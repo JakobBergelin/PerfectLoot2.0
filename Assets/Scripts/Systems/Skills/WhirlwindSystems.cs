@@ -1,0 +1,102 @@
+using Unity.Burst;
+using Unity.Entities;
+using Unity.Mathematics;
+using Unity.Transforms;
+using Unity.VisualScripting;
+using UnityEngine;
+
+[BurstCompile]
+[UpdateInGroup(typeof(SkillSystemGroup))]
+public partial class WhirlwindSystem : SystemBase
+{
+    private const float WeaponDamage = 0.4f;
+    public const float RotationSpeed = 4.0f * math.PI;
+
+    public const float ResourceCost = 12f;
+    private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
+    [BurstCompile]
+    protected override void OnCreate()
+    {
+        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+    }
+
+    [BurstCompile]
+    protected override void OnUpdate()
+    {
+        var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        foreach (var (whirlwind, entity) in SystemAPI.Query<RefRW<Whirlwind>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
+        {
+            if(!SystemAPI.IsComponentEnabled<Whirlwind>(entity) || !whirlwind.ValueRO.Spinning)
+            {
+                whirlwind.ValueRW.Spinning = false;
+                if(SystemAPI.HasComponent<DisableTurning>(entity))
+                {
+                    commandBuffer.RemoveComponent<DisableTurning>(entity);
+                }
+                if(SystemAPI.HasComponent<Channeling>(entity))
+                {
+                    commandBuffer.RemoveComponent<Channeling>(entity);
+                }
+                if(whirlwind.ValueRO.WeaponEntity != Entity.Null)
+                {
+                    commandBuffer.AddComponent<DestroyWithChildren>(whirlwind.ValueRO.WeaponEntity);
+                    whirlwind.ValueRW.WeaponEntity = Entity.Null;
+                }
+                whirlwind.ValueRW.Elapsed = 0.0f;
+            }
+            else if (whirlwind.ValueRO.Spinning)
+            {
+                whirlwind.ValueRW.Elapsed += SystemAPI.Time.DeltaTime;
+            }
+            
+        }
+
+        foreach (var (whirlwind, localTransform, resource, stats, entity) in SystemAPI.Query<RefRW<Whirlwind>, RefRW<LocalTransform>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
+        {
+            var resourceCost = ResourceCost * SystemAPI.Time.DeltaTime;
+            if(resource.ValueRO.CurrentValue >= resourceCost)
+            {
+                whirlwind.ValueRW.Spinning = true;
+                if(whirlwind.ValueRO.Elapsed > 0.4f)
+                {
+                    if(whirlwind.ValueRO.WeaponEntity == Entity.Null)
+                    {
+                        whirlwind.ValueRW.WeaponEntity = EntityManager.CreateEntity();
+
+                        UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
+                        var weaponDamage = stats.ValueRO.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.WeaponDamageRange, stats.ValueRO.WeaponDamageRange);
+                        var damage = weaponDamage * WeaponDamage;
+
+                        Debug.Log(damage);
+
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Attack{Damage = damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = 0.9f});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Source{Entity = entity});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new AttackTarget{TargetType = TargetType.Enemy});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new InitializeFromSource{});
+
+                    }
+                    else
+                    {
+                        var weaponTransform = SystemAPI.GetComponentRW<LocalTransform>(whirlwind.ValueRO.WeaponEntity);
+                        var forward = math.mul(localTransform.ValueRO.Rotation, Vector3.forward);
+                        weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * 1.1f;
+                        SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -resourceCost});
+                    } 
+                }
+            }
+            else
+            {
+                whirlwind.ValueRW.Spinning = false;
+            }
+
+            if (whirlwind.ValueRO.Spinning)
+            {
+                commandBuffer.AddComponent(entity, new DisableTurning());
+                commandBuffer.AddComponent(entity, new Channeling());
+                localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(RotationSpeed  * SystemAPI.Time.DeltaTime * stats.ValueRO.AttackSpeed));
+            }
+
+        }
+    }
+}
