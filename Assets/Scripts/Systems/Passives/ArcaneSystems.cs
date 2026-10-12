@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateArcaneSystem : ISystem
 {
     private const float Resource = 100;
@@ -11,10 +11,10 @@ public partial struct CalculateArcaneSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (arcane, resource) in SystemAPI.Query<RefRO<Arcane>, RefRW<Resource>>())
+        foreach (var (arcane, stats) in SystemAPI.Query<RefRO<Arcane>, RefRW<CalculatedStats>>().WithPresent<Resource>())
         {
-            resource.ValueRW.MaxValue += Resource;
-            resource.ValueRW.Regeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += Resource;
+            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
         }
     }
 }

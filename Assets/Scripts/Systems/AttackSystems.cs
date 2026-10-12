@@ -21,16 +21,16 @@ public partial class AttackSystem : SystemBase
 
     public static void CalculateCrit(Entity source, EntityManager entityManager, ref float damage, ref bool isCrit)
     {
-        if(source != Entity.Null && entityManager.HasComponent<CalculatedStatsPercentages>(source))
+        if(source != Entity.Null && entityManager.HasComponent<CalculatedStats>(source))
         {
-            var sourceStats = entityManager.GetComponentData<CalculatedStatsPercentages>(source);
+            var sourceStats = entityManager.GetComponentData<CalculatedStats>(source);
             UnityEngine.Random.InitState((int)DateTime.Now.Ticks);
             var randomValue = UnityEngine.Random.Range(0.0f, 1.0f);
             
-            if(randomValue < sourceStats.CriticalChance)
+            if(randomValue < sourceStats.Value.CriticalChance)
             {
                 isCrit = true;
-                damage *= 1.0f + sourceStats.CriticalDamage;                        
+                damage *= 1.0f + sourceStats.Value.CriticalDamage;                        
             }
         }
     }
@@ -107,9 +107,9 @@ public partial class AttackSystem : SystemBase
 
                             CalculateCrit(source.ValueRO.Entity, EntityManager, ref damage, ref isCrit);
 
-                            // if(source.ValueRO.Entity != Entity.Null && SystemAPI.HasComponent<CalculatedStatsPercentages>(source.ValueRO.Entity))
+                            // if(source.ValueRO.Entity != Entity.Null && SystemAPI.HasComponent<CalculatedStats>(source.ValueRO.Entity))
                             // {
-                            //     var sourceStats = SystemAPI.GetComponentRO<CalculatedStatsPercentages>(source.ValueRO.Entity);
+                            //     var sourceStats = SystemAPI.GetComponentRO<CalculatedStats>(source.ValueRO.Entity);
                             //     UnityEngine.Random.InitState((int)DateTime.Now.Ticks);
                             //     var randomValue = UnityEngine.Random.Range(0.0f, 1.0f);
                                 

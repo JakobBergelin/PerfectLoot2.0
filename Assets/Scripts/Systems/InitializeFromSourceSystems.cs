@@ -25,23 +25,23 @@ public partial class InitializeFromSourceSystem : SystemBase
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Attack>>().WithPresent<InitializeFromSource>().WithEntityAccess())
         {
             var sourceEntity = source.ValueRO.Entity;
-            var stats = SystemAPI.GetComponentRO<CalculatedStatsPercentages>(sourceEntity);
-            attack.ValueRW.Damage *= 1.0f + stats.ValueRO.Damage;
+            var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
+            attack.ValueRW.Damage *= 1.0f + stats.ValueRO.Value.Damage;
         }
 
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<PeriodicAttack>>().WithPresent<InitializeFromSource>().WithEntityAccess())
         {
             var sourceEntity = source.ValueRO.Entity;
-            var stats = SystemAPI.GetComponentRO<CalculatedStatsPercentages>(sourceEntity);
-            attack.ValueRW.DamagePerSecond *= 1.0f + stats.ValueRO.Damage;
+            var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
+            attack.ValueRW.DamagePerSecond *= 1.0f + stats.ValueRO.Value.Damage;
         }
 
         foreach (var (source, projectile, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Projectile>>().WithPresent<InitializeFromSource>().WithEntityAccess())
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
-            projectile.ValueRW.BounceCount += stats.ValueRO.Bounces;
-            projectile.ValueRW.PierceCount += stats.ValueRO.Pierce;
+            projectile.ValueRW.BounceCount += stats.ValueRO.Value.Bounces;
+            projectile.ValueRW.PierceCount += stats.ValueRO.Value.Pierce;
         }
 
         var commandBuffer = _endSimulationEntityCommandBufferSystem.CreateCommandBuffer();

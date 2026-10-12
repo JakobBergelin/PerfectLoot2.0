@@ -59,17 +59,3 @@ partial struct ResourceRegenerationSystem : ISystem
         }
     }
 }
-
-[BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup), OrderLast = true)]
-public partial struct MultiplyResourceSystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var resource in SystemAPI.Query<RefRW<Resource>>())
-        {
-            resource.ValueRW.Regeneration *= 1.0f + resource.ValueRO.RegenerationMultiplier;
-        }
-    }
-}

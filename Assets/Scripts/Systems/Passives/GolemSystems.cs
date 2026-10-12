@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateGolemSystem : ISystem
 {
     [BurstCompile]

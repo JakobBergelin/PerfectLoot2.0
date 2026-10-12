@@ -42,7 +42,7 @@ public partial class FireballSystem : SystemBase
             {
                 fireball.ValueRW.Elapsed = 0;
             }
-            fireball.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.AttackSpeed;
+            fireball.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
             fireball.ValueRW.Elapsed = Mathf.Min(fireball.ValueRW.Elapsed, fireball.ValueRW.AttackSpeed);
         }
 

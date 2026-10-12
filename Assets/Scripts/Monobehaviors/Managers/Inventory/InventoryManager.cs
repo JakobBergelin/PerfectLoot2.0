@@ -2,6 +2,8 @@ using Equipment;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using Unity.Collections;
+using Unity.Entities;
 using UnityEngine;
 
 public class InventoryManager : MonoBehaviour
@@ -74,7 +76,35 @@ public class InventoryManager : MonoBehaviour
         }
 
         Stats.Sort();
+        _equipmentStatsDirty = true;
+        TryPushEquipmentStats();
         StatsChanged?.Invoke(Stats);
+    }
+
+    bool _equipmentStatsDirty;
+
+    // The player entity may not exist yet when slots change (subscene still loading), so retry until it does.
+    void Update()
+    {
+        if (_equipmentStatsDirty) TryPushEquipmentStats();
+    }
+
+    /// <summary>Writes the summed equipment stats to the player's EquipmentStats component.</summary>
+    void TryPushEquipmentStats()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
+
+        var entityManager = world.EntityManager;
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadWrite<EquipmentStats>());
+        if (query.IsEmpty) return;
+
+        var equipmentStats = new EquipmentStats { Value = Stats.ToStatBlock() };
+        using var players = query.ToEntityArray(Allocator.Temp);
+        foreach (var player in players)
+            entityManager.SetComponentData(player, equipmentStats);
+
+        _equipmentStatsDirty = false;
     }
 
     [ContextMenu("Log Summary")]

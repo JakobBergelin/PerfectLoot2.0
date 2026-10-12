@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateManaSystem : ISystem
 {
     private const float Resource = 50;
@@ -14,10 +14,10 @@ public partial struct CalculateManaSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (mana, resource) in SystemAPI.Query<RefRO<Mana>, RefRW<Resource>>())
+        foreach (var (mana, stats) in SystemAPI.Query<RefRO<Mana>, RefRW<CalculatedStats>>().WithPresent<Resource>())
         {
-            resource.ValueRW.MaxValue += Resource;
-            resource.ValueRW.Regeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += Resource;
+            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
         }
     }
 }

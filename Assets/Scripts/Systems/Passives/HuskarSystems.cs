@@ -33,7 +33,8 @@ public partial struct HuskarSystem : ISystem
 }
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup), OrderLast = true)]
+[UpdateInGroup(typeof(FinalizeStatsSystemGroup))]
+[UpdateAfter(typeof(FinalizeStatsSystem))]
 public partial struct HuskarChangeResourceSystem : ISystem
 {
     [BurstCompile]

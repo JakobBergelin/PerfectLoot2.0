@@ -103,7 +103,7 @@ public partial class CalculateDamageSystem : SystemBase
     public event System.Action<float, float3> OnDamageBlocked;
     protected override void OnUpdate()
     {
-        foreach (var (damageBuffer, calculatedDamageBuffer, calculatedStats, calculatedStatsPercentages, entity) in SystemAPI.Query<DynamicBuffer<DamageInstance>, DynamicBuffer<CalculatedDamageInstance>, RefRO<CalculatedStats>, RefRO<CalculatedStatsPercentages>>().WithEntityAccess())
+        foreach (var (damageBuffer, calculatedDamageBuffer, calculatedStats, entity) in SystemAPI.Query<DynamicBuffer<DamageInstance>, DynamicBuffer<CalculatedDamageInstance>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             foreach(var instance in damageBuffer)
             {
@@ -123,25 +123,25 @@ public partial class CalculateDamageSystem : SystemBase
                     }
 
                     case DamageType.Cold:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStatsPercentages.ValueRO.ColdResitance);
+                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.ColdResistance);
                     break;
                     case DamageType.Fire:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStatsPercentages.ValueRO.FireResistance);
+                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.FireResistance);
                     break;
                     case DamageType.Lightning:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStatsPercentages.ValueRO.LightningResistance);
+                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.LightningResistance);
                     break;
                     case DamageType.Poison:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStatsPercentages.ValueRO.PoisonResistance);
+                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.PoisonResistance);
                     break;
                 }
-                calculatedDamage = calculatedDamage * (1.0f - calculatedStatsPercentages.ValueRO.AllResistance);
+                calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.AllResistance);
 
                 if(instance.Hierarchy == DamageHierarchy.Main)
                 {
-                    if(calculatedStatsPercentages.ValueRO.BlockChance > 0.0f)
+                    if(calculatedStats.ValueRO.Value.BlockChance > 0.0f)
                     {
-                        if(UnityEngine.Random.Range(0.0f,1.0f) < calculatedStatsPercentages.ValueRO.BlockChance)
+                        if(UnityEngine.Random.Range(0.0f,1.0f) < calculatedStats.ValueRO.Value.BlockChance)
                         {
                             float diff = calculatedDamage;
                             calculatedDamage = math.max(0, calculatedDamage - Constants.BlockAmount);
@@ -171,7 +171,7 @@ public partial class DamagingSystem : SystemBase
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-        foreach (var (health, calculatedStatsPercentages, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStatsPercentages>>().WithEntityAccess())
+        foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<CalculatedDamageInstance>(entity);
             foreach(var instance in instances)
@@ -246,41 +246,6 @@ public partial class DamagingSystem : SystemBase
     }
 }
 
-[BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup), OrderLast = true)]
-public partial struct MultiplyArmorSystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var armor in SystemAPI.Query<RefRW<Armor>>())
-        {
-            if(armor.ValueRO.Value == 0)
-            {
-                armor.ValueRW.PhysicalResistance = 0.0f;
-            }
-            else
-            {
-                armor.ValueRW.PhysicalResistance = 1.0f - math.pow(1.0f - (Constants.ReductionPerArmor * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier)), armor.ValueRO.Value);
-            }
-        }
-    }
-}
-
-[BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup), OrderLast = true)]
-public partial struct MultiplyHealthSystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var health in SystemAPI.Query<RefRW<Health>>())
-        {
-            health.ValueRW.MaxValue *=  1.0f + health.ValueRO.MaxHealthMultiplier;
-        }
-    }
-}
-
 public partial class ApplyHealingSystem : SystemBase
 {
     public event System.Action<float, float3> OnHealingReceived;
@@ -293,7 +258,7 @@ public partial class ApplyHealingSystem : SystemBase
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-        foreach (var (health, calculatedStatsPercentages, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStatsPercentages>>().WithEntityAccess())
+        foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<HealingInstance>(entity);
             foreach(var instance in instances)

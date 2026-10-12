@@ -24,7 +24,7 @@ public partial class EnemyMeleeAttackSystem : SystemBase
             {
                 enemyMeleeAttack.ValueRW.Elapsed = 0;
             }
-            enemyMeleeAttack.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.AttackSpeed;
+            enemyMeleeAttack.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
             enemyMeleeAttack.ValueRW.Elapsed = Mathf.Min(enemyMeleeAttack.ValueRW.Elapsed, enemyMeleeAttack.ValueRO.AttackSpeed);
         }
 

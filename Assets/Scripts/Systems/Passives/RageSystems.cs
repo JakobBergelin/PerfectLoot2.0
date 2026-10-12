@@ -5,7 +5,7 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateRageSystem : ISystem
 {
     private const float Resource = 40;
@@ -14,10 +14,10 @@ public partial struct CalculateRageSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var resource in SystemAPI.Query<RefRW<Resource>>().WithPresent<Rage>())
+        foreach (var stats in SystemAPI.Query<RefRW<CalculatedStats>>().WithPresent<Resource, Rage>())
         {
-            resource.ValueRW.MaxValue += Resource;
-            resource.ValueRW.Regeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += Resource;
+            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
         }
     }
 }

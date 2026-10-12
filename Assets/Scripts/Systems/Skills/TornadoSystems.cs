@@ -46,7 +46,7 @@ public partial class TornadoSystem : SystemBase
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         foreach (var (tornado,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
-            tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.AttackSpeed;
+            tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
             tornado.ValueRW.Elapsed = Mathf.Min(tornado.ValueRW.Elapsed, AttackSpeed);
         }
 
@@ -71,7 +71,7 @@ public partial class TornadoSystem : SystemBase
                 
                 var startPos = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction;
                 UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                var weaponDamage = stats.ValueRO.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.WeaponDamageRange, stats.ValueRO.WeaponDamageRange);
+                var weaponDamage = stats.ValueRO.Value.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                 var damage = weaponDamage * WeaponDamagePerSecond + DamagePerSecond;
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = startPos, Rotation = Quaternion.identity, Scale = 1f});
                 commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = Radius, TimeRemaining = 4f, Skill= SkillType.Tornado, TickRate = TickRate});

@@ -122,7 +122,7 @@ partial class PassiveSystem : SystemBase
 }
 
 [BurstCompile]
-[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateClassSystem : ISystem
 {
     [BurstCompile]
@@ -130,63 +130,63 @@ public partial struct CalculateClassSystem : ISystem
     {
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Warrior>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Mage>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Rogue>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Monk>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Fighter>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Paladin>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Caster>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Cleric>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Fencer>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
         foreach (var (playerclass, level, calculatedStats) in SystemAPI.Query<RefRO<Savant>, RefRO<Level>, RefRW<CalculatedStats>>())
         {
-            calculatedStats.ValueRW.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
-            calculatedStats.ValueRW.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
-            calculatedStats.ValueRW.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
+            calculatedStats.ValueRW.Value.Strength += level.ValueRO.Value * playerclass.ValueRO.StrengthPerLevel;
+            calculatedStats.ValueRW.Value.Agility += level.ValueRO.Value * playerclass.ValueRO.AgilityPerLevel;
+            calculatedStats.ValueRW.Value.Intelligence += level.ValueRO.Value * playerclass.ValueRO.IntelligencePerLevel;
         }
     }
 }

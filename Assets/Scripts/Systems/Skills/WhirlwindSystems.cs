@@ -64,7 +64,7 @@ public partial class WhirlwindSystem : SystemBase
                         whirlwind.ValueRW.WeaponEntity = EntityManager.CreateEntity();
 
                         UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                        var weaponDamage = stats.ValueRO.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.WeaponDamageRange, stats.ValueRO.WeaponDamageRange);
+                        var weaponDamage = stats.ValueRO.Value.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                         var damage = weaponDamage * WeaponDamage;
 
                         Debug.Log(damage);
@@ -94,7 +94,7 @@ public partial class WhirlwindSystem : SystemBase
             {
                 commandBuffer.AddComponent(entity, new DisableTurning());
                 commandBuffer.AddComponent(entity, new Channeling());
-                localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(RotationSpeed  * SystemAPI.Time.DeltaTime * stats.ValueRO.AttackSpeed));
+                localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(RotationSpeed  * SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed));
             }
 
         }

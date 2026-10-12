@@ -1,6 +1,6 @@
 using Unity.Burst;
 using Unity.Entities;
-using UnityEngine;
+using Unity.Mathematics;
 
 
 [UpdateInGroup(typeof(CalculateStatsSystemGroup), OrderFirst = true)]
@@ -12,72 +12,76 @@ partial struct ResetStatsSystem : ISystem
     {
         foreach (var (calculatedStats, baseStats) in SystemAPI.Query<RefRW<CalculatedStats>, RefRO<BaseStats>>())
         {
-            calculatedStats.ValueRW.Strength = baseStats.ValueRO.Strength;
-            calculatedStats.ValueRW.Agility = baseStats.ValueRO.Agility;
-            
-            calculatedStats.ValueRW.Intelligence = baseStats.ValueRO.Intelligence;
-            calculatedStats.ValueRW.Lifesteal = baseStats.ValueRO.Lifesteal;
-
-            calculatedStats.ValueRW.Pierce = baseStats.ValueRO.Pierce;
-            calculatedStats.ValueRW.Bounces = baseStats.ValueRO.Bounces;
-
-            calculatedStats.ValueRW.WeaponDamage = baseStats.ValueRO.WeaponDamage;
-            calculatedStats.ValueRW.WeaponDamageRange = 0.0f;
-            calculatedStats.ValueRW.AttackSpeed = 1.0f;
+            calculatedStats.ValueRW.Value = baseStats.ValueRO.Value;
             calculatedStats.ValueRW.PierceOnCrit = false;
         }
-        foreach (var (armor, baseStats) in SystemAPI.Query<RefRW<Armor>, RefRO<BaseStats>>())
+        foreach (var armor in SystemAPI.Query<RefRW<Armor>>())
         {
-            armor.ValueRW.Value = baseStats.ValueRO.Armor;
             armor.ValueRW.PhysicalResistanceMultiplier = 0.0f;
         }
-        foreach (var (calculatedStatsPercentages, baseStatsPercentages) in SystemAPI.Query<RefRW<CalculatedStatsPercentages>, RefRO<BaseStatsPercentages>>())
+        foreach (var health in SystemAPI.Query<RefRW<Health>>())
         {
-            calculatedStatsPercentages.ValueRW.AreaOfEffect = baseStatsPercentages.ValueRO.AreaOfEffect;
-            calculatedStatsPercentages.ValueRW.CooldownReduction = baseStatsPercentages.ValueRO.CooldownReduction;
-            calculatedStatsPercentages.ValueRW.ColdResitance = baseStatsPercentages.ValueRO.ColdResitance;
-            calculatedStatsPercentages.ValueRW.FireResistance = baseStatsPercentages.ValueRO.FireResistance;
-            calculatedStatsPercentages.ValueRW.PoisonResistance = baseStatsPercentages.ValueRO.PoisonResistance;
-            calculatedStatsPercentages.ValueRW.LightningResistance = baseStatsPercentages.ValueRO.LightningResistance;
-            calculatedStatsPercentages.ValueRW.AllResistance = baseStatsPercentages.ValueRO.AllResistance;
-            calculatedStatsPercentages.ValueRW.CriticalChance = baseStatsPercentages.ValueRO.CriticalChance;
-            calculatedStatsPercentages.ValueRW.CriticalDamage = baseStatsPercentages.ValueRO.CriticalDamage;
-            calculatedStatsPercentages.ValueRW.BlockChance = baseStatsPercentages.ValueRO.BlockChance;
-            calculatedStatsPercentages.ValueRW.Damage = 0.0f;
-        }
-        foreach (var (movementSpeed, baseStatsPercentages) in SystemAPI.Query<RefRW<MovementSpeed>, RefRO<BaseStatsPercentages>>())
-        {
-            movementSpeed.ValueRW.Value = baseStatsPercentages.ValueRO.MovementSpeed;
-        }
-
-        foreach (var (health, baseStats) in SystemAPI.Query<RefRW<Health>, RefRO<BaseStats>>())
-        {
-            health.ValueRW.MaxValue = baseStats.ValueRO.Health;
             health.ValueRW.MaxHealthMultiplier = 0.0f;
         }
-
-        foreach (var (healthRegeneration, baseStats) in SystemAPI.Query<RefRW<HealthRegeneration>, RefRO<BaseStats>>())
+        foreach (var resource in SystemAPI.Query<RefRW<Resource>>())
         {
-            healthRegeneration.ValueRW.Value = baseStats.ValueRO.HealthRegeneration;
-        }
-
-        foreach (var (resource, baseStats) in SystemAPI.Query<RefRW<Resource>, RefRO<BaseStats>>())
-        {
-            resource.ValueRW.MaxValue = baseStats.ValueRO.Health;
-            resource.ValueRW.Regeneration = baseStats.ValueRO.HealthRegeneration;
             resource.ValueRW.RegenerationMultiplier = 0.0f;
         }
-
-        // ResetMovementSpeedJob resetMovementSpeedJob = new ResetMovementSpeedJob();
-        // resetMovementSpeedJob.ScheduleParallel();
     }
 }
 
-// [BurstCompile]
-// public partial struct ResetMovementSpeedJob : IJobEntity
-// {
-//     public void Execute(ref MovementSpeed movementSpeed, in BaseStatsPercentages baseStatsPercentages)
-//     {
-//         movementSpeed.Value = baseStatsPercentages.MovementSpeed;
-//     }
-// }
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
+[BurstCompile]
+partial struct ApplyEquipmentStatsSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (calculatedStats, equipmentStats) in SystemAPI.Query<RefRW<CalculatedStats>, RefRO<EquipmentStats>>())
+        {
+            calculatedStats.ValueRW.Value.Add(equipmentStats.ValueRO.Value);
+        }
+    }
+}
+
+[UpdateInGroup(typeof(FinalizeStatsSystemGroup))]
+[BurstCompile]
+partial struct FinalizeStatsSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var (armor, stats) in SystemAPI.Query<RefRW<Armor>, RefRO<CalculatedStats>>())
+        {
+            armor.ValueRW.Value = stats.ValueRO.Value.Armor;
+            var fromArmor = 0.0f;
+            if(armor.ValueRO.Value != 0)
+            {
+                fromArmor = 1.0f - math.pow(1.0f - (Constants.ReductionPerArmor * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier)), armor.ValueRO.Value);
+            }
+            // Flat physical resistance stacks multiplicatively with the armor reduction
+            armor.ValueRW.PhysicalResistance = 1.0f - (1.0f - fromArmor) * (1.0f - stats.ValueRO.Value.PhysicalResistance);
+        }
+
+        foreach (var (movementSpeed, stats) in SystemAPI.Query<RefRW<MovementSpeed>, RefRO<CalculatedStats>>())
+        {
+            movementSpeed.ValueRW.Value = stats.ValueRO.Value.MovementSpeed;
+        }
+
+        foreach (var (health, stats) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>())
+        {
+            health.ValueRW.MaxValue = stats.ValueRO.Value.Health * (1.0f + health.ValueRO.MaxHealthMultiplier);
+        }
+
+        foreach (var (healthRegeneration, stats) in SystemAPI.Query<RefRW<HealthRegeneration>, RefRO<CalculatedStats>>())
+        {
+            healthRegeneration.ValueRW.Value = stats.ValueRO.Value.HealthRegeneration;
+        }
+
+        foreach (var (resource, stats) in SystemAPI.Query<RefRW<Resource>, RefRO<CalculatedStats>>())
+        {
+            resource.ValueRW.MaxValue = stats.ValueRO.Value.Resource;
+            resource.ValueRW.Regeneration = stats.ValueRO.Value.ResourceRegeneration * (1.0f + resource.ValueRO.RegenerationMultiplier);
+        }
+    }
+}
