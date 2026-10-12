@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b490422f904a17b5aeb5a4c01ad924, type: 3}
+  m_Name: BootsLootTable
+  m_EditorClassIdentifier: Assembly-CSharp::Loottables.LootTable
+  Name: Boots
+  Mode: 1
+  Entries:
+  - Entry: {fileID: 11400000, guid: 15fe6c59dd6f44f28425b4991082b045, type: 2}
+    Value: 60
+  - Entry: {fileID: 11400000, guid: c4c3aecd912d425fba3fc2d142d49bb8, type: 2}
+    Value: 30
+  - Entry: {fileID: 11400000, guid: 8faa2530fa164e24929e41757583d484, type: 2}
+    Value: 10

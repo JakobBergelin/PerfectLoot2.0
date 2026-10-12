@@ -69,7 +69,7 @@ public class LootGenerationManager : MonoBehaviour
             }
 
             Item rolled = candidate; // a foreach variable can't be passed by ref
-            rolled.Rarity = RollableItem.GetRandomRarity();
+            rolled.Rarity = rolled.BaseItem.ForcedRarity ?? RollableItem.GetRandomRarity();
             rolled.BaseItem.Roll(ref rolled);
             return rolled;
         }

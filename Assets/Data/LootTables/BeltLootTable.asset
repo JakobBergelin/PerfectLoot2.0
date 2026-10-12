@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b490422f904a17b5aeb5a4c01ad924, type: 3}
+  m_Name: BeltLootTable
+  m_EditorClassIdentifier: Assembly-CSharp::Loottables.LootTable
+  Name: Belt
+  Mode: 1
+  Entries:
+  - Entry: {fileID: 11400000, guid: badbf344738a4a76a0b6723198af2223, type: 2}
+    Value: 60
+  - Entry: {fileID: 11400000, guid: 9f850d9dc03e4038a43a8a53c66b14d2, type: 2}
+    Value: 30
+  - Entry: {fileID: 11400000, guid: 7fb339696af84064bf018e1cefcfcd47, type: 2}
+    Value: 10

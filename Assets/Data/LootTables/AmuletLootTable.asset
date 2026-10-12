@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b490422f904a17b5aeb5a4c01ad924, type: 3}
+  m_Name: AmuletLootTable
+  m_EditorClassIdentifier: Assembly-CSharp::Loottables.LootTable
+  Name: Amulet
+  Mode: 1
+  Entries:
+  - Entry: {fileID: 11400000, guid: 8c2d4aa99fd64d8cb1af9f8c48b7b7a2, type: 2}
+    Value: 60
+  - Entry: {fileID: 11400000, guid: bb38cf422cbc488ba24cec7815e13980, type: 2}
+    Value: 30
+  - Entry: {fileID: 11400000, guid: 0c6a9d85175b47d5a0c10afcd1a481dd, type: 2}
+    Value: 10

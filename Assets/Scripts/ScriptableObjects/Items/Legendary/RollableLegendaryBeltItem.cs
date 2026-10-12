@@ -6,5 +6,7 @@ namespace Equipment
     public class RollableLegendaryBeltItem : RollableBeltItem
     {
         public LegendaryAffix LegendaryAffix;
+
+        public override Rarity? ForcedRarity => Rarity.Legendary;
     }
 }

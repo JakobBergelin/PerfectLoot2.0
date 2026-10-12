@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ab9b30347a8f44d5ae96872c8c6ec649, type: 3}
+  m_Name: MailChausses
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegsItem
+  Name: Mail Chausses
+  BaseAffixes: []
+  RollableAffixes:
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 24
+    RollRange:
+      Min: 10
+      Max: 40
+  - Affix: 5
+    RollRange:
+      Min: 0.02
+      Max: 0.08
+  - Affix: 4
+    RollRange:
+      Min: 0.03
+      Max: 0.1
+  - Affix: 22
+    RollRange:
+      Min: 2
+      Max: 10
+  - Affix: 25
+    RollRange:
+      Min: 0.5
+      Max: 2
+  Armor:
+    Min: 7
+    Max: 11

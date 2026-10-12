@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 76b490422f904a17b5aeb5a4c01ad924, type: 3}
+  m_Name: OffhandLootTable
+  m_EditorClassIdentifier: Assembly-CSharp::Loottables.LootTable
+  Name: Offhand
+  Mode: 1
+  Entries:
+  - Entry: {fileID: 11400000, guid: e3dfff5dda7a414f9d162a18c100af6e, type: 2}
+    Value: 60
+  - Entry: {fileID: 11400000, guid: 4ba43c1703f842ab9ebc30668cd74514, type: 2}
+    Value: 30
+  - Entry: {fileID: 11400000, guid: 95459cc4030f4eabb2e3506cd2bb7140, type: 2}
+    Value: 10

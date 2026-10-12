@@ -1,0 +1,45 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2c7f9d65480541ada45d2c8d37e6e5c1, type: 3}
+  m_Name: LeatherGloves
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableHandsItem
+  Name: Leather Gloves
+  BaseAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 1
+      Max: 2
+  RollableAffixes:
+  - Affix: 9
+    RollRange:
+      Min: 0.05
+      Max: 0.2
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 20
+    RollRange:
+      Min: 0.03
+      Max: 0.12
+  - Affix: 15
+    RollRange:
+      Min: 0.05
+      Max: 0.25
+  - Affix: 12
+    RollRange:
+      Min: 0.01
+      Max: 0.05
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 8

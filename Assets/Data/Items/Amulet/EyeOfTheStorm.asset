@@ -1,0 +1,46 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c55a96dc5324353bdc09d584a7af52a, type: 3}
+  m_Name: EyeOfTheStorm
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
+  Name: Eye of the Storm
+  BaseAffixes:
+  - Affix: 26
+    RollRange:
+      Min: 20
+      Max: 40
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 19
+    RollRange:
+      Min: 0.1
+      Max: 0.4
+  - Affix: 20
+    RollRange:
+      Min: 0.03
+      Max: 0.12
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.1
+  - Affix: 23
+    RollRange:
+      Min: 0.01
+      Max: 0.04
+  - Affix: 12
+    RollRange:
+      Min: 0.01
+      Max: 0.05
+  LegendaryAffix: 0

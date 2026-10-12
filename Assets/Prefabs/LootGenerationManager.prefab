@@ -45,3 +45,14 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LootGenerationManager
   GenerationSettings: {fileID: 11400000, guid: 4056ba9b3c1bae3459c4bf786634989c, type: 2}
+  AllWeaponsLootTable: {fileID: 11400000, guid: c31774342c4b405aa43caebe90a17f94, type: 2}
+  AllHeadsLootTable: {fileID: 11400000, guid: d36fe9e7ba714a90b7e516b89d8cc25e, type: 2}
+  AllBootsLootTable: {fileID: 11400000, guid: c001a1f686e44bf1a3d3c4b1c0f2279c, type: 2}
+  AllLegsLootTable: {fileID: 11400000, guid: d6a79617c18e45f78abab42894e65aa6, type: 2}
+  AllChestLootTable: {fileID: 11400000, guid: c2953c572b914f88a5485677452f3231, type: 2}
+  AllBeltLootTable: {fileID: 11400000, guid: cd4bbabef75048539cca5a563680f202, type: 2}
+  AllHandsLootTable: {fileID: 11400000, guid: 9227582b8159441bbfd2138ca66195de, type: 2}
+  AllShouldersLootTable: {fileID: 11400000, guid: 5eedd3a743f34813b0fd73894fd3a051, type: 2}
+  AllAmuletLootTable: {fileID: 11400000, guid: 1309c76dd3a44aca863e17b591551148, type: 2}
+  AllRingLootTable: {fileID: 11400000, guid: 72c4f5c0a78c4da9968d486e9f804eef, type: 2}
+  AllOffhandLootTable: {fileID: 11400000, guid: befe20fb555f4dd4a4062644618b2251, type: 2}

@@ -11,6 +11,9 @@ namespace Equipment
 
         public string Name;
         public abstract ItemType ItemType { get; }
+
+        /// <summary>When set, drops of this base item always roll this rarity instead of a random one.</summary>
+        public virtual Rarity? ForcedRarity => null;
         public List<Rollable> BaseAffixes;      // Always a part of the item
         public List<Rollable> RollableAffixes;  // 0 - x dependent on rarity
 
