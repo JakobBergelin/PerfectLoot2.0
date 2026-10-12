@@ -5,24 +5,10 @@ using UnityEngine;
 
 public struct InventoryItem : IBufferElementData
 {
-    public ItemType Type;
-
     [SerializeField]
     public Guid Seed;
 }
 
-public enum ItemType
-{
-    None,
-    Vanguard,
-    BrokenPromises,
-    NormalBoots,
-    MagicBoots,
-    RareBoots,
-    NormalSword,
-    NormalDagger,
-    NormalCrossbow,
-}
 
 public struct Vanguard : IComponentData
 {

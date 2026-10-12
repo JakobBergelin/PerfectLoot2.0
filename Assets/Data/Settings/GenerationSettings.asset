@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4e931904bcec3d94a93b98445062601f, type: 3}
+  m_Name: GenerationSettings
+  m_EditorClassIdentifier: Assembly-CSharp::GenerationSettings
+  NormalBaseMax: 1
+  NormalBaseMin: 0
+  MagicBaseMax: 0.8
+  MagicBaseMin: 0.1
+  RareBaseMax: 0.6
+  RareBaseMin: 0.2
+  LegendaryBaseMax: 0.75
+  LegendaryBaseMin: 0.5
+  MagicAffixMax: 1
+  MagicAffixMin: 0
+  RareAffixMax: 0.6
+  RareAffixMin: 0.2
+  LegendaryAffixMax: 0.85
+  LegendaryAffixMin: 0.5

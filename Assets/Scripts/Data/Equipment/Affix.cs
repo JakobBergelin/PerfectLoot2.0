@@ -1,0 +1,34 @@
+namespace Equipment
+{
+    public enum Affix
+    {
+        Strength,
+        Agility,
+        Intelligence,
+        MovementSpeed,
+        AllResistance,
+        BlockChance,
+        CooldownReduction,
+        ResourceCostReduction,
+        DodgeChance,
+        AttackSpeed,
+        WeaponDamage,
+        WeaponDamageRange,
+        Lifesteal,
+        ProjectilePierces,
+        ProjectileBounces,
+        Damage,
+        AreaOfEffect,
+        ColdResistance,
+        FireResistance,
+        LightningResistance,
+        CriticalChance,
+        CriticalDamage,
+        Armor,
+        ResourceSteal,
+        Health,
+        HealthRegeneration,
+        Resource,
+        ResourceRegeneration,
+    }
+}

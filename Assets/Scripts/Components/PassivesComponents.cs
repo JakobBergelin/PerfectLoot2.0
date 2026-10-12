@@ -151,7 +151,7 @@ public struct Medusa : IComponentData
 
 public struct Balance : IComponentData
 {
-    
+    // all stats even?
 }
 
 public struct RandomizeCharacter : IComponentData{}

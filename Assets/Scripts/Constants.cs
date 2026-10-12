@@ -27,27 +27,7 @@ public static class Constants
     public readonly static float ReductionPerArmor = 0.04f;
 
     public static class Generate
-    {
-        public static class TierFactors
-        {
-            public readonly static float NormalMax = 1f;
-            public readonly static float NormalMin = 0.0f;
-            public readonly static float MagicMax = 0.8f;
-            public readonly static float MagicMin = 0.1f;
-
-            public readonly static float MagicAffixMax = 1.0f;
-            public readonly static float MagicAffixMin = 0.0f;
-            public readonly static float RareMax = 0.7f;
-            public readonly static float RareMin = 0.2f;
-            public readonly static float RareAffixMax = 0.8f;
-            public readonly static float RareAffixMin = 0.2f;
-            public readonly static float LegendaryMax= 0.75f;
-            public readonly static float LegendaryMin = 0.4f;
-
-            public readonly static float LegendaryAffixMax= 0.85f;
-            public readonly static float LegendaryAffixMin = 0.5f;
-        }
-        
+    {        
         public static class Boots
         {
             public readonly static int MaxArmor = 5;
