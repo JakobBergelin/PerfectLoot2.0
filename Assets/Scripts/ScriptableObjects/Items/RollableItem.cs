@@ -7,7 +7,8 @@ namespace Equipment
 {
     public abstract class RollableItem : Lootable
     {
-        static readonly Rarity[] DroppableRarities = Array.FindAll((Rarity[])Enum.GetValues(typeof(Rarity)), r => r != Rarity.Unrolled);
+        // Legendary and Unique only come from their own item types via ForcedRarity
+        static readonly Rarity[] DroppableRarities = { Rarity.Normal, Rarity.Magic, Rarity.Rare };
 
         public string Name;
         public Sprite Icon;                     // Shown in inventory/loot UI and editor tooling
@@ -29,7 +30,7 @@ namespace Equipment
             return new List<Loot> { CreateItem() };
         }
 
-        /// <summary>Random rarity for a drop. Never returns Unrolled.</summary>
+        /// <summary>Random rarity for a standard drop: Normal, Magic or Rare with equal odds.</summary>
         public static Rarity GetRandomRarity()
         {
             return DroppableRarities[UnityEngine.Random.Range(0, DroppableRarities.Length)];
