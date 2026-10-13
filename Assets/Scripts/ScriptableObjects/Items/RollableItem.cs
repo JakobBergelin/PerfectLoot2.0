@@ -10,6 +10,7 @@ namespace Equipment
         static readonly Rarity[] DroppableRarities = Array.FindAll((Rarity[])Enum.GetValues(typeof(Rarity)), r => r != Rarity.Unrolled);
 
         public string Name;
+        public Sprite Icon;                     // Shown in inventory/loot UI and editor tooling
         public abstract ItemType ItemType { get; }
 
         /// <summary>When set, drops of this base item always roll this rarity instead of a random one.</summary>
