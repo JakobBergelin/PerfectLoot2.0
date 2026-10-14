@@ -5,6 +5,8 @@ using UnityEngine;
 
 public struct Luminosity : IComponentData
 {
+    public float HealValue;
+    public float HealRadius;
 }
 
 [BurstCompile]
@@ -32,11 +34,12 @@ public partial class LuminositySystem : SystemBase
                 {
                     if(instance.IsCrit)
                     {
+                        var luminosity = SystemAPI.GetComponent<Luminosity>(source);
                         var newEntity = commandBuffer.CreateEntity();
                 
                         UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
                         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
-                        commandBuffer.AddComponent(newEntity, new Heal{Value = 2.0f, Type = TargetType.Player, Radius = 5f});
+                        commandBuffer.AddComponent(newEntity, new Heal{Value = luminosity.HealValue, Type = TargetType.Player, Radius = luminosity.HealRadius});
                         commandBuffer.AddComponent(newEntity, new Source{Entity = instance.Source});
                         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
                         // single frame heal

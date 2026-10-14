@@ -51,33 +51,7 @@ partial class PassiveSystem : SystemBase
         }
     }
 
-    private void ManagePassive<T>(PassiveType type, T component, DynamicBuffer<Passive> buffer, EntityCommandBuffer commandBuffer, EntityManager entityManager, Entity entity) where T : unmanaged, IComponentData
-    {
-        Passive foundPassive = new Passive{Type = PassiveType.None};
-        foreach (var passive in buffer)
-        {
-            if(passive.Type == type)
-            {
-                foundPassive = passive;
-                break;
-            }
-        }
-
-        if(foundPassive.Type != PassiveType.None)
-        {
-            if(!entityManager.HasComponent<T>(entity))
-            {
-                commandBuffer.AddComponent<T>(entity, component);
-            }   
-        }
-        else
-        {
-            if(entityManager.HasComponent<T>(entity))
-            {
-                commandBuffer.RemoveComponent<T>(entity);
-            }
-        }
-    }
+    // Passive skill components are added/removed by PassiveSkillManager
 
     [BurstCompile]
     protected override void OnUpdate()
@@ -108,16 +82,6 @@ partial class PassiveSystem : SystemBase
             ManageClass(ClassType.Fencer, new Fencer{StrengthPerLevel = 1, AgilityPerLevel = 2, IntelligencePerLevel = 0}, unitClass.ValueRO.Type, commandBuffer, EntityManager, entity);
             ManageClass(ClassType.Savant, new Savant{StrengthPerLevel = 0, AgilityPerLevel = 2, IntelligencePerLevel = 1}, unitClass.ValueRO.Type, commandBuffer, EntityManager, entity);
         }
-
-        foreach (var (skillBuffer, entity) in SystemAPI.Query<DynamicBuffer<Passive>>().WithEntityAccess())
-        {
-            ManagePassive(PassiveType.Golem, new Golem{}, skillBuffer, commandBuffer, EntityManager, entity);
-            ManagePassive(PassiveType.Huskar, new Huskar{}, skillBuffer, commandBuffer, EntityManager, entity);
-            ManagePassive(PassiveType.Medusa, new Medusa{}, skillBuffer, commandBuffer, EntityManager, entity);
-            ManagePassive(PassiveType.Balance, new Balance{}, skillBuffer, commandBuffer, EntityManager, entity);
-            ManagePassive(PassiveType.Luminosity, new Luminosity{}, skillBuffer, commandBuffer, EntityManager, entity);
-        }
-        
     }
 }
 

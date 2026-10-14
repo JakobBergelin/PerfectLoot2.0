@@ -10,8 +10,8 @@ public partial struct CalculateGolemSystem : ISystem
     {
         foreach (var (golem, health, armor) in SystemAPI.Query<RefRO<Golem>, RefRW<Health>, RefRW<Armor>>())
         {
-            health.ValueRW.MaxHealthMultiplier += 1.0f;
-            armor.ValueRW.PhysicalResistanceMultiplier += 1.0f;
+            health.ValueRW.MaxHealthMultiplier += golem.ValueRO.MaxHealthMultiplier;
+            armor.ValueRW.PhysicalResistanceMultiplier += golem.ValueRO.PhysicalResistanceMultiplier;
         }
     }
 }

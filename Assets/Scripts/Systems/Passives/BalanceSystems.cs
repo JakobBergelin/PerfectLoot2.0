@@ -13,7 +13,7 @@ public partial struct CalculateBalanceSystem : ISystem
         {
             float min = math.min(stats.ValueRO.Value.Strength, stats.ValueRO.Value.Agility);
             min = math.min(min, stats.ValueRO.Value.Intelligence);
-            stats.ValueRW.Value.Damage += min * 0.4f;
+            stats.ValueRW.Value.Damage += min * balance.ValueRO.DamagePerLowestAttribute;
         }
     }
 }

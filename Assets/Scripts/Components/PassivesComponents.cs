@@ -136,7 +136,8 @@ public struct Savant : IComponentData
 public struct Golem : IComponentData
 {
     // Can't regenerate hp
-    // Double health and armor 
+    public float MaxHealthMultiplier;
+    public float PhysicalResistanceMultiplier;
 }
 
 public struct Huskar : IComponentData
@@ -151,7 +152,8 @@ public struct Medusa : IComponentData
 
 public struct Balance : IComponentData
 {
-    // all stats even?
+    // Damage bonus per point of the lowest of Strength, Agility and Intelligence
+    public float DamagePerLowestAttribute;
 }
 
 public struct RandomizeCharacter : IComponentData{}
