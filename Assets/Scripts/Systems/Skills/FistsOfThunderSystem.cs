@@ -8,6 +8,7 @@ using UnityEngine;
 [UpdateInGroup(typeof(SkillSystemGroup))]
 public partial class FistsOfThunderSystem : SystemBase
 {
+    private Unity.Mathematics.Random _random;
     private const float ResourceGeneration = 1.0f;
     private float[] HitCooldowns;
     public float[] HitDamage;
@@ -18,6 +19,7 @@ public partial class FistsOfThunderSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
         HitCooldowns = new float[7]{0.30f, 0.24f, 0.24f, 0.52f, 0.26f, 0.24f, 0.45f};
         HitDamage = new float[7]{0.5f, 0.5f, 0.6f, 0.7f, 0.4f, 0.6f, 0.9f};
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
@@ -51,8 +53,7 @@ public partial class FistsOfThunderSystem : SystemBase
             {
                 var newEntity = commandBuffer.CreateEntity();
                 
-                UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                var weaponDamage = stats.ValueRO.Value.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
+                var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                 var damage = HitDamage[fistOfThunder.ValueRO.PunchCount] + weaponDamage * HitWeaponDamage;
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction, Rotation = Quaternion.identity, Scale = 1f});
                 commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = 0.5f, DamageHierarchy = DamageHierarchy.Main});

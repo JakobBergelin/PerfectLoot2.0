@@ -10,6 +10,7 @@ using UnityEngine.SocialPlatforms;
 [UpdateInGroup(typeof(SkillSystemGroup))]
 public partial class TornadoSystem : SystemBase
 {
+    private Unity.Mathematics.Random _random;
     private const float ResourceCost = 15.0f;
     private const float AttackSpeed = 0.9f;
     private const float Radius = 2f;
@@ -23,6 +24,7 @@ public partial class TornadoSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
     }
 
@@ -70,8 +72,7 @@ public partial class TornadoSystem : SystemBase
                 var newEntity = commandBuffer.CreateEntity();
                 
                 var startPos = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction;
-                UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                var weaponDamage = stats.ValueRO.Value.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
+                var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                 var damage = weaponDamage * WeaponDamagePerSecond + DamagePerSecond;
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = startPos, Rotation = Quaternion.identity, Scale = 1f});
                 commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = Radius, TimeRemaining = 4f, Skill= SkillType.Tornado, TickRate = TickRate});
@@ -92,8 +93,7 @@ public partial class TornadoSystem : SystemBase
             if(tornado.ValueRO.Elapsed >= TornadoDirectionDuration)
             {
                 tornado.ValueRW.Elapsed = 0.0f;
-                UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                tornado.ValueRW.Direction = new float3(UnityEngine.Random.Range(-1.0f, 1.0f), 0.0f, UnityEngine.Random.Range(-1.0f, 1.0f));
+                tornado.ValueRW.Direction = new float3(_random.NextFloat(-1.0f, 1.0f), 0.0f, _random.NextFloat(-1.0f, 1.0f));
             }
             
             tornado.ValueRW.Sway = Quaternion.Euler(0.0f, (float)Math.PI * 2.0f, 0.0f) * tornado.ValueRO.Sway;

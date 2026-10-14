@@ -9,6 +9,7 @@ using UnityEngine;
 [UpdateInGroup(typeof(SkillSystemGroup))]
 public partial class WhirlwindSystem : SystemBase
 {
+    private Unity.Mathematics.Random _random;
     private const float WeaponDamage = 0.4f;
     public const float RotationSpeed = 4.0f * math.PI;
 
@@ -17,6 +18,7 @@ public partial class WhirlwindSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
     }
 
@@ -63,8 +65,7 @@ public partial class WhirlwindSystem : SystemBase
                     {
                         whirlwind.ValueRW.WeaponEntity = EntityManager.CreateEntity();
 
-                        UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                        var weaponDamage = stats.ValueRO.Value.WeaponDamage + UnityEngine.Random.Range(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
+                        var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                         var damage = weaponDamage * WeaponDamage;
 
                         Debug.Log(damage);

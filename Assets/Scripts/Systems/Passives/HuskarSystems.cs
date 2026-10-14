@@ -24,11 +24,11 @@ public partial struct HuskarSystem : ISystem
             }
         }
 
-        foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
-        {
-            resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
-            resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
-        }
+        //foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
+        //{
+        //    resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
+        //    resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
+        //}
     }
 }
 
@@ -40,10 +40,10 @@ public partial struct HuskarChangeResourceSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
-        {
-            resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
-            resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
-        }
+        //foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
+        //{
+        //    resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
+        //    resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
+        //}
     }
 }

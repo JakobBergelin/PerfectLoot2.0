@@ -36,8 +36,7 @@ public partial class LuminositySystem : SystemBase
                     {
                         var luminosity = SystemAPI.GetComponent<Luminosity>(source);
                         var newEntity = commandBuffer.CreateEntity();
-                
-                        UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
+
                         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
                         commandBuffer.AddComponent(newEntity, new Heal{Value = luminosity.HealValue, Type = TargetType.Player, Radius = luminosity.HealRadius});
                         commandBuffer.AddComponent(newEntity, new Source{Entity = instance.Source});

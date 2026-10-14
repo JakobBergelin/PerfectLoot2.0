@@ -101,6 +101,13 @@ partial struct DestroyWithChildrenSystem : ISystem
 public partial class CalculateDamageSystem : SystemBase
 {
     public event System.Action<float, float3> OnDamageBlocked;
+    private Unity.Mathematics.Random _random;
+
+    protected override void OnCreate()
+    {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
+    }
+
     protected override void OnUpdate()
     {
         foreach (var (damageBuffer, calculatedDamageBuffer, calculatedStats, entity) in SystemAPI.Query<DynamicBuffer<DamageInstance>, DynamicBuffer<CalculatedDamageInstance>, RefRO<CalculatedStats>>().WithEntityAccess())
@@ -141,7 +148,7 @@ public partial class CalculateDamageSystem : SystemBase
                 {
                     if(calculatedStats.ValueRO.Value.BlockChance > 0.0f)
                     {
-                        if(UnityEngine.Random.Range(0.0f,1.0f) < calculatedStats.ValueRO.Value.BlockChance)
+                        if(_random.NextFloat() < calculatedStats.ValueRO.Value.BlockChance)
                         {
                             float diff = calculatedDamage;
                             calculatedDamage = math.max(0, calculatedDamage - Constants.BlockAmount);

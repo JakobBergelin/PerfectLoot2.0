@@ -3,33 +3,34 @@ using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
 
+// Runs on the damage after armor, resistances and block. After Rage and Luminosity so fully absorbed hits still trigger them.
 [BurstCompile]
+[UpdateAfter(typeof(CalculateDamageSystem))]
+[UpdateAfter(typeof(RageSystem))]
+[UpdateAfter(typeof(LuminositySystem))]
+[UpdateBefore(typeof(DamagingSystem))]
 [UpdateBefore(typeof(UpdateResourcesSystem))]
-[UpdateBefore(typeof(CalculateDamageSystem))]
 public partial struct MedusaSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (medusa, damageInstance, resourcechanger, resource) in SystemAPI.Query<RefRO<Medusa>, DynamicBuffer<DamageInstance>, DynamicBuffer<ResourceChanger>, RefRO<Resource>>())
+        foreach (var (medusa, damageInstance, resourcechanger, resource) in SystemAPI.Query<RefRO<Medusa>, DynamicBuffer<CalculatedDamageInstance>, DynamicBuffer<ResourceChanger>, RefRO<Resource>>())
         {
             var remainingResource = resource.ValueRO.CurrentValue;
-            for(int i = 0; i < damageInstance.Length; i++)
+            for(int i = 0; i < damageInstance.Length && remainingResource > 0.0f; i++)
             {
-                if(damageInstance[i].Damage <= remainingResource)
+                ref var instance = ref damageInstance.ElementAt(i);
+                var absorbed = math.min(instance.Damage, remainingResource);
+                if(absorbed <= 0.0f)
                 {
-                    resourcechanger.Add(new ResourceChanger{Value = -1.0f * math.abs(damageInstance[i].Damage)});
-                    remainingResource -= damageInstance[i].Damage;
-                    damageInstance.RemoveAt(i);
-                    i--;
+                    continue;
                 }
-                else
-                {
-                    var toRemove = damageInstance[i].Damage - remainingResource;
-                    resourcechanger.Add(new ResourceChanger{Value = -1.0f * math.abs(toRemove)});
-                    remainingResource -= toRemove;
-                }
-                
+
+                // Keep the instance; DamagingSystem skips damage <= 0
+                resourcechanger.Add(new ResourceChanger{Value = -absorbed});
+                remainingResource -= absorbed;
+                instance.Damage -= absorbed;
             }
         }
     }

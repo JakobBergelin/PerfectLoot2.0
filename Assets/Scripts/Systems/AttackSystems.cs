@@ -11,22 +11,21 @@ using System;
 [UpdateInGroup(typeof(AttackSystemGroup))]
 public partial class AttackSystem : SystemBase
 {
-    private EndSimulationEntityCommandBufferSystem _endSimulationEntityCommandBufferSystem;
+    private Unity.Mathematics.Random _random;
 
     [BurstCompile]
     protected override void OnCreate()
     {
-        _endSimulationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
     }
 
-    public static void CalculateCrit(Entity source, EntityManager entityManager, ref float damage, ref bool isCrit)
+    public static void CalculateCrit(Entity source, EntityManager entityManager, ref Unity.Mathematics.Random random, ref float damage, ref bool isCrit)
     {
         if(source != Entity.Null && entityManager.HasComponent<CalculatedStats>(source))
         {
             var sourceStats = entityManager.GetComponentData<CalculatedStats>(source);
-            UnityEngine.Random.InitState((int)DateTime.Now.Ticks);
-            var randomValue = UnityEngine.Random.Range(0.0f, 1.0f);
-            
+            var randomValue = random.NextFloat();
+
             if(randomValue < sourceStats.Value.CriticalChance)
             {
                 isCrit = true;
@@ -48,9 +47,8 @@ public partial class AttackSystem : SystemBase
             GroupIndex = 0,
         };
 
-        var commandBuffer = _endSimulationEntityCommandBufferSystem.CreateCommandBuffer();
-
-        foreach (var (attack, localTransform, source, entity) in SystemAPI.Query<RefRW<Attack>, RefRO<LocalTransform>, RefRO<Source>>().WithEntityAccess())
+        // IgnoreEntity buffers are added up front by AddIgnoreEntityBufferSystem, so every hit this frame is recorded
+        foreach (var (attack, localTransform, source, ignoreBuffer, entity) in SystemAPI.Query<RefRW<Attack>, RefRO<LocalTransform>, RefRO<Source>, DynamicBuffer<IgnoreEntity>>().WithEntityAccess())
         {
             outHits.Clear();
             physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, attack.ValueRO.Radius, ref outHits, collisionFilter);
@@ -77,55 +75,33 @@ public partial class AttackSystem : SystemBase
                             }
                         }
 
-                        DynamicBuffer<IgnoreEntity> ignoreBuffer;
-                        if(!SystemAPI.HasBuffer<IgnoreEntity>(entity))
+                        bool skipEntity = false;
+                        foreach(var ignored in ignoreBuffer)
                         {
-                            ignoreBuffer = commandBuffer.AddBuffer<IgnoreEntity>(entity);
+                            if(ignored.Entity == hit.Entity)
+                            {
+                                skipEntity = true;
+                                break;
+                            }
                         }
-                        else
+                        if(skipEntity)
                         {
-                            bool skipEntity = false;
-                            ignoreBuffer = SystemAPI.GetBuffer<IgnoreEntity>(entity);
-                            foreach(var ignored in ignoreBuffer)
-                            {
-                                if(ignored.Entity == hit.Entity)
-                                {
-                                    skipEntity = true;
-                                    continue;
-                                }
-                            }
-                            if(skipEntity)
-                            {
-                                continue;
-                            }
+                            continue;
                         }
 
-                        if(SystemAPI.HasComponent<Health>(hit.Entity))
+                        if(SystemAPI.HasComponent<Health>(hit.Entity) && SystemAPI.HasBuffer<DamageInstance>(hit.Entity))
                         {
                             bool isCrit = false;
                             var damage = attack.ValueRO.Damage;
 
-                            CalculateCrit(source.ValueRO.Entity, EntityManager, ref damage, ref isCrit);
-
-                            // if(source.ValueRO.Entity != Entity.Null && SystemAPI.HasComponent<CalculatedStats>(source.ValueRO.Entity))
-                            // {
-                            //     var sourceStats = SystemAPI.GetComponentRO<CalculatedStats>(source.ValueRO.Entity);
-                            //     UnityEngine.Random.InitState((int)DateTime.Now.Ticks);
-                            //     var randomValue = UnityEngine.Random.Range(0.0f, 1.0f);
-                                
-                            //     if(randomValue < sourceStats.ValueRO.CriticalChance)
-                            //     {
-                            //         isCrit = true;
-                            //         damage *= 1.0f + sourceStats.ValueRO.CriticalDamage;                        
-                            //     }
-                            // }
-
+                            CalculateCrit(source.ValueRO.Entity, EntityManager, ref _random, ref damage, ref isCrit);
 
                             attack.ValueRW.Events.OnHit = true;
                             attack.ValueRW.Events.OnHitNormal = hit.SurfaceNormal;
                             attack.ValueRW.Events.IsCrit = isCrit;
 
-                            commandBuffer.AppendToBuffer(hit.Entity, new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit});
+                            // Written directly (not via ECB) so CalculateDamageSystem handles it this frame
+                            SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit});
                             //TODO dynamic graceperiod depending on skill and attackspeed
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = 0.3f});
                         }
@@ -136,6 +112,20 @@ public partial class AttackSystem : SystemBase
     }
 }
 
+
+// Gives every attack an IgnoreEntity buffer before AttackSystem runs, whichever system created it
+[UpdateInGroup(typeof(AttackSystemGroup), OrderFirst = true)]
+public partial struct AddIgnoreEntityBufferSystem : ISystem
+{
+    public void OnUpdate(ref SystemState state)
+    {
+        var query = SystemAPI.QueryBuilder().WithAll<Attack>().WithNone<IgnoreEntity>().Build();
+        if(!query.IsEmpty)
+        {
+            state.EntityManager.AddComponent<IgnoreEntity>(query);
+        }
+    }
+}
 
 [UpdateInGroup(typeof(AttackSystemGroup))]
 public partial struct IgnoreEntitySystem : ISystem
@@ -148,7 +138,7 @@ public partial struct IgnoreEntitySystem : ISystem
             for(int i = 0; i < ignoreBuffer.Length; i++)
             {
                 ref var instance = ref ignoreBuffer.ElementAt(i);
-                instance.GraceTimer -= Time.deltaTime;
+                instance.GraceTimer -= SystemAPI.Time.DeltaTime;
                 if(instance.GraceTimer <= 0)
                 {
                     ignoreBuffer.RemoveAt(i);
@@ -246,8 +236,6 @@ public partial class PeriodicAttackSystem : SystemBase
                                 ref var instance = ref periodicDamageBuffer.ElementAt(index);
                                 instance.AccumilatedDamage += damage;
                             }
-                            
-                            break;
                         }
                         
                     }
@@ -278,6 +266,13 @@ public partial class PeriodicAttackSystem : SystemBase
 [UpdateAfter(typeof(PeriodicAttackSystem))]
 public partial class AccumilatedPeriodicAttackSystem : SystemBase
 {
+    private Unity.Mathematics.Random _random;
+
+    protected override void OnCreate()
+    {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
+    }
+
     [BurstCompile]
     protected override void OnUpdate()
     {
@@ -293,7 +288,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
                     bool isCrit = false;
                     var damage = instance.AccumilatedDamage;
 
-                    AttackSystem.CalculateCrit(instance.Source, EntityManager, ref damage, ref isCrit);
+                    AttackSystem.CalculateCrit(instance.Source, EntityManager, ref _random, ref damage, ref isCrit);
 
                     DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit});
                     periodicDamageInstance.RemoveAt(i);
