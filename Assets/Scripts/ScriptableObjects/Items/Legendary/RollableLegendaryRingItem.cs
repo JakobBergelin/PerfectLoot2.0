@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Equipment
 {
-    [CreateAssetMenu(fileName = "RollableLegendaryRing", menuName = "Items/LegendaryRing")]
+    [CreateAssetMenu(fileName = "RollableLegendaryRing", menuName = "Items/Legendary/Ring")]
     public class RollableLegendaryRingItem : RollableRingItem
     {
         public LegendaryAffix LegendaryAffix;

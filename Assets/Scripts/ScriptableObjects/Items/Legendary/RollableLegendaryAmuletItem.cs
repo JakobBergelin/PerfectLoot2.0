@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Equipment
 {
-    [CreateAssetMenu(fileName = "RollableLegendaryAmulet", menuName = "Items/LegendaryAmulet")]
+    [CreateAssetMenu(fileName = "RollableLegendaryAmulet", menuName = "Items/Legendary/Amulet")]
     public class RollableLegendaryAmuletItem : RollableAmuletItem
     {
         public LegendaryAffix LegendaryAffix;

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace Equipment
 {
-    [CreateAssetMenu(fileName = "RollableLegendaryOffhand", menuName = "Items/LegendaryOffhand")]
+    [CreateAssetMenu(fileName = "RollableLegendaryOffhand", menuName = "Items/Legendary/Offhand")]
     public class RollableLegendaryOffhandItem : RollableOffhandItem
     {
         public LegendaryAffix LegendaryAffix;
