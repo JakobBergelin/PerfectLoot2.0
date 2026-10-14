@@ -9,6 +9,9 @@ public class PassiveSkillManager : MonoBehaviour
     public static PassiveSkillManager Instance;
     public PassiveSkillSlot Slot1, Slot2, Slot3;
 
+    [Header("Every passive that can be rolled into an empty slot at start")]
+    public List<PassiveSkill> AllPassives = new List<PassiveSkill>();
+
     [Header("Active passives (read-only, rebuilt whenever a slot changes)")]
     public List<PassiveSkill> Active = new List<PassiveSkill>();
 
@@ -27,7 +30,53 @@ public class PassiveSkillManager : MonoBehaviour
             if (slot != null) slot.Changed += OnSlotChanged;
     }
 
-    void Start() => RebuildPassives();
+    void Start()
+    {
+        RandomizeEmptySlots();
+        RebuildPassives();
+    }
+
+    /// <summary>Fills empty slots with random passives from AllPassives, never repeating a PassiveType.</summary>
+    void RandomizeEmptySlots()
+    {
+        var taken = new HashSet<PassiveType>();
+        foreach (var slot in Slots)
+            if (slot != null && !slot.IsEmpty) taken.Add(slot.EquippedPassive.Type);
+
+        var pool = new List<PassiveSkill>();
+        foreach (var passive in AllPassives)
+            if (passive != null && taken.Add(passive.Type)) pool.Add(passive);
+
+        foreach (var slot in Slots)
+        {
+            if (slot == null || !slot.IsEmpty) continue;
+            if (pool.Count == 0)
+            {
+                Debug.LogWarning("Not enough different passives in AllPassives to fill every passive slot.");
+                return;
+            }
+
+            int index = Random.Range(0, pool.Count);
+            // Set directly instead of EquipPassive so Start pushes once instead of once per slot
+            slot.EquippedPassive = pool[index];
+            pool.RemoveAt(index);
+        }
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        var seen = new HashSet<PassiveType>();
+        foreach (var passive in AllPassives)
+        {
+            if (passive == null) { Debug.LogWarning($"{name}: AllPassives has an empty entry.", this); continue; }
+            if (!seen.Add(passive.Type)) Debug.LogWarning($"{name}: {passive.Type} is in AllPassives more than once.", this);
+        }
+        foreach (PassiveType type in System.Enum.GetValues(typeof(PassiveType)))
+            if (type != PassiveType.None && !seen.Contains(type))
+                Debug.LogWarning($"{name}: AllPassives is missing {type}. Run Tools > Create missing passive assets.", this);
+    }
+#endif
 
     void OnDestroy()
     {
