@@ -8,16 +8,14 @@ using UnityEngine;
 [UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateManaSystem : ISystem
 {
-    private const float Resource = 50;
-    private const float ResourceRegeneration = 5;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (mana, stats) in SystemAPI.Query<RefRO<Mana>, RefRW<CalculatedStats>>().WithPresent<Resource>())
         {
-            stats.ValueRW.Value.Resource += Resource;
-            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += mana.ValueRO.MaxResource;
+            stats.ValueRW.Value.ResourceRegeneration += mana.ValueRO.Regeneration;
         }
     }
 }

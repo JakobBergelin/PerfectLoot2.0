@@ -8,16 +8,14 @@ using UnityEngine;
 [UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateEnergySystem : ISystem
 {
-    private const float Resource = 35;
-    private const float ResourceRegeneration = 1;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var stats in SystemAPI.Query<RefRW<CalculatedStats>>().WithPresent<Resource, Energy>())
+        foreach (var (energy, stats) in SystemAPI.Query<RefRO<Energy>, RefRW<CalculatedStats>>().WithPresent<Resource>())
         {
-            stats.ValueRW.Value.Resource += Resource;
-            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += energy.ValueRO.MaxResource;
+            stats.ValueRW.Value.ResourceRegeneration += energy.ValueRO.Regeneration;
         }
     }
 }
@@ -25,18 +23,17 @@ public partial struct CalculateEnergySystem : ISystem
 
 public partial struct EnergySystem : ISystem
 {  
-    private const float ResourceOnSkillUse = 2;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (rage, resourcechanger, skillBuffer) in SystemAPI.Query<RefRO<Energy>, DynamicBuffer<ResourceChanger>, DynamicBuffer<Skill>>())
+        foreach (var (energy, resourcechanger, skillBuffer) in SystemAPI.Query<RefRO<Energy>, DynamicBuffer<ResourceChanger>, DynamicBuffer<Skill>>())
         {
             foreach(var instance in skillBuffer)
             {
                 if(instance.events.OnUsed)
                 {
-                    resourcechanger.Add(new ResourceChanger{Value = ResourceOnSkillUse});
+                    resourcechanger.Add(new ResourceChanger{Value = energy.ValueRO.ResourceOnSkillUse});
                 }
                 
             }

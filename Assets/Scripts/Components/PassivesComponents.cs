@@ -56,77 +56,39 @@ public enum PassiveType
     Luminosity,
 }
 
+// Resource types, added by CharacterManager from a ResourceDefinition asset
 public struct Mana : IComponentData
 {
+    public float MaxResource;
+    public float Regeneration;
 }
 public struct Rage : IComponentData
 {
+    public float MaxResource;
+    public float Regeneration;
+    public float ResourcePerHit;
 }
 public struct Focus : IComponentData
 {
+    public float MaxResource;
+    public float Regeneration;
+    // Added to the regeneration multiplier while standing still or channeling, 0.2 = +20%
+    public float StandingStillRegenerationMultiplier;
 }
 public struct Energy : IComponentData
 {
+    public float MaxResource;
+    public float Regeneration;
+    public float ResourceOnSkillUse;
 }
 public struct Arcane : IComponentData
 {
+    public float MaxResource;
+    public float Regeneration;
 }
 
-public struct Warrior : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Mage : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Rogue : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Monk : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Fighter : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Paladin : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Caster : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Cleric : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Fencer : IComponentData
-{
-    public int StrengthPerLevel;
-    public int AgilityPerLevel;
-    public int IntelligencePerLevel;
-}
-public struct Savant : IComponentData
+// Class, added by CharacterManager from a CharacterClass asset
+public struct ClassAttributes : IComponentData
 {
     public int StrengthPerLevel;
     public int AgilityPerLevel;

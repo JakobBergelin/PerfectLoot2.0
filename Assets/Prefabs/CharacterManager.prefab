@@ -1,0 +1,66 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &7600000000000000001
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 7600000000000000002}
+  - component: {fileID: 7600000000000000003}
+  m_Layer: 0
+  m_Name: CharacterManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &7600000000000000002
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7600000000000000001}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &7600000000000000003
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7600000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7e0b74eed5afd0b88ecb894bc007c5fa, type: 3}
+  m_Name:
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterManager
+  Class: {fileID: 0}
+  Resource: {fileID: 0}
+  StartingLevel: 1
+  AllClasses:
+  - {fileID: 11400000, guid: 60b1e2e3ee27c79a4ebf79818420de43, type: 2}
+  - {fileID: 11400000, guid: a99056135d2cbf85d8c7469314362133, type: 2}
+  - {fileID: 11400000, guid: 36bdfad28302698c234c80f5dfbf0ef7, type: 2}
+  - {fileID: 11400000, guid: aae43e5487b47bff4fa0108af9a8e94d, type: 2}
+  - {fileID: 11400000, guid: d222550614f859ec79d86d834f178508, type: 2}
+  - {fileID: 11400000, guid: 9ee27f19be8a5ed270d119ed824f1d40, type: 2}
+  - {fileID: 11400000, guid: a0f5e74188689f313f2ebf1a186fa35a, type: 2}
+  - {fileID: 11400000, guid: 16e803ddb037d0eb5700ff7cc316b1de, type: 2}
+  - {fileID: 11400000, guid: 6c800003969b28e233c2fa5c99e7041e, type: 2}
+  - {fileID: 11400000, guid: 8036682b957ec1492f73ed31d7359e04, type: 2}
+  AllResources:
+  - {fileID: 11400000, guid: c86fae1eb6fc7afd8d942ff5749e58e0, type: 2}
+  - {fileID: 11400000, guid: 4cbbc315260c1de11f2cbe2afca12355, type: 2}
+  - {fileID: 11400000, guid: c62dafcb4e8533eaa9187ff78e561b5c, type: 2}
+  - {fileID: 11400000, guid: c7d7faa26e2e7bed63e441867feb6a32, type: 2}
+  - {fileID: 11400000, guid: 073c7745032823400ebd05ae7fcf5213, type: 2}

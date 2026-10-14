@@ -8,16 +8,14 @@ using UnityEngine;
 [UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateRageSystem : ISystem
 {
-    private const float Resource = 40;
-    private const float ResourceRegeneration = -3;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var stats in SystemAPI.Query<RefRW<CalculatedStats>>().WithPresent<Resource, Rage>())
+        foreach (var (rage, stats) in SystemAPI.Query<RefRO<Rage>, RefRW<CalculatedStats>>().WithPresent<Resource>())
         {
-            stats.ValueRW.Value.Resource += Resource;
-            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += rage.ValueRO.MaxResource;
+            stats.ValueRW.Value.ResourceRegeneration += rage.ValueRO.Regeneration;
         }
     }
 }
@@ -27,7 +25,6 @@ public partial struct CalculateRageSystem : ISystem
 [UpdateBefore(typeof(DamagingSystem))]
 public partial struct RageSystem : ISystem
 {  
-    private const float ResourcePerHit = 3;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
@@ -38,7 +35,7 @@ public partial struct RageSystem : ISystem
             {
                 if(instance.Hierarchy == DamageHierarchy.Main)
                 {
-                    resourceChanger.Add(new ResourceChanger{Value = ResourcePerHit});
+                    resourceChanger.Add(new ResourceChanger{Value = rage.ValueRO.ResourcePerHit});
                 }
                 
             }

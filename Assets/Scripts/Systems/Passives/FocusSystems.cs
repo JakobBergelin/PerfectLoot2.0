@@ -8,22 +8,19 @@ using UnityEngine;
 [UpdateInGroup(typeof(FlatStatsSystemGroup))]
 public partial struct CalculateFocusSystem : ISystem
 {
-    private const float Resource = 75;
-    private const float ResourceRegeneration = 0;
 
-    private const float ResourceRegenerationMultiplier = 0.2f;
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (resource, stats, entity) in SystemAPI.Query<RefRW<Resource>, RefRW<CalculatedStats>>().WithPresent<Focus>().WithEntityAccess())
+        foreach (var (focus, resource, stats, entity) in SystemAPI.Query<RefRO<Focus>, RefRW<Resource>, RefRW<CalculatedStats>>().WithEntityAccess())
         {
-            stats.ValueRW.Value.Resource += Resource;
-            stats.ValueRW.Value.ResourceRegeneration += ResourceRegeneration;
+            stats.ValueRW.Value.Resource += focus.ValueRO.MaxResource;
+            stats.ValueRW.Value.ResourceRegeneration += focus.ValueRO.Regeneration;
 
             if(SystemAPI.HasComponent<StandingStill>(entity) || SystemAPI.HasComponent<Channeling>(entity))
             {
-                resource.ValueRW.RegenerationMultiplier += ResourceRegenerationMultiplier;
+                resource.ValueRW.RegenerationMultiplier += focus.ValueRO.StandingStillRegenerationMultiplier;
             }
         }
     }
