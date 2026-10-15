@@ -13,7 +13,6 @@ public partial class WhirlwindSystem : SystemBase
     private const float WeaponDamage = 0.4f;
     public const float RotationSpeed = 4.0f * math.PI;
 
-    public const float ResourceCost = 12f;
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     [BurstCompile]
     protected override void OnCreate()
@@ -55,7 +54,7 @@ public partial class WhirlwindSystem : SystemBase
 
         foreach (var (whirlwind, localTransform, resource, stats, entity) in SystemAPI.Query<RefRW<Whirlwind>, RefRW<LocalTransform>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
-            var resourceCost = ResourceCost * SystemAPI.Time.DeltaTime;
+            var resourceCost = whirlwind.ValueRO.ResourceCostPerSecond * SystemAPI.Time.DeltaTime;
             if(resource.ValueRO.CurrentValue >= resourceCost)
             {
                 whirlwind.ValueRW.Spinning = true;
@@ -98,6 +97,16 @@ public partial class WhirlwindSystem : SystemBase
                 localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(RotationSpeed  * SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed));
             }
 
+        }
+
+        // Report spinning as active (after SkillActivationSystem's defaults)
+        foreach (var (whirlwind, skillBuffer) in SystemAPI.Query<RefRO<Whirlwind>, DynamicBuffer<Skill>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        {
+            int index = -1;
+            if (SkillUtil.FindSkill(skillBuffer, SkillType.Whirlwind, ref index))
+            {
+                skillBuffer.ElementAt(index).State.IsActive = whirlwind.ValueRO.Spinning;
+            }
         }
     }
 }

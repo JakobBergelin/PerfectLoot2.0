@@ -21,19 +21,7 @@ public partial class BarrageSystem : SystemBase
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-        foreach (var skillBuffer in SystemAPI.Query<DynamicBuffer<Skill>>().WithPresent<Barrage>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            int index = -1;
-            if (SkillUtil.FindSkill(skillBuffer, SkillType.Barrage, ref index))
-            {
-                ref var skill = ref skillBuffer.ElementAt(index);
-
-                skill.UIInformation.MaxCooldown = 0.0f;
-                skill.UIInformation.CurrentCooldown = 0.0f;
-                skill.UIInformation.ResourceCost = 0.0f;
-                skill.UIInformation.ResourceCostPerSecond = 5.0f;
-            }
-        }
+        // SkillState: no cooldown or cost to report; IsActive set by SkillActivationSystem
 
         foreach (var barrage in SystemAPI.Query<RefRW<Barrage>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {

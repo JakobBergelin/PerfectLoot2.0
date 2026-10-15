@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 520406a89a8d59fa87e1ac4530811c04, type: 3}
+  m_Name: Whirlwind
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.WhirlwindSkill
+  Name: Whirlwind
+  Icon: {fileID: 0}
+  Description: 
+  resourceCostPerSecond: 12

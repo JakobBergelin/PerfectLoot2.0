@@ -11,8 +11,6 @@ using UnityEngine.SocialPlatforms;
 public partial class TornadoSystem : SystemBase
 {
     private Unity.Mathematics.Random _random;
-    private const float ResourceCost = 15.0f;
-    private const float AttackSpeed = 0.9f;
     private const float Radius = 2f;
     private const float TornadoDirectionDuration = 0.7f;
     private const float TornadoSpeed = 5f;
@@ -31,25 +29,12 @@ public partial class TornadoSystem : SystemBase
     [BurstCompile]
     protected override void OnUpdate()
     {
-        foreach (var skillBuffer in SystemAPI.Query<DynamicBuffer<Skill>>().WithPresent<Tornado>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            int index = -1;
-            if (SkillUtil.FindSkill(skillBuffer, SkillType.Tornado, ref index))
-            {
-                ref var skill = ref skillBuffer.ElementAt(index);
-
-                skill.UIInformation.MaxCooldown = 0.0f;
-                skill.UIInformation.CurrentCooldown = 0.0f;
-                skill.UIInformation.ResourceCost = 0.0f;
-                skill.UIInformation.ResourceCostPerSecond = 0.0f;
-            }
-        }
-
+        // SkillState: no cooldown to report (Elapsed is a wind-up); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         foreach (var (tornado,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            tornado.ValueRW.Elapsed = Mathf.Min(tornado.ValueRW.Elapsed, AttackSpeed);
+            tornado.ValueRW.Elapsed = Mathf.Min(tornado.ValueRW.Elapsed, tornado.ValueRO.AttackSpeed);
         }
 
         foreach (var (tornado, localTransform, desiredDirection, resource,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
@@ -61,13 +46,13 @@ public partial class TornadoSystem : SystemBase
                 continue;
             }
 
-            if(resource.ValueRO.CurrentValue < ResourceCost)
+            if(resource.ValueRO.CurrentValue < tornado.ValueRO.ResourceCost)
             {
                 tornado.ValueRW.Elapsed = 0.0f;
                 continue;
             }
 
-            if(tornado.ValueRO.Elapsed >= AttackSpeed)
+            if(tornado.ValueRO.Elapsed >= tornado.ValueRO.AttackSpeed)
             {
                 var newEntity = commandBuffer.CreateEntity();
                 
@@ -83,7 +68,7 @@ public partial class TornadoSystem : SystemBase
 
                 tornado.ValueRW.Elapsed = 0.0f;
 
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -ResourceCost});
+                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -tornado.ValueRO.ResourceCost});
             }
         }
 

@@ -28,7 +28,16 @@ public partial class FinalizeStatsSystemGroup : ComponentSystemGroup
 public partial class SubDamageSystemGroup : ComponentSystemGroup
 {}
 
+/// <summary>
+/// Reads player input. First in SimulationSystemGroup because the Input System processes its events
+/// just before Update, so this sees this frame's input (InitializationSystemGroup would see last frame's).
+/// </summary>
+[UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+public partial class InputSystemGroup : ComponentSystemGroup
+{}
+
 [UpdateInGroup(typeof(SimulationSystemGroup))]
+[UpdateAfter(typeof(InputSystemGroup))]
 public partial class SkillSystemGroup : ComponentSystemGroup
 {}
 

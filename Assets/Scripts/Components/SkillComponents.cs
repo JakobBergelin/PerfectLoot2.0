@@ -2,26 +2,32 @@ using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
 
+/// <summary>An equipped active skill. Written by ActiveSkillManager, state filled in each frame for UI.</summary>
 public struct Skill : IBufferElementData
 {
     public SkillType Type;
-    public struct UIInfo
-    {
-        public float MaxCooldown;
-        public float CurrentCooldown;
-        public float ResourceCost;
-        public float ResourceCostPerSecond;
-    }
+    public int SlotIndex;   // Which slot/key (Skill1..Skill4) triggers it
 
-    public UIInfo UIInformation;
+    public SkillState State;
 
     public struct Triggers
     {
         public bool OnUsed;
-        public bool OnPressed;
     }
 
     public Triggers events;
+}
+
+/// <summary>Per-frame skill state, reported for UI (mirrored to ActiveSkillSlot).</summary>
+public struct SkillState
+{
+    public bool IsPressed;              // Set by SkillActivationSystem
+    public bool IsActive;               // Firing/channeling; defaults to "enabled", skills may override
+    public float CooldownRemaining;     // Only skills with a real cooldown (e.g. Dash) report this
+    public float CooldownDuration;
+    public float ResourceCost;          // Static, from the ActiveSkill asset
+    public float ResourceCostPerSecond;
+    public bool HasEnoughResource;      // Set by SkillActivationSystem
 }
 
 public enum SkillType
@@ -66,11 +72,13 @@ public struct Barrage : IComponentData, IEnableableComponent
 public struct FireBall : IComponentData, IEnableableComponent
 {
     public float AttackSpeed;
+    public float ResourceCost;
     public float Elapsed;
 }
 
 public struct Dash : IComponentData, IEnableableComponent
 {
+    public float Cooldown;
     public float Elapsed;
 
     public bool Dashing;
@@ -80,6 +88,7 @@ public struct Dash : IComponentData, IEnableableComponent
 
 public struct Whirlwind : IComponentData, IEnableableComponent
 {
+    public float ResourceCostPerSecond;
     public Entity WeaponEntity;
     public float Elapsed;
     public bool Spinning;
@@ -87,6 +96,8 @@ public struct Whirlwind : IComponentData, IEnableableComponent
 
 public struct Tornado : IComponentData, IEnableableComponent
 {
+    public float AttackSpeed;
+    public float ResourceCost;
     public float Elapsed;
 }
 

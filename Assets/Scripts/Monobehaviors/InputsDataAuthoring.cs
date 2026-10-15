@@ -20,7 +20,9 @@ public class InputsDataAuthoring : MonoBehaviour
 public struct InputsData : IComponentData
 {
     public float2 Move;
-    public bool4 Skill; // Hittade inget sätt att ha en array
+    // Per skill slot (Skill1..Skill4 actions)
+    public bool4 SkillHeld;
+    public bool4 SkillPressedThisFrame;
 
     public float3 MousePosition;
 }

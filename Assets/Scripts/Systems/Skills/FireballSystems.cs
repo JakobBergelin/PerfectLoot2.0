@@ -8,7 +8,6 @@ using UnityEngine;
 [UpdateInGroup(typeof(SkillSystemGroup))]
 public partial class FireballSystem : SystemBase
 {
-    private const float ResourceCost = 2.0f;
     private const float Damage = 2.0f;
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     [BurstCompile]
@@ -20,21 +19,7 @@ public partial class FireballSystem : SystemBase
     [BurstCompile]
     protected override void OnUpdate()
     {
-        foreach (var skillBuffer in SystemAPI.Query<DynamicBuffer<Skill>>().WithPresent<FireBall>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            int index = -1;
-            if (SkillUtil.FindSkill(skillBuffer, SkillType.Fireball, ref index))
-            {
-                ref var skill = ref skillBuffer.ElementAt(index);
-
-                // TODO, write cost and cooldown after calculations
-                skill.UIInformation.MaxCooldown = 0.0f;
-                skill.UIInformation.CurrentCooldown = 0.0f;
-                skill.UIInformation.ResourceCost = 0.0f;
-                skill.UIInformation.ResourceCostPerSecond = 0.0f;
-            }
-        }
-
+        // SkillState: no cooldown to report (Elapsed is a wind-up that restarts when released); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         foreach (var (fireball, stats, entity) in SystemAPI.Query<RefRW<FireBall>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
@@ -49,7 +34,7 @@ public partial class FireballSystem : SystemBase
         foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, entity) in SystemAPI.Query<RefRW<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, Constants.RotationSpeed * SystemAPI.Time.DeltaTime);
-            if(resource.ValueRO.CurrentValue < ResourceCost)
+            if(resource.ValueRO.CurrentValue < fireball.ValueRO.ResourceCost)
             {
                 fireball.ValueRW.Elapsed = 0;
                 continue;
@@ -73,7 +58,7 @@ public partial class FireballSystem : SystemBase
 
                 fireball.ValueRW.Elapsed = 0.0f;
 
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -ResourceCost});
+                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -fireball.ValueRO.ResourceCost});
 
                 int index = -1;
                 if (SkillUtil.FindSkill(skillBuffer, SkillType.Fireball, ref index))
