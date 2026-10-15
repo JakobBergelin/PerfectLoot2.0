@@ -1,0 +1,132 @@
+/* Variables and font on the bar's own root so every slot inherits them */
+.skill-bar-root {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    padding-bottom: 24px;
+    --slot-size: 88px;
+    --slot-spacing: 16px;
+    --slot-radius: 8px;
+    --slot-bg: rgba(20, 22, 28, 0.9);
+    --slot-border: #3A3F4B;
+    --slot-border-pressed: #FFFFFF;
+    --slot-border-active: #E0A020;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.skill-bar {
+    flex-direction: row;
+}
+
+.skill-slot-column {
+    align-items: center;
+    margin-left: 8px;
+    margin-right: 8px;
+}
+
+.skill-slot {
+    width: var(--slot-size);
+    height: var(--slot-size);
+    background-color: var(--slot-bg);
+    border-width: 2px;
+    border-color: var(--slot-border);
+    border-radius: var(--slot-radius);
+    overflow: hidden;
+    transition-duration: 0.08s;
+}
+
+.skill-slot__icon {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    right: 4px;
+    bottom: 4px;
+    border-radius: 5px;
+    -unity-background-scale-mode: scale-and-crop;
+    -unity-background-image-tint-color: #FFFFFF;
+    transition-duration: 0.12s;
+}
+
+.skill-slot__cooldown-sweep {
+    --sweep-color: rgba(0, 0, 0, 0.6);
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.skill-slot__fallback {
+    position: absolute;
+    left: 4px;
+    top: 4px;
+    right: 4px;
+    bottom: 4px;
+    font-size: 14px;
+    color: var(--text-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+}
+
+.skill-slot__cooldown-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    font-size: 30px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.8);
+    display: none;
+}
+
+.skill-slot__key {
+    margin-top: 6px;
+    min-width: 22px;
+    height: 22px;
+    padding-left: 6px;
+    padding-right: 6px;
+    background-color: var(--slot-bg);
+    border-width: 1px;
+    border-color: var(--slot-border);
+    border-radius: 4px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+}
+
+/* States, toggled by SkillBarHUD */
+
+.skill-slot--pressed {
+    border-color: var(--slot-border-pressed);
+    scale: 0.95 0.95;
+}
+
+.skill-slot--active {
+    border-color: var(--slot-border-active);
+}
+
+.skill-slot--no-resource > .skill-slot__icon {
+    -unity-background-image-tint-color: #6A80FF;
+}
+
+/* After no-resource so cooldown wins when both apply */
+.skill-slot--cooldown > .skill-slot__icon {
+    -unity-background-image-tint-color: #5A5A5A;
+}
+
+.skill-slot--cooldown > .skill-slot__cooldown-text {
+    display: flex;
+}
+
+.skill-slot--empty {
+    opacity: 0.45;
+}
