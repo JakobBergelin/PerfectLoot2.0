@@ -117,5 +117,3 @@ public struct Balance : IComponentData
     // Damage bonus per point of the lowest of Strength, Agility and Intelligence
     public float DamagePerLowestAttribute;
 }
-
-public struct RandomizeCharacter : IComponentData{}

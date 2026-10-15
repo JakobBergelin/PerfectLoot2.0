@@ -12,7 +12,6 @@ public class PassivesAuthoring : MonoBehaviour
             AddBuffer<Passive>(entity);
             AddComponent<UnitResource>(entity);
             AddComponent<UnitClass>(entity); 
-            AddComponent<RandomizeCharacter>(entity);
             AddComponent<Level>(entity);
         }
     }
