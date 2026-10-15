@@ -25,6 +25,9 @@ namespace Equipment
             get { yield break; }
         }
 
+        /// <summary>Fixed (not rolled) stats this base item gives while equipped, e.g. a weapon's reach.</summary>
+        public virtual void AddFixedStats(ref StatBlock stats) { }
+
         public override List<Loot> Explore()
         {
             return new List<Loot> { CreateItem() };

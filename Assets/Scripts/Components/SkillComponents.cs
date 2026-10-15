@@ -1,3 +1,4 @@
+using Unity.Collections;
 using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -57,8 +58,19 @@ public class SkillUtil
     }
 }
 
+public struct FistsOfThunderHit
+{
+    public float Cooldown;  // Time before this punch can land, scaled by attack speed
+    public float Damage;    // Flat damage, plus WeaponDamage * WeaponDamageMultiplier
+}
+
 public struct FistsOfThunder : IComponentData, IEnableableComponent
 {
+    public FixedList128Bytes<FistsOfThunderHit> Hits;  // The combo, up to 15 punches
+    public float ResourceGeneration;    // Per punch
+    public float WeaponDamageMultiplier;
+    public float Radius;
+
     public float TimeSinceLastPunch;
     public int PunchCount;
 }
@@ -66,6 +78,11 @@ public struct FistsOfThunder : IComponentData, IEnableableComponent
 public struct Barrage : IComponentData, IEnableableComponent
 {
     public float AttackSpeed;
+    public float Damage;
+    public float ProjectileSpeed;
+    public float Radius;
+    public float HomingTurnSpeed;
+    public float HomingTurnAcceleration;
     public float Elapsed;
 }
 
@@ -73,6 +90,9 @@ public struct FireBall : IComponentData, IEnableableComponent
 {
     public float AttackSpeed;
     public float ResourceCost;
+    public float Damage;
+    public float ProjectileSpeed;
+    public float Radius;
     public float Elapsed;
 }
 
@@ -89,6 +109,10 @@ public struct Dash : IComponentData, IEnableableComponent
 public struct Whirlwind : IComponentData, IEnableableComponent
 {
     public float ResourceCostPerSecond;
+    public float WeaponDamageMultiplier;
+    public float RotationSpeed;     // Radians per second
+    public float AttackRadius;
+    public float SpinUpTime;        // Seconds of spinning before the weapon starts hitting
     public Entity WeaponEntity;
     public float Elapsed;
     public bool Spinning;
@@ -98,11 +122,21 @@ public struct Tornado : IComponentData, IEnableableComponent
 {
     public float AttackSpeed;
     public float ResourceCost;
+    public float Radius;
+    public float DirectionDuration; // Seconds before a tornado picks a new random direction
+    public float Speed;
+    public float DamagePerSecond;
+    public float WeaponDamagePerSecond;
+    public float Lifetime;
+    public float TickRate;
     public float Elapsed;
 }
 
+// On each spawned tornado
 public struct TornadoBehavior : IComponentData
 {
+    public float DirectionDuration;
+    public float Speed;
     public float Elapsed;
     public float3 Direction;
     public float3 Position;

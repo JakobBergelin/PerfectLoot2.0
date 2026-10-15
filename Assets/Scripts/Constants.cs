@@ -26,6 +26,9 @@ public static class Constants
 
     public readonly static float ReductionPerArmor = 0.04f;
 
+    // Weapon reach used when no weapon is equipped
+    public readonly static float UnarmedWeaponReach = 1.1f;
+
     public static class Generate
     {        
         public static class Boots

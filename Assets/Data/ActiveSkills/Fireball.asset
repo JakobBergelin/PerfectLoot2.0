@@ -17,3 +17,6 @@ MonoBehaviour:
   Description: 
   AttackSpeed: 0.5
   resourceCost: 2
+  Damage: 2
+  ProjectileSpeed: 15
+  Radius: 0.25

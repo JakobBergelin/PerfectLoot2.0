@@ -99,7 +99,12 @@ public class InventoryManager : MonoBehaviour
         using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadWrite<EquipmentStats>());
         if (query.IsEmpty) return;
 
-        var equipmentStats = new EquipmentStats { Value = Stats.ToStatBlock() };
+        // Rolled affixes plus fixed per-item stats (weapon reach, weapon damage range)
+        var block = Stats.ToStatBlock();
+        foreach (var (_, slot) in NamedSlots)
+            if (slot != null && !slot.IsEmpty) slot.EquippedItem.BaseItem.AddFixedStats(ref block);
+
+        var equipmentStats = new EquipmentStats { Value = block };
         using var players = query.ToEntityArray(Allocator.Temp);
         foreach (var player in players)
             entityManager.SetComponentData(player, equipmentStats);

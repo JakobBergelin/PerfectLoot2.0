@@ -9,19 +9,12 @@ using UnityEngine;
 public partial class FistsOfThunderSystem : SystemBase
 {
     private Unity.Mathematics.Random _random;
-    private const float ResourceGeneration = 1.0f;
-    private float[] HitCooldowns;
-    public float[] HitDamage;
-
-    private const float HitWeaponDamage = 0.1f;
 
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     [BurstCompile]
     protected override void OnCreate()
     {
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
-        HitCooldowns = new float[7]{0.30f, 0.24f, 0.24f, 0.52f, 0.26f, 0.24f, 0.45f};
-        HitDamage = new float[7]{0.5f, 0.5f, 0.6f, 0.7f, 0.4f, 0.6f, 0.9f};
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
     }
 
@@ -31,13 +24,19 @@ public partial class FistsOfThunderSystem : SystemBase
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         foreach (var (fistsOfThunder, stats, entity) in SystemAPI.Query<RefRW<FistsOfThunder>, RefRO<CalculatedStats>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
-            if(!SystemAPI.IsComponentEnabled<FistsOfThunder>(entity))
+            var hits = fistsOfThunder.ValueRO.Hits;
+            if(!SystemAPI.IsComponentEnabled<FistsOfThunder>(entity) || fistsOfThunder.ValueRO.PunchCount >= hits.Length)
             {
+                // Released, or the combo got shorter (asset edited): start over
                 fistsOfThunder.ValueRW.PunchCount = 0;
                 fistsOfThunder.ValueRW.TimeSinceLastPunch = 0.0f;
             }
+            if(hits.Length == 0)
+            {
+                continue;
+            }
             fistsOfThunder.ValueRW.TimeSinceLastPunch += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            fistsOfThunder.ValueRW.TimeSinceLastPunch = Mathf.Min(fistsOfThunder.ValueRW.TimeSinceLastPunch, HitCooldowns[fistsOfThunder.ValueRO.PunchCount]);
+            fistsOfThunder.ValueRW.TimeSinceLastPunch = Mathf.Min(fistsOfThunder.ValueRW.TimeSinceLastPunch, hits[fistsOfThunder.ValueRO.PunchCount].Cooldown);
         }
 
         foreach (var (fistOfThunder, localTransform, desiredDirection, stats, entity) in SystemAPI.Query<RefRW<FistsOfThunder>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<CalculatedStats>>().WithEntityAccess())
@@ -49,14 +48,22 @@ public partial class FistsOfThunderSystem : SystemBase
                 continue;
             }
 
-            if(fistOfThunder.ValueRO.TimeSinceLastPunch >= HitCooldowns[fistOfThunder.ValueRO.PunchCount])
+            var hits = fistOfThunder.ValueRO.Hits;
+            if(hits.Length == 0)
+            {
+                continue;
+            }
+
+            var hit = hits[fistOfThunder.ValueRO.PunchCount];
+            if(fistOfThunder.ValueRO.TimeSinceLastPunch >= hit.Cooldown)
             {
                 var newEntity = commandBuffer.CreateEntity();
-                
+
                 var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
-                var damage = HitDamage[fistOfThunder.ValueRO.PunchCount] + weaponDamage * HitWeaponDamage;
-                commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction, Rotation = Quaternion.identity, Scale = 1f});
-                commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = 0.5f, DamageHierarchy = DamageHierarchy.Main});
+                var damage = hit.Damage + weaponDamage * fistOfThunder.ValueRO.WeaponDamageMultiplier;
+                var position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction * stats.ValueRO.Value.WeaponReach;
+                commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = Quaternion.identity, Scale = 1f});
+                commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = fistOfThunder.ValueRO.Radius, DamageHierarchy = DamageHierarchy.Main});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
                 commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
                 commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
@@ -64,12 +71,12 @@ public partial class FistsOfThunderSystem : SystemBase
                 commandBuffer.AddComponent(newEntity, new DestroyWithChildren{});
 
                 fistOfThunder.ValueRW.PunchCount++;
-                if(fistOfThunder.ValueRW.PunchCount >= 7)
+                if(fistOfThunder.ValueRW.PunchCount >= hits.Length)
                 {
                     fistOfThunder.ValueRW.PunchCount = 0;
                 }
                 fistOfThunder.ValueRW.TimeSinceLastPunch = 0.0f;
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = ResourceGeneration});
+                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = fistOfThunder.ValueRO.ResourceGeneration});
             }
         }
     }

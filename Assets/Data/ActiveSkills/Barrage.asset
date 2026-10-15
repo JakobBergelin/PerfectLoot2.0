@@ -16,3 +16,8 @@ MonoBehaviour:
   Icon: {fileID: 0}
   Description: 
   AttackSpeed: 0.3
+  Damage: 3
+  ProjectileSpeed: 7
+  Radius: 0.25
+  HomingTurnSpeed: 1.5
+  HomingTurnAcceleration: 1.7

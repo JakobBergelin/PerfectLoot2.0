@@ -17,3 +17,10 @@ MonoBehaviour:
   Description: 
   AttackSpeed: 0.9
   resourceCost: 15
+  Radius: 2
+  DamagePerSecond: 0.5
+  WeaponDamagePerSecond: 0.2
+  TickRate: 0.5
+  Lifetime: 4
+  Speed: 5
+  DirectionDuration: 0.7

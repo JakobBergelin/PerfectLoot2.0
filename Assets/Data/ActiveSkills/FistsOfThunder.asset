@@ -15,3 +15,21 @@ MonoBehaviour:
   Name: Fists Of Thunder
   Icon: {fileID: 0}
   Description: 
+  ResourceGeneration: 1
+  WeaponDamageMultiplier: 0.1
+  Radius: 0.5
+  Combo:
+  - Cooldown: 0.3
+    Damage: 0.5
+  - Cooldown: 0.24
+    Damage: 0.5
+  - Cooldown: 0.24
+    Damage: 0.6
+  - Cooldown: 0.52
+    Damage: 0.7
+  - Cooldown: 0.26
+    Damage: 0.4
+  - Cooldown: 0.24
+    Damage: 0.6
+  - Cooldown: 0.45
+    Damage: 0.9

@@ -10,8 +10,6 @@ using UnityEngine;
 public partial class WhirlwindSystem : SystemBase
 {
     private Unity.Mathematics.Random _random;
-    private const float WeaponDamage = 0.4f;
-    public const float RotationSpeed = 4.0f * math.PI;
 
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     [BurstCompile]
@@ -58,19 +56,19 @@ public partial class WhirlwindSystem : SystemBase
             if(resource.ValueRO.CurrentValue >= resourceCost)
             {
                 whirlwind.ValueRW.Spinning = true;
-                if(whirlwind.ValueRO.Elapsed > 0.4f)
+                if(whirlwind.ValueRO.Elapsed > whirlwind.ValueRO.SpinUpTime)
                 {
                     if(whirlwind.ValueRO.WeaponEntity == Entity.Null)
                     {
                         whirlwind.ValueRW.WeaponEntity = EntityManager.CreateEntity();
 
                         var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
-                        var damage = weaponDamage * WeaponDamage;
+                        var damage = weaponDamage * whirlwind.ValueRO.WeaponDamageMultiplier;
 
                         Debug.Log(damage);
 
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
-                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Attack{Damage = damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = 0.9f});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Attack{Damage = damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = whirlwind.ValueRO.AttackRadius});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Source{Entity = entity});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new AttackTarget{TargetType = TargetType.Enemy});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new InitializeFromSource{});
@@ -80,7 +78,7 @@ public partial class WhirlwindSystem : SystemBase
                     {
                         var weaponTransform = SystemAPI.GetComponentRW<LocalTransform>(whirlwind.ValueRO.WeaponEntity);
                         var forward = math.mul(localTransform.ValueRO.Rotation, Vector3.forward);
-                        weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * 1.1f;
+                        weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * stats.ValueRO.Value.WeaponReach;
                         SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -resourceCost});
                     } 
                 }
@@ -94,7 +92,7 @@ public partial class WhirlwindSystem : SystemBase
             {
                 commandBuffer.AddComponent(entity, new DisableTurning());
                 commandBuffer.AddComponent(entity, new Channeling());
-                localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(RotationSpeed  * SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed));
+                localTransform.ValueRW.Rotation = math.mul(localTransform.ValueRW.Rotation, quaternion.RotateY(whirlwind.ValueRO.RotationSpeed * SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed));
             }
 
         }

@@ -51,6 +51,13 @@ partial struct FinalizeStatsSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // No weapon equipped: fall back to unarmed reach
+        foreach (var stats in SystemAPI.Query<RefRW<CalculatedStats>>())
+        {
+            if (stats.ValueRO.Value.WeaponReach <= 0f)
+                stats.ValueRW.Value.WeaponReach = Constants.UnarmedWeaponReach;
+        }
+
         foreach (var (armor, stats) in SystemAPI.Query<RefRW<Armor>, RefRO<CalculatedStats>>())
         {
             armor.ValueRW.Value = stats.ValueRO.Value.Armor;

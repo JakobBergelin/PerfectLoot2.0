@@ -16,3 +16,7 @@ MonoBehaviour:
   Icon: {fileID: 0}
   Description: 
   resourceCostPerSecond: 12
+  WeaponDamageMultiplier: 0.4
+  RotationsPerSecond: 2
+  AttackRadius: 0.9
+  SpinUpTime: 0.4
