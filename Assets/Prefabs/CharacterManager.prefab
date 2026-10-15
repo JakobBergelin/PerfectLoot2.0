@@ -44,6 +44,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7e0b74eed5afd0b88ecb894bc007c5fa, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::CharacterManager
+  BaseStats: {fileID: 11400000, guid: 7cbe13bb4ec29e9c1296f2adf612b2c7, type: 2}
+  SpawnPoint: {fileID: 0}
+  RespawnDelay: 3
   Class: {fileID: 0}
   Resource: {fileID: 0}
   StartingLevel: 1

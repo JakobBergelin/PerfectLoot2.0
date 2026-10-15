@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Dash
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.DashSkill
   Name: Dash
-  Icon: {fileID: 0}
+  Icon: {fileID: -7848039375673857549, guid: 4e87c69f43d012f4c8323afc57f52730, type: 3}
   Description: 
   cooldown: 2

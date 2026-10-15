@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Crossbow
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableWeaponItem
   Name: Crossbow
+  Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 13
@@ -43,4 +44,5 @@ MonoBehaviour:
     Min: 3
     Max: 6
   WeaponCooldown: 1.2
-  WeaponDamageRange: 15
+  WeaponDamageRange: 3
+  WeaponReach: 1.1

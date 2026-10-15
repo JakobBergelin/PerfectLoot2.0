@@ -28,6 +28,7 @@ public class PassiveSkillManager : MonoBehaviour
 
         foreach (var slot in Slots)
             if (slot != null) slot.Changed += OnSlotChanged;
+        CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
     void Start()
@@ -82,10 +83,19 @@ public class PassiveSkillManager : MonoBehaviour
     {
         foreach (var slot in Slots)
             if (slot != null) slot.Changed -= OnSlotChanged;
+        CharacterManager.PlayerSpawned -= OnPlayerSpawned;
         if (Instance == this) Instance = null;
     }
 
     void OnSlotChanged(PassiveSkillSlot slot) => RebuildPassives();
+
+    // New player entity (spawn/respawn): none of the passives are on it yet
+    void OnPlayerSpawned(Entity player)
+    {
+        _applied.Clear();
+        _dirty = true;
+        TryPushPassives();
+    }
 
     // The player entity may not exist yet when slots change (subscene still loading), so retry until it does.
     void Update()

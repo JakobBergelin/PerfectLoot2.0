@@ -78,6 +78,7 @@ public class BaseStatsAuthoring : MonoBehaviour
 /// Every stat a unit can have. Shared by BaseStats, EquipmentStats and CalculatedStats.
 /// Percentages are fractions: 0.1 = 10%.
 /// </summary>
+[System.Serializable]
 public struct StatBlock
 {
     public float Strength;

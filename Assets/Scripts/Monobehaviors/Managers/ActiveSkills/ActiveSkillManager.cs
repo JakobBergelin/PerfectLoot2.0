@@ -29,6 +29,7 @@ public class ActiveSkillManager : MonoBehaviour
 
         foreach (var slot in Slots)
             if (slot != null) slot.Changed += OnSlotChanged;
+        CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
     void Start() => PushSkills();
@@ -37,10 +38,18 @@ public class ActiveSkillManager : MonoBehaviour
     {
         foreach (var slot in Slots)
             if (slot != null) slot.Changed -= OnSlotChanged;
+        CharacterManager.PlayerSpawned -= OnPlayerSpawned;
         if (Instance == this) Instance = null;
     }
 
     void OnSlotChanged(ActiveSkillSlot slot) => PushSkills();
+
+    // New player entity (spawn/respawn): none of the skills are on it yet
+    void OnPlayerSpawned(Entity player)
+    {
+        _applied.Clear();
+        PushSkills();
+    }
 
     void Update()
     {

@@ -10,10 +10,18 @@ public partial struct CameraFollowSystem : ISystem
     {
         // Get player position
         float3 playerPosition = float3.zero;
+        bool hasPlayer = false;
 
         foreach (var (player, transform) in SystemAPI.Query<RefRO<Player>, RefRO<LocalTransform>>())
         {
             playerPosition = transform.ValueRO.Position;
+            hasPlayer = true;
+        }
+
+        // Dead / not spawned yet: keep the camera where it is
+        if (!hasPlayer)
+        {
+            return;
         }
 
         // Move camera

@@ -43,6 +43,7 @@ public class InventoryManager : MonoBehaviour
 
         foreach (var (_, slot) in NamedSlots)
             if (slot != null) slot.Changed += OnSlotChanged;
+        CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
     void Start() => RecalculateStats();
@@ -51,10 +52,18 @@ public class InventoryManager : MonoBehaviour
     {
         foreach (var (_, slot) in NamedSlots)
             if (slot != null) slot.Changed -= OnSlotChanged;
+        CharacterManager.PlayerSpawned -= OnPlayerSpawned;
         if (Instance == this) Instance = null;
     }
 
     void OnSlotChanged(InventorySlot slot) => RecalculateStats();
+
+    // New player entity (spawn/respawn): it has no equipment stats yet
+    void OnPlayerSpawned(Entity player)
+    {
+        _equipmentStatsDirty = true;
+        TryPushEquipmentStats();
+    }
 
     /// <summary>Rebuilds Stats and Equipped from the current slots.</summary>
     [ContextMenu("Recalculate")]
