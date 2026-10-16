@@ -1,0 +1,54 @@
+.combat-text-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* Fixed box centered on the label's position (negative margins), so code only sets a translate */
+.combat-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 160px;
+    height: 48px;
+    margin-left: -80px;
+    margin-top: -24px;
+    font-size: 22px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: rgba(0, 0, 0, 0.85);
+    color: #FFFFFF;
+}
+
+.combat-text--hidden {
+    display: none;
+}
+
+.combat-text--crit {
+    font-size: 30px;
+    color: #FFD84D;
+}
+
+.combat-text--blocked {
+    color: #7FA7FF;
+}
+
+.combat-text--bleed {
+    color: #FF7AB6;
+}
+
+.combat-text--burn {
+    color: #FF4D3D;
+}
+
+.combat-text--poison {
+    color: #4CC94C;
+}
+
+.combat-text--heal {
+    color: #7CFC00;
+}

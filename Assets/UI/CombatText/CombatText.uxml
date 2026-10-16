@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="CombatText.uss" />
+    <ui:VisualElement name="combatTextLayer" class="combat-text-layer" picking-mode="Ignore" />
+</ui:UXML>

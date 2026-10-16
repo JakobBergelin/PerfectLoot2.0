@@ -4,7 +4,6 @@ using UnityEngine;
 public class AssetStorage : MonoBehaviour
 {
     public static AssetStorage Instance;
-    public GameObject CombatTextPrefab;
     public Material ManabarMaterial;
     public Material RagebarMaterial;
     public Material FocusbarMaterial;
