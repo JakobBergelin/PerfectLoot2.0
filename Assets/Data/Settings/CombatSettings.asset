@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::CombatSettings
   Values:
     BlockAmount: 5
-    ReductionPerArmor: 0.04
+    ArmorConstant: 100
+    ElementalResistanceConstant: 20
     UnarmedWeaponReach: 1.1
     HomingTargetRange: 15

@@ -8,7 +8,8 @@ public class CombatSettings : ScriptableObject
     public CombatConfig Values = new CombatConfig
     {
         BlockAmount = 5.0f,
-        ReductionPerArmor = 0.04f,
+        ArmorConstant = 100f,
+        ElementalResistanceConstant = 20f,
         UnarmedWeaponReach = 1.1f,
         HomingTargetRange = 15.0f,
     };
@@ -20,10 +21,15 @@ public struct CombatConfig : IComponentData
 {
     [Tooltip("Damage removed from a hit when it is blocked")]
     public float BlockAmount;
-    [Tooltip("Physical damage reduction per point of armor (compounding)")]
-    public float ReductionPerArmor;
+    [Tooltip("Armor needed for 50% physical damage mitigation. Mitigation = Armor / (Armor + ArmorConstant)")]
+    public float ArmorConstant;
+    [Tooltip("Resistance needed for 50% mitigation of cold, fire, lightning and poison damage. Mitigation = Resistance / (Resistance + ElementalResistanceConstant)")]
+    public float ElementalResistanceConstant;
     [Tooltip("Weapon reach used when no weapon is equipped")]
     public float UnarmedWeaponReach;
     [Tooltip("Radius a homing projectile searches for a target in")]
     public float HomingTargetRange;
+
+    /// <summary>Fraction of damage mitigated by a defense value: value / (value + constant). 0 when the value is 0 or less.</summary>
+    public static float Mitigation(float value, float constant) => value <= 0f ? 0f : value / (value + constant);
 }

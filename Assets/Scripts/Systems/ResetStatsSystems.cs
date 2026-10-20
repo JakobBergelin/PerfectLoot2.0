@@ -71,11 +71,9 @@ partial struct FinalizeStatsSystem : ISystem
         foreach (var (armor, stats) in SystemAPI.Query<RefRW<Armor>, RefRO<CalculatedStats>>())
         {
             armor.ValueRW.Value = stats.ValueRO.Value.Armor;
-            var fromArmor = 0.0f;
-            if(armor.ValueRO.Value != 0)
-            {
-                fromArmor = 1.0f - math.pow(1.0f - (combatConfig.ReductionPerArmor * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier)), armor.ValueRO.Value);
-            }
+            // Mitigation = Armor / (Armor + ArmorConstant): ArmorConstant armor gives 50%. The multiplier (Golem) scales the armor value.
+            float effectiveArmor = math.max(0, armor.ValueRO.Value) * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier);
+            float fromArmor = CombatConfig.Mitigation(effectiveArmor, combatConfig.ArmorConstant);
             // Flat physical resistance stacks multiplicatively with the armor reduction
             armor.ValueRW.PhysicalResistance = 1.0f - (1.0f - fromArmor) * (1.0f - stats.ValueRO.Value.PhysicalResistance);
         }

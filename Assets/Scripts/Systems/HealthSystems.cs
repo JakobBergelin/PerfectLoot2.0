@@ -128,6 +128,7 @@ public partial class CalculateDamageSystem : SystemBase
             foreach(var instance in damageBuffer)
             {
                 float calculatedDamage = instance.Damage;
+                var stats = calculatedStats.ValueRO.Value;
 
                 switch(instance.Type)
                 {
@@ -142,20 +143,20 @@ public partial class CalculateDamageSystem : SystemBase
                         break;
                     }
 
+                    // Elemental: AllResistance adds to each resistance, then Resistance / (Resistance + ElementalResistanceConstant) is mitigated
                     case DamageType.Cold:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.ColdResistance);
+                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.ColdResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Fire:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.FireResistance);
+                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.FireResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Lightning:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.LightningResistance);
+                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.LightningResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Poison:
-                        calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.PoisonResistance);
+                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.PoisonResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                 }
-                calculatedDamage = calculatedDamage * (1.0f - calculatedStats.ValueRO.Value.AllResistance);
 
                 if(instance.Hierarchy == DamageHierarchy.Main)
                 {

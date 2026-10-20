@@ -25,8 +25,8 @@ MonoBehaviour:
       Max: 8
   - Affix: 19
     RollRange:
-      Min: 0.1
-      Max: 0.4
+      Min: 10
+      Max: 40
   - Affix: 20
     RollRange:
       Min: 0.03
