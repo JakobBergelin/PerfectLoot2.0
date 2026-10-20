@@ -18,6 +18,7 @@ public partial class TornadoSystem : SystemBase
     {
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        RequireForUpdate<MovementConfig>();
     }
 
     [BurstCompile]
@@ -25,6 +26,7 @@ public partial class TornadoSystem : SystemBase
     {
         // SkillState: no cooldown to report (Elapsed is a wind-up); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
         foreach (var (tornado,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
@@ -33,7 +35,7 @@ public partial class TornadoSystem : SystemBase
 
         foreach (var (tornado, localTransform, desiredDirection, resource,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, Constants.RotationSpeed * SystemAPI.Time.DeltaTime);
+            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
 
             if(Quaternion.Angle(localTransform.ValueRW.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2))
             {

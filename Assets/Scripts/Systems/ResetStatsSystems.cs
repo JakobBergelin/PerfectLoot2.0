@@ -49,13 +49,18 @@ partial struct ApplyEquipmentStatsSystem : ISystem
 partial struct FinalizeStatsSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<CombatConfig>();
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var combatConfig = SystemAPI.GetSingleton<CombatConfig>();
+
         // No weapon equipped: fall back to unarmed reach
         foreach (var stats in SystemAPI.Query<RefRW<CalculatedStats>>())
         {
             if (stats.ValueRO.Value.WeaponReach <= 0f)
-                stats.ValueRW.Value.WeaponReach = Constants.UnarmedWeaponReach;
+                stats.ValueRW.Value.WeaponReach = combatConfig.UnarmedWeaponReach;
         }
 
         foreach (var (armor, stats) in SystemAPI.Query<RefRW<Armor>, RefRO<CalculatedStats>>())
@@ -64,7 +69,7 @@ partial struct FinalizeStatsSystem : ISystem
             var fromArmor = 0.0f;
             if(armor.ValueRO.Value != 0)
             {
-                fromArmor = 1.0f - math.pow(1.0f - (Constants.ReductionPerArmor * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier)), armor.ValueRO.Value);
+                fromArmor = 1.0f - math.pow(1.0f - (combatConfig.ReductionPerArmor * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier)), armor.ValueRO.Value);
             }
             // Flat physical resistance stacks multiplicatively with the armor reduction
             armor.ValueRW.PhysicalResistance = 1.0f - (1.0f - fromArmor) * (1.0f - stats.ValueRO.Value.PhysicalResistance);

@@ -10,15 +10,19 @@ using Unity.Transforms;
 partial struct PhysicalSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<StatusEffectConfig>();
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
         foreach (var (instances, health, entity) in SystemAPI.Query<DynamicBuffer<BleedInstance>, RefRO<Health>>().WithEntityAccess())
         {
             SystemAPI.SetComponentEnabled<Bleeding>(entity, !instances.IsEmpty);
 
             for(int i = 0; i < instances.Length; i++)
             {
-                float damage = health.ValueRO.CurrentValue * Constants.DefaultBleedDamageHealthMultiplier * Time.deltaTime;
+                float damage = health.ValueRO.CurrentValue * statusEffects.BleedDamageHealthMultiplier * Time.deltaTime;
                 SystemAPI.GetBuffer<DamageInstance>(entity).Add(new DamageInstance{Damage = damage, Type = DamageType.Physical, Hierarchy = DamageHierarchy.Sub, IsCrit = false});
                 ref var instance = ref instances.ElementAt(i);
                 instance.TimeRemaining -= Time.deltaTime;
@@ -38,14 +42,18 @@ partial struct PhysicalSystem : ISystem
 partial struct ColdSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<StatusEffectConfig>();
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
         foreach (var (chilled,entity) in SystemAPI.Query<RefRW<Chilled>>().WithEntityAccess())
         {
             if(chilled.ValueRO.Value >= 100.0f)
             {
                 SystemAPI.SetComponentEnabled<Frozen>(entity, true);
-                SystemAPI.GetComponentRW<Frozen>(entity).ValueRW.TimeRemaining = Constants.DefaultFrozenTime;
+                SystemAPI.GetComponentRW<Frozen>(entity).ValueRW.TimeRemaining = statusEffects.FrozenTime;
                 chilled.ValueRW.Value = 0;
                 SystemAPI.SetComponentEnabled<Chilled>(entity, false);
             }
@@ -94,14 +102,18 @@ partial struct FireSystem : ISystem
 partial struct PoisonSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<StatusEffectConfig>();
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
         foreach (var (poisoned,entity) in SystemAPI.Query<RefRW<Poisioned>>().WithEntityAccess())
         {
             poisoned.ValueRW.TimeRemaining -= Time.deltaTime;
             if(poisoned.ValueRO.TimeRemaining >= 0)
             {
-                float damage = Constants.DefaultPoisonDamagePerSecond * Time.deltaTime;
+                float damage = statusEffects.PoisonDamagePerSecond * Time.deltaTime;
                 SystemAPI.GetBuffer<DamageInstance>(entity).Add(new DamageInstance{Damage = damage, Type = DamageType.Poison, Hierarchy = DamageHierarchy.Sub, IsCrit = false});
 
             }

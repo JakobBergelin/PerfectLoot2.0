@@ -110,14 +110,17 @@ public partial class PoisonedUISystem : SystemBase
 {
     public event System.Action<float, float3> OnPoisoned;
 
+    protected override void OnCreate() => RequireForUpdate<StatusEffectConfig>();
+
     [BurstCompile]
     protected override void OnUpdate()
     {
+        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
         foreach (var (poisoned, localTransform, entity) in SystemAPI.Query<RefRW<Poisioned>, RefRO<LocalTransform>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             if(!SystemAPI.IsComponentEnabled<Poisioned>(entity) && poisoned.ValueRO.DisplayCounter > 0.0f)
             {
-                OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * Constants.DefaultPoisonDamagePerSecond, localTransform.ValueRO.Position);
+                OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * statusEffects.PoisonDamagePerSecond, localTransform.ValueRO.Position);
                 poisoned.ValueRW.DisplayCounter = 0.0f;
                 break;
             }
@@ -126,7 +129,7 @@ public partial class PoisonedUISystem : SystemBase
                 poisoned.ValueRW.DisplayCounter += SystemAPI.Time.DeltaTime;
                 if(poisoned.ValueRO.DisplayCounter > 1.0f)
                 {
-                    OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * Constants.DefaultPoisonDamagePerSecond, localTransform.ValueRO.Position);
+                    OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * statusEffects.PoisonDamagePerSecond, localTransform.ValueRO.Position);
                     poisoned.ValueRW.DisplayCounter = 0.0f;
                 }
 

@@ -15,12 +15,14 @@ public partial class CharacterMovementSystem : SystemBase
     protected override void OnCreate()
     {
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        RequireForUpdate<MovementConfig>();
     }
 
     [BurstCompile]
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
         foreach (var(movementSpeed, inputs, transform, velocity, entity) in SystemAPI.Query<RefRO<MovementSpeed>, RefRO<InputsData>, RefRW<LocalTransform>, RefRW<PhysicsVelocity>>().WithEntityAccess())
         {
             float3 position = transform.ValueRO.Position;
@@ -33,11 +35,11 @@ public partial class CharacterMovementSystem : SystemBase
 
                 var newQuaternion = Quaternion.LookRotation(direction, Vector3.up);
 
-                float speed = Constants.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value);
+                float speed = movementConfig.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value);
                 if(!SystemAPI.HasComponent<DisableTurning>(entity))
                 {
-                    transform.ValueRW.Rotation = Quaternion.RotateTowards(transform.ValueRO.Rotation, newQuaternion, Constants.RotationSpeed * SystemAPI.Time.DeltaTime);
-                    speed = math.remap(0.0f, 180.0f, Constants.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value) , 0.0f, Quaternion.Angle(transform.ValueRW.Rotation, newQuaternion));
+                    transform.ValueRW.Rotation = Quaternion.RotateTowards(transform.ValueRO.Rotation, newQuaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+                    speed = math.remap(0.0f, 180.0f, movementConfig.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value) , 0.0f, Quaternion.Angle(transform.ValueRW.Rotation, newQuaternion));
                 }
 
                 /*transform.ValueRW.Position += (float3)direction * speed * Time.deltaTime;*/

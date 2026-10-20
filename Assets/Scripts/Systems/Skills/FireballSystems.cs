@@ -13,6 +13,7 @@ public partial class FireballSystem : SystemBase
     protected override void OnCreate()
     {
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        RequireForUpdate<MovementConfig>();
     }
 
     [BurstCompile]
@@ -20,6 +21,7 @@ public partial class FireballSystem : SystemBase
     {
         // SkillState: no cooldown to report (Elapsed is a wind-up that restarts when released); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
         foreach (var (fireball, stats, entity) in SystemAPI.Query<RefRW<FireBall>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             if(!SystemAPI.IsComponentEnabled<FireBall>(entity))
@@ -32,7 +34,7 @@ public partial class FireballSystem : SystemBase
 
         foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, entity) in SystemAPI.Query<RefRW<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>>().WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, Constants.RotationSpeed * SystemAPI.Time.DeltaTime);
+            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
             if(resource.ValueRO.CurrentValue < fireball.ValueRO.ResourceCost)
             {
                 fireball.ValueRW.Elapsed = 0;

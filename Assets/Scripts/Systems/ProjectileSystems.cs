@@ -13,8 +13,12 @@ using Unity.Mathematics;
 partial struct HomingProjectileSystem : ISystem
 {
     [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<CombatConfig>();
+
+    [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        var combatConfig = SystemAPI.GetSingleton<CombatConfig>();
 
         // Find target if missing, looking at HomingType
         var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
@@ -32,7 +36,7 @@ partial struct HomingProjectileSystem : ISystem
             if(target == Entity.Null)
             {
                 //TODO player range
-                physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, Constants.Range, ref outHits, collisionFilter);
+                physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, combatConfig.HomingTargetRange, ref outHits, collisionFilter);
                 if(!outHits.IsEmpty)
                 {
                     Entity bestEntity = Entity.Null;

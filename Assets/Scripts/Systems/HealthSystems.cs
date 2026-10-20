@@ -117,10 +117,12 @@ public partial class CalculateDamageSystem : SystemBase
     protected override void OnCreate()
     {
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
+        RequireForUpdate<CombatConfig>();
     }
 
     protected override void OnUpdate()
     {
+        var combatConfig = SystemAPI.GetSingleton<CombatConfig>();
         foreach (var (damageBuffer, calculatedDamageBuffer, calculatedStats, entity) in SystemAPI.Query<DynamicBuffer<DamageInstance>, DynamicBuffer<CalculatedDamageInstance>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             foreach(var instance in damageBuffer)
@@ -162,7 +164,7 @@ public partial class CalculateDamageSystem : SystemBase
                         if(_random.NextFloat() < calculatedStats.ValueRO.Value.BlockChance)
                         {
                             float diff = calculatedDamage;
-                            calculatedDamage = math.max(0, calculatedDamage - Constants.BlockAmount);
+                            calculatedDamage = math.max(0, calculatedDamage - combatConfig.BlockAmount);
                             diff = diff - calculatedDamage;
                             OnDamageBlocked?.Invoke(diff, SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
                         }
@@ -184,11 +186,13 @@ public partial class DamagingSystem : SystemBase
     protected override void OnCreate()
     {
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        RequireForUpdate<StatusEffectConfig>();
     }
 
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<CalculatedDamageInstance>(entity);
@@ -209,27 +213,27 @@ public partial class DamagingSystem : SystemBase
                     {
                         case DamageType.Physical:
                             // TODO buffers?
-                            SystemAPI.GetBuffer<BleedInstance>(entity).Add(new BleedInstance{TimeRemaining = Constants.DefaultBleedTime});
+                            SystemAPI.GetBuffer<BleedInstance>(entity).Add(new BleedInstance{TimeRemaining = statusEffects.BleedTime});
                         break;
                         case DamageType.Cold:
                             if(!SystemAPI.IsComponentEnabled<Chilled>(entity))
                             {
                                 SystemAPI.SetComponentEnabled<Chilled>(entity ,true);
                             }
-                            SystemAPI.GetComponentRW<Chilled>(entity).ValueRW.Value += damage * Constants.DefaultChilledDamageMultiplier;
+                            SystemAPI.GetComponentRW<Chilled>(entity).ValueRW.Value += damage * statusEffects.ChilledDamageMultiplier;
                         break;
                         case DamageType.Fire:
-                            SystemAPI.GetBuffer<BurnInstance>(entity).Add(new BurnInstance{DamagePerSecond = damage / Constants.DefaultBurnTime, TimeRemaining = Constants.DefaultBurnTime});
+                            SystemAPI.GetBuffer<BurnInstance>(entity).Add(new BurnInstance{DamagePerSecond = damage / statusEffects.BurnTime, TimeRemaining = statusEffects.BurnTime});
                         break;
                         case DamageType.Lightning:
-                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * Constants.DefaultChargedDamageMultiplier , Radius = Constants.DefaultChargedRadius});
+                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = statusEffects.ChargedRadius});
                         break;
                         case DamageType.Poison:
                             if(!SystemAPI.IsComponentEnabled<Poisioned>(entity))
                             {
                                 SystemAPI.SetComponentEnabled<Poisioned>(entity ,true);
                             }
-                            SystemAPI.GetComponentRW<Poisioned>(entity).ValueRW.TimeRemaining = Constants.DefaultPoisonTime;
+                            SystemAPI.GetComponentRW<Poisioned>(entity).ValueRW.TimeRemaining = statusEffects.PoisonTime;
                         break;
                     } 
                 }

@@ -102,6 +102,12 @@ public class CharacterManager : MonoBehaviour
             return;
         }
 
+        // The subscene is loaded at this point, so the settings singletons should be too. Without them movement,
+        // damage and stat systems never run.
+        using var settingsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<MovementConfig>(), ComponentType.ReadOnly<CombatConfig>(), ComponentType.ReadOnly<StatusEffectConfig>());
+        if (settingsQuery.IsEmpty)
+            Debug.LogError("No game settings found. Add the GameSettings prefab (GameSettingsAuthoring) to the Entities subscene.", this);
+
         if (BaseStats == null)
             Debug.LogWarning("CharacterManager has no PlayerBaseStats, using defaults.", this);
         var baseStats = BaseStats != null ? BaseStats.Stats : DefaultBaseStats.Stats;

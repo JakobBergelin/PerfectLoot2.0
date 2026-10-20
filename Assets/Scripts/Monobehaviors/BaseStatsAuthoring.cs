@@ -87,7 +87,7 @@ public struct StatBlock
 
     public float WeaponDamage;
     public float WeaponDamageRange;     // Weapon damage rolls are WeaponDamage +- this
-    public float WeaponReach;           // How far in front of the unit melee attacks land; Constants.UnarmedWeaponReach when 0
+    public float WeaponReach;           // How far in front of the unit melee attacks land; CombatSettings.UnarmedWeaponReach when 0
     public float AttackSpeed;
     public float Damage;
 
