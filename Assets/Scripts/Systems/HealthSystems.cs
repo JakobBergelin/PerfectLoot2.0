@@ -5,6 +5,17 @@ using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
 
+// TODO: Replace the stick/pivot bars (here and in ResourceUISystem) with a single billboard quad per bar.
+// The shader faces the camera and draws the fill from a per-entity [MaterialProperty] float, so the CPU only
+// writes one value when health changes. Scales to many enemies and makes the ordering below unnecessary.
+
+// Counter-rotates the bar against the unit's rotation, so it has to run after everything that rotates units
+// (physics runs first in the frame) and before the transforms are calculated
+[UpdateAfter(typeof(CharacterMovementSystem))]
+[UpdateAfter(typeof(EnemyMovementSystem))]
+[UpdateAfter(typeof(EnemyMeleeAttackSystem))]
+[UpdateAfter(typeof(SkillSystemGroup))]
+[UpdateBefore(typeof(TransformSystemGroup))]
 public partial class HealthUISystem : SystemBase
 {
     protected override void OnUpdate()

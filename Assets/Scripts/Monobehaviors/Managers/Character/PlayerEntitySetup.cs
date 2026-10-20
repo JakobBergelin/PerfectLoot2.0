@@ -1,5 +1,6 @@
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics.GraphicsIntegration;
 
 /// <summary>
 /// Adds every gameplay component the player needs to a spawned visual-only entity.
@@ -50,6 +51,10 @@ public static class PlayerEntitySetup
         AddOrSet(entityManager, entity, new UnitResource());
         AddOrSet(entityManager, entity, new UnitClass());
         AddOrSet(entityManager, entity, new Level());
+
+        // Smooth the rendered motion between fixed physics steps. Extrapolation only (no PhysicsGraphicalInterpolationBuffer):
+        // interpolation would render an older rotation than LocalTransform, which the health/resource bars counter-rotate against.
+        AddOrSet(entityManager, entity, new PhysicsGraphicalSmoothing { ApplySmoothing = 1 });
 
         // Fill health and resource once the stats have been calculated
         AddOrSet(entityManager, entity, new FillHealthAndResource());

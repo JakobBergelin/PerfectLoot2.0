@@ -5,6 +5,12 @@ using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
 
+// Same ordering as HealthUISystem: after everything that rotates units, before the transforms are calculated
+[UpdateAfter(typeof(CharacterMovementSystem))]
+[UpdateAfter(typeof(EnemyMovementSystem))]
+[UpdateAfter(typeof(EnemyMeleeAttackSystem))]
+[UpdateAfter(typeof(SkillSystemGroup))]
+[UpdateBefore(typeof(TransformSystemGroup))]
 public partial class ResourceUISystem : SystemBase
 {
     protected override void OnUpdate()

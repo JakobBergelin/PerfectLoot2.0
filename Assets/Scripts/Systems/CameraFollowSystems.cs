@@ -4,6 +4,8 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 
+// Follows the rendered position (LocalToWorld, which includes physics smoothing), so it runs after the transforms
+[UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct CameraFollowSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
@@ -12,7 +14,7 @@ public partial struct CameraFollowSystem : ISystem
         float3 playerPosition = float3.zero;
         bool hasPlayer = false;
 
-        foreach (var (player, transform) in SystemAPI.Query<RefRO<Player>, RefRO<LocalTransform>>())
+        foreach (var (player, transform) in SystemAPI.Query<RefRO<Player>, RefRO<LocalToWorld>>())
         {
             playerPosition = transform.ValueRO.Position;
             hasPlayer = true;
