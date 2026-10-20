@@ -1,0 +1,21 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="CharacterPanel.uss" />
+    <ui:VisualElement name="characterPanelRoot" class="character-panel-root character-panel-root--hidden" picking-mode="Ignore">
+        <ui:VisualElement name="panel" class="character-panel">
+            <ui:VisualElement class="cp-equipment">
+                <ui:Label text="Character" class="cp-title" />
+                <ui:Label name="header" class="cp-header" />
+                <!-- Slots are created by CharacterPanelHUD -->
+                <ui:VisualElement name="slotGrid" class="cp-slot-grid" />
+                <ui:Label text="Press I to close" class="cp-hint" />
+            </ui:VisualElement>
+            <!-- Stat sections and rows are created by CharacterPanelHUD -->
+            <ui:ScrollView name="statList" class="cp-stats" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tooltip" class="cp-tooltip" picking-mode="Ignore">
+            <ui:Label name="tooltipTitle" class="cp-tooltip__title" picking-mode="Ignore" />
+            <ui:Label name="tooltipSubtitle" class="cp-tooltip__subtitle" picking-mode="Ignore" />
+            <ui:Label name="tooltipBody" class="cp-tooltip__body" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

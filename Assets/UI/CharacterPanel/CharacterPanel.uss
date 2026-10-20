@@ -1,0 +1,182 @@
+/* Variables and font on the panel's own root so everything inherits them */
+.character-panel-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    --panel-bg: rgba(20, 22, 28, 0.95);
+    --panel-border: #3A3F4B;
+    --slot-bg: rgba(10, 11, 14, 0.9);
+    --slot-border: #3A3F4B;
+    --divider: #2C3039;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.character-panel-root--hidden {
+    display: none;
+}
+
+.character-panel {
+    flex-direction: row;
+    padding: 16px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+/* Equipment column */
+.cp-equipment {
+    width: 256px;
+}
+
+.cp-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 2px 4px;
+}
+
+.cp-header {
+    font-size: 15px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0 0 12px 4px;
+}
+
+.cp-slot-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cp-slot {
+    width: 76px;
+    height: 76px;
+    margin: 4px;
+    background-color: var(--slot-bg);
+    border-width: 2px;
+    border-color: var(--slot-border);
+    border-radius: 6px;
+    align-items: center;
+    justify-content: center;
+}
+
+.cp-slot__icon {
+    position: absolute;
+    left: 6px;
+    top: 6px;
+    right: 6px;
+    bottom: 6px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.cp-slot__label {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 2px;
+}
+
+.cp-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 10px 0 0 4px;
+    padding: 0;
+}
+
+/* Stats column */
+.cp-stats {
+    width: 300px;
+    max-height: 600px;
+    margin-left: 20px;
+}
+
+.cp-section {
+    padding-top: 6px;
+    margin-top: 6px;
+    border-top-width: 1px;
+    border-color: var(--divider);
+}
+
+.cp-section--first {
+    margin-top: 0;
+    padding-top: 0;
+    border-top-width: 0;
+}
+
+.cp-section__title {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 2px 0;
+}
+
+.cp-row {
+    flex-direction: row;
+    justify-content: space-between;
+    height: 20px;
+}
+
+.cp-row__name {
+    font-size: 14px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0;
+}
+
+.cp-row__value {
+    font-size: 14px;
+    color: var(--text-color);
+    -unity-text-align: middle-right;
+    padding: 0;
+    margin: 0 8px 0 0;
+}
+
+/* Item tooltip */
+.cp-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 260px;
+    padding: 8px 10px;
+    background-color: rgba(8, 9, 12, 0.97);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 4px;
+}
+
+.cp-tooltip--visible {
+    display: flex;
+}
+
+.cp-tooltip__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.cp-tooltip__subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.cp-tooltip__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
