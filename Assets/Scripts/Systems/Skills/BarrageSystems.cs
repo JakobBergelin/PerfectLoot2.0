@@ -23,9 +23,9 @@ public partial class BarrageSystem : SystemBase
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         // SkillState: no cooldown or cost to report; IsActive set by SkillActivationSystem
 
-        foreach (var barrage in SystemAPI.Query<RefRW<Barrage>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (barrage, stats) in SystemAPI.Query<RefRW<Barrage>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
-            barrage.ValueRW.Elapsed += SystemAPI.Time.DeltaTime;
+            barrage.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
             barrage.ValueRW.Elapsed = Mathf.Min(barrage.ValueRW.Elapsed, barrage.ValueRW.AttackSpeed);
         }
 

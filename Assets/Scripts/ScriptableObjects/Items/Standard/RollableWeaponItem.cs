@@ -8,7 +8,8 @@ namespace Equipment
     {
         public override ItemType ItemType => ItemType.Weapon;
         public RollRange WeaponDamage;
-        public float WeaponCooldown;
+        [Tooltip("Multiplies the time between attacks: 0.9 is faster, 1.1 is slower")]
+        public float WeaponCooldown = 1f;
         [Tooltip("Damage rolls with this weapon are WeaponDamage +- this")]
         public float WeaponDamageRange;
         [Tooltip("How far in front of the wielder melee attacks land")]
@@ -26,6 +27,7 @@ namespace Equipment
         {
             stats.WeaponDamageRange += WeaponDamageRange;
             stats.WeaponReach += WeaponReach;
+            stats.WeaponCooldown += WeaponCooldown;
         }
     }
 }

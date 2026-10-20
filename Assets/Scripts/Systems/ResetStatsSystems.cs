@@ -61,6 +61,11 @@ partial struct FinalizeStatsSystem : ISystem
         {
             if (stats.ValueRO.Value.WeaponReach <= 0f)
                 stats.ValueRW.Value.WeaponReach = combatConfig.UnarmedWeaponReach;
+
+            // Weapon cooldown scales the time between attacks, so it divides the attack rate (no weapon: unchanged)
+            if (stats.ValueRO.Value.WeaponCooldown <= 0f)
+                stats.ValueRW.Value.WeaponCooldown = 1f;
+            stats.ValueRW.Value.AttackSpeed /= stats.ValueRO.Value.WeaponCooldown;
         }
 
         foreach (var (armor, stats) in SystemAPI.Query<RefRW<Armor>, RefRO<CalculatedStats>>())

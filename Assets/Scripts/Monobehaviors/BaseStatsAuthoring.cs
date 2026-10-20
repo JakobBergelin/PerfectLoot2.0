@@ -88,6 +88,7 @@ public struct StatBlock
     public float WeaponDamage;
     public float WeaponDamageRange;     // Weapon damage rolls are WeaponDamage +- this
     public float WeaponReach;           // How far in front of the unit melee attacks land; CombatSettings.UnarmedWeaponReach when 0
+    public float WeaponCooldown;        // Multiplies the time between attacks (folded into AttackSpeed when stats are finalized); 1 when 0
     public float AttackSpeed;
     public float Damage;
 
@@ -128,6 +129,7 @@ public struct StatBlock
         WeaponDamage += other.WeaponDamage;
         WeaponDamageRange += other.WeaponDamageRange;
         WeaponReach += other.WeaponReach;
+        WeaponCooldown += other.WeaponCooldown;
         AttackSpeed += other.AttackSpeed;
         Damage += other.Damage;
 
