@@ -91,10 +91,13 @@ public class CharacterPanelHUD : MonoBehaviour
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         _toggleAction?.Enable();
+        MenuPanels.OpenChanged += OnMenuOpenChanged;
     }
 
     void OnDisable()
     {
+        MenuPanels.OpenChanged -= OnMenuOpenChanged;
+        if (_open) SetOpen(false);
         _toggleAction?.Disable();
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
@@ -152,9 +155,16 @@ public class CharacterPanelHUD : MonoBehaviour
         RefreshStats();
     }
 
+    // Another menu panel opened: close this one
+    void OnMenuOpenChanged(object openPanel)
+    {
+        if (_open && openPanel != null && !ReferenceEquals(openPanel, this)) SetOpen(false);
+    }
+
     void SetOpen(bool open)
     {
         _open = open;
+        MenuPanels.SetOpen(this, open);
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
         if (!open) HideTooltip();

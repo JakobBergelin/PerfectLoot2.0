@@ -15,4 +15,4 @@ MonoBehaviour:
   Name: Balance
   Icon: {fileID: 0}
   Description: 
-  DamagePerLowestAttribute: 0.4
+  DamagePerLowestAttribute: 0.004

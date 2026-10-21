@@ -1,0 +1,25 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="SkillsPanel.uss" />
+    <ui:VisualElement name="skillsPanelRoot" class="skills-panel-root skills-panel-root--hidden" picking-mode="Ignore">
+        <ui:VisualElement name="panel" class="skills-panel">
+            <ui:Label text="Skills" class="sp-title" />
+
+            <!-- Slots and picker options are created by SkillsPanelHUD -->
+            <ui:Label text="Active Skills" class="sp-section-title" />
+            <ui:VisualElement name="activeSlots" class="sp-active-slots" />
+            <ui:VisualElement name="activePicker" class="sp-picker sp-picker--hidden" />
+
+            <ui:VisualElement class="sp-divider" />
+
+            <ui:Label text="Passive Skills" class="sp-section-title" />
+            <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
+            <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
+
+            <ui:Label text="Click a slot to change it · Press K to close" class="sp-hint" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tooltip" class="sp-tooltip" picking-mode="Ignore">
+            <ui:Label name="tooltipTitle" class="sp-tooltip__title" picking-mode="Ignore" />
+            <ui:Label name="tooltipBody" class="sp-tooltip__body" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

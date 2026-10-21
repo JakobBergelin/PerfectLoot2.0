@@ -38,10 +38,12 @@ public partial class InputsDataSystem : SystemBase
         {
             data.ValueRW.Move = inputs.Player.Move.ReadValue<Vector2>();
 
+            // While a menu panel is open the mouse is used for the menu, so skills are ignored (movement still works)
+            bool menuOpen = MenuPanels.IsAnyOpen;
             for(int i = 0; i < skillActions.Length; i++)
             {
-                data.ValueRW.SkillHeld[i] = skillActions[i].IsPressed();
-                data.ValueRW.SkillPressedThisFrame[i] = skillActions[i].WasPressedThisFrame();
+                data.ValueRW.SkillHeld[i] = !menuOpen && skillActions[i].IsPressed();
+                data.ValueRW.SkillPressedThisFrame[i] = !menuOpen && skillActions[i].WasPressedThisFrame();
             }
 
             if(camera == null)

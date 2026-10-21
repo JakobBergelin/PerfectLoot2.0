@@ -1,0 +1,253 @@
+/* Variables and font on the panel's own root so everything inherits them */
+.skills-panel-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    --panel-bg: rgba(20, 22, 28, 0.95);
+    --panel-border: #3A3F4B;
+    --card-bg: rgba(10, 11, 14, 0.9);
+    --card-bg-hover: rgba(40, 44, 54, 0.95);
+    --card-border: #3A3F4B;
+    --divider: #2C3039;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.skills-panel-root--hidden {
+    display: none;
+}
+
+.skills-panel {
+    width: 560px;
+    padding: 16px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.sp-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.sp-section-title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 4px 0 8px 0;
+}
+
+.sp-divider {
+    height: 1px;
+    margin: 12px 0 8px 0;
+    background-color: var(--divider);
+}
+
+.sp-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    margin: 12px 0 0 0;
+    padding: 0;
+}
+
+/* Active skill slots: 2x2 cards */
+.sp-active-slots {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+.sp-card {
+    width: 258px;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 6px;
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.sp-card:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.sp-card--selected {
+    border-color: var(--accent);
+}
+
+.sp-card__icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.sp-card__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+    margin-left: 10px;
+}
+
+.sp-card__name {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.sp-card__key {
+    align-self: flex-start;
+    margin-top: 4px;
+    padding: 1px 6px;
+    font-size: 12px;
+    color: var(--accent);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 3px;
+}
+
+/* Passive skill slots: a row of round icons */
+.sp-passive-slots {
+    flex-direction: row;
+    justify-content: center;
+}
+
+.sp-passive {
+    width: 120px;
+    align-items: center;
+    padding: 6px;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 6px;
+}
+
+.sp-passive:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.sp-passive--selected {
+    border-color: var(--accent);
+}
+
+.sp-passive__icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 32px;
+    border-width: 2px;
+    border-color: var(--card-border);
+    background-color: rgba(0, 0, 0, 0.5);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.sp-passive__name {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 6px 0 0 0;
+    padding: 0;
+}
+
+/* Picker with the skills that can go in the selected slot */
+.sp-picker {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 4px;
+    padding: 8px;
+    background-color: rgba(0, 0, 0, 0.35);
+    border-radius: 6px;
+}
+
+.sp-picker--hidden {
+    display: none;
+}
+
+.sp-option {
+    width: 96px;
+    align-items: center;
+    padding: 6px;
+    border-width: 2px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 6px;
+}
+
+.sp-option:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.sp-option--current {
+    border-color: var(--accent);
+}
+
+.sp-option__icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 4px;
+    background-color: rgba(0, 0, 0, 0.5);
+    -unity-background-scale-mode: scale-and-crop;
+}
+
+.sp-option__name {
+    font-size: 12px;
+    color: var(--text-color);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 4px 0 0 0;
+    padding: 0;
+}
+
+.sp-picker__empty {
+    font-size: 13px;
+    color: var(--text-muted);
+}
+
+/* Skill tooltip */
+.sp-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 280px;
+    padding: 8px 10px;
+    background-color: rgba(8, 9, 12, 0.97);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 4px;
+}
+
+.sp-tooltip--visible {
+    display: flex;
+}
+
+.sp-tooltip__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.sp-tooltip__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
