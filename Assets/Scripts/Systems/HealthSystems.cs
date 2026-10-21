@@ -194,6 +194,8 @@ public partial class DamagingSystem : SystemBase
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
+        // Optional: without it units just don't flash
+        SystemAPI.TryGetSingleton<HitFlashConfig>(out var hitFlashConfig);
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<CalculatedDamageInstance>(entity);
@@ -214,6 +216,14 @@ public partial class DamagingSystem : SystemBase
                     if(instance.HitForce > 0.0f && SystemAPI.HasComponent<Knockback>(entity))
                     {
                         SystemAPI.GetComponentRW<Knockback>(entity).ValueRW.Velocity += instance.HitDirection * instance.HitForce;
+                    }
+
+                    // Flash white, tinted by the damage type
+                    if(SystemAPI.HasComponent<HitFlash>(entity))
+                    {
+                        var flash = SystemAPI.GetComponentRW<HitFlash>(entity);
+                        flash.ValueRW.FlashColor = hitFlashConfig.FlashColor(instance.Type);
+                        flash.ValueRW.Timer = hitFlashConfig.Duration;
                     }
 
                     switch(instance.Type)

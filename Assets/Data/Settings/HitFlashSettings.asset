@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b4b33862fea225fc7ad72fbb8e5a878b, type: 3}
+  m_Name: HitFlashSettings
+  m_EditorClassIdentifier: Assembly-CSharp::HitFlashSettings
+  Duration: 0.12
+  Strength: 0.8
+  TypeTint: 0.35
+  Physical: {r: 1, g: 1, b: 1, a: 1}
+  Fire: {r: 1, g: 0.45, b: 0.1, a: 1}
+  Cold: {r: 0.45, g: 0.8, b: 1, a: 1}
+  Lightning: {r: 1, g: 0.95, b: 0.3, a: 1}
+  Poison: {r: 0.35, g: 1, b: 0.3, a: 1}

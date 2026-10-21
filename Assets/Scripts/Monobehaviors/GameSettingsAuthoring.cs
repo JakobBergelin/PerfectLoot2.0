@@ -10,6 +10,7 @@ public class GameSettingsAuthoring : MonoBehaviour
     public MovementSettings MovementSettings;
     public CombatSettings CombatSettings;
     public StatusEffectSettings StatusEffectSettings;
+    public HitFlashSettings HitFlashSettings;
 
     public class Baker : Baker<GameSettingsAuthoring>
     {
@@ -18,10 +19,11 @@ public class GameSettingsAuthoring : MonoBehaviour
             DependsOn(authoring.MovementSettings);
             DependsOn(authoring.CombatSettings);
             DependsOn(authoring.StatusEffectSettings);
+            DependsOn(authoring.HitFlashSettings);
 
-            if (authoring.MovementSettings == null || authoring.CombatSettings == null || authoring.StatusEffectSettings == null)
+            if (authoring.MovementSettings == null || authoring.CombatSettings == null || authoring.StatusEffectSettings == null || authoring.HitFlashSettings == null)
             {
-                Debug.LogError("GameSettingsAuthoring: all three settings assets must be assigned.", authoring);
+                Debug.LogError("GameSettingsAuthoring: all settings assets must be assigned.", authoring);
                 return;
             }
 
@@ -29,6 +31,7 @@ public class GameSettingsAuthoring : MonoBehaviour
             AddComponent(entity, authoring.MovementSettings.Values);
             AddComponent(entity, authoring.CombatSettings.Values);
             AddComponent(entity, authoring.StatusEffectSettings.Values);
+            AddComponent(entity, authoring.HitFlashSettings.ToConfig());
         }
     }
 }

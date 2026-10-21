@@ -17,6 +17,8 @@ public class UnitBarsAuthoring : MonoBehaviour
         public override void Bake(UnitBarsAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
+            // The player visual is the rendered part of the player, so it carries the hit flash
+            HitFlashBaking.Add(this, entity);
             if (authoring.HealthBarPivotGameObject != null && authoring.HealthBarStickGameObject != null)
             {
                 AddComponent(entity, new HealthBarUI

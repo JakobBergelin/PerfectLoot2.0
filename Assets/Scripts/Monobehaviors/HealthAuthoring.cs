@@ -23,6 +23,7 @@ public class HealthAuthoring : MonoBehaviour
             AddBuffer<PeriodicDamageInstance>(entity);
             AddBuffer<CalculatedDamageInstance>(entity);
             AddComponent(entity, new Knockback());
+            HitFlashBaking.Add(this, entity);
             
             AddComponent(entity, new Chilled());
             SetComponentEnabled<Chilled>(entity, false);
