@@ -28,6 +28,7 @@ public static class PlayerEntitySetup
         AddBuffer<HealingInstance>(entityManager, entity);
         AddBuffer<PeriodicDamageInstance>(entityManager, entity);
         AddBuffer<CalculatedDamageInstance>(entityManager, entity);
+        AddOrSet(entityManager, entity, new Knockback());
         AddBuffer<BurnInstance>(entityManager, entity);
         AddBuffer<BleedInstance>(entityManager, entity);
         AddBuffer<ChargedInstance>(entityManager, entity);

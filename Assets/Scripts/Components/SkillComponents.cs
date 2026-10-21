@@ -70,6 +70,7 @@ public struct FistsOfThunder : IComponentData, IEnableableComponent
     public float ResourceGeneration;    // Per punch
     public float WeaponDamageMultiplier;
     public float Radius;
+    public float HitForce;
 
     public float TimeSinceLastPunch;
     public int PunchCount;
@@ -93,6 +94,7 @@ public struct FireBall : IComponentData, IEnableableComponent
     public float Damage;
     public float ProjectileSpeed;
     public float Radius;
+    public float HitForce;
     public float Elapsed;
 }
 
@@ -113,6 +115,7 @@ public struct Whirlwind : IComponentData, IEnableableComponent
     public float RotationSpeed;     // Radians per second
     public float AttackRadius;
     public float SpinUpTime;        // Seconds of spinning before the weapon starts hitting
+    public float HitForce;
     public Entity WeaponEntity;
     public float Elapsed;
     public bool Spinning;
@@ -129,6 +132,7 @@ public struct Tornado : IComponentData, IEnableableComponent
     public float WeaponDamagePerSecond;
     public float Lifetime;
     public float TickRate;
+    public float HitForce;
     public float Elapsed;
 }
 

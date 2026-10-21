@@ -22,6 +22,8 @@ namespace ActiveSkills
         public float Speed = 5f;
         [Tooltip("Seconds before it picks a new random direction")]
         public float DirectionDuration = 0.7f;
+        [Tooltip("Knockback speed of each damage tick, in a random direction")]
+        public float HitForce = 3f;
 
         public override SkillType Type => SkillType.Tornado;
         public override float ResourceCost => resourceCost;
@@ -37,6 +39,7 @@ namespace ActiveSkills
             component.Lifetime = Lifetime;
             component.Speed = Speed;
             component.DirectionDuration = DirectionDuration;
+            component.HitForce = HitForce;
             return component;
         }
     }

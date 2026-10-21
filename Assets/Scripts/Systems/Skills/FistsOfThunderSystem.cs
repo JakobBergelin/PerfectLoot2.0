@@ -65,7 +65,8 @@ public partial class FistsOfThunderSystem : SystemBase
                 var damage = hit.Damage + weaponDamage * fistOfThunder.ValueRO.WeaponDamageMultiplier;
                 var position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction * stats.ValueRO.Value.WeaponReach;
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = Quaternion.identity, Scale = 1f});
-                commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = fistOfThunder.ValueRO.Radius, DamageHierarchy = DamageHierarchy.Main});
+                commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = fistOfThunder.ValueRO.Radius, DamageHierarchy = DamageHierarchy.Main,
+                    HitDirection = desiredDirection.ValueRO.Direction, HitForce = fistOfThunder.ValueRO.HitForce});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
                 commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
                 commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

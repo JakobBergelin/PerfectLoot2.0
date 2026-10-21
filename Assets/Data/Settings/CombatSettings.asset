@@ -18,3 +18,4 @@ MonoBehaviour:
     ElementalResistanceConstant: 20
     UnarmedWeaponReach: 1.1
     HomingTargetRange: 15
+    KnockbackDamping: 8

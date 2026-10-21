@@ -15,6 +15,8 @@ namespace ActiveSkills
         public float AttackRadius = 0.9f;
         [Tooltip("Seconds of spinning before the weapon starts hitting")]
         public float SpinUpTime = 0.4f;
+        [Tooltip("Knockback speed of each hit, in the direction the weapon sweeps")]
+        public float HitForce = 3f;
 
         public override SkillType Type => SkillType.Whirlwind;
         public override float ResourceCostPerSecond => resourceCostPerSecond;
@@ -26,6 +28,7 @@ namespace ActiveSkills
             component.RotationSpeed = RotationsPerSecond * 2f * math.PI;
             component.AttackRadius = AttackRadius;
             component.SpinUpTime = SpinUpTime;
+            component.HitForce = HitForce;
             return component;
         }
     }

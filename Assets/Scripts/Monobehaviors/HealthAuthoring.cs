@@ -1,5 +1,6 @@
 using UnityEngine;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Collections;
 using System;
 
@@ -21,6 +22,7 @@ public class HealthAuthoring : MonoBehaviour
             AddBuffer<HealingInstance>(entity);
             AddBuffer<PeriodicDamageInstance>(entity);
             AddBuffer<CalculatedDamageInstance>(entity);
+            AddComponent(entity, new Knockback());
             
             AddComponent(entity, new Chilled());
             SetComponentEnabled<Chilled>(entity, false);
@@ -69,6 +71,8 @@ public struct DamageInstance : IBufferElementData
     public DamageHierarchy Hierarchy;
     public Entity Source;
     public bool IsCrit;
+    public float3 HitDirection;     // Normalized; with HitForce, pushes the target (knockback, effects)
+    public float HitForce;
 }
 
 public struct HealingInstance : IBufferElementData
@@ -85,6 +89,9 @@ public struct PeriodicDamageInstance : IBufferElementData
     public SkillType Skill;
     public float Tick;
     public Entity Source;
+    public float3 HitDirection;
+    public float HitForce;
+    public HitDirectionMode DirectionMode;
 }
 
 public struct CalculatedDamageInstance : IBufferElementData
@@ -94,4 +101,6 @@ public struct CalculatedDamageInstance : IBufferElementData
     public DamageHierarchy Hierarchy;
     public Entity Source;
     public bool IsCrit;
+    public float3 HitDirection;
+    public float HitForce;
 }

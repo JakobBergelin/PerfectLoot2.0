@@ -12,6 +12,8 @@ namespace ActiveSkills
         public float ProjectileSpeed = 15f;
         [Tooltip("Hit radius of the fireball")]
         public float Radius = 0.25f;
+        [Tooltip("Knockback speed on hit, in the direction the fireball flies")]
+        public float HitForce = 2f;
 
         public override SkillType Type => SkillType.Fireball;
         public override float ResourceCost => resourceCost;
@@ -23,6 +25,7 @@ namespace ActiveSkills
             component.Damage = Damage;
             component.ProjectileSpeed = ProjectileSpeed;
             component.Radius = Radius;
+            component.HitForce = HitForce;
             return component;
         }
     }

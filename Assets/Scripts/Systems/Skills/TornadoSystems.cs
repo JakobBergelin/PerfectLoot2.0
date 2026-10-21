@@ -56,7 +56,8 @@ public partial class TornadoSystem : SystemBase
                 var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
                 var damage = weaponDamage * tornado.ValueRO.WeaponDamagePerSecond + tornado.ValueRO.DamagePerSecond;
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = startPos, Rotation = Quaternion.identity, Scale = 1f});
-                commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.ValueRO.Radius, TimeRemaining = tornado.ValueRO.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.ValueRO.TickRate});
+                commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.ValueRO.Radius, TimeRemaining = tornado.ValueRO.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.ValueRO.TickRate,
+                    HitForce = tornado.ValueRO.HitForce, DirectionMode = HitDirectionMode.Random});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
                 commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
                 commandBuffer.AddComponent(newEntity, new TornadoBehavior{DirectionDuration = tornado.ValueRO.DirectionDuration, Speed = tornado.ValueRO.Speed, Elapsed = 0.0f, Direction = desiredDirection.ValueRO.Direction, Position = startPos, Sway = new float3(1.0f,0.0f,0.0f)});

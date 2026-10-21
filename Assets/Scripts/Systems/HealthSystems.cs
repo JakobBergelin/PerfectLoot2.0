@@ -171,7 +171,7 @@ public partial class CalculateDamageSystem : SystemBase
                         }
                     }
                 }
-                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source});
+                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce});
             }
             damageBuffer.Clear();
         }
@@ -209,6 +209,12 @@ public partial class DamagingSystem : SystemBase
                     }
                     OnDamageTaken?.Invoke(damage, position, instance.IsCrit);
                     health.ValueRW.CurrentValue -= damage;
+
+                    // Push the target; KnockbackSystem moves it and lets the push die out
+                    if(instance.HitForce > 0.0f && SystemAPI.HasComponent<Knockback>(entity))
+                    {
+                        SystemAPI.GetComponentRW<Knockback>(entity).ValueRW.Velocity += instance.HitDirection * instance.HitForce;
+                    }
 
                     switch(instance.Type)
                     {

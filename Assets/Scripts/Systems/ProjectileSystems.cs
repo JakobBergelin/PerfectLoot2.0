@@ -167,9 +167,6 @@ public partial class ProjectileDestroySystem : SystemBase
                 if(projectile.ValueRO.BounceCount > 0)
                 {
                     projectile.ValueRW.BounceCount--;
-                    // Direction towards something
-                    // UnityEngine.Random.InitState(System.DateTime.Now.Millisecond);
-                    // projectile.ValueRW.Direction = math.normalize(new float3(UnityEngine.Random.Range(-1.0f,1.0f), 0.0f, UnityEngine.Random.Range(-1.0f,1.0f)));
                     projectile.ValueRW.Direction = Vector3.Reflect(projectile.ValueRW.Direction, attack.ValueRO.Events.OnHitNormal);
                     continue;
                 }

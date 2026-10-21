@@ -2,6 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Physics;
 using Unity.Collections;
+using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using System.Linq;
@@ -32,6 +33,17 @@ public partial class AttackSystem : SystemBase
                 damage *= 1.0f + sourceStats.Value.CriticalDamage;                        
             }
         }
+    }
+
+    /// <summary>The direction a hit pushes in: the given direction (normalized), or a new random horizontal one.</summary>
+    public static float3 ResolveHitDirection(HitDirectionMode mode, float3 direction, ref Unity.Mathematics.Random random)
+    {
+        if (mode == HitDirectionMode.Random)
+        {
+            var flat = random.NextFloat2Direction();
+            return new float3(flat.x, 0f, flat.y);
+        }
+        return math.normalizesafe(direction);
     }
 
     [BurstCompile]
@@ -101,7 +113,8 @@ public partial class AttackSystem : SystemBase
                             attack.ValueRW.Events.IsCrit = isCrit;
 
                             // Written directly (not via ECB) so CalculateDamageSystem handles it this frame
-                            SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit});
+                            var hitDirection = ResolveHitDirection(attack.ValueRO.DirectionMode, attack.ValueRO.HitDirection, ref _random);
+                            SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
                             //TODO dynamic graceperiod depending on skill and attackspeed
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = 0.3f});
                         }
@@ -229,7 +242,8 @@ public partial class PeriodicAttackSystem : SystemBase
                             float damage = periodicAttack.ValueRO.DamagePerSecond * SystemAPI.Time.DeltaTime;
                             if(index == -1)
                             {
-                                periodicDamageBuffer.Add(new PeriodicDamageInstance{AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity});
+                                periodicDamageBuffer.Add(new PeriodicDamageInstance{AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity,
+                                    HitDirection = periodicAttack.ValueRO.HitDirection, HitForce = periodicAttack.ValueRO.HitForce, DirectionMode = periodicAttack.ValueRO.DirectionMode});
                             }
                             else
                             {
@@ -290,7 +304,9 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
 
                     AttackSystem.CalculateCrit(instance.Source, EntityManager, ref _random, ref damage, ref isCrit);
 
-                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit});
+                    // Random directions are rolled per tick
+                    var hitDirection = AttackSystem.ResolveHitDirection(instance.DirectionMode, instance.HitDirection, ref _random);
+                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = hitDirection, HitForce = instance.HitForce});
                     periodicDamageInstance.RemoveAt(i);
                     i--;
                 }
