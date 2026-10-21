@@ -28,6 +28,12 @@ namespace Equipment
         /// <summary>Fixed (not rolled) stats this base item gives while equipped, e.g. a weapon's reach.</summary>
         public virtual void AddFixedStats(ref StatBlock stats) { }
 
+        /// <summary>The fixed stats from AddFixedStats as readable lines, for tooltips.</summary>
+        public virtual IEnumerable<string> FixedStatLines
+        {
+            get { yield break; }
+        }
+
         public override List<Loot> Explore()
         {
             return new List<Loot> { CreateItem() };
@@ -58,6 +64,44 @@ namespace Equipment
             var settings = LootGenerationManager.Instance.GenerationSettings;
             RollBaseAffixes(item, settings);
             RollRollableAffixes(item, settings);
+        }
+
+        /// <summary>
+        /// The range an affix on this base item can roll at the given rarity (the asset's RollRange narrowed by the
+        /// rarity window, same as Roll). Base affixes are looked up in the intrinsic stats and BaseAffixes, rollable
+        /// ones in RollableAffixes. Without settings the full asset range is returned.
+        /// </summary>
+        public bool TryGetRollRange(Affix affix, bool isBaseAffix, Rarity rarity, GenerationSettings settings, out float min, out float max)
+        {
+            min = max = 0f;
+            var range = FindRange(affix, isBaseAffix);
+            if (range == null) return false;
+
+            var (minLerp, maxLerp) = settings == null ? (0f, 1f)
+                : isBaseAffix ? settings.GetBaseRange(rarity)
+                : settings.GetAffixRange(rarity);
+            min = Mathf.Lerp(range.Min, range.Max, minLerp);
+            max = Mathf.Lerp(range.Min, range.Max, maxLerp);
+            return true;
+        }
+
+        RollRange FindRange(Affix affix, bool isBaseAffix)
+        {
+            if (isBaseAffix)
+            {
+                foreach (var (intrinsicAffix, range) in IntrinsicAffixes)
+                    if (intrinsicAffix == affix) return range;
+                return FindIn(BaseAffixes, affix);
+            }
+            return FindIn(RollableAffixes, affix);
+        }
+
+        static RollRange FindIn(List<Rollable> rollables, Affix affix)
+        {
+            if (rollables == null) return null;
+            foreach (var rollable in rollables)
+                if (rollable.Affix == affix) return rollable.RollRange;
+            return null;
         }
 
         void RollBaseAffixes(Item item, GenerationSettings settings)

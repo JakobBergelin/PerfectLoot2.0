@@ -18,6 +18,7 @@ public class CharacterPanelHUD : MonoBehaviour
     const string HiddenClass = "character-panel-root--hidden";
     const string TooltipVisibleClass = "cp-tooltip--visible";
     const string NoValue = "–";
+    const string RangeColor = "#8A8F99";
 
     static readonly Color EmptySlotBorder = new Color32(58, 63, 75, 255);
 
@@ -253,8 +254,12 @@ public class CharacterPanelHUD : MonoBehaviour
         _tooltipSubtitle.text = $"{item.Rarity} {item.ItemType}";
 
         var sb = new StringBuilder();
-        AppendAffixes(sb, item.BaseAffixes);
-        AppendAffixes(sb, item.RollableAffixes);
+        // Fixed (not rolled) stats first, muted, e.g. a weapon's cooldown and reach
+        foreach (var line in item.BaseItem.FixedStatLines)
+            sb.AppendLine($"<color={RangeColor}>{line}</color>");
+        var settings = LootGenerationManager.Instance != null ? LootGenerationManager.Instance.GenerationSettings : null;
+        AppendAffixes(sb, item, item.BaseAffixes, isBaseAffix: true, settings);
+        AppendAffixes(sb, item, item.RollableAffixes, isBaseAffix: false, settings);
         _tooltipBody.text = sb.Length > 0 ? sb.ToString().TrimEnd() : "No stats";
 
         // Right of the slot, in the root's coordinates
@@ -266,11 +271,17 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void HideTooltip() => _tooltip?.RemoveFromClassList(TooltipVisibleClass);
 
-    static void AppendAffixes(StringBuilder sb, List<Rolled> affixes)
+    // "+177 Strength  [150 – 180]": the range this affix could roll on this item at its rarity, muted
+    static void AppendAffixes(StringBuilder sb, Item item, List<Rolled> affixes, bool isBaseAffix, GenerationSettings settings)
     {
         if (affixes == null) return;
         foreach (var rolled in affixes)
-            sb.AppendLine($"+{FormatAffix(rolled.Affix, rolled.Value)} {SplitWords(rolled.Affix.ToString())}");
+        {
+            sb.Append($"+{FormatAffix(rolled.Affix, rolled.Value)} {SplitWords(rolled.Affix.ToString())}");
+            if (item.BaseItem.TryGetRollRange(rolled.Affix, isBaseAffix, item.Rarity, settings, out float min, out float max))
+                sb.Append($"  <color={RangeColor}>[{FormatAffix(rolled.Affix, min)} – {FormatAffix(rolled.Affix, max)}]</color>");
+            sb.AppendLine();
+        }
     }
 
     // Affixes rolled as fractions (0.1 = 10%); the rest are flat values

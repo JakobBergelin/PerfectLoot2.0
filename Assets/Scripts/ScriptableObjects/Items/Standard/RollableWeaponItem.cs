@@ -29,5 +29,15 @@ namespace Equipment
             stats.WeaponReach += WeaponReach;
             stats.WeaponCooldown += WeaponCooldown;
         }
+
+        public override IEnumerable<string> FixedStatLines
+        {
+            get
+            {
+                yield return $"Weapon Cooldown x{WeaponCooldown:0.##}";
+                yield return $"Weapon Reach {WeaponReach:0.##}";
+                if (WeaponDamageRange > 0f) yield return $"Damage range ±{WeaponDamageRange:0.##}";
+            }
+        }
     }
 }
