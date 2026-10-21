@@ -6,7 +6,7 @@ namespace Passives
     public class BalancePassive : PassiveSkill<Balance>
     {
         // Damage bonus per point of the lowest of Strength, Agility and Intelligence (0.01 = 1%)
-        public float DamagePerLowestAttribute = 0.4f;
+        public float DamagePerLowestAttribute = 0.004f;
 
         public override PassiveType Type => PassiveType.Balance;
 
