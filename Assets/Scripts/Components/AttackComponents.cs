@@ -7,10 +7,8 @@ public struct Attack : IComponentData
     public DamageType Type;
     public DamageHierarchy DamageHierarchy;
     public float Radius;
-    // Push on hit (knockback now; particles and ragdoll can use it too). HitForce 0 = no push.
-    public float3 HitDirection;
+    // Push on hit, away from the attack's position (knockback now; particles and ragdoll can use it too). 0 = no push.
     public float HitForce;
-    public HitDirectionMode DirectionMode;
     public struct Triggers
     {
         public bool OnHit;
@@ -30,15 +28,7 @@ public struct PeriodicAttack : IComponentData
     public SkillType Skill;
     public float TickRate;
     // Push on each damage tick, see Attack
-    public float3 HitDirection;
     public float HitForce;
-    public HitDirectionMode DirectionMode;
-}
-
-public enum HitDirectionMode
-{
-    Fixed,      // HitDirection
-    Random,     // A new random horizontal direction for every hit
 }
 
 // Combined with attack component to determine who did it

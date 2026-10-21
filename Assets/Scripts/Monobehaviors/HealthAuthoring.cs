@@ -71,7 +71,7 @@ public struct DamageInstance : IBufferElementData
     public DamageHierarchy Hierarchy;
     public Entity Source;
     public bool IsCrit;
-    public float3 HitDirection;     // Normalized; with HitForce, pushes the target (knockback, effects)
+    public float3 HitDirection;     // Normalized, away from the attack; with HitForce, pushes the target (knockback, effects)
     public float HitForce;
 }
 
@@ -89,9 +89,8 @@ public struct PeriodicDamageInstance : IBufferElementData
     public SkillType Skill;
     public float Tick;
     public Entity Source;
-    public float3 HitDirection;
+    public float3 HitDirection;     // Away from the attack, updated every frame it overlaps
     public float HitForce;
-    public HitDirectionMode DirectionMode;
 }
 
 public struct CalculatedDamageInstance : IBufferElementData

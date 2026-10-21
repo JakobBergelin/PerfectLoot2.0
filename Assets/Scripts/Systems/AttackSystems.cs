@@ -35,15 +35,14 @@ public partial class AttackSystem : SystemBase
         }
     }
 
-    /// <summary>The direction a hit pushes in: the given direction (normalized), or a new random horizontal one.</summary>
-    public static float3 ResolveHitDirection(HitDirectionMode mode, float3 direction, ref Unity.Mathematics.Random random)
+    /// <summary>The direction a hit pushes in: horizontally away from the attack. Random if the target is on its center.</summary>
+    public static float3 HitDirection(float3 attackPosition, float3 targetPosition, ref Unity.Mathematics.Random random)
     {
-        if (mode == HitDirectionMode.Random)
-        {
-            var flat = random.NextFloat2Direction();
-            return new float3(flat.x, 0f, flat.y);
-        }
-        return math.normalizesafe(direction);
+        var away = targetPosition - attackPosition;
+        away.y = 0f;
+        if (math.lengthsq(away) > 1e-6f) return math.normalize(away);
+        var flat = random.NextFloat2Direction();
+        return new float3(flat.x, 0f, flat.y);
     }
 
     [BurstCompile]
@@ -113,7 +112,7 @@ public partial class AttackSystem : SystemBase
                             attack.ValueRW.Events.IsCrit = isCrit;
 
                             // Written directly (not via ECB) so CalculateDamageSystem handles it this frame
-                            var hitDirection = ResolveHitDirection(attack.ValueRO.DirectionMode, attack.ValueRO.HitDirection, ref _random);
+                            var hitDirection = HitDirection(localTransform.ValueRO.Position, SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position, ref _random);
                             SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
                             //TODO dynamic graceperiod depending on skill and attackspeed
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = 0.3f});
@@ -180,10 +179,12 @@ public partial struct ResetAttackTriggersSystem : ISystem
 [UpdateInGroup(typeof(AttackSystemGroup))]
 public partial class PeriodicAttackSystem : SystemBase
 {
+    private Unity.Mathematics.Random _random;
     private EndSimulationEntityCommandBufferSystem _endSimulationEntityCommandBufferSystem;
     [BurstCompile]
     protected override void OnCreate()
     {
+        _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
         _endSimulationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
     }
     [BurstCompile]
@@ -240,15 +241,18 @@ public partial class PeriodicAttackSystem : SystemBase
                                 }
                             }
                             float damage = periodicAttack.ValueRO.DamagePerSecond * SystemAPI.Time.DeltaTime;
+                            // Away from where the attack is now; the tick uses the latest one
+                            var hitDirection = AttackSystem.HitDirection(localTransform.ValueRO.Position, SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position, ref _random);
                             if(index == -1)
                             {
                                 periodicDamageBuffer.Add(new PeriodicDamageInstance{AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity,
-                                    HitDirection = periodicAttack.ValueRO.HitDirection, HitForce = periodicAttack.ValueRO.HitForce, DirectionMode = periodicAttack.ValueRO.DirectionMode});
+                                    HitDirection = hitDirection, HitForce = periodicAttack.ValueRO.HitForce});
                             }
                             else
                             {
                                 ref var instance = ref periodicDamageBuffer.ElementAt(index);
                                 instance.AccumilatedDamage += damage;
+                                instance.HitDirection = hitDirection;
                             }
                         }
                         
@@ -304,9 +308,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
 
                     AttackSystem.CalculateCrit(instance.Source, EntityManager, ref _random, ref damage, ref isCrit);
 
-                    // Random directions are rolled per tick
-                    var hitDirection = AttackSystem.ResolveHitDirection(instance.DirectionMode, instance.HitDirection, ref _random);
-                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = hitDirection, HitForce = instance.HitForce});
+                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce});
                     periodicDamageInstance.RemoveAt(i);
                     i--;
                 }

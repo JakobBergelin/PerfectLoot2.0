@@ -19,13 +19,6 @@ public partial class WhirlwindSystem : SystemBase
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
     }
 
-    // The way the weapon tip moves while spinning: the player's right for a positive (clockwise) spin, left otherwise
-    static float3 SweepDirection(quaternion rotation, float rotationSpeed)
-    {
-        var right = math.mul(rotation, new float3(1f, 0f, 0f));
-        return rotationSpeed >= 0f ? right : -right;
-    }
-
     [BurstCompile]
     protected override void OnUpdate()
     {
@@ -75,8 +68,7 @@ public partial class WhirlwindSystem : SystemBase
                         Debug.Log(damage);
 
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
-                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Attack{Damage = damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = whirlwind.ValueRO.AttackRadius,
-                            HitDirection = SweepDirection(localTransform.ValueRO.Rotation, whirlwind.ValueRO.RotationSpeed), HitForce = whirlwind.ValueRO.HitForce});
+                        commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Attack{Damage = damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = whirlwind.ValueRO.AttackRadius, HitForce = whirlwind.ValueRO.HitForce});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Source{Entity = entity});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new AttackTarget{TargetType = TargetType.Enemy});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new InitializeFromSource{});
@@ -87,10 +79,6 @@ public partial class WhirlwindSystem : SystemBase
                         var weaponTransform = SystemAPI.GetComponentRW<LocalTransform>(whirlwind.ValueRO.WeaponEntity);
                         var forward = math.mul(localTransform.ValueRO.Rotation, Vector3.forward);
                         weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * stats.ValueRO.Value.WeaponReach;
-                        // Hits push the way the weapon is sweeping right now
-                        var weaponAttack = SystemAPI.GetComponentRW<Attack>(whirlwind.ValueRO.WeaponEntity);
-                        weaponAttack.ValueRW.HitDirection = SweepDirection(localTransform.ValueRO.Rotation, whirlwind.ValueRO.RotationSpeed);
-                        weaponAttack.ValueRW.HitForce = whirlwind.ValueRO.HitForce;
                         SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -resourceCost});
                     } 
                 }

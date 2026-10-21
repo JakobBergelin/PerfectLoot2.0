@@ -22,7 +22,7 @@ namespace ActiveSkills
         public float WeaponDamageMultiplier = 0.1f;
         [Tooltip("Hit radius of each punch")]
         public float Radius = 0.5f;
-        [Tooltip("Knockback speed of each punch, in the punch direction")]
+        [Tooltip("Knockback speed of each punch, away from where it lands")]
         public float HitForce = 2f;
 
         [Tooltip("The combo, in order. Max 15 punches.")]

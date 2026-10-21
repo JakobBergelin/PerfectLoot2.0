@@ -15,7 +15,7 @@ namespace ActiveSkills
         public float AttackRadius = 0.9f;
         [Tooltip("Seconds of spinning before the weapon starts hitting")]
         public float SpinUpTime = 0.4f;
-        [Tooltip("Knockback speed of each hit, in the direction the weapon sweeps")]
+        [Tooltip("Knockback speed of each hit, away from the weapon")]
         public float HitForce = 3f;
 
         public override SkillType Type => SkillType.Whirlwind;

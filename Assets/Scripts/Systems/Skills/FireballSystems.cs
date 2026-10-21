@@ -52,8 +52,7 @@ public partial class FireballSystem : SystemBase
                 
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction, Rotation = Quaternion.identity, Scale = 0.5f});
                 commandBuffer.AddComponent(newEntity, new Projectile{Direction = desiredDirection.ValueRO.Direction, Speed = fireball.ValueRO.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0});
-                commandBuffer.AddComponent(newEntity, new Attack{Damage = fireball.ValueRO.Damage, Type = DamageType.Fire, DamageHierarchy = DamageHierarchy.Main, Radius = fireball.ValueRO.Radius,
-                    HitDirection = desiredDirection.ValueRO.Direction, HitForce = fireball.ValueRO.HitForce});
+                commandBuffer.AddComponent(newEntity, new Attack{Damage = fireball.ValueRO.Damage, Type = DamageType.Fire, DamageHierarchy = DamageHierarchy.Main, Radius = fireball.ValueRO.Radius, HitForce = fireball.ValueRO.HitForce});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
                 commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
                 commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
