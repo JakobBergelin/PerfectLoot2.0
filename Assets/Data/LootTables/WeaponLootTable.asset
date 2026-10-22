@@ -23,3 +23,5 @@ MonoBehaviour:
     Value: 20
   - Entry: {fileID: 11400000, guid: d2f4d8f7830b4916b7794a4298c87a23, type: 2}
     Value: 10
+  - Entry: {fileID: 11400000, guid: 9475d1ebf16247f41adf0c178dc02bde, type: 2}
+    Value: 10

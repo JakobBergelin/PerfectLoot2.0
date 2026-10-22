@@ -25,6 +25,25 @@ namespace Equipment
             get { yield break; }
         }
 
+        /// <summary>
+        /// Every roll range on this base item with where it comes from: the slot's intrinsic stats (weapon damage,
+        /// armor, ...), then BaseAffixes, then RollableAffixes. Read-only; for tooling such as the Item Editor.
+        /// </summary>
+        public IEnumerable<(Affix Affix, RollRange Range, AffixSource Source)> AllRanges
+        {
+            get
+            {
+                foreach (var (affix, range) in IntrinsicAffixes)
+                    if (range != null) yield return (affix, range, AffixSource.Intrinsic);
+                if (BaseAffixes != null)
+                    foreach (var rollable in BaseAffixes)
+                        if (rollable?.RollRange != null) yield return (rollable.Affix, rollable.RollRange, AffixSource.Base);
+                if (RollableAffixes != null)
+                    foreach (var rollable in RollableAffixes)
+                        if (rollable?.RollRange != null) yield return (rollable.Affix, rollable.RollRange, AffixSource.Rollable);
+            }
+        }
+
         /// <summary>Fixed (not rolled) stats this base item gives while equipped, e.g. a weapon's reach.</summary>
         public virtual void AddFixedStats(ref StatBlock stats) { }
 
