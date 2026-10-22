@@ -149,6 +149,38 @@ public class InventoryManager : MonoBehaviour
         _appliedPowers.AddRange(equipped);
     }
 
+    [Header("Testing")]
+    [Tooltip("Rolled and equipped by the \"Roll and equip test item\" context menu item (Play mode)")]
+    public RollableItem TestItem;
+
+    [ContextMenu("Roll and equip test item")]
+    void RollAndEquipTestItem()
+    {
+        if (!Application.isPlaying || TestItem == null || LootGenerationManager.Instance == null)
+        {
+            Debug.LogWarning("Needs Play mode, a TestItem and a LootGenerationManager.", this);
+            return;
+        }
+
+        // The matching slot; for rings the first empty one, otherwise the first
+        InventorySlot target = null;
+        foreach (var (_, slot) in NamedSlots)
+        {
+            if (slot == null || slot.SlotType != TestItem.ItemType) continue;
+            if (target == null) target = slot;
+            if (slot.IsEmpty) { target = slot; break; }
+        }
+        if (target == null)
+        {
+            Debug.LogWarning($"No {TestItem.ItemType} slot to equip {TestItem.name} in.", this);
+            return;
+        }
+
+        var item = LootGenerationManager.Instance.RollItem(TestItem);
+        target.EquipItem(item);
+        Debug.Log($"Equipped {item.Rarity} {item.BaseItem.Name} in {target.name}.", this);
+    }
+
     [ContextMenu("Log Summary")]
     void LogSummary()
     {

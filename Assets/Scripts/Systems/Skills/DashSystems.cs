@@ -28,7 +28,7 @@ public partial struct DashSystem : ISystem
             }
         }
 
-        foreach (var (dash, localTransform, desiredDirection, skillBuffer) in SystemAPI.Query<RefRW<Dash>, RefRW<LocalTransform>, RefRO<DesiredDirection>, DynamicBuffer<Skill>>())
+        foreach (var (dash, localTransform, desiredDirection, skillBuffer, entity) in SystemAPI.Query<RefRW<Dash>, RefRW<LocalTransform>, RefRO<DesiredDirection>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
             if(dash.ValueRO.Elapsed >= dash.ValueRO.Cooldown)
             {
@@ -36,6 +36,10 @@ public partial struct DashSystem : ISystem
                 dash.ValueRW.Elapsed = 0.0f;
                 dash.ValueRW.Dashing = true;
                 dash.ValueRW.NextPosition = localTransform.ValueRW.Position + desiredDirection.ValueRO.Direction * 7.0f;
+
+                // Dash is a mobility skill: let mobility reactions (e.g. Refractionist) know it was used this frame
+                if (SystemAPI.HasComponent<MobilitySkillUsed>(entity))
+                    SystemAPI.SetComponentEnabled<MobilitySkillUsed>(entity, true);
             }
 
         }

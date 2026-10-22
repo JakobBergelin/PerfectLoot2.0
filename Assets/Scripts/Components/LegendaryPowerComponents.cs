@@ -7,3 +7,10 @@ public struct Vanguard : IComponentData
 {
     public float DamageReduction;
 }
+
+/// <summary>Refractionist: using a mobility skill grants Refraction stacks (RefractionistSystem).</summary>
+public struct Refractionist : IComponentData
+{
+    public int RefractionStacks;
+    public int MaxStacks;
+}

@@ -46,3 +46,4 @@ MonoBehaviour:
   MovementSpeed:
     Min: 0.2
     Max: 0.35
+  LegendaryPower: {fileID: 11400000, guid: f5581e465a2b48987fab6d9da8f09f83, type: 2}

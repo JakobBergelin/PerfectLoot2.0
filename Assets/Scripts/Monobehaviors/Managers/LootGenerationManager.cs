@@ -81,11 +81,17 @@ public class LootGenerationManager : MonoBehaviour
                 continue;
             }
 
-            Item rolled = candidate; // a foreach variable can't be passed by ref
-            rolled.Rarity = rolled.BaseItem.ForcedRarity ?? RollableItem.GetRandomRarity();
-            rolled.BaseItem.Roll(ref rolled);
-            return rolled;
+            return RollItem(candidate.BaseItem);
         }
         return null; // e.g. an And-mode table where nothing dropped
+    }
+
+    /// <summary>A new item of this base, rolled at its forced rarity (Legendary/Unique) or a random one.</summary>
+    public Item RollItem(RollableItem baseItem)
+    {
+        var item = baseItem.CreateItem();
+        item.Rarity = baseItem.ForcedRarity ?? RollableItem.GetRandomRarity();
+        baseItem.Roll(ref item);
+        return item;
     }
 }
