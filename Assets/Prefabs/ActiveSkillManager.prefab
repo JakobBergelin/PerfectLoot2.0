@@ -103,7 +103,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
-  EquippedSkill: {fileID: 11400000, guid: 7ce8baf1608afeccf74a580d9949c1ff, type: 2}
+  EquippedSkill: {fileID: 0}
   IsPressed: 0
   IsActive: 0
   HasEnoughResource: 0
@@ -153,7 +153,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
-  EquippedSkill: {fileID: 11400000, guid: 4e6024d7d7ed27eb6e09b0adbe680ab2, type: 2}
+  EquippedSkill: {fileID: 0}
   IsPressed: 0
   IsActive: 0
   HasEnoughResource: 0
@@ -203,7 +203,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
-  EquippedSkill: {fileID: 11400000, guid: 17ebeb588ee9834454104b94454dee29, type: 2}
+  EquippedSkill: {fileID: 0}
   IsPressed: 0
   IsActive: 0
   HasEnoughResource: 0
@@ -253,7 +253,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
   m_Name:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
-  EquippedSkill: {fileID: 11400000, guid: 9d6ec9bfd76dff2c67545d5d5f5998ea, type: 2}
+  EquippedSkill: {fileID: 0}
   IsPressed: 0
   IsActive: 0
   HasEnoughResource: 0

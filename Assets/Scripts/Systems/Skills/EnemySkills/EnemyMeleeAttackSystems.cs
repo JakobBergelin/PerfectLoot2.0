@@ -33,8 +33,9 @@ public partial class EnemyMeleeAttackSystem : SystemBase
 
         foreach (var (enemyMeleeAttack, localTransform, npcBehavior, entity) in SystemAPI.Query<RefRW<EnemyMeleeAttack>, RefRW<LocalTransform>, RefRO<NpcBehavior>>().WithEntityAccess())
         {
-            // Frozen and similar: no turning or attacking
-            if (SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions)
+            // Frozen and similar, or still rising out of the ground: no turning or attacking
+            if (SystemAPI.HasComponent<SpawnRise>(entity) ||
+                (SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions))
             {
                 continue;
             }

@@ -1,6 +1,7 @@
 using Enemies;
 using Unity.Collections;
 using Unity.Entities;
+using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
 
@@ -18,6 +19,10 @@ public class EnemyManager : MonoBehaviour
     public int TestCount = 5;
     [Tooltip("Spawned by the \"Spawn dummy\" context menu item")]
     public EnemyDefinition DummyDefinition;
+
+    [Header("Spawning")]
+    [Tooltip("Seconds enemies spawned with riseIn take to rise out of the ground")]
+    public float RiseDuration = 0.6f;
 
     World _queryWorld;
     EntityQuery _prefabsQuery;
@@ -37,16 +42,19 @@ public class EnemyManager : MonoBehaviour
     public bool IsReady => TryGetPrefabs(out _, out _);
 
     /// <summary>Spawns one enemy at the position. Returns Entity.Null if not ready or the definition isn't registered.</summary>
-    public Entity Spawn(EnemyDefinition definition, Vector3 position)
+    public Entity Spawn(EnemyDefinition definition, Vector3 position, bool riseIn = false)
     {
         using var positions = new NativeArray<Vector3>(1, Allocator.Temp);
         var spawned = positions;
         spawned[0] = position;
-        return SpawnAt(definition, positions);
+        return SpawnAt(definition, positions, riseIn);
     }
 
-    /// <summary>Spawns count enemies at random points within radius of center (on the same height).</summary>
-    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius)
+    /// <summary>
+    /// Spawns count enemies at random points within radius of center (on the same height). riseIn: they rise out of
+    /// the ground over RiseDuration instead of appearing at once.
+    /// </summary>
+    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius, bool riseIn = false)
     {
         if (count <= 0) return;
         using var positions = new NativeArray<Vector3>(count, Allocator.Temp);
@@ -56,7 +64,7 @@ public class EnemyManager : MonoBehaviour
             var offset = Random.insideUnitCircle * radius;
             spawned[i] = center + new Vector3(offset.x, 0f, offset.y);
         }
-        SpawnAt(definition, positions);
+        SpawnAt(definition, positions, riseIn);
     }
 
     /// <summary>
@@ -64,7 +72,7 @@ public class EnemyManager : MonoBehaviour
     /// removes the template. Adding the gameplay components once instead of per enemy keeps big groups cheap.
     /// Returns the first spawned enemy, or Entity.Null.
     /// </summary>
-    Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions)
+    Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions, bool riseIn)
     {
         if (definition == null) { Debug.LogWarning("EnemyManager.Spawn: no definition.", this); return Entity.Null; }
         if (!TryGetPrefabs(out var entityManager, out var prefabs))
@@ -82,6 +90,22 @@ public class EnemyManager : MonoBehaviour
         // (on the whole linked group, so its health bar isn't simulated or drawn either)
         var template = entityManager.Instantiate(prefab);
         EnemyEntitySetup.AddGameplayComponents(entityManager, template, definition);
+
+        // Rising out of the ground: start a body height under the spawn point, immovable and weightless (SpawnRiseSystem)
+        float riseDepth = 2f * Mathf.Max(0.01f, definition.Scale);
+        if (riseIn && entityManager.HasComponent<PhysicsMass>(template))
+        {
+            var mass = entityManager.GetComponentData<PhysicsMass>(template);
+            entityManager.AddComponentData(template, new SpawnRise { Depth = riseDepth, Duration = RiseDuration, InverseMass = mass.InverseMass });
+            mass.InverseMass = 0f;
+            entityManager.SetComponentData(template, mass);
+            if (entityManager.HasComponent<PhysicsGravityFactor>(template)) entityManager.SetComponentData(template, new PhysicsGravityFactor { Value = 0f });
+            else entityManager.AddComponentData(template, new PhysicsGravityFactor { Value = 0f });
+        }
+        else
+        {
+            riseIn = false;
+        }
         if (entityManager.HasBuffer<LinkedEntityGroup>(template))
         {
             using var group = entityManager.GetBuffer<LinkedEntityGroup>(template).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);
@@ -98,6 +122,13 @@ public class EnemyManager : MonoBehaviour
         {
             var transform = templateTransform;
             transform.Position = positions[i];
+            if (riseIn)
+            {
+                var rise = entityManager.GetComponentData<SpawnRise>(enemies[i]);
+                rise.TargetY = positions[i].y;
+                entityManager.SetComponentData(enemies[i], rise);
+                transform.Position.y -= riseDepth;
+            }
             entityManager.SetComponentData(enemies[i], transform);
         }
 

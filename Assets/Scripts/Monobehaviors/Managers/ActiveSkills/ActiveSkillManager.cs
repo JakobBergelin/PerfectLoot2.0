@@ -32,7 +32,38 @@ public class ActiveSkillManager : MonoBehaviour
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
-    void Start() => PushSkills();
+    void Start()
+    {
+        RandomizeEmptySlots();
+        PushSkills();
+    }
+
+    /// <summary>Fills empty slots with random skills from AllSkills, never repeating a SkillType.</summary>
+    void RandomizeEmptySlots()
+    {
+        var taken = new HashSet<SkillType>();
+        foreach (var slot in Slots)
+            if (slot != null && !slot.IsEmpty) taken.Add(slot.EquippedSkill.Type);
+
+        var pool = new List<ActiveSkill>();
+        foreach (var skill in AllSkills)
+            if (skill != null && taken.Add(skill.Type)) pool.Add(skill);
+
+        foreach (var slot in Slots)
+        {
+            if (slot == null || !slot.IsEmpty) continue;
+            if (pool.Count == 0)
+            {
+                Debug.LogWarning("Not enough different skills in AllSkills to fill every skill slot.");
+                return;
+            }
+
+            int index = Random.Range(0, pool.Count);
+            // Set directly instead of EquipSkill so Start pushes once instead of once per slot
+            slot.EquippedSkill = pool[index];
+            pool.RemoveAt(index);
+        }
+    }
 
     void OnDestroy()
     {

@@ -60,7 +60,9 @@ public partial struct EnemyMovementSystem : ISystem
         }
     }
 
+    // Enemies still rising out of the ground (SpawnRise) don't act yet
     [BurstCompile]
+    [WithNone(typeof(SpawnRise))]
     partial struct EnemyMovementJob : IJobEntity
     {
         public Entity Player;
