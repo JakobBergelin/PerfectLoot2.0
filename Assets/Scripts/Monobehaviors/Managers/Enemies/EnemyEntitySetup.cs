@@ -17,19 +17,23 @@ public static class EnemyEntitySetup
         // Stats, health, damage buffers, status effects, knockback, smoothing
         AddCombatComponents(entityManager, entity, definition.Stats);
 
-        AddOrSet(entityManager, entity, new NpcBehavior
+        // Without AI (training dummies) it just stands there
+        if (definition.HasAI)
         {
-            TurnSpeed = definition.TurnSpeed,
-            TurnAcceleration = definition.TurnAcceleration,
-            DetectionRadius = definition.DetectionRadius,
-            AttackRadius = definition.AttackRadius,
-            DesiredDirection = quaternion.identity,
-        });
-        AddOrSet(entityManager, entity, new EnemyMeleeAttack
-        {
-            Damage = definition.MeleeDamage,
-            AttackSpeed = definition.SecondsBetweenAttacks,
-        });
+            AddOrSet(entityManager, entity, new NpcBehavior
+            {
+                TurnSpeed = definition.TurnSpeed,
+                TurnAcceleration = definition.TurnAcceleration,
+                DetectionRadius = definition.DetectionRadius,
+                AttackRadius = definition.AttackRadius,
+                DesiredDirection = quaternion.identity,
+            });
+            AddOrSet(entityManager, entity, new EnemyMeleeAttack
+            {
+                Damage = definition.MeleeDamage,
+                AttackSpeed = definition.SecondsBetweenAttacks,
+            });
+        }
 
         if (definition.OverrideColor) ApplyTint(entityManager, entity, definition.Tint);
     }

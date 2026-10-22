@@ -16,6 +16,8 @@ public class EnemyManager : MonoBehaviour
     [Tooltip("Spawned by the \"Spawn test group\" context menu item")]
     public EnemyDefinition TestDefinition;
     public int TestCount = 5;
+    [Tooltip("Spawned by the \"Spawn dummy\" context menu item")]
+    public EnemyDefinition DummyDefinition;
 
     World _queryWorld;
     EntityQuery _prefabsQuery;
@@ -72,15 +74,24 @@ public class EnemyManager : MonoBehaviour
     void SpawnTestGroup()
     {
         if (!Application.isPlaying) { Debug.LogWarning("Enter Play mode to spawn enemies.", this); return; }
+        SpawnGroup(TestDefinition, NearPlayer(new Vector3(6f, 0f, 0f)), TestCount, 2f);
+    }
 
-        // A bit away from the player, or around the manager when there is no player
-        var center = transform.position;
+    [ContextMenu("Spawn dummy")]
+    void SpawnDummy()
+    {
+        if (!Application.isPlaying) { Debug.LogWarning("Enter Play mode to spawn enemies.", this); return; }
+        Spawn(DummyDefinition, NearPlayer(new Vector3(0f, 0f, 4f)));
+    }
+
+    // The player's position plus offset, or the manager's position when there is no player
+    Vector3 NearPlayer(Vector3 offset)
+    {
         var characterManager = CharacterManager.Instance;
         var world = World.DefaultGameObjectInjectionWorld;
         if (characterManager != null && world != null && world.EntityManager.Exists(characterManager.Player))
-            center = (Vector3)world.EntityManager.GetComponentData<LocalTransform>(characterManager.Player).Position + new Vector3(6f, 0f, 0f);
-
-        SpawnGroup(TestDefinition, center, TestCount, 2f);
+            return (Vector3)world.EntityManager.GetComponentData<LocalTransform>(characterManager.Player).Position + offset;
+        return transform.position;
     }
 
     bool TryGetPrefabs(out EntityManager entityManager, out DynamicBuffer<EnemyPrefabElement> prefabs)

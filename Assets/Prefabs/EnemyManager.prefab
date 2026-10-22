@@ -46,3 +46,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::EnemyManager
   TestDefinition: {fileID: 11400000, guid: 53e46699ce5772a858e12955aec09bcb, type: 2}
   TestCount: 5
+  DummyDefinition: {fileID: 11400000, guid: 96d482c5910e31871a92fcd25727151a, type: 2}

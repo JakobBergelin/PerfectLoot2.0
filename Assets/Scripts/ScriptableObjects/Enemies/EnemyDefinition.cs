@@ -29,6 +29,8 @@ namespace Enemies
         };
 
         [Header("Behavior")]
+        [Tooltip("Chases and attacks the player. Off for training dummies (the behavior and melee values below are then unused).")]
+        public bool HasAI = true;
         [Tooltip("Distance at which it notices the player")]
         public float DetectionRadius = 15f;
         [Tooltip("Distance at which it stops and attacks; the hit itself has half this radius")]
