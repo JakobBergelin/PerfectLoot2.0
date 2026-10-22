@@ -19,3 +19,6 @@ MonoBehaviour:
     UnarmedWeaponReach: 1.1
     HomingTargetRange: 15
     KnockbackDamping: 8
+    ProjectileMaxDistance: 50
+    HomingAvoidLookahead: 3
+    HomingAvoidStrength: 0.3

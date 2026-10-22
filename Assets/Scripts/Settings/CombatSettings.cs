@@ -13,6 +13,9 @@ public class CombatSettings : ScriptableObject
         UnarmedWeaponReach = 1.1f,
         HomingTargetRange = 15.0f,
         KnockbackDamping = 8f,
+        ProjectileMaxDistance = 50f,
+        HomingAvoidLookahead = 3f,
+        HomingAvoidStrength = 0.3f,
     };
 }
 
@@ -32,6 +35,12 @@ public struct CombatConfig : IComponentData
     public float HomingTargetRange;
     [Tooltip("How fast knockback dies out, per second. A push travels about HitForce / (mass * KnockbackDamping) units.")]
     public float KnockbackDamping;
+    [Tooltip("Projectiles farther than this from the player are removed")]
+    public float ProjectileMaxDistance;
+    [Tooltip("How far ahead (units) homing projectiles look for the ground or a wall to steer away from")]
+    public float HomingAvoidLookahead;
+    [Tooltip("How strongly homing projectiles steer away from the ground or walls ahead. Keep it weak: better hit a wall than miss the target")]
+    public float HomingAvoidStrength;
 
     /// <summary>Fraction of damage mitigated by a defense value: value / (value + constant). 0 when the value is 0 or less.</summary>
     public static float Mitigation(float value, float constant) => value <= 0f ? 0f : value / (value + constant);

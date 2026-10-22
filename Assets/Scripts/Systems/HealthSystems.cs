@@ -70,41 +70,6 @@ partial struct CheckDeathSystem : ISystem
 }
 
 
-// If all DestroyWithChildren tags are added to the EndSimulationEntityCommandBufferSystem, they should get destroyed the same frame if this runs after
-[UpdateInGroup(typeof(SimulationSystemGroup), OrderLast = true)]
-[UpdateAfter(typeof(EndSimulationEntityCommandBufferSystem))]
-partial struct DestroyWithChildrenSystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        var toDestroy = new NativeList<Entity>(Allocator.Temp);
-        var toDestroyNext = new NativeList<Entity>(Allocator.Temp);
-
-        foreach (var (destroy, entity) in SystemAPI.Query<RefRO<DestroyWithChildren>>().WithEntityAccess())
-        {
-            toDestroy.Add(entity);
-            if (state.EntityManager.HasBuffer<Child>(entity))
-            {
-                // TODO remove frame delay
-                foreach(var child in state.EntityManager.GetBuffer<Child>(entity))
-                {
-                    toDestroyNext.Add(child.Value);
-                }
-            }
-        }
-
-        if(!toDestroy.IsEmpty)
-        {
-            state.EntityManager.DestroyEntity(toDestroy.AsArray());  
-        }
-        if(!toDestroyNext.IsEmpty)
-        {
-            state.EntityManager.AddComponent<DestroyWithChildren>(toDestroyNext.AsArray());
-        }
-    }
-}
-
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateBefore(typeof(DamagingSystem))]
 public partial class CalculateDamageSystem : SystemBase
