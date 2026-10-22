@@ -28,7 +28,10 @@ public partial class CharacterMovementSystem : SystemBase
         {
             float3 position = transform.ValueRO.Position;
             bool moving = false;
-            if(inputs.ValueRO.Move.x != 0.0f || inputs.ValueRO.Move.y != 0.0f)
+
+            // Effects: slows lower the speed, Frozen and similar stop moving and turning
+            var modifiers = SystemAPI.HasComponent<MovementModifiers>(entity) ? SystemAPI.GetComponent<MovementModifiers>(entity) : new MovementModifiers { SpeedMultiplier = 1f };
+            if(!modifiers.PreventsActions && (inputs.ValueRO.Move.x != 0.0f || inputs.ValueRO.Move.y != 0.0f))
             {
                 position.x += inputs.ValueRO.Move.x;
                 position.z += inputs.ValueRO.Move.y;
@@ -44,6 +47,7 @@ public partial class CharacterMovementSystem : SystemBase
                 }
 
                 // Horizontal only: Y is left to gravity
+                speed *= modifiers.SpeedMultiplier;
                 velocity.ValueRW.Linear = new float3(direction.x * speed, velocity.ValueRO.Linear.y, direction.z * speed);
                 moving = true;
             }

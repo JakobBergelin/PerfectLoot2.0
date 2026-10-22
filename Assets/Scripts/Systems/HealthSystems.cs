@@ -88,6 +88,12 @@ public partial class CalculateDamageSystem : SystemBase
         var combatConfig = SystemAPI.GetSingleton<CombatConfig>();
         foreach (var (damageBuffer, calculatedDamageBuffer, calculatedStats, entity) in SystemAPI.Query<DynamicBuffer<DamageInstance>, DynamicBuffer<CalculatedDamageInstance>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
+            if (damageBuffer.IsEmpty) continue;
+
+            // Buffs that stop damage
+            bool invulnerable = SystemAPI.HasComponent<Invulnerable>(entity) && SystemAPI.IsComponentEnabled<Invulnerable>(entity);
+            bool hasRefraction = SystemAPI.HasComponent<Refraction>(entity) && SystemAPI.IsComponentEnabled<Refraction>(entity);
+
             foreach(var instance in damageBuffer)
             {
                 float calculatedDamage = instance.Damage;
@@ -121,7 +127,26 @@ public partial class CalculateDamageSystem : SystemBase
                     break;
                 }
 
-                if(instance.Hierarchy == DamageHierarchy.Main)
+                // Invulnerable: no damage at all. Refraction: absorbs one hit per stack (shown as blocked).
+                if(invulnerable)
+                {
+                    calculatedDamage = 0.0f;
+                }
+                else if(hasRefraction && instance.Hierarchy == DamageHierarchy.Main && calculatedDamage > 0.0f)
+                {
+                    // Use up one stack; the last one ends the effect
+                    var refraction = SystemAPI.GetComponentRW<Refraction>(entity);
+                    refraction.ValueRW.Stacks--;
+                    if(refraction.ValueRO.Stacks <= 0)
+                    {
+                        SystemAPI.SetComponentEnabled<Refraction>(entity, false);
+                        hasRefraction = false;
+                    }
+                    OnDamageBlocked?.Invoke(calculatedDamage, SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
+                    calculatedDamage = 0.0f;
+                }
+
+                if(instance.Hierarchy == DamageHierarchy.Main && calculatedDamage > 0.0f)
                 {
                     if(calculatedStats.ValueRO.Value.BlockChance > 0.0f)
                     {
@@ -157,6 +182,12 @@ public partial class DamagingSystem : SystemBase
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
+        var bleeds = SystemAPI.GetBufferLookup<BleedInstance>();
+        var bleeding = SystemAPI.GetComponentLookup<Bleeding>();
+        var burns = SystemAPI.GetBufferLookup<BurnInstance>();
+        var burning = SystemAPI.GetComponentLookup<Burning>();
+        var poisoned = SystemAPI.GetComponentLookup<Poisoned>();
+        var chilled = SystemAPI.GetComponentLookup<Chilled>();
         // Optional: without it units just don't flash
         SystemAPI.TryGetSingleton<HitFlashConfig>(out var hitFlashConfig);
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
@@ -191,33 +222,32 @@ public partial class DamagingSystem : SystemBase
                         flash.ValueRW.Timer = hitFlashConfig.Duration;
                     }
 
+                    // Status effect per damage type
                     switch(instance.Type)
                     {
                         case DamageType.Physical:
-                            // TODO buffers?
-                            SystemAPI.GetBuffer<BleedInstance>(entity).Add(new BleedInstance{TimeRemaining = statusEffects.BleedTime});
+                            EffectApply.AddBleed(bleeds, bleeding, entity, statusEffects.BleedDuration, instance.Source);
                         break;
                         case DamageType.Cold:
-                            if(!SystemAPI.IsComponentEnabled<Chilled>(entity))
-                            {
-                                SystemAPI.SetComponentEnabled<Chilled>(entity ,true);
-                            }
-                            SystemAPI.GetComponentRW<Chilled>(entity).ValueRW.Value += damage * statusEffects.ChilledDamageMultiplier;
+                            EffectApply.AddChill(chilled, entity, math.max(1, (int)math.round(damage * statusEffects.ChilledDamageMultiplier)), statusEffects.ChillMaxStacks, statusEffects.ChillDuration);
                         break;
                         case DamageType.Fire:
-                            SystemAPI.GetBuffer<BurnInstance>(entity).Add(new BurnInstance{DamagePerSecond = damage / statusEffects.BurnTime, TimeRemaining = statusEffects.BurnTime});
+                            // The hit's damage is dealt again over the burn's duration
+                            if(statusEffects.BurnDuration > 0.0f)
+                                EffectApply.AddBurn(burns, burning, entity, damage / statusEffects.BurnDuration, statusEffects.BurnDuration, instance.Source);
                         break;
                         case DamageType.Lightning:
                             SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = statusEffects.ChargedRadius});
                         break;
                         case DamageType.Poison:
-                            if(!SystemAPI.IsComponentEnabled<Poisioned>(entity))
+                            if(poisoned.HasComponent(entity))
                             {
-                                SystemAPI.SetComponentEnabled<Poisioned>(entity ,true);
+                                var poison = EffectApply.Refresh(poisoned, entity, statusEffects.PoisonDuration);
+                                poison.ValueRW.DamagePerSecond = statusEffects.PoisonDamagePerSecond;
+                                poison.ValueRW.Source = instance.Source;
                             }
-                            SystemAPI.GetComponentRW<Poisioned>(entity).ValueRW.TimeRemaining = statusEffects.PoisonTime;
                         break;
-                    } 
+                    }
                 }
                 else //Subdamage
                 {

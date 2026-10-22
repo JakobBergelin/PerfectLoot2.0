@@ -12,6 +12,8 @@ public static class PlayerEntitySetup
         AddOrSet(entityManager, entity, new Player());
         // In the spatial grid, so enemies keep a little distance (capsule radius 0.5)
         AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Physics });
+        // Its active buffs and debuffs, for the HUD (EffectDisplaySystem)
+        AddBuffer<EffectDisplay>(entityManager, entity);
 
         // Stats, health, damage buffers, status effects, knockback, smoothing
         AddCombatComponents(entityManager, entity, baseStats);

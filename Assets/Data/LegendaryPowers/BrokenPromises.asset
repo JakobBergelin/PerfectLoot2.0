@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: BrokenPromises
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.BrokenPromisesPower
   Name: Broken Promises
-  Description: After {HitsRequired} non-critical hits in a row, gain +{CriticalChanceBonus:P0} critical chance for {Duration} seconds.
+  Description: 'After {HitsRequired} non-critical hits in a row, gain +{CriticalChanceBonus:P0} critical chance for {Duration} seconds.'
   HitsRequired: 10
   Duration: 2
   CriticalChanceBonus: 1

@@ -65,9 +65,7 @@ public class CombatTextHUD : MonoBehaviour
 
     DamagingSystem _damagingSystem;
     CalculateDamageSystem _calculateDamageSystem;
-    BleedingUISystem _bleedingSystem;
-    BurningUISystem _burningSystem;
-    PoisonedUISystem _poisonedSystem;
+    EffectDamageTextSystem _effectDamageTextSystem;
     ApplyHealingSystem _healingSystem;
 
     void Awake() => _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
@@ -116,16 +114,17 @@ public class CombatTextHUD : MonoBehaviour
 
         _damagingSystem = world.GetExistingSystemManaged<DamagingSystem>();
         _calculateDamageSystem = world.GetExistingSystemManaged<CalculateDamageSystem>();
-        _bleedingSystem = world.GetExistingSystemManaged<BleedingUISystem>();
-        _burningSystem = world.GetExistingSystemManaged<BurningUISystem>();
-        _poisonedSystem = world.GetExistingSystemManaged<PoisonedUISystem>();
+        _effectDamageTextSystem = world.GetExistingSystemManaged<EffectDamageTextSystem>();
         _healingSystem = world.GetExistingSystemManaged<ApplyHealingSystem>();
 
         if (_damagingSystem != null) _damagingSystem.OnDamageTaken += OnDamageTaken;
         if (_calculateDamageSystem != null) _calculateDamageSystem.OnDamageBlocked += OnBlocked;
-        if (_bleedingSystem != null) _bleedingSystem.OnBleeding += OnBleeding;
-        if (_burningSystem != null) _burningSystem.OnBurning += OnBurning;
-        if (_poisonedSystem != null) _poisonedSystem.OnPoisoned += OnPoisoned;
+        if (_effectDamageTextSystem != null)
+        {
+            _effectDamageTextSystem.OnBleeding += OnBleeding;
+            _effectDamageTextSystem.OnBurning += OnBurning;
+            _effectDamageTextSystem.OnPoisoned += OnPoisoned;
+        }
         if (_healingSystem != null) _healingSystem.OnHealingReceived += OnHealing;
     }
 
@@ -133,9 +132,12 @@ public class CombatTextHUD : MonoBehaviour
     {
         if (_damagingSystem != null) _damagingSystem.OnDamageTaken -= OnDamageTaken;
         if (_calculateDamageSystem != null) _calculateDamageSystem.OnDamageBlocked -= OnBlocked;
-        if (_bleedingSystem != null) _bleedingSystem.OnBleeding -= OnBleeding;
-        if (_burningSystem != null) _burningSystem.OnBurning -= OnBurning;
-        if (_poisonedSystem != null) _poisonedSystem.OnPoisoned -= OnPoisoned;
+        if (_effectDamageTextSystem != null)
+        {
+            _effectDamageTextSystem.OnBleeding -= OnBleeding;
+            _effectDamageTextSystem.OnBurning -= OnBurning;
+            _effectDamageTextSystem.OnPoisoned -= OnPoisoned;
+        }
         if (_healingSystem != null) _healingSystem.OnHealingReceived -= OnHealing;
     }
 

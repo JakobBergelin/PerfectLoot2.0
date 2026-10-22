@@ -39,109 +39,44 @@ partial struct AttackUISystem : ISystem
     }
 }
 
-[BurstCompile]
+
+/// <summary>
+/// Combat text for damage over time: shows the bleed, burn and poison damage a unit took, summed, about once a second
+/// and once more when the last of it ends (EffectDamageSystem adds it up).
+/// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
-public partial class BleedingUISystem : SystemBase
+public partial class EffectDamageTextSystem : SystemBase
 {
+    const float Interval = 1.0f;
+
     public event System.Action<float, float3> OnBleeding;
-
-    [BurstCompile]
-    protected override void OnUpdate()
-    {
-        foreach (var (bleeding, localTransform, entity) in SystemAPI.Query<RefRW<Bleeding>, RefRO<LocalTransform>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            if(!SystemAPI.IsComponentEnabled<Bleeding>(entity) && bleeding.ValueRO.DamageToDisplay > 0.0f)
-            {
-                OnBleeding?.Invoke(bleeding.ValueRO.DamageToDisplay, localTransform.ValueRO.Position);
-                bleeding.ValueRW.DamageToDisplay = 0.0f;
-                bleeding.ValueRW.DisplayCounter = 0.0f;
-                break;
-            }
-            if(SystemAPI.IsComponentEnabled<Bleeding>(entity))
-            {
-                bleeding.ValueRW.DisplayCounter += SystemAPI.Time.DeltaTime;
-                if(bleeding.ValueRO.DisplayCounter > 1.0f)
-                {
-                    OnBleeding?.Invoke(bleeding.ValueRO.DamageToDisplay, localTransform.ValueRO.Position);
-                    bleeding.ValueRW.DamageToDisplay = 0.0f;
-                    bleeding.ValueRW.DisplayCounter = 0.0f;
-                }
-
-            }
-            
-        }
-
-    }
-}
-
-[BurstCompile]
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-public partial class BurningUISystem : SystemBase
-{
     public event System.Action<float, float3> OnBurning;
-
-    [BurstCompile]
-    protected override void OnUpdate()
-    {
-        foreach (var (burning, localTransform, entity) in SystemAPI.Query<RefRW<Burning>, RefRO<LocalTransform>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
-        {
-            if(!SystemAPI.IsComponentEnabled<Burning>(entity) && burning.ValueRO.DamageToDisplay > 0.0f)
-            {
-                OnBurning?.Invoke(burning.ValueRO.DamageToDisplay, localTransform.ValueRO.Position);
-                burning.ValueRW.DamageToDisplay = 0.0f;
-                burning.ValueRW.DisplayCounter = 0.0f;
-                break;
-            }
-            if(SystemAPI.IsComponentEnabled<Burning>(entity))
-            {
-                burning.ValueRW.DisplayCounter += SystemAPI.Time.DeltaTime;
-                if(burning.ValueRO.DisplayCounter > 1.0f)
-                {
-                    OnBurning?.Invoke(burning.ValueRO.DamageToDisplay, localTransform.ValueRO.Position);
-                    burning.ValueRW.DamageToDisplay = 0.0f;
-                    burning.ValueRW.DisplayCounter = 0.0f;
-                }
-
-            }
-            
-        }
-
-    }
-}
-
-[BurstCompile]
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-public partial class PoisonedUISystem : SystemBase
-{
     public event System.Action<float, float3> OnPoisoned;
 
-    protected override void OnCreate() => RequireForUpdate<StatusEffectConfig>();
-
-    [BurstCompile]
     protected override void OnUpdate()
     {
-        var statusEffects = SystemAPI.GetSingleton<StatusEffectConfig>();
-        foreach (var (poisoned, localTransform, entity) in SystemAPI.Query<RefRW<Poisioned>, RefRO<LocalTransform>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        foreach (var (text, localTransform, entity) in SystemAPI.Query<RefRW<EffectDamageText>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            if(!SystemAPI.IsComponentEnabled<Poisioned>(entity) && poisoned.ValueRO.DisplayCounter > 0.0f)
+            ref var t = ref text.ValueRW;
+            if (t.Bleed <= 0.0f && t.Burn <= 0.0f && t.Poison <= 0.0f)
             {
-                OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * statusEffects.PoisonDamagePerSecond, localTransform.ValueRO.Position);
-                poisoned.ValueRW.DisplayCounter = 0.0f;
-                break;
+                t.Timer = 0.0f;
+                continue;
             }
-            if(SystemAPI.IsComponentEnabled<Poisioned>(entity))
-            {
-                poisoned.ValueRW.DisplayCounter += SystemAPI.Time.DeltaTime;
-                if(poisoned.ValueRO.DisplayCounter > 1.0f)
-                {
-                    OnPoisoned?.Invoke(poisoned.ValueRO.DisplayCounter * statusEffects.PoisonDamagePerSecond, localTransform.ValueRO.Position);
-                    poisoned.ValueRW.DisplayCounter = 0.0f;
-                }
 
-            }
-            
+            t.Timer += deltaTime;
+            bool stillTicking = IsActive<Bleeding>(entity) || IsActive<Burning>(entity) || IsActive<Poisoned>(entity);
+            if (t.Timer < Interval && stillTicking) continue;
+
+            var position = localTransform.ValueRO.Position;
+            if (t.Bleed > 0.0f) OnBleeding?.Invoke(t.Bleed, position);
+            if (t.Burn > 0.0f) OnBurning?.Invoke(t.Burn, position);
+            if (t.Poison > 0.0f) OnPoisoned?.Invoke(t.Poison, position);
+            t = default;
         }
-
     }
-}
 
+    bool IsActive<T>(Entity entity) where T : unmanaged, IComponentData, IEnableableComponent
+        => EntityManager.HasComponent<T>(entity) && EntityManager.IsComponentEnabled<T>(entity);
+}

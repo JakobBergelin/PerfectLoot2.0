@@ -19,9 +19,11 @@ public partial class SkillActivationSystem : SystemBase
             // Only one skill at a time: the lowest held slot wins
             // TODO, replace with prio order, dash pressed should have prio over fireball etc.
             int activeSlot = int.MaxValue;
+            // Frozen and similar: no skill can be used (all of them get disabled below)
+            bool preventsActions = SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
             foreach (var skill in skills)
             {
-                if (IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot)
+                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot)
                     activeSlot = skill.SlotIndex;
             }
 

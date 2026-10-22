@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="EffectBar.uss" />
+    <ui:VisualElement name="effectBarRoot" class="effect-bar-root" picking-mode="Ignore">
+        <!-- Tiles are created by EffectBarHUD: buffs on the left, debuffs on the right -->
+        <ui:VisualElement class="effect-bar" picking-mode="Ignore">
+            <ui:VisualElement name="buffs" class="effect-bar__group effect-bar__group--buffs" picking-mode="Ignore" />
+            <ui:VisualElement name="debuffs" class="effect-bar__group effect-bar__group--debuffs" picking-mode="Ignore" />
+        </ui:VisualElement>
+        <ui:VisualElement name="tooltip" class="effect-tooltip" picking-mode="Ignore">
+            <ui:Label name="tooltipTitle" class="effect-tooltip__title" picking-mode="Ignore" />
+            <ui:Label name="tooltipBody" class="effect-tooltip__body" picking-mode="Ignore" />
+            <ui:Label name="tooltipFooter" class="effect-tooltip__footer" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

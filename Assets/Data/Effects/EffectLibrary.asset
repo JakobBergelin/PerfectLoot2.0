@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 509901cf0ac3247da379dfc568f129b4, type: 3}
+  m_Name: EffectLibrary
+  m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectLibrary
+  Effects:
+  - {fileID: 11400000, guid: a2fd2a47a2a4abf3c9937bcf42dbedd8, type: 2}
+  - {fileID: 11400000, guid: 02496b98b8e75272e3b7da1a8cdba86c, type: 2}
+  - {fileID: 11400000, guid: 8fb7c4220b4ab3380a6d4b65be116efb, type: 2}
+  - {fileID: 11400000, guid: c0302d3b4ac0cd75354c2c525e67e8ef, type: 2}
+  - {fileID: 11400000, guid: e336dbff52d7913b40a28ce1ea3d0a8b, type: 2}
+  - {fileID: 11400000, guid: c602c51962c7001c7282008803ff94db, type: 2}
+  - {fileID: 11400000, guid: a4cc945a3a4d892b15aee262f0da1284, type: 2}
+  - {fileID: 11400000, guid: d27eefdb6cd7e9336bbb5e292b1ad4c8, type: 2}

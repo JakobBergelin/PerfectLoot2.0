@@ -44,40 +44,7 @@ namespace Equipment
         {
             var block = new StatBlock();
             foreach (var total in Totals)
-            {
-                var v = total.Value;
-                switch (total.Affix)
-                {
-                    case Affix.Strength: block.Strength += v; break;
-                    case Affix.Agility: block.Agility += v; break;
-                    case Affix.Intelligence: block.Intelligence += v; break;
-                    case Affix.MovementSpeed: block.MovementSpeed += v; break;
-                    case Affix.AllResistance: block.AllResistance += v; break;
-                    case Affix.BlockChance: block.BlockChance += v; break;
-                    case Affix.CooldownReduction: block.CooldownReduction += v; break;
-                    case Affix.ResourceCostReduction: block.ResourceCostReduction += v; break;
-                    case Affix.DodgeChance: block.DodgeChance += v; break;
-                    case Affix.AttackSpeed: block.AttackSpeed += v; break;
-                    case Affix.WeaponDamage: block.WeaponDamage += v; break;
-                    case Affix.WeaponDamageRange: block.WeaponDamageRange += v; break;
-                    case Affix.Lifesteal: block.Lifesteal += v; break;
-                    case Affix.ProjectilePierces: block.Pierce += (int)Math.Round(v); break;
-                    case Affix.ProjectileBounces: block.Bounces += (int)Math.Round(v); break;
-                    case Affix.Damage: block.Damage += v; break;
-                    case Affix.AreaOfEffect: block.AreaOfEffect += v; break;
-                    case Affix.ColdResistance: block.ColdResistance += v; break;
-                    case Affix.FireResistance: block.FireResistance += v; break;
-                    case Affix.LightningResistance: block.LightningResistance += v; break;
-                    case Affix.CriticalChance: block.CriticalChance += v; break;
-                    case Affix.CriticalDamage: block.CriticalDamage += v; break;
-                    case Affix.Armor: block.Armor += (int)Math.Round(v); break;
-                    case Affix.ResourceSteal: block.ResourceSteal += v; break;
-                    case Affix.Health: block.Health += v; break;
-                    case Affix.HealthRegeneration: block.HealthRegeneration += v; break;
-                    case Affix.Resource: block.Resource += v; break;
-                    case Affix.ResourceRegeneration: block.ResourceRegeneration += v; break;
-                }
-            }
+                StatAffix.Add(ref block, total.Affix, total.Value);
             return block;
         }
 

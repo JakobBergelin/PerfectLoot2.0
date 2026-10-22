@@ -37,8 +37,89 @@ public class CharacterManager : MonoBehaviour
     public List<CharacterClass> AllClasses = new List<CharacterClass>();
     public List<ResourceDefinition> AllResources = new List<ResourceDefinition>();
 
+    [Header("Testing")]
+    [Tooltip("Applied by the \"Apply test effect to player\" context menu item")]
+    public Effects.EffectDefinition TestEffect;
+    public int TestStacks = 1;
+    [Tooltip("Seconds for test buffs (Broken Promises, Invulnerable); status effects use StatusEffectSettings")]
+    public float TestDuration = 3f;
+
     /// <summary>The current player entity, or Entity.Null while dead / not spawned yet.</summary>
     public Entity Player => _player;
+
+    [ContextMenu("Apply test effect to player")]
+    void ApplyTestEffect() => RequestTestEffect(remove: false);
+
+    [ContextMenu("Remove test effect from player")]
+    void RemoveTestEffect() => RequestTestEffect(remove: true);
+
+    // Applies or removes the test effect directly on the player's effect components. Status effects use
+    // StatusEffectSettings; buffs use TestDuration / TestStacks.
+    void RequestTestEffect(bool remove)
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (!Application.isPlaying || TestEffect == null || world == null || !world.EntityManager.Exists(_player))
+        {
+            Debug.LogWarning("Needs Play mode, a spawned player and a TestEffect.", this);
+            return;
+        }
+        var entityManager = world.EntityManager;
+        using var settingsQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<StatusEffectConfig>());
+        var settings = settingsQuery.IsEmpty ? default : settingsQuery.GetSingleton<StatusEffectConfig>();
+        int stacks = Mathf.Max(1, TestStacks);
+
+        switch (TestEffect.Type)
+        {
+            case EffectType.BrokenPromises:
+                if (remove) entityManager.SetComponentEnabled<BrokenPromisesBuff>(_player, false);
+                else SetEffect(entityManager, new BrokenPromisesBuff { TimeRemaining = TestDuration, Duration = TestDuration, CriticalChanceBonus = 1f });
+                break;
+            case EffectType.Refraction:
+                if (remove) entityManager.SetComponentEnabled<Refraction>(_player, false);
+                else SetEffect(entityManager, new Refraction { Stacks = stacks });
+                break;
+            case EffectType.Invulnerable:
+                if (remove) entityManager.SetComponentEnabled<Invulnerable>(_player, false);
+                else SetEffect(entityManager, new Invulnerable { TimeRemaining = TestDuration, Duration = TestDuration });
+                break;
+            case EffectType.Bleeding:
+                if (remove) { entityManager.GetBuffer<BleedInstance>(_player).Clear(); entityManager.SetComponentEnabled<Bleeding>(_player, false); }
+                else
+                {
+                    for (int i = 0; i < stacks; i++)
+                        entityManager.GetBuffer<BleedInstance>(_player).Add(new BleedInstance { TimeRemaining = settings.BleedDuration, Duration = settings.BleedDuration });
+                    entityManager.SetComponentEnabled<Bleeding>(_player, true);
+                }
+                break;
+            case EffectType.Burning:
+                if (remove) { entityManager.GetBuffer<BurnInstance>(_player).Clear(); entityManager.SetComponentEnabled<Burning>(_player, false); }
+                else
+                {
+                    for (int i = 0; i < stacks; i++)
+                        entityManager.GetBuffer<BurnInstance>(_player).Add(new BurnInstance { DamagePerSecond = 1f, TimeRemaining = settings.BurnDuration, Duration = settings.BurnDuration });
+                    entityManager.SetComponentEnabled<Burning>(_player, true);
+                }
+                break;
+            case EffectType.Poisoned:
+                if (remove) entityManager.SetComponentEnabled<Poisoned>(_player, false);
+                else SetEffect(entityManager, new Poisoned { TimeRemaining = settings.PoisonDuration, Duration = settings.PoisonDuration, DamagePerSecond = settings.PoisonDamagePerSecond });
+                break;
+            case EffectType.Chilled:
+                if (remove) entityManager.SetComponentEnabled<Chilled>(_player, false);
+                else SetEffect(entityManager, new Chilled { Stacks = Mathf.Min(stacks, settings.ChillMaxStacks), TimeRemaining = settings.ChillDuration, Duration = settings.ChillDuration });
+                break;
+            case EffectType.Frozen:
+                if (remove) entityManager.SetComponentEnabled<Frozen>(_player, false);
+                else SetEffect(entityManager, new Frozen { TimeRemaining = settings.FrozenDuration, Duration = settings.FrozenDuration });
+                break;
+        }
+    }
+
+    void SetEffect<T>(EntityManager entityManager, T effect) where T : unmanaged, IComponentData, IEnableableComponent
+    {
+        entityManager.SetComponentData(_player, effect);
+        entityManager.SetComponentEnabled<T>(_player, true);
+    }
 
     Entity _player;
     bool _hasSpawned;

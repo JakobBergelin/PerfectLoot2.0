@@ -33,6 +33,12 @@ public partial class EnemyMeleeAttackSystem : SystemBase
 
         foreach (var (enemyMeleeAttack, localTransform, npcBehavior, entity) in SystemAPI.Query<RefRW<EnemyMeleeAttack>, RefRW<LocalTransform>, RefRO<NpcBehavior>>().WithEntityAccess())
         {
+            // Frozen and similar: no turning or attacking
+            if (SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions)
+            {
+                continue;
+            }
+
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, npcBehavior.ValueRO.DesiredDirection, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
 
             if (Quaternion.Angle(localTransform.ValueRW.Rotation, npcBehavior.ValueRO.DesiredDirection) > (math.PI / 2))

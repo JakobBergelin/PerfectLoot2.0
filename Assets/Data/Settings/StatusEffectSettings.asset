@@ -13,12 +13,15 @@ MonoBehaviour:
   m_Name: StatusEffectSettings
   m_EditorClassIdentifier: Assembly-CSharp::StatusEffectSettings
   Values:
-    BleedTime: 1
+    BleedDuration: 1
     BleedDamageHealthMultiplier: 0.05
-    BurnTime: 3
+    BurnDuration: 3
+    PoisonDuration: 5
+    PoisonDamagePerSecond: 3
     ChilledDamageMultiplier: 2
-    FrozenTime: 2
+    ChillDuration: 4
+    ChillMaxStacks: 100
+    ChillSlowPerStack: 0.005
+    FrozenDuration: 2
     ChargedDamageMultiplier: 0.3
     ChargedRadius: 4
-    PoisonTime: 5
-    PoisonDamagePerSecond: 3

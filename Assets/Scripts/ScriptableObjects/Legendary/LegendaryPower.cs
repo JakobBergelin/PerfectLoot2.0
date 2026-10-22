@@ -1,6 +1,3 @@
-using System;
-using System.Reflection;
-using System.Text.RegularExpressions;
 using Unity.Entities;
 using UnityEngine;
 
@@ -13,22 +10,13 @@ namespace Equipment
     public abstract class LegendaryPower : ScriptableObject
     {
         public string Name;
-        [Tooltip("Can contain the power's own fields: {FieldName} or {FieldName:format}, e.g. {Duration} or {CriticalChanceBonus:P0}")]
+        [Tooltip("Can contain the power's own fields: {FieldName} or {FieldName:format}, e.g. {HitsRequired}, or {Effect.Duration} for a referenced asset")]
         [TextArea] public string Description;
 
         public string DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
 
         /// <summary>Description with every {Field} / {Field:format} replaced by this power's current value.</summary>
-        public string FormattedDescription => Placeholder.Replace(Description ?? "", match =>
-        {
-            var field = GetType().GetField(match.Groups[1].Value, BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            if (field == null) return match.Value;
-            var value = field.GetValue(this);
-            string format = match.Groups[2].Success ? match.Groups[2].Value : "0.##";
-            return value is IFormattable formattable ? formattable.ToString(format, null) : value?.ToString() ?? "";
-        });
-
-        static readonly Regex Placeholder = new Regex(@"\{(\w+)(?::([^}]+))?\}");
+        public string FormattedDescription => DescriptionFormatter.Format(this, Description);
 
         /// <summary>Adds this power's component to the entity, or refreshes its values if already present.</summary>
         public abstract void Apply(EntityManager entityManager, Entity entity);

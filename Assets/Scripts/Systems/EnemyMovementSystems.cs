@@ -70,8 +70,17 @@ public partial struct EnemyMovementSystem : ISystem
         public float DeltaTime;
 
         void Execute(Entity entity, ref NpcBehavior npc, ref LocalTransform transform, ref PhysicsVelocity velocity,
-            in MovementSpeed movementSpeed, in Steering steering)
+            in MovementSpeed movementSpeed, in Steering steering, in MovementModifiers modifiers)
         {
+            // Frozen and similar: stand still (knockback still pushes) and don't turn or attack
+            if (modifiers.PreventsActions)
+            {
+                npc.IsAttacking = false;
+                velocity.Linear = new float3(0f, velocity.Linear.y, 0f);
+                velocity.Angular = float3.zero;
+                return;
+            }
+
             var toPlayer = PlayerPosition - transform.Position;
             toPlayer.y = 0f;
             float distance = math.length(toPlayer);
@@ -84,7 +93,7 @@ public partial struct EnemyMovementSystem : ISystem
             bool chasing = npc.TargetPlayer != Entity.Null;
             npc.IsAttacking = chasing && distance <= npc.AttackRadius;
 
-            float speed = movementSpeed.Value;
+            float speed = movementSpeed.Value * modifiers.SpeedMultiplier;
             var desired = float3.zero;
             if (chasing && distance > 1e-4f)
             {

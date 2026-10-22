@@ -56,17 +56,20 @@ public partial class AttackSystemGroup : ComponentSystemGroup
 
 /// <summary>
 /// Resolves this frame's damage: costs paid in health (Huskar), resistances, damage passives, applying it,
-/// knockback, status effect damage (SubDamageSystemGroup) and death.
+/// knockback, buffs and debuffs (EffectSystemGroup), lightning charges and death.
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(AttackSystemGroup))]
 public partial class DamageSystemGroup : ComponentSystemGroup
 {}
 
-/// <summary>Status effect damage (bleed, chill, burn, poison, lightning). After DamagingSystem has applied the hits.</summary>
+/// <summary>
+/// Buffs and debuffs (enableable effect components): freezes fully chilled units, deals damage over time, works out
+/// slows and stuns, and counts timed effects down (last). After DamagingSystem, which applies the status effects.
+/// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(DamagingSystem))]
-public partial class SubDamageSystemGroup : ComponentSystemGroup
+public partial class EffectSystemGroup : ComponentSystemGroup
 {}
 
 /// <summary>Healing, regeneration and resource gains; UpdateResourcesSystem (last) applies this frame's resource changes.</summary>

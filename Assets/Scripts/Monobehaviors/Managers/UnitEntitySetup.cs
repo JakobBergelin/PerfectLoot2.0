@@ -29,14 +29,21 @@ public static class UnitEntitySetup
         AddBuffer<PeriodicDamageInstance>(entityManager, entity);
         AddBuffer<CalculatedDamageInstance>(entityManager, entity);
         AddOrSet(entityManager, entity, new Knockback());
-        AddBuffer<BurnInstance>(entityManager, entity);
-        AddBuffer<BleedInstance>(entityManager, entity);
         AddBuffer<ChargedInstance>(entityManager, entity);
+
+        // Buffs and debuffs: every effect component is present but disabled until applied
+        AddDisabled(entityManager, entity, new BrokenPromisesBuff());
+        AddDisabled(entityManager, entity, new Refraction());
+        AddDisabled(entityManager, entity, new Invulnerable());
+        AddDisabled(entityManager, entity, new Bleeding());
+        AddBuffer<BleedInstance>(entityManager, entity);
+        AddDisabled(entityManager, entity, new Burning());
+        AddBuffer<BurnInstance>(entityManager, entity);
+        AddDisabled(entityManager, entity, new Poisoned());
         AddDisabled(entityManager, entity, new Chilled());
         AddDisabled(entityManager, entity, new Frozen());
-        AddDisabled(entityManager, entity, new Burning());
-        AddDisabled(entityManager, entity, new Bleeding());
-        AddDisabled(entityManager, entity, new Poisioned());
+        AddOrSet(entityManager, entity, new MovementModifiers { SpeedMultiplier = 1f });
+        AddOrSet(entityManager, entity, new EffectDamageText());
 
         // Units never tip over. Rigidbody constraints don't bake into Unity Physics, so the rotation is locked here.
         if (entityManager.HasComponent<PhysicsMass>(entity))
