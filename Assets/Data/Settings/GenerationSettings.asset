@@ -18,11 +18,7 @@ MonoBehaviour:
   MagicBaseMin: 0.1
   RareBaseMax: 0.6
   RareBaseMin: 0.2
-  LegendaryBaseMax: 0.75
-  LegendaryBaseMin: 0.5
   MagicAffixMax: 1
   MagicAffixMin: 0
   RareAffixMax: 0.6
   RareAffixMin: 0.2
-  LegendaryAffixMax: 0.85
-  LegendaryAffixMin: 0.5

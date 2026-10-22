@@ -61,6 +61,7 @@ public class InventoryManager : MonoBehaviour
     // New player entity (spawn/respawn): it has no equipment stats yet
     void OnPlayerSpawned(Entity player)
     {
+        _appliedPowers.Clear();
         _equipmentStatsDirty = true;
         TryPushEquipmentStats();
     }
@@ -116,9 +117,36 @@ public class InventoryManager : MonoBehaviour
         var equipmentStats = new EquipmentStats { Value = block };
         using var players = query.ToEntityArray(Allocator.Temp);
         foreach (var player in players)
+        {
             entityManager.SetComponentData(player, equipmentStats);
+            SyncLegendaryPowers(entityManager, player);
+        }
 
         _equipmentStatsDirty = false;
+    }
+
+    // Powers currently applied to the player entity, so unequipped ones can be removed
+    readonly List<LegendaryPower> _appliedPowers = new List<LegendaryPower>();
+
+    /// <summary>Applies the powers of equipped Legendary/Unique items (each power once) and removes ones no longer equipped.</summary>
+    void SyncLegendaryPowers(EntityManager entityManager, Entity player)
+    {
+        var equipped = new List<LegendaryPower>();
+        foreach (var (_, slot) in NamedSlots)
+        {
+            if (slot == null || slot.IsEmpty) continue;
+            if (slot.EquippedItem.BaseItem is ILegendaryItem legendary && legendary.Power != null && !equipped.Contains(legendary.Power))
+                equipped.Add(legendary.Power);
+        }
+
+        foreach (var power in _appliedPowers)
+            if (!equipped.Contains(power)) power.Remove(entityManager, player);
+        // Apply also refreshes already applied powers, so edited values take effect
+        foreach (var power in equipped)
+            power.Apply(entityManager, player);
+
+        _appliedPowers.Clear();
+        _appliedPowers.AddRange(equipped);
     }
 
     [ContextMenu("Log Summary")]

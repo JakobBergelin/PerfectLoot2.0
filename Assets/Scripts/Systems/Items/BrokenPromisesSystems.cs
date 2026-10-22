@@ -1,140 +1,66 @@
-//using System;
-//using Unity.Burst;
-//using Unity.Entities;
-//using UnityEngine;
+using Unity.Burst;
+using Unity.Entities;
 
-//public struct BrokenPromises : IComponentData
-//{
+/// <summary>Broken Promises legendary power, added by BrokenPromisesPower while the item is equipped.</summary>
+public struct BrokenPromises : IComponentData
+{
+    public int HitsRequired;
+    public float Duration;
+    public float CriticalChanceBonus;
 
-//    // TODO ring affixes
+    public int NonCritHits;             // Current streak
+    public float ActiveTimeRemaining;   // > 0 while the bonus is active
+}
 
-//    public int NonCritHits; 
-//}
+/// <summary>Counts the owner's non-critical main hits in a row; a crit resets the streak, a full streak starts the bonus.</summary>
+[UpdateInGroup(typeof(DamageSystemGroup))]
+[UpdateAfter(typeof(CalculateDamageSystem))]
+[UpdateBefore(typeof(DamagingSystem))]
+[BurstCompile]
+public partial struct BrokenPromisesHitSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        var brokenPromisesLookup = SystemAPI.GetComponentLookup<BrokenPromises>();
+        foreach (var calculatedDamageBuffer in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>())
+        {
+            foreach (var instance in calculatedDamageBuffer)
+            {
+                if (instance.Hierarchy != DamageHierarchy.Main || !brokenPromisesLookup.HasComponent(instance.Source)) continue;
 
-//public struct BrokenPromisesActive : IComponentData
-//{
-//    public float TimeRemaining;
-//}
+                var brokenPromises = brokenPromisesLookup.GetRefRW(instance.Source);
+                if (instance.IsCrit)
+                {
+                    brokenPromises.ValueRW.NonCritHits = 0;
+                    continue;
+                }
 
-//[BurstCompile]
-//[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
-//public partial struct CalculateBrokenPromisesSystem : ISystem
-//{
+                brokenPromises.ValueRW.NonCritHits++;
+                if (brokenPromises.ValueRO.NonCritHits >= brokenPromises.ValueRO.HitsRequired)
+                {
+                    brokenPromises.ValueRW.NonCritHits = 0;
+                    brokenPromises.ValueRW.ActiveTimeRemaining = brokenPromises.ValueRO.Duration;
+                }
+            }
+        }
+    }
+}
 
-//    [BurstCompile]
-//    public void OnUpdate(ref SystemState state)
-//    {
-//        foreach (var (item, stats, precentages) in SystemAPI.Query<RefRO<BrokenPromises>, RefRW<CalculatedStats>, RefRW<CalculatedStatsPercentages>>())
-//        {
-
-//        }
-//    }
-//}
-
-//[BurstCompile]
-//[UpdateInGroup(typeof(CalculateStatsSystemGroup))]
-//public partial struct CalculateBrokenPromisesActiveSystem : ISystem
-//{
-
-//    [BurstCompile]
-//    public void OnUpdate(ref SystemState state)
-//    {
-//        foreach (var (item, precentages) in SystemAPI.Query<RefRO<BrokenPromisesActive>, RefRW<CalculatedStatsPercentages>>())
-//        {
-//            precentages.ValueRW.CriticalChance += 1.0f;
-//        }
-//    }
-//}
-
-//[BurstCompile]
-//public partial class BrokenPromisesActiveSystem : SystemBase
-//{
-//    private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
-//    [BurstCompile]
-//    protected override void OnCreate()
-//    {
-//        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
-//    }
-
-//    [BurstCompile]
-//    protected override void OnUpdate()
-//    {
-//        var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-//        foreach (var (brokenPromises, entity) in SystemAPI.Query<RefRW<BrokenPromisesActive>>().WithEntityAccess())
-//        {
-//            brokenPromises.ValueRW.TimeRemaining -= SystemAPI.Time.DeltaTime;
-//            if(brokenPromises.ValueRO.TimeRemaining <= 0.0f)
-//            {
-//                commandBuffer.RemoveComponent<BrokenPromisesActive>(entity);
-//            }
-//        }
-//    }
-//}
-
-//[BurstCompile]
-//[UpdateAfter(typeof(InventorySystem))]
-//public partial struct RandomizeBrokenPromisesSystem : ISystem
-//{
-//    [BurstCompile]
-//    public void OnUpdate(ref SystemState state)
-//    {
-//        foreach (var (itemBuffer, item) in SystemAPI.Query<DynamicBuffer<InventoryItem>, RefRW<BrokenPromises>>())
-//        {
-//            Guid seed = new Guid();
-//            foreach(var i in itemBuffer)
-//            {
-//                if(i.Type == ItemType.BrokenPromises)
-//                {
-//                    seed = i.Seed;
-//                    break;
-//                }
-//            }
-//            UnityEngine.Random.InitState(seed.GetHashCode());
-//        }
-//    }
-//}
-
-//[BurstCompile]
-//[UpdateAfter(typeof(CalculateDamageSystem))]
-//[UpdateBefore(typeof(DamagingSystem))]
-//public partial class BrokenPromisesSystem : SystemBase
-//{
-//    private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
-//    [BurstCompile]
-//    protected override void OnCreate()
-//    {
-//        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
-//    }
-
-//    [BurstCompile]
-//    protected override void OnUpdate()
-//    {
-//        var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-//        foreach (var (calculatedDamageBuffer, entity) in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>().WithEntityAccess())
-//        {
-//            foreach(var instance in calculatedDamageBuffer)
-//            {
-//                var source = instance.Source;
-//                if(SystemAPI.HasComponent<BrokenPromises>(source))
-//                {
-                    
-//                    var brokenPromises = SystemAPI.GetComponentRW<BrokenPromises>(source);
-//                    if(instance.IsCrit)
-//                    {
-//                        brokenPromises.ValueRW.NonCritHits = 0;
-//                    }
-//                    else
-//                    {
-//                        brokenPromises.ValueRW.NonCritHits++;
-//                    }
-
-//                    if(brokenPromises.ValueRO.NonCritHits >= 10)
-//                    {
-//                        brokenPromises.ValueRW.NonCritHits = 0;
-//                        commandBuffer.AddComponent(source, new BrokenPromisesActive{TimeRemaining = 2.0f});
-//                    }
-//                }
-//            }
-//        }
-//    }
-//}
+/// <summary>Adds the critical chance bonus while Broken Promises is active, and counts its time down.</summary>
+[UpdateInGroup(typeof(FlatStatsSystemGroup))]
+[BurstCompile]
+public partial struct BrokenPromisesStatsSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        foreach (var (brokenPromises, stats) in SystemAPI.Query<RefRW<BrokenPromises>, RefRW<CalculatedStats>>())
+        {
+            if (brokenPromises.ValueRO.ActiveTimeRemaining <= 0f) continue;
+            stats.ValueRW.Value.CriticalChance += brokenPromises.ValueRO.CriticalChanceBonus;
+            brokenPromises.ValueRW.ActiveTimeRemaining -= deltaTime;
+        }
+    }
+}

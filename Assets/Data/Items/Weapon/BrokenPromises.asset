@@ -44,4 +44,4 @@ MonoBehaviour:
     Max: 10
   WeaponCooldown: 0.8
   WeaponDamageRange: 1.8
-  LegendaryAffix: 1
+  LegendaryPower: {fileID: 11400000, guid: 422584afdc1f4de44bd5b4242ec6d428, type: 2}

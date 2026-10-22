@@ -46,4 +46,3 @@ MonoBehaviour:
   MovementSpeed:
     Min: 0.2
     Max: 0.35
-  LegendaryAffix: 0

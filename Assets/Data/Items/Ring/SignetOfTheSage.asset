@@ -43,4 +43,3 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.12
-  LegendaryAffix: 0

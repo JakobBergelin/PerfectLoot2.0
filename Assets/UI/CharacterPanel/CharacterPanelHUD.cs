@@ -270,6 +270,15 @@ public class CharacterPanelHUD : MonoBehaviour
         var settings = LootGenerationManager.Instance != null ? LootGenerationManager.Instance.GenerationSettings : null;
         AppendAffixes(sb, item, item.BaseAffixes, isBaseAffix: true, settings);
         AppendAffixes(sb, item, item.RollableAffixes, isBaseAffix: false, settings);
+
+        // Legendary/Unique power: name in the item's rarity color, then its description with the numbers filled in
+        if (item.BaseItem is ILegendaryItem legendary && legendary.Power != null)
+        {
+            var color = ColorUtility.ToHtmlStringRGB(RarityColors.Get(item.Rarity) ?? Color.white);
+            sb.AppendLine();
+            sb.AppendLine($"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>");
+            sb.AppendLine(legendary.Power.FormattedDescription);
+        }
         _tooltipBody.text = sb.Length > 0 ? sb.ToString().TrimEnd() : "No stats";
 
         // Right of the slot, in the root's coordinates
