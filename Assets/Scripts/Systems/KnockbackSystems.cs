@@ -1,11 +1,12 @@
 using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Transforms;
 
 /// <summary>
-/// Moves units that were pushed by a hit and lets the push die out. Moves the position directly instead of
-/// PhysicsVelocity, because the movement systems overwrite the velocity every frame.
+/// Pushes units that were hit and lets the push die out. Physics bodies get it added to their velocity after the
+/// movement systems have written theirs, so walls and other bodies stop the push. Units without a body are moved directly.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(DamagingSystem))]
@@ -23,7 +24,7 @@ public partial struct KnockbackSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         float decay = math.exp(-SystemAPI.GetSingleton<CombatConfig>().KnockbackDamping * deltaTime);
 
-        foreach (var (knockback, localTransform) in SystemAPI.Query<RefRW<Knockback>, RefRW<LocalTransform>>())
+        foreach (var (knockback, localTransform, entity) in SystemAPI.Query<RefRW<Knockback>, RefRW<LocalTransform>>().WithEntityAccess())
         {
             var velocity = knockback.ValueRO.Velocity;
             if (math.lengthsq(velocity) < StopSpeed * StopSpeed)
@@ -34,7 +35,15 @@ public partial struct KnockbackSystem : ISystem
 
             // Horizontal only, so a push never lifts a unit or sinks it into the ground
             velocity.y = 0f;
-            localTransform.ValueRW.Position += velocity * deltaTime;
+            if (SystemAPI.HasComponent<PhysicsVelocity>(entity))
+            {
+                var physicsVelocity = SystemAPI.GetComponentRW<PhysicsVelocity>(entity);
+                physicsVelocity.ValueRW.Linear += velocity;
+            }
+            else
+            {
+                localTransform.ValueRW.Position += velocity * deltaTime;
+            }
             knockback.ValueRW.Velocity = velocity * decay;
         }
     }

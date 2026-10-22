@@ -81,7 +81,12 @@ public partial class InputsDataSystem : SystemBase
 
         foreach (var (desiredDirection, transform, inputsData) in SystemAPI.Query<RefRW<DesiredDirection>, RefRO<LocalTransform>, RefRO<InputsData>>())
         {
-            desiredDirection.ValueRW.Direction = Vector3.Normalize(inputsData.ValueRO.MousePosition - transform.ValueRO.Position);
+            // Horizontal only, so turning toward the mouse never tilts the body (the mouse point and the body center
+            // are at different heights); keep the last direction when the mouse is right on the player
+            var toMouse = inputsData.ValueRO.MousePosition - transform.ValueRO.Position;
+            toMouse.y = 0f;
+            if (math.lengthsq(toMouse) < 1e-6f) continue;
+            desiredDirection.ValueRW.Direction = math.normalize(toMouse);
             desiredDirection.ValueRW.Quaternion = Quaternion.LookRotation(desiredDirection.ValueRO.Direction, Vector3.up);
         }
     }

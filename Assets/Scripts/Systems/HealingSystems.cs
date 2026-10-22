@@ -35,7 +35,7 @@ public partial class HealingSystem : SystemBase
         var collisionFilter = new CollisionFilter
         {
             BelongsTo = ~0u,
-            CollidesWith = (uint)CollisionLayerHelper.Enemy | (uint)CollisionLayerHelper.Player,
+            CollidesWith = (uint)CollisionLayerHelper.AnyEnemy | (uint)CollisionLayerHelper.Player,
             GroupIndex = 0,
         };
 
@@ -90,7 +90,7 @@ public partial class PeriodicHealSystem : SystemBase
         // var collisionFilter = new CollisionFilter
         // {
         //     BelongsTo = ~0u,
-        //     CollidesWith = (uint)CollisionLayerHelper.Enemy,
+        //     CollidesWith = (uint)CollisionLayerHelper.AnyEnemy,
         //     GroupIndex = 0,
         // };
 

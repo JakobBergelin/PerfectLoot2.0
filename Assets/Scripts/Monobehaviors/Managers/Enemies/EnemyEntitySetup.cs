@@ -1,6 +1,8 @@
 using Enemies;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
+using Unity.Transforms;
 using Unity.Rendering;
 using static UnitEntitySetup;
 
@@ -14,8 +16,22 @@ public static class EnemyEntitySetup
     {
         AddOrSet(entityManager, entity, new Enemy());
 
-        // Stats, health, damage buffers, status effects, knockback, smoothing
+        // Stats, health, damage buffers, status effects, knockback, smoothing, rotation lock
         AddCombatComponents(entityManager, entity, definition.Stats);
+
+        // Size (the collider scales with the transform) and weight
+        var transform = entityManager.GetComponentData<LocalTransform>(entity);
+        transform.Scale = math.max(0.01f, definition.Scale);
+        entityManager.SetComponentData(entity, transform);
+        if (entityManager.HasComponent<PhysicsMass>(entity))
+        {
+            var mass = entityManager.GetComponentData<PhysicsMass>(entity);
+            mass.InverseMass = 1f / math.max(0.01f, definition.Mass);
+            entityManager.SetComponentData(entity, mass);
+        }
+
+        // Spacing in crowds
+        AddOrSet(entityManager, entity, new Steering { Radius = definition.BodyRadius, BodyType = definition.BodyType });
 
         // Without AI (training dummies) it just stands there
         if (definition.HasAI)

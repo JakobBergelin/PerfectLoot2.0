@@ -1,83 +1,150 @@
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
+using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Transforms;
-using UnityEngine;
-using Unity.Collections;
-using Unity.Mathematics;
+
+/// <summary>
+/// Enemy AI movement, in parallel: notices the player within DetectionRadius, chases it, stops within AttackRadius,
+/// and steers away from nearby units (UnitSpatialGrid) so crowds spread out around the player instead of piling up.
+/// Only writes horizontal velocity, so gravity keeps enemies on the ground.
+/// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
-partial struct EnemyMovementSystem : ISystem
+[UpdateAfter(typeof(UnitSpatialGridSystem))]
+[BurstCompile]
+public partial struct EnemyMovementSystem : ISystem
 {
-    public quaternion lookRotation;
+    EntityQuery _playerQuery;
+
+    public void OnCreate(ref SystemState state)
+    {
+        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player, LocalTransform>().Build();
+        state.RequireForUpdate<UnitSpatialGrid>();
+        state.RequireForUpdate<MovementConfig>();
+    }
+
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
-        NativeList<DistanceHit> hits = new NativeList<DistanceHit>(Allocator.Temp);
-        NativeList<DistanceHit> attackRadius = new NativeList<DistanceHit>(Allocator.Temp);
-        var collisionFilter = new CollisionFilter
+        var player = Entity.Null;
+        var playerPosition = float3.zero;
+        if (_playerQuery.CalculateEntityCount() == 1)
         {
-            BelongsTo = ~0u,
-            CollidesWith = (uint)CollisionLayerHelper.Player,
-            GroupIndex = 0,
-        };
-
-        foreach (var (npcBehavior, localTransform, entity) in SystemAPI.Query<RefRW<NpcBehavior>, RefRW<LocalTransform>>().WithEntityAccess())
-        {         
-            hits.Clear(); 
-            physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, npcBehavior.ValueRO.DetectionRadius, ref hits, collisionFilter);
-            if(!hits.IsEmpty)
-            {
-                foreach(var hit in hits)
-                {
-                    if(SystemAPI.HasComponent<Player>(hit.Entity))
-                    {
-                        npcBehavior.ValueRW.TargetPlayer = hit.Entity;
-                    }
-                }
-            }          
-        }  
-
-        foreach (var (npcBehavior, localTransform) in SystemAPI.Query<RefRW<NpcBehavior>, RefRW<LocalTransform>>())
-        {
-
-            var target = npcBehavior.ValueRO.TargetPlayer; 
-            if(target != Entity.Null && SystemAPI.HasComponent<LocalTransform>(target))
-            {
-                var targetDirection = SystemAPI.GetComponentRO<LocalTransform>(target).ValueRO.Position - localTransform.ValueRO.Position;
-                npcBehavior.ValueRW.Direction = Vector3.Normalize(targetDirection);
-                var newDirection = Vector3.RotateTowards(npcBehavior.ValueRO.Direction, targetDirection, npcBehavior.ValueRO.TurnSpeed * SystemAPI.Time.DeltaTime, 0.0f);
-                npcBehavior.ValueRW.Direction = newDirection;
-                npcBehavior.ValueRW.DesiredDirection = Quaternion.LookRotation(newDirection);
-                npcBehavior.ValueRW.TurnSpeed += npcBehavior.ValueRO.TurnAcceleration * SystemAPI.Time.DeltaTime;
-                lookRotation = Quaternion.LookRotation(newDirection);
-                localTransform.ValueRW.Rotation = Quaternion.Slerp(localTransform.ValueRO.Rotation, lookRotation, npcBehavior.ValueRO.TurnSpeed * SystemAPI.Time.DeltaTime);
-            }
-        }     
-        foreach (var (localTransform, npcBehavior, movementSpeed, physicsVelocity) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<NpcBehavior>, RefRO<MovementSpeed>, RefRW<PhysicsVelocity>>())
-        {
-            attackRadius.Clear();
-            physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, npcBehavior.ValueRO.AttackRadius, ref attackRadius, collisionFilter);
-            float speed = math.remap(0.0f, 180.0f, movementSpeed.ValueRO.Value, 0.0f, Quaternion.Angle(localTransform.ValueRO.Rotation, lookRotation));
-            npcBehavior.ValueRW.IsAttacking = false;
-            if (!attackRadius.IsEmpty)
-            {
-                foreach(var hit in attackRadius)
-                {
-                    if(SystemAPI.HasComponent<Player>(hit.Entity))
-                    {
-                        npcBehavior.ValueRW.IsAttacking = true;
-                    }
-                }
-                physicsVelocity.ValueRW.Linear = float3.zero;
-                physicsVelocity.ValueRW.Angular = float3.zero;
-            }
-            if (!npcBehavior.ValueRO.IsAttacking)
-            {
-                physicsVelocity.ValueRW.Linear = npcBehavior.ValueRO.Direction * speed;
-                physicsVelocity.ValueRW.Angular = float3.zero;
-            }
+            player = _playerQuery.GetSingletonEntity();
+            playerPosition = SystemAPI.GetComponent<LocalTransform>(player).Position;
         }
 
+        state.Dependency = new EnemyMovementJob
+        {
+            Player = player,
+            PlayerPosition = playerPosition,
+            Grid = SystemAPI.GetSingleton<UnitSpatialGrid>().Units,
+            Config = SystemAPI.GetSingleton<MovementConfig>(),
+            DeltaTime = SystemAPI.Time.DeltaTime,
+        }.ScheduleParallel(state.Dependency);
+
+        // Enemies without AI (training dummies) stand still: without this, a push or knockback would keep them sliding
+        state.Dependency = new StationaryEnemyJob().ScheduleParallel(state.Dependency);
+    }
+
+    [BurstCompile]
+    [WithAll(typeof(Enemy))]
+    [WithNone(typeof(NpcBehavior))]
+    partial struct StationaryEnemyJob : IJobEntity
+    {
+        void Execute(ref PhysicsVelocity velocity)
+        {
+            velocity.Linear = new float3(0f, velocity.Linear.y, 0f);
+            velocity.Angular = float3.zero;
+        }
+    }
+
+    [BurstCompile]
+    partial struct EnemyMovementJob : IJobEntity
+    {
+        public Entity Player;
+        public float3 PlayerPosition;
+        [ReadOnly] public NativeParallelMultiHashMap<int, GridUnit> Grid;
+        public MovementConfig Config;
+        public float DeltaTime;
+
+        void Execute(Entity entity, ref NpcBehavior npc, ref LocalTransform transform, ref PhysicsVelocity velocity,
+            in MovementSpeed movementSpeed, in Steering steering)
+        {
+            var toPlayer = PlayerPosition - transform.Position;
+            toPlayer.y = 0f;
+            float distance = math.length(toPlayer);
+
+            // Notice the player once it is close enough; forget a player that no longer exists (respawned)
+            if (npc.TargetPlayer != Player) npc.TargetPlayer = Entity.Null;
+            if (Player != Entity.Null && npc.TargetPlayer == Entity.Null && distance <= npc.DetectionRadius)
+                npc.TargetPlayer = Player;
+
+            bool chasing = npc.TargetPlayer != Entity.Null;
+            npc.IsAttacking = chasing && distance <= npc.AttackRadius;
+
+            float speed = movementSpeed.Value;
+            var desired = float3.zero;
+            if (chasing && distance > 1e-4f)
+            {
+                var direction = toPlayer / distance;
+                var lookRotation = quaternion.LookRotationSafe(direction, math.up());
+                npc.Direction = direction;
+                npc.DesiredDirection = lookRotation;
+                npc.TurnSpeed += npc.TurnAcceleration * DeltaTime;
+                transform.Rotation = math.slerp(transform.Rotation, lookRotation, math.saturate(npc.TurnSpeed * DeltaTime));
+
+                // Slower while still turning toward the player, stopped while attacking
+                float angle = math.degrees(Angle(transform.Rotation, lookRotation));
+                if (!npc.IsAttacking)
+                    desired = direction * math.remap(0f, 180f, speed, 0f, math.min(angle, 180f));
+            }
+
+            // Push away from overlapping neighbours (other enemies and the player)
+            desired += Separation(entity, transform.Position, steering.Radius) * Config.SeparationStrength(steering.BodyType);
+
+            // The push may exceed the walk speed a little, so a packed crowd can still spread
+            float maxSpeed = math.max(speed, 1f) * 1.5f;
+            float desiredSpeed = math.length(desired);
+            if (desiredSpeed > maxSpeed) desired *= maxSpeed / desiredSpeed;
+
+            // Horizontal only: Y is left to gravity
+            velocity.Linear = new float3(desired.x, velocity.Linear.y, desired.z);
+            velocity.Angular = float3.zero;
+        }
+
+        float3 Separation(Entity self, float3 position, float radius)
+        {
+            var push = float3.zero;
+            var cell = UnitSpatialGrid.Cell(position);
+            for (int x = -1; x <= 1; x++)
+            for (int z = -1; z <= 1; z++)
+            {
+                if (!Grid.TryGetFirstValue(UnitSpatialGrid.Hash(cell + new int2(x, z)), out var other, out var iterator)) continue;
+                do
+                {
+                    if (other.Entity == self) continue;
+                    var away = position - other.Position;
+                    away.y = 0f;
+                    float minDistance = (radius + other.Radius) * Config.SeparationSpacing;
+                    float distanceSq = math.lengthsq(away);
+                    if (distanceSq >= minDistance * minDistance) continue;
+
+                    float distance = math.sqrt(distanceSq);
+                    // Exactly on top of each other: pick a direction from the entity index so they still split
+                    var direction = distance > 1e-4f ? away / distance : new float3(math.sin(self.Index), 0f, math.cos(self.Index));
+                    push += direction * (1f - distance / minDistance);
+                }
+                while (Grid.TryGetNextValue(out other, ref iterator));
+            }
+            return push;
+        }
+
+        static float Angle(quaternion a, quaternion b)
+        {
+            float dot = math.abs(math.dot(a.value, b.value));
+            return 2f * math.acos(math.min(dot, 1f));
+        }
     }
 }

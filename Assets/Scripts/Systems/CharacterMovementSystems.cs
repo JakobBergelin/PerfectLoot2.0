@@ -43,12 +43,16 @@ public partial class CharacterMovementSystem : SystemBase
                     speed = math.remap(0.0f, 180.0f, movementConfig.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value) , 0.0f, Quaternion.Angle(transform.ValueRW.Rotation, newQuaternion));
                 }
 
-                /*transform.ValueRW.Position += (float3)direction * speed * Time.deltaTime;*/
-                velocity.ValueRW.Linear = (float3)direction * speed;
-                velocity.ValueRW.Angular = float3.zero;
-
+                // Horizontal only: Y is left to gravity
+                velocity.ValueRW.Linear = new float3(direction.x * speed, velocity.ValueRO.Linear.y, direction.z * speed);
                 moving = true;
             }
+            else
+            {
+                // Stop when there is no input (keeping the fall speed)
+                velocity.ValueRW.Linear = new float3(0f, velocity.ValueRO.Linear.y, 0f);
+            }
+            velocity.ValueRW.Angular = float3.zero;
 
             if(moving && !SystemAPI.HasComponent<StandingStill>(entity))
             {

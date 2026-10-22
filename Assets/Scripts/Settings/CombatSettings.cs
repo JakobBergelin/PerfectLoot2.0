@@ -30,7 +30,7 @@ public struct CombatConfig : IComponentData
     public float UnarmedWeaponReach;
     [Tooltip("Radius a homing projectile searches for a target in")]
     public float HomingTargetRange;
-    [Tooltip("How fast knockback dies out, per second. A push travels about HitForce / KnockbackDamping units.")]
+    [Tooltip("How fast knockback dies out, per second. A push travels about HitForce / (mass * KnockbackDamping) units.")]
     public float KnockbackDamping;
 
     /// <summary>Fraction of damage mitigated by a defense value: value / (value + constant). 0 when the value is 0 or less.</summary>

@@ -16,6 +16,15 @@ namespace Enemies
         public bool OverrideColor;
         public Color Tint = Color.white;
 
+        [Header("Body")]
+        [Tooltip("Physics: collides with other units and the player (body-blocks). Swarm: only collides with the world, " +
+                 "much cheaper for big numbers. Must match the prefab's layer (Enemy or EnemySwarm).")]
+        public BodyType BodyType = BodyType.Physics;
+        [Tooltip("Uniform size; the collider and health bar scale with it")]
+        public float Scale = 1f;
+        [Tooltip("Heavier units push lighter ones aside")]
+        public float Mass = 1f;
+
         [Tooltip("For enemies MovementSpeed is the speed in units per second (for the player it is a bonus)")]
         public StatBlock Stats = new StatBlock
         {
@@ -46,5 +55,19 @@ namespace Enemies
         public float SecondsBetweenAttacks = 1f;
 
         public string DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
+
+        /// <summary>Capsule radius of the visual prefabs (0.5) at this definition's scale.</summary>
+        public float BodyRadius => 0.5f * Scale;
+
+#if UNITY_EDITOR
+        void OnValidate()
+        {
+            if (Prefab == null) return;
+            string expectedLayer = BodyType == BodyType.Swarm ? "EnemySwarm" : "Enemy";
+            if (LayerMask.LayerToName(Prefab.layer) != expectedLayer)
+                Debug.LogWarning($"{name}: BodyType {BodyType} needs a prefab on the {expectedLayer} layer, but {Prefab.name} is on " +
+                                 $"'{LayerMask.LayerToName(Prefab.layer)}'. Use EnemySwarmVisuals for Swarm, EnemyVisuals for Physics.", this);
+        }
+#endif
     }
 }

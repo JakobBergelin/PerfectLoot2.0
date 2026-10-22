@@ -39,6 +39,33 @@ public class EnemyManager : MonoBehaviour
     /// <summary>Spawns one enemy at the position. Returns Entity.Null if not ready or the definition isn't registered.</summary>
     public Entity Spawn(EnemyDefinition definition, Vector3 position)
     {
+        using var positions = new NativeArray<Vector3>(1, Allocator.Temp);
+        var spawned = positions;
+        spawned[0] = position;
+        return SpawnAt(definition, positions);
+    }
+
+    /// <summary>Spawns count enemies at random points within radius of center (on the same height).</summary>
+    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius)
+    {
+        if (count <= 0) return;
+        using var positions = new NativeArray<Vector3>(count, Allocator.Temp);
+        var spawned = positions;
+        for (int i = 0; i < count; i++)
+        {
+            var offset = Random.insideUnitCircle * radius;
+            spawned[i] = center + new Vector3(offset.x, 0f, offset.y);
+        }
+        SpawnAt(definition, positions);
+    }
+
+    /// <summary>
+    /// Builds one fully set-up template from the definition, instantiates it once per position in a single batch and
+    /// removes the template. Adding the gameplay components once instead of per enemy keeps big groups cheap.
+    /// Returns the first spawned enemy, or Entity.Null.
+    /// </summary>
+    Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions)
+    {
         if (definition == null) { Debug.LogWarning("EnemyManager.Spawn: no definition.", this); return Entity.Null; }
         if (!TryGetPrefabs(out var entityManager, out var prefabs))
         {
@@ -51,23 +78,31 @@ public class EnemyManager : MonoBehaviour
             return Entity.Null;
         }
 
-        var enemy = entityManager.Instantiate(prefab);
-        var transform = entityManager.GetComponentData<LocalTransform>(enemy);
-        transform.Position = position;
-        entityManager.SetComponentData(enemy, transform);
-
-        EnemyEntitySetup.AddGameplayComponents(entityManager, enemy, definition);
-        return enemy;
-    }
-
-    /// <summary>Spawns count enemies at random points within radius of center (on the same height).</summary>
-    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius)
-    {
-        for (int i = 0; i < count; i++)
+        // Template: the baked visual prefab plus the definition's gameplay components, turned back into a prefab
+        // (on the whole linked group, so its health bar isn't simulated or drawn either)
+        var template = entityManager.Instantiate(prefab);
+        EnemyEntitySetup.AddGameplayComponents(entityManager, template, definition);
+        if (entityManager.HasBuffer<LinkedEntityGroup>(template))
         {
-            var offset = Random.insideUnitCircle * radius;
-            if (Spawn(definition, center + new Vector3(offset.x, 0f, offset.y)) == Entity.Null) return;
+            using var group = entityManager.GetBuffer<LinkedEntityGroup>(template).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);
+            entityManager.AddComponent<Prefab>(group);
         }
+        else
+        {
+            entityManager.AddComponent<Prefab>(template);
+        }
+
+        using var enemies = entityManager.Instantiate(template, positions.Length, Allocator.Temp);
+        var templateTransform = entityManager.GetComponentData<LocalTransform>(template);
+        for (int i = 0; i < enemies.Length; i++)
+        {
+            var transform = templateTransform;
+            transform.Position = positions[i];
+            entityManager.SetComponentData(enemies[i], transform);
+        }
+
+        entityManager.DestroyEntity(template);
+        return enemies.Length > 0 ? enemies[0] : Entity.Null;
     }
 
     [ContextMenu("Spawn test group")]

@@ -27,7 +27,7 @@ partial struct HomingProjectileSystem : ISystem
         var collisionFilter = new CollisionFilter
         {
             BelongsTo = ~0u,
-            CollidesWith = (uint)CollisionLayerHelper.Enemy,
+            CollidesWith = (uint)CollisionLayerHelper.AnyEnemy,
             GroupIndex = 0,
         };
 

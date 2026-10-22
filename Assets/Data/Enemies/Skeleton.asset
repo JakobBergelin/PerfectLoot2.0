@@ -16,6 +16,9 @@ MonoBehaviour:
   Prefab: {fileID: 7900000000000000001, guid: d7346aa012cce4e63960479f5596bc23, type: 3}
   OverrideColor: 1
   Tint: {r: 0.9, g: 0.88, b: 0.78, a: 1}
+  BodyType: 0
+  Scale: 1
+  Mass: 1
   Stats:
     Strength: 0
     Agility: 0

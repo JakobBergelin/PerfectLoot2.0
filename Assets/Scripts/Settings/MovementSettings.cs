@@ -9,6 +9,9 @@ public class MovementSettings : ScriptableObject
     {
         MovementSpeed = 4.0f,
         RotationSpeed = 360f,
+        SeparationSpacing = 1.2f,
+        PhysicsSeparationStrength = 2f,
+        SwarmSeparationStrength = 5f,
     };
 }
 
@@ -20,4 +23,14 @@ public struct MovementConfig : IComponentData
     public float MovementSpeed;
     [Tooltip("Turn speed in degrees per second")]
     public float RotationSpeed;
+
+    [Header("Enemy crowds")]
+    [Tooltip("Enemies try to keep (radius + other radius) * this apart")]
+    public float SeparationSpacing;
+    [Tooltip("Speed (units per second) at which Physics-body enemies push away from overlapping neighbours")]
+    public float PhysicsSeparationStrength;
+    [Tooltip("Same for Swarm-body enemies; higher, since nothing else keeps them apart")]
+    public float SwarmSeparationStrength;
+
+    public float SeparationStrength(BodyType bodyType) => bodyType == BodyType.Swarm ? SwarmSeparationStrength : PhysicsSeparationStrength;
 }

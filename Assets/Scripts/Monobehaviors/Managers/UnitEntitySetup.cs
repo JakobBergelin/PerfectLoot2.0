@@ -1,5 +1,6 @@
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.Physics;
 using Unity.Physics.GraphicsIntegration;
 
 /// <summary>
@@ -35,6 +36,14 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Burning());
         AddDisabled(entityManager, entity, new Bleeding());
         AddDisabled(entityManager, entity, new Poisioned());
+
+        // Units never tip over. Rigidbody constraints don't bake into Unity Physics, so the rotation is locked here.
+        if (entityManager.HasComponent<PhysicsMass>(entity))
+        {
+            var mass = entityManager.GetComponentData<PhysicsMass>(entity);
+            mass.InverseInertia = float3.zero;
+            entityManager.SetComponentData(entity, mass);
+        }
 
         // Smooth the rendered motion between fixed physics steps. Extrapolation only (no PhysicsGraphicalInterpolationBuffer):
         // interpolation would render an older rotation than LocalTransform, which the health/resource bars counter-rotate against.

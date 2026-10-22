@@ -15,3 +15,6 @@ MonoBehaviour:
   Values:
     MovementSpeed: 4
     RotationSpeed: 360
+    SeparationSpacing: 1.2
+    PhysicsSeparationStrength: 2
+    SwarmSeparationStrength: 5

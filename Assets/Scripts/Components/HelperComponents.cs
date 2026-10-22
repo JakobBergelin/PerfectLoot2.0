@@ -22,6 +22,8 @@ public enum CollisionLayerHelper
     Enemy = 1 << 9,
     PlayerAttack = 1 << 10,
     EnemyAttack = 1 << 11,
-    Unit = Player | Enemy,
+    EnemySwarm = 1 << 14,
+    AnyEnemy = Enemy | EnemySwarm,
+    Unit = Player | AnyEnemy,
     Attack = PlayerAttack | EnemyAttack,
 }
