@@ -127,6 +127,13 @@ public partial class CalculateDamageSystem : SystemBase
                     break;
                 }
 
+                // Vanguard: main physical hits lose a flat amount after armor, down to 0 (before Refraction, so a hit
+                // Vanguard cancels doesn't use up a stack, and before block)
+                if(instance.Type == DamageType.Physical && instance.Hierarchy == DamageHierarchy.Main && SystemAPI.HasComponent<Vanguard>(entity))
+                {
+                    calculatedDamage = math.max(0.0f, calculatedDamage - SystemAPI.GetComponent<Vanguard>(entity).DamageReduction);
+                }
+
                 // Invulnerable: no damage at all. Refraction: absorbs one hit per stack (shown as blocked).
                 if(invulnerable)
                 {
