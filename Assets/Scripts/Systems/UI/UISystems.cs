@@ -7,6 +7,7 @@ using UnityEngine;
 using UnityEngine.SocialPlatforms;
 
 [BurstCompile]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 partial struct ProjectileUISystem : ISystem
 {
     [BurstCompile]
@@ -20,6 +21,7 @@ partial struct ProjectileUISystem : ISystem
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 partial struct AttackUISystem : ISystem
 {
     [BurstCompile]
@@ -38,6 +40,7 @@ partial struct AttackUISystem : ISystem
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class BleedingUISystem : SystemBase
 {
     public event System.Action<float, float3> OnBleeding;
@@ -72,6 +75,7 @@ public partial class BleedingUISystem : SystemBase
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class BurningUISystem : SystemBase
 {
     public event System.Action<float, float3> OnBurning;
@@ -106,6 +110,7 @@ public partial class BurningUISystem : SystemBase
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class PoisonedUISystem : SystemBase
 {
     public event System.Action<float, float3> OnPoisoned;

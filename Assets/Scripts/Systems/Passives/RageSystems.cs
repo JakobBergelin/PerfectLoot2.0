@@ -21,6 +21,7 @@ public partial struct CalculateRageSystem : ISystem
 }
 
 
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(CalculateDamageSystem))]
 [UpdateBefore(typeof(DamagingSystem))]
 public partial struct RageSystem : ISystem

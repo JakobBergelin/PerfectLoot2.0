@@ -21,6 +21,8 @@ public partial struct CalculateEnergySystem : ISystem
 }
 
 
+// Grants resource when a skill was used this frame (skill events are set in SkillSystemGroup)
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
 public partial struct EnergySystem : ISystem
 {  
 

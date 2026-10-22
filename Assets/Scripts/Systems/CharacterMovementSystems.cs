@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Physics;
 
 [BurstCompile]
+[UpdateInGroup(typeof(MovementSystemGroup))]
 public partial class CharacterMovementSystem : SystemBase
 {
     // TODO use midframe commandbuffer

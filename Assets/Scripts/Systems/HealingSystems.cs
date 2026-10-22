@@ -14,6 +14,8 @@ public struct Heal : IComponentData
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
+[UpdateBefore(typeof(ApplyHealingSystem))]
 public partial class HealingSystem : SystemBase
 {
     private EndSimulationEntityCommandBufferSystem _endSimulationEntityCommandBufferSystem;
@@ -69,6 +71,7 @@ public partial class HealingSystem : SystemBase
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
 public partial class PeriodicHealSystem : SystemBase
 {
     private EndSimulationEntityCommandBufferSystem _endSimulationEntityCommandBufferSystem;
@@ -168,6 +171,8 @@ public partial class PeriodicHealSystem : SystemBase
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
+[UpdateBefore(typeof(ApplyHealingSystem))]
 public partial class AccumilatedPeriodicHealSystem : SystemBase
 {
     [BurstCompile]

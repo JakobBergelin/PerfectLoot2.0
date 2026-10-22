@@ -10,12 +10,8 @@ using Unity.Mathematics;
 // writes one value when health changes. Scales to many enemies and makes the ordering below unnecessary.
 
 // Counter-rotates the bar against the unit's rotation, so it has to run after everything that rotates units
-// (physics runs first in the frame) and before the transforms are calculated
-[UpdateAfter(typeof(CharacterMovementSystem))]
-[UpdateAfter(typeof(EnemyMovementSystem))]
-[UpdateAfter(typeof(EnemyMeleeAttackSystem))]
-[UpdateAfter(typeof(SkillSystemGroup))]
-[UpdateBefore(typeof(TransformSystemGroup))]
+// (skills, movement; physics runs first in the frame) and before the transforms are calculated: FeedbackSystemGroup
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class HealthUISystem : SystemBase
 {
     protected override void OnUpdate()
@@ -38,6 +34,7 @@ public partial class HealthUISystem : SystemBase
     }
 }
 
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
 partial struct HealthRegenerationSystem : ISystem
 {
     [BurstCompile]
@@ -50,6 +47,7 @@ partial struct HealthRegenerationSystem : ISystem
         }
     }
 }
+[UpdateInGroup(typeof(DamageSystemGroup), OrderLast = true)]
 partial struct CheckDeathSystem : ISystem
 {
     [BurstCompile]
@@ -107,7 +105,7 @@ partial struct DestroyWithChildrenSystem : ISystem
     }
 }
 
-[UpdateAfter(typeof(AttackSystemGroup))]
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateBefore(typeof(DamagingSystem))]
 public partial class CalculateDamageSystem : SystemBase
 {
@@ -179,7 +177,7 @@ public partial class CalculateDamageSystem : SystemBase
 }
 
 
-[UpdateBefore(typeof(SubDamageSystemGroup))]
+[UpdateInGroup(typeof(DamageSystemGroup))]
 public partial class DamagingSystem : SystemBase
 {
     public event System.Action<float, float3, bool> OnDamageTaken;
@@ -285,6 +283,7 @@ public partial class DamagingSystem : SystemBase
     }
 }
 
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
 public partial class ApplyHealingSystem : SystemBase
 {
     public event System.Action<float, float3> OnHealingReceived;

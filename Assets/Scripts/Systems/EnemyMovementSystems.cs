@@ -5,6 +5,7 @@ using Unity.Transforms;
 using UnityEngine;
 using Unity.Collections;
 using Unity.Mathematics;
+[UpdateInGroup(typeof(MovementSystemGroup))]
 partial struct EnemyMovementSystem : ISystem
 {
     public quaternion lookRotation;

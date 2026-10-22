@@ -7,6 +7,7 @@ using Unity.Collections;
 using Unity.Mathematics;
 
 //Run this before projectile system because the direction needs to be modified to follow the target
+[UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateBefore(typeof(ProjectileSystem))]
 // TODO run after all updates of stats
 [BurstCompile]
@@ -133,6 +134,7 @@ partial struct HomingProjectileSystem : ISystem
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(MovementSystemGroup))]
 partial struct ProjectileSystem : ISystem
 {
     [BurstCompile]
@@ -147,7 +149,9 @@ partial struct ProjectileSystem : ISystem
     }
 }
 
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(CalculateDamageSystem))]
+[UpdateBefore(typeof(DamagingSystem))]
 [BurstCompile]
 public partial class ProjectileDestroySystem : SystemBase
 {

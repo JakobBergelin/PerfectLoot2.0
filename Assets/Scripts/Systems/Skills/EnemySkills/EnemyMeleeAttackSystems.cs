@@ -5,6 +5,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 [BurstCompile]
+[UpdateInGroup(typeof(SkillSystemGroup))]
 public partial class EnemyMeleeAttackSystem : SystemBase
 {
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;

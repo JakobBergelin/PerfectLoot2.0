@@ -5,11 +5,11 @@ using UnityEngine;
 
 // Runs on the damage after armor, resistances and block. After Rage and Luminosity so fully absorbed hits still trigger them.
 [BurstCompile]
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(CalculateDamageSystem))]
 [UpdateAfter(typeof(RageSystem))]
 [UpdateAfter(typeof(LuminositySystem))]
 [UpdateBefore(typeof(DamagingSystem))]
-[UpdateBefore(typeof(UpdateResourcesSystem))]
 public partial struct MedusaSystem : ISystem
 {
     [BurstCompile]

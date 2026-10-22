@@ -10,6 +10,7 @@ public struct Luminosity : IComponentData
 }
 
 [BurstCompile]
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(CalculateDamageSystem))]
 [UpdateBefore(typeof(DamagingSystem))]
 public partial class LuminositySystem : SystemBase

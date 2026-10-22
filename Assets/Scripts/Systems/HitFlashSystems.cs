@@ -29,7 +29,7 @@ public static class HitFlashBaking
     }
 }
 
-[UpdateAfter(typeof(DamagingSystem))]
+[UpdateInGroup(typeof(FeedbackSystemGroup))]
 [BurstCompile]
 public partial struct HitFlashSystem : ISystem
 {

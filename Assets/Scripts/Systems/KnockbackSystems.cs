@@ -7,8 +7,8 @@ using Unity.Transforms;
 /// Moves units that were pushed by a hit and lets the push die out. Moves the position directly instead of
 /// PhysicsVelocity, because the movement systems overwrite the velocity every frame.
 /// </summary>
+[UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(DamagingSystem))]
-[UpdateBefore(typeof(TransformSystemGroup))]
 [BurstCompile]
 public partial struct KnockbackSystem : ISystem
 {

@@ -4,8 +4,9 @@ using Unity.Mathematics;
 using UnityEngine;
 
 [BurstCompile]
-[UpdateBefore(typeof(UpdateResourcesSystem))]
-[UpdateBefore(typeof(CalculateDamageSystem))]
+// Turns this frame's skill costs into fire damage: after the skills (SkillSystemGroup), before damage is calculated
+// and before UpdateResourcesSystem (HealthAndResourceSystemGroup) would spend them
+[UpdateInGroup(typeof(DamageSystemGroup), OrderFirst = true)]
 public partial struct HuskarSystem : ISystem
 {
     [BurstCompile]
@@ -23,27 +24,5 @@ public partial struct HuskarSystem : ISystem
                 }
             }
         }
-
-        //foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
-        //{
-        //    resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
-        //    resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
-        //}
-    }
-}
-
-[BurstCompile]
-[UpdateInGroup(typeof(FinalizeStatsSystemGroup))]
-[UpdateAfter(typeof(FinalizeStatsSystem))]
-public partial struct HuskarChangeResourceSystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        //foreach (var (huskar, health, resource) in SystemAPI.Query<RefRO<Huskar>, RefRO<Health>, RefRW<Resource>>())
-        //{
-        //    resource.ValueRW.CurrentValue = health.ValueRO.CurrentValue;
-        //    resource.ValueRW.MaxValue = health.ValueRO.MaxValue;
-        //}
     }
 }
