@@ -25,6 +25,7 @@ public static class UnitEntitySetup
         AddOrSet(entityManager, entity, new HealthRegeneration { Value = baseStats.HealthRegeneration });
         AddBuffer<DamageInstance>(entityManager, entity);
         AddBuffer<HealingInstance>(entityManager, entity);
+        AddBuffer<PeriodicHealingInstance>(entityManager, entity);
         AddBuffer<PeriodicDamageInstance>(entityManager, entity);
         AddBuffer<CalculatedDamageInstance>(entityManager, entity);
         AddOrSet(entityManager, entity, new Knockback());

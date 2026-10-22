@@ -303,12 +303,13 @@ public partial class ApplyHealingSystem : SystemBase
             var instances = EntityManager.GetBuffer<HealingInstance>(entity);
             foreach(var instance in instances)
             {
-                float heal = instance.Value;
-                var position = EntityManager.GetComponentData<LocalTransform>(entity).Position;
+                // Never above max health; the combat text shows what was actually restored
+                float heal = math.min(instance.Value, health.ValueRO.MaxValue - health.ValueRO.CurrentValue);
                 if(heal <= 0.0f)
                 {
                     continue;
                 }
+                var position = EntityManager.GetComponentData<LocalTransform>(entity).Position;
                 OnHealingReceived?.Invoke(heal, position);
                 health.ValueRW.CurrentValue += heal;
             }
