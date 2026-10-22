@@ -42,7 +42,6 @@ MonoBehaviour:
     MovementSpeed: 5.5
     AreaOfEffect: 0
     CooldownReduction: 0
-    PhysicalResistance: 0
     ColdResistance: 0
     FireResistance: 0
     PoisonResistance: 0

@@ -34,7 +34,6 @@ public struct StatBlock
     public float AreaOfEffect;
     public float CooldownReduction;
 
-    public float PhysicalResistance;
     public float ColdResistance;
     public float FireResistance;
     public float PoisonResistance;
@@ -75,7 +74,6 @@ public struct StatBlock
         AreaOfEffect += other.AreaOfEffect;
         CooldownReduction += other.CooldownReduction;
 
-        PhysicalResistance += other.PhysicalResistance;
         ColdResistance += other.ColdResistance;
         FireResistance += other.FireResistance;
         PoisonResistance += other.PoisonResistance;

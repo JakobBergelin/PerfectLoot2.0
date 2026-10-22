@@ -353,7 +353,6 @@ public class CharacterPanelHUD : MonoBehaviour
 
         section = AddSection(list, "Defense");
         AddRow(section, "Armor", () => WithMitigation(_snapshot.Armor.Value, ArmorMitigation()));
-        AddRow(section, "Physical Resistance", () => Pct(_snapshot.Stats.PhysicalResistance));
         AddRow(section, "Block Chance", () => Pct(_snapshot.Stats.BlockChance));
         AddRow(section, "Dodge Chance", () => Pct(_snapshot.Stats.DodgeChance));
 
