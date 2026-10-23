@@ -130,3 +130,10 @@ Sprite vs 3D, same look:
 | Entities Graphics | not supported (GameObjects) | supported (shaders are DOTS-instancing ready) |
 | Hand-drawn art | yes, real sprites can replace the placeholders | shader-generated look only |
 | Runtime cost | cheap quads, more texture memory | more triangles, small textures |
+
+### 3D retro: chosen direction, first polish pass
+
+- **Editor = Play mode**: `PixelArtCamera` runs in edit mode, so the Game view shows the low-res pixel image without pressing Play (Scene view stays full-res).
+- **Pixel-stable camera**: orthographic camera (pitch 50°, size 5.2). In play mode it follows the player, snaps to whole pixels in the view plane and shifts the upscaled image by the sub-pixel remainder (1 px render margin) → no shimmering edges, smooth motion.
+- **Readability**: the player has a bone-white crest, cape emblem and a light-teal 1 px outline. Enemy outlines use their trait color (Baron fire `#C8501C`, Imp fast `#D7C7A6`, Priest summoner `#FFD36A`); the Elite gets a 2 px `#FFA53A` outline. Per-actor material copies live in `Materials/Doom3D_Pixel/ActorOutlines/`.
+- Lava and fire glow toned down to deep orange so they don't read as yellow/gold (gold = summoner).
