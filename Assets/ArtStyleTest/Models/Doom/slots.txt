@@ -1,0 +1,15 @@
+# object|material slots in submesh order
+DM_Player|DM_DarkSteel,DM_Steel,DM_Teal,DM_Leather,DM_Visor,DM_Bone
+DM_Baron|DM_DemonSkin,DM_Rust,DM_DarkSteel,DM_Fire,DM_Bone,DM_Steel
+DM_Imp|DM_ImpSkin,DM_Bone,DM_Fire
+DM_Priest|DM_Robe,DM_RobeRed,DM_Bone,DM_Gold,DM_Wood,DM_DarkSteel,DM_Chain,DM_Fire
+DM_DeadTree_1|DM_Bark,DM_Chain,DM_DarkSteel,DM_Bone,DM_Lava
+DM_DeadTree_2|DM_Bark,DM_Lava
+DM_Rock_1|DM_Stone,DM_StoneDark
+DM_Rock_2|DM_Stone,DM_StoneDark
+DM_Rock_3|DM_Stone,DM_StoneDark
+DM_Pillar|DM_Stone,DM_Bone,DM_Fire,DM_StoneDark
+DM_Thorns|DM_Thorn
+DM_Stake|DM_Wood,DM_Bone,DM_Robe
+DM_Brazier|DM_DarkSteel,DM_Fire
+DM_LavaFissure|DM_Lava,DM_StoneDark

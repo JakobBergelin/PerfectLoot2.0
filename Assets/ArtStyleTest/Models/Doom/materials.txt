@@ -1,0 +1,23 @@
+# name|base color (sRGB hex)|emission hex
+DM_Ash|#4E484A|
+DM_Bark|#2A2220|
+DM_Bone|#D6C7A3|
+DM_Chain|#55555A|
+DM_DarkSteel|#40444B|
+DM_DemonSkin|#7A2E22|
+DM_Fire|#FFB060|#FF6A10
+DM_Flesh|#9A4A40|
+DM_Gold|#FFE08A|#FFB82A
+DM_ImpSkin|#94422E|
+DM_Lava|#FF8A40|#FF4A10
+DM_Leather|#4A3326|
+DM_Robe|#241618|
+DM_RobeRed|#5E1C1A|
+DM_Rust|#6E4632|
+DM_Steel|#8E949C|
+DM_Stone|#6E6863|
+DM_StoneDark|#38332F|
+DM_Teal|#1E4D4F|
+DM_Thorn|#4A2A22|
+DM_Visor|#BFF3FF|#7FE6FF
+DM_Wood|#3A2A20|
