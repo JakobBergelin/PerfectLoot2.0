@@ -73,3 +73,42 @@ For each biome, take a gameplay-angle screenshot and ask:
 2. Does the player stand out from enemies and from the ground?
 3. Does it look like *one game* across all four biomes?
 4. Does a thumbnail (≈300 px wide) still read clearly? (Steam capsule test)
+
+## 8. Style comparison (Ember Forest, same layout and cast)
+
+![Style comparison](screenshots/StyleComparison.png)
+
+| | Toon | Comic dark fantasy | Ink wash |
+|---|---|---|---|
+| Scene | `ArtStyleTest_EmberForest` | `ArtStyleTest_EmberForest_Comic` | `ArtStyleTest_EmberForest_InkWash` |
+| Shader | `PerfectLoot/Toon` | `PerfectLoot/Comic` | `PerfectLoot/InkWash` |
+| Models | `Models/` (blocky) | `Models/Comic/` (angular, jagged) | `Models/InkWash/` (flowing, organic) |
+| Shape language | chunky boxes | hunched, spiky, slab armor, tattered cloth | rounded creatures, brush-stroke strands |
+| Trait readability | glow on dark | glow + ink contrast | strongest: only traits/player have color |
+| Pipeline fit (AI models) | needs clean shapes | very forgiving (ink hides flaws) | very forgiving (brush outlines) |
+| Biome variety | palette swaps | palette + hatch density | paper tone + ink density; color budget is tight |
+
+Notes:
+- Same cast in every version: Player, Cinder Brute (fire + armor), Ash Imp (fast), Magma Shaman (summoner), Elite Cinder Brute (trait-colored outline).
+- Ink wash rule: environment and enemy bodies are ink only; color is reserved for traits, hazards and the player.
+- Comic rule: hatching only in shadow; glowing trait parts never get hatched.
+
+## 9. 2D sprite test (Doom-style billboards, dark medieval)
+
+![Sprite comparison](screenshots/SpriteComparison.png)
+
+Scenes: `ArtStyleTest_EmberForest_Sprite_Pixel`, `ArtStyleTest_EmberForest_Sprite_Painted` (all assets in `Assets/ArtStyleTest/Sprites2D/`).
+
+Cast (new Doom-medieval designs, same trait roles): horned great-helm knight (player), Hell Baron with furnace chest (fire + armor), lanky spiked Imp with fireball (fast), Skull Priest with censer and floating skulls (summoner), Elite Baron (trait-colored outline).
+
+How it works:
+- Sprites are **pre-rendered** from 3D models in Blender (`ArtSource/EmberForest_ArtTest.blend`, collection `Doom_Models`): orthographic camera at the game camera's pitch (looking down 50°), 8 rotations per actor, transparent PNGs.
+- `ArtSource/Tools/make_sprites.py` turns the renders into two sets:
+  - **Pixel**: 22 px per meter, 37-color dark medieval palette, 1 px outline; the game camera renders at 270 px tall (`PixelArtCamera`, play mode).
+  - **Painted**: 384 px frames, flattened brush blotches, ink edges, canvas grain, 3 px ink outline.
+- `SpriteBillboard` keeps sprites parallel to the camera (feet pivot on the ground); `DirectionalSprite` picks 1 of 8 frames from the angle between the actor's facing and the camera (Doom style).
+- `PerfectLoot/SpriteLit`: cutout sprites that write depth, receive sun/shadows/point lights, cast shadows; bright warm pixels glow (bloom).
+
+Replacing placeholders with hand-drawn or Gemini art: keep the same file names, square frames, feet pivot and 8 rotations (frame 0 = facing the camera, then 45° steps turning to screen-right). Re-run the importer settings and the prefabs pick them up.
+
+Caveats: SpriteRenderer is not supported by Entities Graphics, so actors would stay GameObjects (or use custom quad rendering) if this direction is chosen.
