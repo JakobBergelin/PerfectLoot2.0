@@ -110,6 +110,37 @@ public class LootGenerationManager : MonoBehaviour
         return null; // e.g. an And-mode table where nothing dropped
     }
 
+    [ContextMenu("Simulate drop")]
+    public void SimulateDrop() => SimulateDrops(1);
+
+    [ContextMenu("Simulate 10 drops")]
+    void SimulateTenDrops() => SimulateDrops(10);
+
+    /// <summary>Drops items as if from the world: each from a random loot table in AllLootTables, given to AccountManager.</summary>
+    public void SimulateDrops(int count)
+    {
+        if (!Application.isPlaying || AccountManager.Instance == null)
+        {
+            Debug.LogWarning("Simulating drops needs Play mode and an AccountManager.", this);
+            return;
+        }
+        var tables = AllLootTables.Where(table => table != null).ToArray();
+        if (tables.Length == 0) { Debug.LogWarning("LootGenerationManager has no loot tables.", this); return; }
+
+        for (int i = 0; i < count; i++)
+        {
+            var item = RollDrop(tables[Random.Range(0, tables.Length)]);
+            if (item != null) AccountManager.Instance.ReceiveDrop(item);
+        }
+    }
+
+    /// <summary>One rolled item from a loot table, or null when nothing dropped.</summary>
+    public Item RollDrop(LootTable table)
+    {
+        var candidate = table.Explore().OfType<Item>().FirstOrDefault();
+        return candidate != null ? RollItem(candidate.BaseItem) : null;
+    }
+
     /// <summary>A new item of this base, rolled at its forced rarity (Legendary/Unique) or a random one.</summary>
     public Item RollItem(RollableItem baseItem)
     {

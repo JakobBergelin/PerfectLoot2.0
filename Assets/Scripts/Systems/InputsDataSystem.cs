@@ -36,7 +36,8 @@ public partial class InputsDataSystem : SystemBase
 
         foreach (RefRW<InputsData> data in SystemAPI.Query<RefRW<InputsData>>())
         {
-            data.ValueRW.Move = inputs.Player.Move.ReadValue<Vector2>();
+            // While typing in a UI text field the movement keys are letters for the text
+            data.ValueRW.Move = MenuPanels.IsTyping ? Vector2.zero : inputs.Player.Move.ReadValue<Vector2>();
 
             // While a menu panel is open the mouse is used for the menu, so skills are ignored (movement still works)
             bool menuOpen = MenuPanels.IsAnyOpen;

@@ -191,6 +191,16 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""ItemDatabase"",
+                    ""type"": ""Button"",
+                    ""id"": ""1c55ad6d-a925-4e9f-9e60-b5161f64d081"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -521,6 +531,17 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": "";Keyboard&Mouse"",
                     ""action"": ""Skills"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""c647c075-2751-4c1b-8aa9-05e40bd83e99"",
+                    ""path"": ""<Keyboard>/l"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": "";Keyboard&Mouse"",
+                    ""action"": ""ItemDatabase"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1128,6 +1149,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Skill4 = m_Player.FindAction("Skill4", throwIfNotFound: true);
         m_Player_Inventory = m_Player.FindAction("Inventory", throwIfNotFound: true);
         m_Player_Skills = m_Player.FindAction("Skills", throwIfNotFound: true);
+        m_Player_ItemDatabase = m_Player.FindAction("ItemDatabase", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1231,6 +1253,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Skill4;
     private readonly InputAction m_Player_Inventory;
     private readonly InputAction m_Player_Skills;
+    private readonly InputAction m_Player_ItemDatabase;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1282,6 +1305,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Skills".
         /// </summary>
         public InputAction @Skills => m_Wrapper.m_Player_Skills;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ItemDatabase".
+        /// </summary>
+        public InputAction @ItemDatabase => m_Wrapper.m_Player_ItemDatabase;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1338,6 +1365,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Skills.started += instance.OnSkills;
             @Skills.performed += instance.OnSkills;
             @Skills.canceled += instance.OnSkills;
+            @ItemDatabase.started += instance.OnItemDatabase;
+            @ItemDatabase.performed += instance.OnItemDatabase;
+            @ItemDatabase.canceled += instance.OnItemDatabase;
         }
 
         /// <summary>
@@ -1379,6 +1409,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Skills.started -= instance.OnSkills;
             @Skills.performed -= instance.OnSkills;
             @Skills.canceled -= instance.OnSkills;
+            @ItemDatabase.started -= instance.OnItemDatabase;
+            @ItemDatabase.performed -= instance.OnItemDatabase;
+            @ItemDatabase.canceled -= instance.OnItemDatabase;
         }
 
         /// <summary>
@@ -1749,6 +1782,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnSkills(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ItemDatabase" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnItemDatabase(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

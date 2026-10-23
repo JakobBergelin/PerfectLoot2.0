@@ -1,0 +1,37 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="ItemDatabasePanel.uss" />
+    <ui:VisualElement name="itemDatabaseRoot" class="idb-root idb-root--hidden" picking-mode="Ignore">
+        <ui:VisualElement name="panel" class="idb-panel">
+            <ui:VisualElement class="idb-header">
+                <ui:Label text="Item Database" class="idb-title" />
+                <ui:Label name="count" class="idb-count" />
+            </ui:VisualElement>
+            <!-- Filter chips are created by ItemDatabasePanelHUD -->
+            <ui:VisualElement name="filters" class="idb-filters" />
+            <ui:VisualElement class="idb-body">
+                <ui:VisualElement class="idb-list">
+                    <!-- One row per item kind (its Normal/Magic/Rare tiles side by side), created by ItemDatabasePanelHUD -->
+                    <ui:VisualElement name="rows" class="idb-rows" />
+                    <ui:VisualElement class="idb-pager">
+                        <ui:Label name="prevPage" text="◀ Prev" class="idb-chip" />
+                        <ui:Label name="pageLabel" class="idb-page-label" />
+                        <ui:Label name="nextPage" text="Next ▶" class="idb-chip" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                <ui:VisualElement name="detail" class="idb-detail">
+                    <ui:Label name="detailTitle" class="idb-detail__title" />
+                    <ui:Label name="detailSubtitle" class="idb-detail__subtitle" />
+                    <ui:Label name="detailBody" class="idb-detail__body" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Label text="Press L to close" class="idb-hint" />
+        </ui:VisualElement>
+        <!-- Affix picker opened by the Affix chip; chips created by ItemDatabasePanelHUD -->
+        <ui:VisualElement name="affixPopup" class="idb-affix-popup" />
+        <ui:VisualElement name="tooltip" class="idb-tooltip" picking-mode="Ignore">
+            <ui:Label name="tooltipTitle" class="idb-tooltip__title" picking-mode="Ignore" />
+            <ui:Label name="tooltipSubtitle" class="idb-tooltip__subtitle" picking-mode="Ignore" />
+            <ui:Label name="tooltipBody" class="idb-tooltip__body" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

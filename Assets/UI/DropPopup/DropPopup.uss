@@ -1,0 +1,157 @@
+/* Variables and font on the popup's own root so everything inherits them */
+.dp-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: flex-start;
+    padding-top: 80px;
+    --panel-bg: rgba(20, 22, 28, 0.97);
+    --panel-border: #3A3F4B;
+    --card-bg: rgba(10, 11, 14, 0.9);
+    --divider: #2C3039;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.dp-root--hidden {
+    display: none;
+}
+
+.dp-popup {
+    padding: 14px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.dp-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.dp-heading {
+    font-size: 20px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 16px 0 2px;
+}
+
+.dp-queue {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 2px 2px 0;
+}
+
+.dp-cards {
+    flex-direction: row;
+}
+
+/* A card with its button under it; cards in a row stretch to the same height */
+.dp-column {
+    width: 300px;
+    margin: 0 5px;
+}
+
+.dp-card {
+    flex-grow: 1;
+    padding: 10px;
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 6px;
+}
+
+.dp-card__label {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.dp-card__title {
+    font-size: 17px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.dp-card__subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.dp-card__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+/* PanelSettings has no theme, so buttons are fully styled here */
+.dp-button {
+    height: 38px;
+    margin: 8px 0 0 0;
+    padding: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: #FFFFFF;
+    border-width: 2px;
+    border-radius: 6px;
+}
+
+.dp-button--keep {
+    background-color: #3E5573;
+    border-color: #5A7598;
+}
+
+.dp-button--keep:hover {
+    background-color: #4C6789;
+}
+
+.dp-button--keep:active {
+    background-color: #2F435C;
+}
+
+.dp-button--take {
+    background-color: #2E8B3E;
+    border-color: #49B05A;
+}
+
+.dp-button--take:hover {
+    background-color: #38A24A;
+}
+
+.dp-button--take:active {
+    background-color: #237030;
+}
+
+.dp-button--ok {
+    background-color: var(--accent);
+    border-color: #F0B848;
+    color: #14161C;
+}
+
+.dp-button--ok:hover {
+    background-color: #F0B030;
+}
+
+.dp-button--ok:active {
+    background-color: #B88018;
+}

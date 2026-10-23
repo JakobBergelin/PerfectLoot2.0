@@ -1,0 +1,354 @@
+/* Variables and font on the panel's own root so everything inherits them. PanelSettings has no theme, so every
+   control here is a plain element styled below (no built-in dropdowns, toggles or scroll views). */
+.idb-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    --panel-bg: rgba(20, 22, 28, 0.97);
+    --panel-border: #3A3F4B;
+    --tile-bg: rgba(10, 11, 14, 0.9);
+    --tile-border: #3A3F4B;
+    --chip-bg: #2A2E38;
+    --chip-hover: #383D4A;
+    --chip-border: #4A5060;
+    --divider: #2C3039;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.idb-root--hidden {
+    display: none;
+}
+
+.idb-panel {
+    width: 1140px;
+    height: 790px;
+    padding: 16px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.idb-header {
+    flex-direction: row;
+    align-items: flex-end;
+    margin-bottom: 10px;
+}
+
+.idb-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 14px 0 4px;
+}
+
+.idb-count {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 3px 0;
+}
+
+/* Filters: one row per filter, chips to click */
+.idb-filters {
+    padding-bottom: 8px;
+    margin-bottom: 10px;
+    border-bottom-width: 1px;
+    border-color: var(--divider);
+}
+
+.idb-filter-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+.idb-filter-title {
+    width: 56px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 4px 0 4px;
+}
+
+.idb-filter-spacer {
+    width: 18px;
+}
+
+.idb-chip {
+    font-size: 13px;
+    color: var(--text-color);
+    background-color: var(--chip-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 4px;
+    padding: 4px 9px;
+    margin: 2px 3px;
+    -unity-text-align: middle-center;
+}
+
+.idb-chip:hover {
+    background-color: var(--chip-hover);
+}
+
+.idb-chip--selected {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #14161C;
+    -unity-font-style: bold;
+}
+
+.idb-chip--selected:hover {
+    background-color: #F0B030;
+}
+
+.idb-chip--disabled {
+    opacity: 0.35;
+}
+
+/* Search box: the TextField's own label isn't used; its input is styled here */
+.idb-search {
+    width: 200px;
+    margin: 2px 3px;
+    padding: 0;
+    --unity-cursor-color: #F2F2F2;
+    --unity-selection-color: rgba(224, 160, 32, 0.5);
+}
+
+.idb-search .unity-base-text-field__input {
+    font-size: 13px;
+    color: var(--text-color);
+    background-color: var(--tile-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 4px;
+    padding: 4px 8px;
+    min-height: 26px;
+}
+
+.idb-search:focus .unity-base-text-field__input {
+    border-color: var(--accent);
+}
+
+/* Affix picker */
+.idb-affix-popup {
+    position: absolute;
+    display: none;
+    flex-direction: row;
+    flex-wrap: wrap;
+    width: 640px;
+    padding: 8px;
+    background-color: rgba(8, 9, 12, 0.98);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 6px;
+}
+
+.idb-affix-popup--visible {
+    display: flex;
+}
+
+.idb-affix-popup .idb-chip {
+    width: 196px;
+}
+
+/* Rows and tiles */
+.idb-body {
+    flex-direction: row;
+    flex-grow: 1;
+    min-height: 0;
+}
+
+.idb-list {
+    flex-grow: 1;
+}
+
+.idb-rows {
+    flex-grow: 1;
+    overflow: hidden;
+}
+
+.idb-row {
+    flex-direction: row;
+    align-items: center;
+    height: 50px;
+    border-bottom-width: 1px;
+    border-color: var(--divider);
+}
+
+.idb-row__name {
+    width: 190px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0 8px 0 4px;
+}
+
+.idb-tile {
+    flex-direction: row;
+    align-items: center;
+    width: 160px;
+    height: 42px;
+    margin: 0 4px;
+    padding: 2px 4px;
+    background-color: var(--tile-bg);
+    border-width: 2px;
+    border-color: var(--tile-border);
+    border-radius: 6px;
+}
+
+.idb-tile:hover {
+    background-color: rgba(40, 44, 54, 0.95);
+}
+
+.idb-tile--missing {
+    opacity: 0.45;
+}
+
+.idb-tile--selected {
+    background-color: rgba(60, 64, 76, 0.95);
+}
+
+.idb-tile__icon {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+    -unity-background-scale-mode: scale-to-fit;
+    align-items: center;
+    justify-content: center;
+}
+
+.idb-tile__mystery {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0;
+}
+
+.idb-tile__rarity {
+    flex-grow: 1;
+    font-size: 13px;
+    -unity-font-style: bold;
+    padding: 0;
+    margin: 0 0 0 6px;
+}
+
+.idb-tile__equipped {
+    position: absolute;
+    top: 1px;
+    right: 4px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0;
+}
+
+.idb-pager {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    padding-top: 8px;
+}
+
+.idb-page-label {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 14px;
+}
+
+/* Detail pane */
+.idb-detail {
+    width: 320px;
+    flex-shrink: 0;
+    overflow: hidden;
+    margin-left: 12px;
+    padding-left: 12px;
+    border-left-width: 1px;
+    border-color: var(--divider);
+}
+
+.idb-detail__title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.idb-detail__subtitle {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.idb-detail__body {
+    font-size: 14px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.idb-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    margin: 8px 0 0 4px;
+    padding: 0;
+}
+
+/* Hover tooltip */
+.idb-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 280px;
+    padding: 8px 10px;
+    background-color: rgba(8, 9, 12, 0.97);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 4px;
+}
+
+.idb-tooltip--visible {
+    display: flex;
+}
+
+.idb-tooltip__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.idb-tooltip__subtitle {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.idb-tooltip__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}

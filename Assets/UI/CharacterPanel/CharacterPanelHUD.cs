@@ -1,7 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
-using System.Text.RegularExpressions;
 using Equipment;
 using Unity.Entities;
 using UnityEngine;
@@ -18,7 +16,6 @@ public class CharacterPanelHUD : MonoBehaviour
     const string HiddenClass = "character-panel-root--hidden";
     const string TooltipVisibleClass = "cp-tooltip--visible";
     const string NoValue = "–";
-    const string RangeColor = "#8A8F99";
 
     static readonly Color EmptySlotBorder = new Color32(58, 63, 75, 255);
 
@@ -145,7 +142,7 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame())
+        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
@@ -260,26 +257,9 @@ public class CharacterPanelHUD : MonoBehaviour
         if (item == null) { HideTooltip(); return; }
 
         _tooltipTitle.text = item.BaseItem.Name;
-        _tooltipTitle.style.color = RarityColors.Get(item.Rarity) ?? Color.white;
-        _tooltipSubtitle.text = $"{item.Rarity} {item.ItemType}";
-
-        var sb = new StringBuilder();
-        // Fixed (not rolled) stats first, muted, e.g. a weapon's cooldown and reach
-        foreach (var line in item.BaseItem.FixedStatLines)
-            sb.AppendLine($"<color={RangeColor}>{line}</color>");
-        var settings = LootGenerationManager.Instance != null ? LootGenerationManager.Instance.GenerationSettings : null;
-        AppendAffixes(sb, item, item.BaseAffixes, isBaseAffix: true, settings);
-        AppendAffixes(sb, item, item.RollableAffixes, isBaseAffix: false, settings);
-
-        // Legendary/Unique power: name in the item's rarity color, then its description with the numbers filled in
-        if (item.BaseItem is ILegendaryItem legendary && legendary.Power != null)
-        {
-            var color = ColorUtility.ToHtmlStringRGB(RarityColors.Get(item.Rarity) ?? Color.white);
-            sb.AppendLine();
-            sb.AppendLine($"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>");
-            sb.AppendLine(legendary.Power.FormattedDescription);
-        }
-        _tooltipBody.text = sb.Length > 0 ? sb.ToString().TrimEnd() : "No stats";
+        _tooltipTitle.style.color = ItemText.TitleColor(item);
+        _tooltipSubtitle.text = ItemText.Subtitle(item);
+        _tooltipBody.text = ItemText.Body(item);
 
         // Right of the slot, in the root's coordinates
         var position = view.Element.ChangeCoordinatesTo(_root, new Vector2(view.Element.layout.width + 8f, 0f));
@@ -289,32 +269,6 @@ public class CharacterPanelHUD : MonoBehaviour
     }
 
     void HideTooltip() => _tooltip?.RemoveFromClassList(TooltipVisibleClass);
-
-    // "+177 Strength  [150 – 180]": the range this affix could roll on this item at its rarity, muted
-    static void AppendAffixes(StringBuilder sb, Item item, List<Rolled> affixes, bool isBaseAffix, GenerationSettings settings)
-    {
-        if (affixes == null) return;
-        foreach (var rolled in affixes)
-        {
-            sb.Append($"+{FormatAffix(rolled.Affix, rolled.Value)} {SplitWords(rolled.Affix.ToString())}");
-            if (item.BaseItem.TryGetRollRange(rolled.Affix, isBaseAffix, item.Rarity, settings, out float min, out float max))
-                sb.Append($"  <color={RangeColor}>[{FormatAffix(rolled.Affix, min)} – {FormatAffix(rolled.Affix, max)}]</color>");
-            sb.AppendLine();
-        }
-    }
-
-    // Affixes rolled as fractions (0.1 = 10%); the rest are flat values
-    static bool IsPercentAffix(Affix affix) => affix switch
-    {
-        Affix.MovementSpeed or Affix.BlockChance or Affix.CooldownReduction or Affix.ResourceCostReduction or
-        Affix.DodgeChance or Affix.AttackSpeed or Affix.Lifesteal or Affix.Damage or Affix.AreaOfEffect or
-        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal => true,
-        _ => false
-    };
-
-    static string FormatAffix(Affix affix, float value) => IsPercentAffix(affix) ? Pct(value) : Flat(value);
-
-    static string SplitWords(string name) => Regex.Replace(name, "(\\B[A-Z])", " $1");
 
     // ---------- Stats ----------
 

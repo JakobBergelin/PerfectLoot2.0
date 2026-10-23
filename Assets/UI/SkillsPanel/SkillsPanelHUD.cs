@@ -124,13 +124,13 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame())
+        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
         // Esc closes the picker first, then the panel
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && !MenuPanels.IsTyping)
         {
             if (_selected != null) Select(null);
             else SetOpen(false);

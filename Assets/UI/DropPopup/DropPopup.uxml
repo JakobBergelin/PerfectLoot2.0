@@ -1,0 +1,33 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="DropPopup.uss" />
+    <ui:VisualElement name="dropPopupRoot" class="dp-root dp-root--hidden" picking-mode="Ignore">
+        <ui:VisualElement name="popup" class="dp-popup">
+            <ui:VisualElement class="dp-header">
+                <ui:Label name="heading" class="dp-heading" />
+                <ui:Label name="queue" class="dp-queue" />
+            </ui:VisualElement>
+            <ui:VisualElement class="dp-cards">
+                <!-- Each card's button sits under it: keep under the current item, take under the new one -->
+                <ui:VisualElement name="currentColumn" class="dp-column">
+                    <ui:VisualElement name="currentCard" class="dp-card">
+                        <ui:Label text="Current" class="dp-card__label" />
+                        <ui:Label name="currentTitle" class="dp-card__title" />
+                        <ui:Label name="currentSubtitle" class="dp-card__subtitle" />
+                        <ui:Label name="currentBody" class="dp-card__body" />
+                    </ui:VisualElement>
+                    <ui:Button name="keepButton" text="Keep current" class="dp-button dp-button--keep" />
+                </ui:VisualElement>
+                <ui:VisualElement name="newColumn" class="dp-column">
+                    <ui:VisualElement name="newCard" class="dp-card">
+                        <ui:Label name="newLabel" text="New" class="dp-card__label" />
+                        <ui:Label name="newTitle" class="dp-card__title" />
+                        <ui:Label name="newSubtitle" class="dp-card__subtitle" />
+                        <ui:Label name="newBody" class="dp-card__body" />
+                    </ui:VisualElement>
+                    <ui:Button name="takeButton" text="Take new" class="dp-button dp-button--take" />
+                    <ui:Button name="okButton" text="OK" class="dp-button dp-button--ok" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
