@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!21 &2100000
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: DM_Priest_DM_RobeRed
+  m_Shader: {fileID: 4800000, guid: 4a884b6cc3fc5a943b92153d87250a66, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords:
+  - _SNAPTOPALETTE_ON
+  - _USESMOOTHNORMALS_ON
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Ambient: 0.55
+    - _Band1: 0.42
+    - _Band2: 0.72
+    - _DitherStrength: 0.14
+    - _EmissionPulse: 0
+    - _EmissionPulseSpeed: 2.5
+    - _OutlineWidth: 1
+    - _PointInfluence: 1.2
+    - _ShadowReceive: 1
+    - _SnapToPalette: 1
+    - _UseSmoothNormals: 1
+    m_Colors:
+    - _BaseColor: {r: 0.36862746, g: 0.10980392, b: 0.101960786, a: 1}
+    - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _OutlineColor: {r: 1, g: 0.827451, b: 0.41568628, a: 1}
+    - _ShadowColor: {r: 0.41568628, g: 0.3529412, b: 0.47843137, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1

@@ -4490,6 +4490,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PerfectLoot.ArtStyleTest.PixelArtCamera
   verticalResolution: 270
+  orthographicSize: 5.2
+  followTarget: {fileID: 2122084761}
+  followOffset: {x: -0.3, y: 23.981337, z: -16.083626}
+  snapToPixels: 1
 --- !u!114 &1282426131
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -4565,11 +4569,11 @@ Camera:
     y: 0
     width: 1
     height: 1
-  near clip plane: 0.3
-  far clip plane: 120
+  near clip plane: 1
+  far clip plane: 80
   field of view: 36
-  orthographic: 0
-  orthographic size: 5
+  orthographic: 1
+  orthographic size: 5.238518
   m_Depth: 0
   m_CullingMask:
     serializedVersion: 2
@@ -4594,7 +4598,7 @@ Transform:
   m_GameObject: {fileID: 1282426129}
   serializedVersion: 2
   m_LocalRotation: {x: 0.4226183, y: 0, z: 0, w: 0.9063078}
-  m_LocalPosition: {x: -0.3, y: 12.873691, z: -7.7632074}
+  m_LocalPosition: {x: -0.3, y: 23.981337, z: -17.083626}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []

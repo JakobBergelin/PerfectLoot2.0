@@ -112,3 +112,21 @@ How it works:
 Replacing placeholders with hand-drawn or Gemini art: keep the same file names, square frames, feet pivot and 8 rotations (frame 0 = facing the camera, then 45° steps turning to screen-right). Re-run the importer settings and the prefabs pick them up.
 
 Caveats: SpriteRenderer is not supported by Entities Graphics, so actors would stay GameObjects (or use custom quad rendering) if this direction is chosen.
+
+## 10. Doom-medieval in 3D (same cast and layout as the sprite test)
+
+![Doom style comparison](screenshots/DoomStyleComparison.png)
+
+Scenes: `ArtStyleTest_EmberForest_Doom3D_Pixel`, `ArtStyleTest_EmberForest_Doom3D_Painted`. Models: `Models/Doom/` (the same Blender models the sprites were rendered from).
+
+- **3D pixel**: `PerfectLoot/Retro` shader: 3 lighting bands with 4×4 Bayer dithering, stepped point-light pools, color snapped to the same 37-color palette as the sprites, 1 px outline; low-res `PixelArtCamera` (270 px tall) in play mode. No tonemapping/color grading so the palette survives.
+- **3D painted**: `PerfectLoot/InkWash` in full-color mode (`_ColorKeep = 1`): brushy shading bands, rough brush outlines, grain; film grain post.
+
+Sprite vs 3D, same look:
+| | 2D sprites | 3D |
+|---|---|---|
+| Rotation | 8 fixed angles (pops between frames) | smooth, any angle |
+| Animation | every frame × 8 directions must be drawn/rendered | one rig, any animation (Mixamo etc.) |
+| Entities Graphics | not supported (GameObjects) | supported (shaders are DOTS-instancing ready) |
+| Hand-drawn art | yes, real sprites can replace the placeholders | shader-generated look only |
+| Runtime cost | cheap quads, more texture memory | more triangles, small textures |

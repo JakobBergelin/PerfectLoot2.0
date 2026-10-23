@@ -33,7 +33,7 @@ Material:
     - _DitherStrength: 0.14
     - _EmissionPulse: 0
     - _EmissionPulseSpeed: 2.5
-    - _OutlineWidth: 1
+    - _OutlineWidth: 0
     - _PointInfluence: 1.2
     - _ShadowReceive: 1
     - _SnapToPalette: 1
@@ -41,7 +41,7 @@ Material:
     m_Colors:
     - _BaseColor: {r: 0.7490196, g: 0.9529412, b: 1, a: 1}
     - _EmissionColor: {r: 1.0956863, g: 1.9843137, b: 2.2, a: 2.2}
-    - _OutlineColor: {r: 0.9098039, g: 0.4627451, b: 0.11764706, a: 1}
+    - _OutlineColor: {r: 1, g: 0.64705884, b: 0.22745098, a: 1}
     - _ShadowColor: {r: 0.41568628, g: 0.3529412, b: 0.47843137, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
