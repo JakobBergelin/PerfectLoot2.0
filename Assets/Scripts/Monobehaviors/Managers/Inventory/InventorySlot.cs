@@ -5,30 +5,24 @@ using UnityEngine;
 public class InventorySlot : MonoBehaviour
 {
     public ItemType SlotType;
-    public Item EquippedItem;
+    [Tooltip("The account ItemDatabase entry this slot shows. Equip through InventoryManager.Equip.")]
+    public ItemKey EquippedKey;
 
-    /// <summary>Raised after the equipped item was set or removed.</summary>
+    /// <summary>Raised after the equipped key was set or removed.</summary>
     public event Action<InventorySlot> Changed;
 
-    /// <summary>True when nothing is equipped. Unity serializes EquippedItem as a blank object rather than null.</summary>
-    public bool IsEmpty => EquippedItem == null || EquippedItem.BaseItem == null;
+    /// <summary>The item stored in the account database for EquippedKey, or null.</summary>
+    public Item EquippedItem => EquippedKey.IsSet && AccountManager.Instance != null ? AccountManager.Instance.Items.Get(EquippedKey) : null;
 
-    public bool EquipItem(Item item)
-    {
-        if (item == null) return false;
-        if (item.ItemType != SlotType)
-        {
-            Debug.LogWarning($"Can't put {item.ItemType} into a {SlotType} slot.");
-            return false;
-        }
-        EquippedItem = item;
-        Changed?.Invoke(this);
-        return true;
-    }
+    /// <summary>True when the key is unset or the database has no item for it.</summary>
+    public bool IsEmpty => EquippedItem == null;
 
-    public void UnequipItem()
+    /// <summary>Sets the key without checks; InventoryManager.Equip validates first.</summary>
+    public void SetKey(ItemKey key)
     {
-        EquippedItem = null;
+        EquippedKey = key;
         Changed?.Invoke(this);
     }
+
+    public void Clear() => SetKey(default);
 }

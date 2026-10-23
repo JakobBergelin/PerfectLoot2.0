@@ -2,7 +2,7 @@ using Equipment;
 using UnityEditor;
 using UnityEngine;
 
-/// <summary>Shows a rolled Item with its icon on a rarity-colored background above its fields (e.g. InventorySlot.EquippedItem).</summary>
+/// <summary>Shows a rolled Item with its icon on a rarity-colored background above its fields (e.g. the account ItemDatabase entries).</summary>
 [CustomPropertyDrawer(typeof(Item))]
 public class ItemDrawer : PropertyDrawer
 {

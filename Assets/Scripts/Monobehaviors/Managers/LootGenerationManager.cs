@@ -21,8 +21,17 @@ public class LootGenerationManager : MonoBehaviour
     public LootTable AllOffhandLootTable;
 
     [Header("Testing")]
-    [Tooltip("At game start, roll and equip an item into every empty inventory slot.")]
+    [Tooltip("At game start, roll a Standard item into the account database for every empty inventory slot and equip it.")]
     public bool RollAndEquipOnStart = true;
+
+    // Rerolls per slot when the table gives a Legendary/Unique, an already equipped key, or nothing
+    const int MaxRollAttempts = 50;
+
+    public LootTable[] AllLootTables => new[]
+    {
+        AllWeaponsLootTable, AllHeadsLootTable, AllBootsLootTable, AllLegsLootTable, AllChestLootTable, AllBeltLootTable,
+        AllHandsLootTable, AllShouldersLootTable, AllAmuletLootTable, AllRingLootTable, AllOffhandLootTable,
+    };
 
     void Awake()
     {
@@ -58,6 +67,8 @@ public class LootGenerationManager : MonoBehaviour
         EquipFrom(inv.OffhandSlot, AllOffhandLootTable, onlyIfEmpty);
     }
 
+    // Test data: rolls a Standard item whose key isn't equipped in another slot, stores it in the account database
+    // (replacing what was there) and equips it
     void EquipFrom(InventorySlot slot, LootTable table, bool onlyIfEmpty)
     {
         if (slot == null || table == null)
@@ -67,8 +78,21 @@ public class LootGenerationManager : MonoBehaviour
         }
         if (onlyIfEmpty && !slot.IsEmpty) return;
 
-        var item = RollItem(table, slot.SlotType);
-        if (item != null) slot.EquipItem(item);
+        var inventory = InventoryManager.Instance;
+        var database = AccountManager.Instance != null ? AccountManager.Instance.Items : null;
+        if (database == null) { Debug.LogError("No AccountManager in the scene."); return; }
+
+        for (int attempt = 0; attempt < MaxRollAttempts; attempt++)
+        {
+            var item = RollItem(table, slot.SlotType);
+            if (item == null || item.BaseItem.ForcedRarity != null) continue;
+            var key = ItemKey.Of(item);
+            var holder = inventory.SlotWith(key);
+            if (holder != null && holder != slot) continue;
+
+            if (database.Store(item) && inventory.Equip(slot, key)) return;
+        }
+        Debug.LogWarning($"Couldn't roll a Standard {slot.SlotType} for {slot.name} from {table.name}.");
     }
 
     public Item RollItem(LootTable table, ItemType expectedType)

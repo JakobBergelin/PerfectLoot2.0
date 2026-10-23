@@ -16,6 +16,9 @@ namespace Equipment
 
         /// <summary>When set, drops of this base item always roll this rarity instead of a random one.</summary>
         public virtual Rarity? ForcedRarity => null;
+
+        /// <summary>The rarities this base item can roll: its forced rarity, or Normal, Magic and Rare.</summary>
+        public IReadOnlyList<Rarity> PossibleRarities => ForcedRarity is { } forced ? new[] { forced } : DroppableRarities;
         public List<Rollable> BaseAffixes;      // Always a part of the item
         public List<Rollable> RollableAffixes;  // 0 - x dependent on rarity
 

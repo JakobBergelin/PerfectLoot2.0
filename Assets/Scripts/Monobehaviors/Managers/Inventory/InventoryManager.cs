@@ -46,17 +46,85 @@ public class InventoryManager : MonoBehaviour
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
-    void Start() => RecalculateStats();
+    ItemDatabase _database;
+
+    // AccountManager.Awake has run by now (it outlives scenes, so it may even be from an earlier one)
+    void Start()
+    {
+        if (AccountManager.Instance != null)
+        {
+            _database = AccountManager.Instance.Items;
+            _database.ItemChanged += OnDatabaseItemChanged;
+        }
+        else Debug.LogError("No AccountManager: inventory slots have no item database to read from.", this);
+        RecalculateStats();
+    }
 
     void OnDestroy()
     {
         foreach (var (_, slot) in NamedSlots)
             if (slot != null) slot.Changed -= OnSlotChanged;
         CharacterManager.PlayerSpawned -= OnPlayerSpawned;
+        if (_database != null) _database.ItemChanged -= OnDatabaseItemChanged;
         if (Instance == this) Instance = null;
     }
 
     void OnSlotChanged(InventorySlot slot) => RecalculateStats();
+
+    // A database entry got a new item: every slot pointing to it now shows the new one
+    void OnDatabaseItemChanged(ItemKey key)
+    {
+        if (IsEquipped(key)) RecalculateStats();
+    }
+
+    /// <summary>All inventory slots (null entries for unassigned slot references).</summary>
+    public IEnumerable<InventorySlot> Slots
+    {
+        get { foreach (var (_, slot) in NamedSlots) yield return slot; }
+    }
+
+    /// <summary>The slot that has this key equipped, or null.</summary>
+    public InventorySlot SlotWith(ItemKey key)
+    {
+        foreach (var (_, slot) in NamedSlots)
+            if (slot != null && slot.EquippedKey == key) return slot;
+        return null;
+    }
+
+    public bool IsEquipped(ItemKey key) => key.IsSet && SlotWith(key) != null;
+
+    /// <summary>
+    /// Equips a database item in a slot. Fails when the slot type doesn't match, the database has no item for the
+    /// key, or another slot already has it (so e.g. both ring slots always hold different rings).
+    /// </summary>
+    public bool Equip(InventorySlot slot, ItemKey key)
+    {
+        if (slot == null || !key.IsSet) return false;
+        if (key.BaseItem.ItemType != slot.SlotType)
+        {
+            Debug.LogWarning($"Can't put a {key.BaseItem.ItemType} into a {slot.SlotType} slot.", this);
+            return false;
+        }
+        if (AccountManager.Instance == null || AccountManager.Instance.Items.Get(key) == null)
+        {
+            Debug.LogWarning($"The item database has no {key} to equip.", this);
+            return false;
+        }
+        var other = SlotWith(key);
+        if (other != null && other != slot)
+        {
+            Debug.LogWarning($"{key} is already equipped in {other.name}.", this);
+            return false;
+        }
+
+        slot.SetKey(key);
+        return true;
+    }
+
+    public void Unequip(InventorySlot slot)
+    {
+        if (slot != null) slot.Clear();
+    }
 
     // New player entity (spawn/respawn): it has no equipment stats yet
     void OnPlayerSpawned(Entity player)
@@ -153,32 +221,38 @@ public class InventoryManager : MonoBehaviour
     [Tooltip("Rolled and equipped by the \"Roll and equip test item\" context menu item (Play mode)")]
     public RollableItem TestItem;
 
+    // Rolls TestItem, stores it in the account database (replacing the item there) and equips it
     [ContextMenu("Roll and equip test item")]
     void RollAndEquipTestItem()
     {
-        if (!Application.isPlaying || TestItem == null || LootGenerationManager.Instance == null)
+        if (!Application.isPlaying || TestItem == null || LootGenerationManager.Instance == null || AccountManager.Instance == null)
         {
-            Debug.LogWarning("Needs Play mode, a TestItem and a LootGenerationManager.", this);
-            return;
-        }
-
-        // The matching slot; for rings the first empty one, otherwise the first
-        InventorySlot target = null;
-        foreach (var (_, slot) in NamedSlots)
-        {
-            if (slot == null || slot.SlotType != TestItem.ItemType) continue;
-            if (target == null) target = slot;
-            if (slot.IsEmpty) { target = slot; break; }
-        }
-        if (target == null)
-        {
-            Debug.LogWarning($"No {TestItem.ItemType} slot to equip {TestItem.name} in.", this);
+            Debug.LogWarning("Needs Play mode, a TestItem, a LootGenerationManager and an AccountManager.", this);
             return;
         }
 
         var item = LootGenerationManager.Instance.RollItem(TestItem);
-        target.EquipItem(item);
-        Debug.Log($"Equipped {item.Rarity} {item.BaseItem.Name} in {target.name}.", this);
+        if (!AccountManager.Instance.Items.Store(item)) return;
+        var key = ItemKey.Of(item);
+
+        // Already equipped: storing it updated that slot. Otherwise the matching slot; for rings the first empty one.
+        var target = SlotWith(key);
+        if (target == null)
+        {
+            foreach (var (_, slot) in NamedSlots)
+            {
+                if (slot == null || slot.SlotType != TestItem.ItemType) continue;
+                if (target == null) target = slot;
+                if (slot.IsEmpty) { target = slot; break; }
+            }
+            if (target == null)
+            {
+                Debug.LogWarning($"No {TestItem.ItemType} slot to equip {TestItem.name} in. It's stored in the database.", this);
+                return;
+            }
+            Equip(target, key);
+        }
+        Debug.Log($"Equipped {key} in {target.name}.", this);
     }
 
     [ContextMenu("Log Summary")]
