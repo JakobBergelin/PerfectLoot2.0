@@ -26,18 +26,22 @@ public static class ItemText
     public static string Body(Item item, Item compareTo = null)
     {
         var sb = new StringBuilder();
-        // Fixed (not rolled) stats first, muted, e.g. a weapon's cooldown and reach
-        foreach (var line in item.BaseItem.FixedStatLines)
-            sb.AppendLine($"<color={RangeColor}>{line}</color>");
-
         var settings = LootGenerationManager.Instance != null ? LootGenerationManager.Instance.GenerationSettings : null;
         var compared = new HashSet<Affix>();
-        AppendAffixes(sb, item, item.BaseAffixes, isBaseAffix: true, settings, compareTo, compared);
-        AppendAffixes(sb, item, item.RollableAffixes, isBaseAffix: false, settings, compareTo, compared);
+
+        // Always the same order (AffixOrder): the slot's intrinsic stats, its fixed values (muted, e.g. a weapon's
+        // cooldown and reach), the base affixes, then the rolled affixes
+        var intrinsic = new HashSet<Affix>(item.BaseItem.AllRanges.Where(r => r.Source == AffixSource.Intrinsic).Select(r => r.Affix));
+        var baseAffixes = item.BaseAffixes ?? new List<Rolled>();
+        AppendAffixes(sb, item, Sorted(baseAffixes.Where(rolled => intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
+        foreach (var line in item.BaseItem.FixedStatLines)
+            sb.AppendLine($"<color={RangeColor}>{line}</color>");
+        AppendAffixes(sb, item, Sorted(baseAffixes.Where(rolled => !intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
+        AppendAffixes(sb, item, Sorted(item.RollableAffixes), isBaseAffix: false, settings, compareTo, compared);
 
         if (compareTo != null)
         {
-            foreach (var rolled in AllAffixes(compareTo).Where(rolled => Total(item, rolled.Affix) == null))
+            foreach (var rolled in Sorted(AllAffixes(compareTo).Where(rolled => Total(item, rolled.Affix) == null)))
                 sb.AppendLine($"<color={WorseColor}>Missing: +{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}</color>");
         }
 
@@ -53,10 +57,9 @@ public static class ItemText
     }
 
     // "+177 Strength  [150 – 180]": the range this affix could roll on this item at its rarity, muted
-    static void AppendAffixes(StringBuilder sb, Item item, List<Rolled> affixes, bool isBaseAffix, GenerationSettings settings,
+    static void AppendAffixes(StringBuilder sb, Item item, IEnumerable<Rolled> affixes, bool isBaseAffix, GenerationSettings settings,
                               Item compareTo, HashSet<Affix> compared)
     {
-        if (affixes == null) return;
         foreach (var rolled in affixes)
         {
             sb.Append($"+{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}");
@@ -78,6 +81,10 @@ public static class ItemText
             ? $"<color={BetterColor}>(+{Format(affix, delta)})</color>"
             : $"<color={WorseColor}>(-{Format(affix, -delta)})</color>";
     }
+
+    // Stable, so an affix rolled twice keeps its two lines in roll order
+    static IEnumerable<Rolled> Sorted(IEnumerable<Rolled> affixes) =>
+        (affixes ?? Enumerable.Empty<Rolled>()).OrderBy(rolled => AffixOrder.Index(rolled.Affix));
 
     static IEnumerable<Rolled> AllAffixes(Item item) =>
         (item.BaseAffixes ?? Enumerable.Empty<Rolled>()).Concat(item.RollableAffixes ?? Enumerable.Empty<Rolled>());

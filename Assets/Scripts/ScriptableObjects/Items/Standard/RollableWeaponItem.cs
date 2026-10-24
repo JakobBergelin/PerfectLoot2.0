@@ -34,9 +34,10 @@ namespace Equipment
         {
             get
             {
+                // Listed right after Weapon Damage (ItemText), in this order
+                if (WeaponDamageRange > 0f) yield return $"Damage range ±{WeaponDamageRange:0.##}";
                 yield return $"Weapon Cooldown x{WeaponCooldown:0.##}";
                 yield return $"Weapon Reach {WeaponReach:0.##}";
-                if (WeaponDamageRange > 0f) yield return $"Damage range ±{WeaponDamageRange:0.##}";
             }
         }
     }
