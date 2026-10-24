@@ -47,6 +47,23 @@ partial struct HealthRegenerationSystem : ISystem
         }
     }
 }
+// Keeps CurrentValue at or below MaxValue. FinalizeStatsSystem lowers MaxValue without touching CurrentValue (an
+// item with +Health unequipped, a buff ending, Golem's multiplier), so this runs after all healing and regeneration
+// and before the health bars read it (FeedbackSystemGroup). Only clamps from above: a lower max doesn't kill.
+[UpdateInGroup(typeof(HealthAndResourceSystemGroup), OrderLast = true)]
+partial struct ClampHealthSystem : ISystem
+{
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        foreach (var health in SystemAPI.Query<RefRW<Health>>())
+        {
+            if (health.ValueRO.CurrentValue > health.ValueRO.MaxValue)
+                health.ValueRW.CurrentValue = health.ValueRO.MaxValue;
+        }
+    }
+}
+
 [UpdateInGroup(typeof(DamageSystemGroup), OrderLast = true)]
 partial struct CheckDeathSystem : ISystem
 {
