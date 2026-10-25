@@ -42,6 +42,7 @@ public partial class WhirlwindSystem : SystemBase
                     whirlwind.ValueRW.WeaponEntity = Entity.Null;
                 }
                 whirlwind.ValueRW.Elapsed = 0.0f;
+                whirlwind.ValueRW.TickElapsed = 0.0f;
             }
             else if (whirlwind.ValueRO.Spinning)
             {
@@ -80,7 +81,15 @@ public partial class WhirlwindSystem : SystemBase
                         var forward = math.mul(localTransform.ValueRO.Rotation, Vector3.forward);
                         weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * stats.ValueRO.Value.WeaponReach;
                         SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -resourceCost});
-                    } 
+
+                        // A use every TickInterval while the weapon is out (tagged Melee, so it also raises MeleeAttackUsed)
+                        whirlwind.ValueRW.TickElapsed += SystemAPI.Time.DeltaTime;
+                        if(whirlwind.ValueRO.TickInterval > 0f && whirlwind.ValueRO.TickElapsed >= whirlwind.ValueRO.TickInterval)
+                        {
+                            whirlwind.ValueRW.TickElapsed -= whirlwind.ValueRO.TickInterval;
+                            if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Whirlwind);
+                        }
+                    }
                 }
             }
             else

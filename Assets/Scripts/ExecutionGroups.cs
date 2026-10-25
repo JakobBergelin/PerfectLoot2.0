@@ -42,6 +42,15 @@ public partial class InputSystemGroup : ComponentSystemGroup
 public partial class SkillSystemGroup : ComponentSystemGroup
 {}
 
+/// <summary>
+/// Last in SkillSystemGroup: reactions to this frame's skill uses. SkillTagEventSystem first turns uses into events
+/// (MeleeAttackUsed, MobilitySkillUsed), then e.g. legendary powers react. Casts they request (SkillCastRequest) are
+/// handled by the skill systems next frame.
+/// </summary>
+[UpdateInGroup(typeof(SkillSystemGroup), OrderLast = true)]
+public partial class SkillReactionSystemGroup : ComponentSystemGroup
+{}
+
 /// <summary>Moves units and projectiles.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(SkillSystemGroup))]

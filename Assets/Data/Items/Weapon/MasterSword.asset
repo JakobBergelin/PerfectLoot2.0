@@ -26,4 +26,4 @@ MonoBehaviour:
   WeaponCooldown: 0.9
   WeaponDamageRange: 1.8
   WeaponReach: 1.4
-  LegendaryPower: {fileID: 0}
+  LegendaryPower: {fileID: 11400000, guid: 001f49981bfb4e5db21b5696d470e50e, type: 2}

@@ -9,6 +9,8 @@ namespace ActiveSkills
         public string Name;
         public Sprite Icon;
         [TextArea] public string Description;
+        [Tooltip("What kind of skill it is: effects pick skills by tag, and Melee / Mobility uses raise their events")]
+        public SkillTags Tags;
 
         public abstract SkillType Type { get; }
 

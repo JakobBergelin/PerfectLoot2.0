@@ -156,6 +156,8 @@ public class ActiveSkillManager : MonoBehaviour
             {
                 Type = skill.Type,
                 SlotIndex = slotIndex,
+                BaseTags = skill.Tags,
+                Tags = skill.Tags,
                 State = new SkillState
                 {
                     ResourceCost = skill.ResourceCost,

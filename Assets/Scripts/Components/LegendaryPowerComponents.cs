@@ -14,3 +14,12 @@ public struct Refractionist : IComponentData
     public int RefractionStacks;
     public int MaxStacks;
 }
+
+/// <summary>
+/// Echoing Blade (Master Sword): while the resource is at least ResourceThreshold full, each melee attack also casts a
+/// random equipped projectile skill toward the cursor, paying its cost (EchoingBladeSystem).
+/// </summary>
+public struct EchoingBlade : IComponentData
+{
+    public float ResourceThreshold;
+}

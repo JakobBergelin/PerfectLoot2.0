@@ -17,6 +17,8 @@ namespace ActiveSkills
         public float SpinUpTime = 0.4f;
         [Tooltip("Knockback speed of each hit, away from the weapon")]
         public float HitForce = 3f;
+        [Tooltip("Seconds between melee ticks while spinning: each counts as a melee attack (e.g. for Echoing Blade)")]
+        public float TickInterval = 0.3f;
 
         public override SkillType Type => SkillType.Whirlwind;
         public override float ResourceCostPerSecond => resourceCostPerSecond;
@@ -29,6 +31,7 @@ namespace ActiveSkills
             component.AttackRadius = AttackRadius;
             component.SpinUpTime = SpinUpTime;
             component.HitForce = HitForce;
+            component.TickInterval = TickInterval;
             return component;
         }
     }

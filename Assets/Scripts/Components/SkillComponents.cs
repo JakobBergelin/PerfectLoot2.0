@@ -9,11 +9,15 @@ public struct Skill : IBufferElementData
     public SkillType Type;
     public int SlotIndex;   // Which slot/key (Skill1..Skill4) triggers it
 
+    public SkillTags BaseTags;  // From the ActiveSkill asset
+    public SkillTags Tags;      // This frame's tags: BaseTags (reset by SkillActivationSystem) plus whatever effects add
+
     public SkillState State;
 
     public struct Triggers
     {
         public bool OnUsed;
+        public bool AutoCast;   // OnUsed came from an effect (e.g. Echoing Blade), not the player pressing the skill
     }
 
     public Triggers events;
@@ -42,8 +46,62 @@ public enum SkillType
 
 }
 
+/// <summary>
+/// What kind of skill it is. Effects pick skills by tag (e.g. Echoing Blade casts a random Projectile skill) and
+/// SkillTagEventSystem turns uses of Melee / Mobility skills into MeleeAttackUsed / MobilitySkillUsed. Stored in assets:
+/// add new values at the end.
+/// </summary>
+[System.Flags]
+public enum SkillTags
+{
+    None = 0,
+    Projectile = 1 << 0,
+    Melee = 1 << 1,
+    Mobility = 1 << 2,
+    Channeled = 1 << 3,
+}
+
+/// <summary>
+/// A request on the caster to cast a skill now, made by an effect (e.g. Echoing Blade). The skill's own system handles
+/// it at the start of the next frame's skills: no wind-up, the normal resource cost (skipped when it can't be paid),
+/// counted as a use with AutoCast. Requests nobody handled are cleared (SkillCastRequestCleanupSystem).
+/// </summary>
+public struct SkillCastRequest : IBufferElementData
+{
+    public SkillType Type;
+    public float3 Direction;
+    public bool AutoCast;
+}
+
 public class SkillUtil
 {
+    /// <summary>Removes and returns the first request for this skill, if there is one.</summary>
+    public static bool TryTakeRequest(DynamicBuffer<SkillCastRequest> requests, SkillType type, out SkillCastRequest request)
+    {
+        for (int i = 0; i < requests.Length; i++)
+        {
+            if (requests[i].Type != type) continue;
+            request = requests[i];
+            requests.RemoveAt(i);
+            return true;
+        }
+        request = default;
+        return false;
+    }
+
+    /// <summary>
+    /// Raises the skill's OnUsed event this frame (autoCast: cast by an effect, not the player). Every use counts: a
+    /// cast, a punch, a Whirlwind tick. Melee and Mobility skills also raise MeleeAttackUsed / MobilitySkillUsed from it.
+    /// </summary>
+    public static void MarkUsed(DynamicBuffer<Skill> buffer, SkillType type, bool autoCast = false)
+    {
+        int index = -1;
+        if (!FindSkill(buffer, type, ref index)) return;
+        ref var skill = ref buffer.ElementAt(index);
+        skill.events.OnUsed = true;
+        skill.events.AutoCast |= autoCast;
+    }
+
     public static bool FindSkill(DynamicBuffer<Skill> buffer,SkillType type, ref int index)
     {
         for(int i = 0; i < buffer.Length; i++)
@@ -116,8 +174,10 @@ public struct Whirlwind : IComponentData, IEnableableComponent
     public float AttackRadius;
     public float SpinUpTime;        // Seconds of spinning before the weapon starts hitting
     public float HitForce;
+    public float TickInterval;      // Seconds between melee ticks (MeleeAttackUsed) while the weapon is out
     public Entity WeaponEntity;
     public float Elapsed;
+    public float TickElapsed;
     public bool Spinning;
 }
 
@@ -137,7 +197,14 @@ public struct Tornado : IComponentData, IEnableableComponent
 }
 
 /// <summary>
-/// One-frame event on every unit: enabled by a mobility skill (Dash, ...) when it is used, read by reactions such as
-/// Refractionist at the end of SkillSystemGroup, and disabled again by MobilitySkillEventSystem at the start of the next one.
+/// One-frame event on every unit: enabled by SkillTagEventSystem when a skill tagged Mobility (Dash, ...) is used, read by
+/// reactions such as Refractionist (SkillReactionSystemGroup), and disabled again by MobilitySkillEventSystem at the
+/// start of the next frame's skills.
 /// </summary>
 public struct MobilitySkillUsed : IComponentData, IEnableableComponent {}
+
+/// <summary>
+/// One-frame event on every unit, like MobilitySkillUsed: enabled when a skill tagged Melee is used (each Fists of Thunder
+/// punch, each Whirlwind tick), read by reactions such as Echoing Blade.
+/// </summary>
+public struct MeleeAttackUsed : IComponentData, IEnableableComponent {}

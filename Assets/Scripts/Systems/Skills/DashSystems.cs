@@ -37,9 +37,8 @@ public partial struct DashSystem : ISystem
                 dash.ValueRW.Dashing = true;
                 dash.ValueRW.NextPosition = localTransform.ValueRW.Position + desiredDirection.ValueRO.Direction * 7.0f;
 
-                // Dash is a mobility skill: let mobility reactions (e.g. Refractionist) know it was used this frame
-                if (SystemAPI.HasComponent<MobilitySkillUsed>(entity))
-                    SystemAPI.SetComponentEnabled<MobilitySkillUsed>(entity, true);
+                // A use (tagged Mobility, so it also raises MobilitySkillUsed for e.g. Refractionist)
+                SkillUtil.MarkUsed(skillBuffer, SkillType.Dash);
             }
 
         }

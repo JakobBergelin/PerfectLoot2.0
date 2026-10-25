@@ -36,6 +36,9 @@ public partial class SkillActivationSystem : SystemBase
                 SetSkillEnabled(entity, skill.Type, enabled);
 
                 skill.events.OnUsed = false;
+                skill.events.AutoCast = false;
+                // Effects that change tags add theirs after this, every frame
+                skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
                 skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Whirlwind) override this
                 skill.State.HasEnoughResource = resource >= skill.State.ResourceCost

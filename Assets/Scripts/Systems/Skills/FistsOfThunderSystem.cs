@@ -79,6 +79,8 @@ public partial class FistsOfThunderSystem : SystemBase
                 }
                 fistOfThunder.ValueRW.TimeSinceLastPunch = 0.0f;
                 SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = fistOfThunder.ValueRO.ResourceGeneration});
+                // Each punch is a use (tagged Melee, so it also raises MeleeAttackUsed)
+                if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.FistOfThunder);
             }
         }
     }

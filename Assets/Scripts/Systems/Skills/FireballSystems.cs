@@ -22,6 +22,23 @@ public partial class FireballSystem : SystemBase
         // SkillState: no cooldown to report (Elapsed is a wind-up that restarts when released); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
+
+        // Casts requested by effects (e.g. Echoing Blade): no wind-up, the normal cost (skipped if it can't be paid)
+        foreach (var (fireball, requests, skills, resourceChanges, resource, localTransform, entity) in
+                 SystemAPI.Query<RefRO<FireBall>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRO<Resource>, RefRO<LocalTransform>>()
+                          .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
+        {
+            float available = resource.ValueRO.CurrentValue;
+            while (SkillUtil.TryTakeRequest(requests, SkillType.Fireball, out var request))
+            {
+                if (available < fireball.ValueRO.ResourceCost) continue;
+                available -= fireball.ValueRO.ResourceCost;
+                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
+                resourceChanges.Add(new ResourceChanger{Value = -fireball.ValueRO.ResourceCost});
+                SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
+            }
+        }
+
         foreach (var (fireball, stats, entity) in SystemAPI.Query<RefRW<FireBall>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             if(!SystemAPI.IsComponentEnabled<FireBall>(entity))
@@ -48,26 +65,28 @@ public partial class FireballSystem : SystemBase
 
             if(fireball.ValueRO.Elapsed >= fireball.ValueRO.AttackSpeed)
             {
-                var newEntity = commandBuffer.CreateEntity();
-                
-                commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction, Rotation = Quaternion.identity, Scale = 0.5f});
-                commandBuffer.AddComponent(newEntity, new Projectile{Direction = desiredDirection.ValueRO.Direction, Speed = fireball.ValueRO.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0, FollowGround = true});
-                commandBuffer.AddComponent(newEntity, new Attack{Damage = fireball.ValueRO.Damage, Type = DamageType.Fire, DamageHierarchy = DamageHierarchy.Main, Radius = fireball.ValueRO.Radius, HitForce = fireball.ValueRO.HitForce});
-                commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
-                commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
-                commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
-
+                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
                 fireball.ValueRW.Elapsed = 0.0f;
 
                 SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -fireball.ValueRO.ResourceCost});
-
-                int index = -1;
-                if (SkillUtil.FindSkill(skillBuffer, SkillType.Fireball, ref index))
-                {
-                    ref var skill = ref skillBuffer.ElementAt(index);
-                    skill.events.OnUsed = true;
-                }
+                SkillUtil.MarkUsed(skillBuffer, SkillType.Fireball);
             }
         }
+    }
+
+    /// <summary>
+    /// One fireball from the caster toward direction. Used by the normal cast and by effects that cast it (Echoing Blade);
+    /// the caller pays the cost.
+    /// </summary>
+    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in FireBall fireball, float3 casterPosition, float3 direction)
+    {
+        var newEntity = commandBuffer.CreateEntity();
+
+        commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + direction, Rotation = quaternion.identity, Scale = 0.5f});
+        commandBuffer.AddComponent(newEntity, new Projectile{Direction = direction, Speed = fireball.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0, FollowGround = true});
+        commandBuffer.AddComponent(newEntity, new Attack{Damage = fireball.Damage, Type = DamageType.Fire, DamageHierarchy = DamageHierarchy.Main, Radius = fireball.Radius, HitForce = fireball.HitForce});
+        commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
+        commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
+        commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
     }
 }

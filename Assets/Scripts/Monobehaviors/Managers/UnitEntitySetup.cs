@@ -44,6 +44,8 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Frozen());
         // One-frame event for mobility skills (Dash, ...), read by Refractionist and similar
         AddDisabled(entityManager, entity, new MobilitySkillUsed());
+        AddDisabled(entityManager, entity, new MeleeAttackUsed());
+        if (!entityManager.HasBuffer<SkillCastRequest>(entity)) entityManager.AddBuffer<SkillCastRequest>(entity);
         AddOrSet(entityManager, entity, new MovementModifiers { SpeedMultiplier = 1f });
         AddOrSet(entityManager, entity, new EffectDamageText());
 

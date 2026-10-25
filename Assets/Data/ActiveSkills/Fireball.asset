@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Fireball
   Icon: {fileID: 0}
   Description: 
+  Tags: 1
   AttackSpeed: 0.5
   resourceCost: 2
   Damage: 2
