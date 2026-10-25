@@ -1,0 +1,4 @@
+# object|material slots in submesh order
+CT_Revenant_Animated|CT_Iron,TR_Armor,CT_Cloth,CT_DarkStone,CT_GhostEye
+CT_Wraith_Animated|CT_WraithCloth,CT_DarkStone,CT_GhostEye,CT_Pale,TR_Shield
+CT_BellRinger_Animated|CT_Cloth,CT_Bone,TR_Summon,CT_Wood,CT_Iron
