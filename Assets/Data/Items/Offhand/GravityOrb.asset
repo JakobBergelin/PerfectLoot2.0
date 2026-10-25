@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55686650adcc894d986b417fd0d60b3, type: 3}
+  m_Name: GravityOrb
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueOffhandItem
+  Name: Gravity Orb
+  BaseAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 10
+      Max: 14
+  - Affix: 5
+    RollRange:
+      Min: 0.15
+      Max: 0.25
+  RollableAffixes:
+  - Affix: 5
+    RollRange:
+      Min: 0.02
+      Max: 0.08
+  - Affix: 4
+    RollRange:
+      Min: 3
+      Max: 10
+  - Affix: 24
+    RollRange:
+      Min: 10
+      Max: 40
+  - Affix: 22
+    RollRange:
+      Min: 2
+      Max: 10
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 17
+    RollRange:
+      Min: 10
+      Max: 40
+  LegendaryPower: {fileID: 11400000, guid: 76f49f7a8bf244fcab94b10630811bae, type: 2}

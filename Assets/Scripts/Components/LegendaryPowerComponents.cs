@@ -23,3 +23,18 @@ public struct EchoingBlade : IComponentData
 {
     public float ResourceThreshold;
 }
+
+/// <summary>
+/// Event Horizon (Gravity Orb): the wearer's projectiles orbit it, up to MaxProjectiles; each new one pushes the oldest
+/// out. Faster projectiles orbit further out (EventHorizonSystems).
+/// </summary>
+public struct EventHorizon : IComponentData
+{
+    public int MaxProjectiles;
+    public float RadiusPerSpeed;    // Orbit radius = projectile speed * this, clamped to Min/MaxRadius
+    public float MinRadius;
+    public float MaxRadius;
+    public float PullStrength;      // How hard a projectile is steered toward its radius
+    public float TurnSpeed;         // Radians per second the orbit can turn a projectile
+    public uint NextOrder;          // Capture counter: lower Orbiting.Order is older
+}

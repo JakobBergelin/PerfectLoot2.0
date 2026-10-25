@@ -50,3 +50,15 @@ public struct WanderingProjectile : IComponentData
     /// <summary>The sway offset applied last frame, replaced by the new one each frame.</summary>
     public float3 SwayOffset;
 }
+
+/// <summary>
+/// A projectile orbiting Center (Event Horizon): OrbitSteeringSystem turns its direction around the center each frame,
+/// keeping its speed. Order is when it was captured (the oldest is released first). Removing this releases it on its
+/// current heading.
+/// </summary>
+public struct Orbiting : IComponentData
+{
+    public Entity Center;
+    public float Radius;
+    public uint Order;
+}
