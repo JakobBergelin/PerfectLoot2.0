@@ -175,6 +175,8 @@ public class CharacterManager : MonoBehaviour
     {
         using var prefabQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerPrefab>());
         if (prefabQuery.IsEmpty) return;
+        // A generated level must exist first, or the player would fall through it
+        if (!LevelGeneration.LevelState.IsReady(entityManager)) return;
         var prefab = prefabQuery.GetSingleton<PlayerPrefab>().Value;
         if (prefab == Entity.Null)
         {
@@ -182,6 +184,8 @@ public class CharacterManager : MonoBehaviour
             enabled = false;
             return;
         }
+
+        if (!TryFindSpawnPosition(entityManager, prefab, out var spawnPosition)) return;
 
         // The subscene is loaded at this point, so the settings singletons should be too. Without them movement,
         // damage and stat systems never run.
@@ -195,7 +199,7 @@ public class CharacterManager : MonoBehaviour
 
         _player = entityManager.Instantiate(prefab);
         var spawnTransform = entityManager.GetComponentData<LocalTransform>(_player);
-        spawnTransform.Position = SpawnPoint != null ? SpawnPoint.position : transform.position;
+        spawnTransform.Position = spawnPosition;
         entityManager.SetComponentData(_player, spawnTransform);
 
         PlayerEntitySetup.AddGameplayComponents(entityManager, _player, baseStats);
@@ -207,6 +211,36 @@ public class CharacterManager : MonoBehaviour
         PushCharacter();
 
         PlayerSpawned?.Invoke(_player);
+    }
+
+    // Seconds to keep looking for ground before spawning at the plain position anyway
+    const float MaxGroundWait = 2f;
+    float _groundWait;
+
+    /// <summary>
+    /// The level's player start (or SpawnPoint without a level), standing on the ground below it. False while the ground
+    /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait it gives up and uses the
+    /// plain position.
+    /// </summary>
+    bool TryFindSpawnPosition(EntityManager entityManager, Entity prefab, out Vector3 position)
+    {
+        position = SpawnPoint != null ? SpawnPoint.position : transform.position;
+        if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
+
+        float bottomOffset = LevelGeneration.GroundPlacement.BottomOffset(entityManager, prefab);
+        if (LevelGeneration.GroundPlacement.TryGetCollisionWorld(entityManager, out var collisionWorld) &&
+            LevelGeneration.GroundPlacement.TryPlace(collisionWorld, position, bottomOffset, out var placed))
+        {
+            position = placed;
+            _groundWait = 0f;
+            return true;
+        }
+
+        _groundWait += Time.deltaTime;
+        if (_groundWait < MaxGroundWait) return false;
+        Debug.LogWarning($"CharacterManager: no ground under the spawn position {position}; spawning there anyway.", this);
+        _groundWait = 0f;
+        return true;
     }
 
     PlayerBaseStats _defaultBaseStats;

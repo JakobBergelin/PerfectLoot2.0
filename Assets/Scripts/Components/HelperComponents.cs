@@ -16,6 +16,7 @@ public struct InitializeFromSource : IComponentData{}
 public enum CollisionLayerHelper
 {
     None = 0,
+    Water = 1 << 4,     // Blocks units, not attacks or projectiles
     Ground = 1 << 6,
     Wall = 1 << 7,
     Player = 1 << 8,

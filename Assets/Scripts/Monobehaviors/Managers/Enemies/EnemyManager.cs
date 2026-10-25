@@ -1,4 +1,5 @@
 using Enemies;
+using LevelGeneration;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Physics;
@@ -23,6 +24,9 @@ public class EnemyManager : MonoBehaviour
     [Header("Spawning")]
     [Tooltip("Seconds enemies spawned with riseIn take to rise out of the ground")]
     public float RiseDuration = 0.6f;
+
+    // Random spots a group member tries before settling for one without ground under it
+    const int GroundTries = 6;
 
     World _queryWorld;
     EntityQuery _prefabsQuery;
@@ -59,10 +63,18 @@ public class EnemyManager : MonoBehaviour
         if (count <= 0) return;
         using var positions = new NativeArray<Vector3>(count, Allocator.Temp);
         var spawned = positions;
+        // A spot over a wall or water has no ground under it: try a few others (the last try is used regardless)
+        CollisionWorld collisionWorld = default;
+        var world = World.DefaultGameObjectInjectionWorld;
+        bool hasPhysics = world != null && world.IsCreated && GroundPlacement.TryGetCollisionWorld(world.EntityManager, out collisionWorld);
         for (int i = 0; i < count; i++)
         {
-            var offset = Random.insideUnitCircle * radius;
-            spawned[i] = center + new Vector3(offset.x, 0f, offset.y);
+            for (int attempt = 0; attempt < GroundTries; attempt++)
+            {
+                var offset = Random.insideUnitCircle * radius;
+                spawned[i] = center + new Vector3(offset.x, 0f, offset.y);
+                if (!hasPhysics || GroundPlacement.TryFindGround(collisionWorld, spawned[i], out _)) break;
+            }
         }
         SpawnAt(definition, positions, riseIn);
     }
@@ -116,16 +128,22 @@ public class EnemyManager : MonoBehaviour
             entityManager.AddComponent<Prefab>(template);
         }
 
+        // On the ground: the collider's lowest point just above the floor under each position (unchanged where there's none)
+        float bottomOffset = GroundPlacement.BottomOffset(entityManager, template);
+        bool hasPhysics = GroundPlacement.TryGetCollisionWorld(entityManager, out var collisionWorld);
+
         using var enemies = entityManager.Instantiate(template, positions.Length, Allocator.Temp);
         var templateTransform = entityManager.GetComponentData<LocalTransform>(template);
         for (int i = 0; i < enemies.Length; i++)
         {
             var transform = templateTransform;
             transform.Position = positions[i];
+            if (hasPhysics && GroundPlacement.TryPlace(collisionWorld, transform.Position, bottomOffset, out var placed))
+                transform.Position = placed;
             if (riseIn)
             {
                 var rise = entityManager.GetComponentData<SpawnRise>(enemies[i]);
-                rise.TargetY = positions[i].y;
+                rise.TargetY = transform.Position.y;
                 entityManager.SetComponentData(enemies[i], rise);
                 transform.Position.y -= riseDepth;
             }
@@ -174,6 +192,8 @@ public class EnemyManager : MonoBehaviour
             _queryWorld = world;
         }
         if (_prefabsQuery.IsEmpty) return false;
+        // Nothing spawns before a generated level exists
+        if (!LevelGeneration.LevelState.IsReady(entityManager)) return false;
 
         prefabs = entityManager.GetBuffer<EnemyPrefabElement>(_prefabsQuery.GetSingletonEntity(), isReadOnly: true);
         return true;
