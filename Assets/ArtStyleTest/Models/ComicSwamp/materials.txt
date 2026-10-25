@@ -1,0 +1,17 @@
+# name|base color (sRGB hex)|emission hex
+SW_Bark|#3A3024|
+SW_Bone|#CFC6A8|
+SW_Cap|#6E3E3A|
+SW_Chitin|#2E2620|
+SW_Cloak|#3D4A2A|
+SW_EyeDark|#141016|
+SW_Moss|#5E6B34|
+SW_Mud|#4E4636|
+SW_Mushroom|#B89A78|
+SW_SickEye|#D8D27A|
+SW_Stone|#6A6A5A|
+SW_ToadBelly|#A39A62|
+SW_ToadSkin|#6B7436|
+SW_Water|#26352E|
+TR_Poison|#9CFF4A|#8CFF3A
+TR_Shield|#C9A2FF|#B57BFF

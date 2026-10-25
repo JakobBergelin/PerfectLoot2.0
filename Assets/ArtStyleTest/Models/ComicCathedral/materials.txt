@@ -1,0 +1,17 @@
+# name|base color (sRGB hex)|emission hex
+CT_Bone|#D6CFB8|
+CT_Cloth|#3A2E3A|
+CT_DarkStone|#3A3B42|
+CT_Flame|#FFB060|#FF8A30
+CT_GhostEye|#E8F0F8|#D8E8F8
+CT_GlassBlue|#2A3A6A|#3A5AC8
+CT_GlassRed|#8A2A30|#C83A3A
+CT_Iron|#4A4C52|
+CT_Pale|#A8B4C0|
+CT_Stone|#6E7078|
+CT_Wax|#E8DCC0|
+CT_Wood|#4A3A2E|
+CT_WraithCloth|#2A2E3A|
+TR_Armor|#8A8F99|
+TR_Shield|#C9A2FF|#B57BFF
+TR_Summon|#FFE08A|#FFD24A

@@ -133,7 +133,7 @@ Sprite vs 3D, same look:
 
 ### 3D retro: chosen direction, first polish pass
 
-- **Editor = Play mode**: `PixelArtCamera` runs in edit mode, so the Game view shows the low-res pixel image without pressing Play (Scene view stays full-res).
-- **Pixel-stable camera**: orthographic camera (pitch 50°, size 5.2). In play mode it follows the player, snaps to whole pixels in the view plane and shifts the upscaled image by the sub-pixel remainder (1 px render margin) → no shimmering edges, smooth motion.
+- **Pixelation is a plain scene setup (no script)**: the orthographic camera (pitch 50°, size 5.2) renders into `Rendering/RT_Pixel_480x270` (point filter, set as the camera's *Output → Target Texture*), and the `Pixel Display` canvas shows it full-screen with a Raw Image + Aspect Ratio Fitter (16:9). The Game view shows the pixel image in edit mode too; the Scene view stays full-res. To change the pixel size, change the render texture's size.
+- **No pixel snapping yet**: edges may shimmer slightly when the camera moves. If that bothers you, add a small follow script that rounds the camera position to whole pixels (world units per pixel = 2 × orthographic size ÷ 270). (`PixelArtCamera.cs` still exists for the sprite pixel scene and contains a full snapping version.)
 - **Readability**: the player has a bone-white crest, cape emblem and a light-teal 1 px outline. Enemy outlines use their trait color (Baron fire `#C8501C`, Imp fast `#D7C7A6`, Priest summoner `#FFD36A`); the Elite gets a 2 px `#FFA53A` outline. Per-actor material copies live in `Materials/Doom3D_Pixel/ActorOutlines/`.
 - Lava and fire glow toned down to deep orange so they don't read as yellow/gold (gold = summoner).
