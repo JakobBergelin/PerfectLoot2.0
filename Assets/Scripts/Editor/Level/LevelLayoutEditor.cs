@@ -288,7 +288,8 @@ public class LevelLayoutEditor : Editor
         _hoverValid = false;
         if (!plane.Raycast(ray, out float distance)) return;
 
-        var local = (ray.GetPoint(distance) - layout.transform.position) / layout.TileSize;
+        var grid = layout.WorldToGrid(ray.GetPoint(distance));
+        var local = new Vector3(grid.x, 0f, grid.y);
         if (_brush == Brush.Corners)
         {
             _hover = new Vector2Int(Mathf.RoundToInt(local.x), Mathf.RoundToInt(local.z));
@@ -457,9 +458,7 @@ public class LevelLayoutEditor : Editor
                     var from = _rectStart.Value;
                     var min = new Vector2Int(Mathf.Min(from.x, _hover.x), Mathf.Min(from.y, _hover.y));
                     var max = new Vector2Int(Mathf.Max(from.x, _hover.x), Mathf.Max(from.y, _hover.y));
-                    var a = layout.CornerPosition(min.x, min.y);
-                    var b = layout.CornerPosition(max.x, max.y);
-                    Handles.DrawSolidRectangleWithOutline(new[] { a, new Vector3(b.x, a.y, a.z), b, new Vector3(a.x, a.y, b.z) },
+                    Handles.DrawSolidRectangleWithOutline(GridRect(layout, min, max - min, 0.08f),
                                                           new Color(color.r, color.g, color.b, 0.15f), color);
                 }
                 Handles.color = color;
@@ -479,9 +478,19 @@ public class LevelLayoutEditor : Editor
 
     static void DrawCellRect(LevelLayoutAuthoring layout, Vector2Int cell, Vector2Int size, Color color)
     {
-        var a = layout.CornerPosition(cell.x, cell.y) + Vector3.up * 0.08f;
-        var b = layout.CornerPosition(cell.x + size.x, cell.y + size.y) + Vector3.up * 0.08f;
-        Handles.DrawSolidRectangleWithOutline(new[] { a, new Vector3(b.x, a.y, a.z), b, new Vector3(a.x, a.y, b.z) },
-                                              new Color(color.r, color.g, color.b, 0.12f), color);
+        Handles.DrawSolidRectangleWithOutline(GridRect(layout, cell, size, 0.08f), new Color(color.r, color.g, color.b, 0.12f), color);
+    }
+
+    // The 4 world corners of a grid rectangle (turned with the layout), a little above the grid
+    static Vector3[] GridRect(LevelLayoutAuthoring layout, Vector2Int from, Vector2Int size, float lift)
+    {
+        var up = Vector3.up * lift;
+        return new[]
+        {
+            layout.CornerPosition(from.x, from.y) + up,
+            layout.CornerPosition(from.x + size.x, from.y) + up,
+            layout.CornerPosition(from.x + size.x, from.y + size.y) + up,
+            layout.CornerPosition(from.x, from.y + size.y) + up,
+        };
     }
 }

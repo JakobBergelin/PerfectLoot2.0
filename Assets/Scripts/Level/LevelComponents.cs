@@ -19,6 +19,8 @@ namespace LevelGeneration
         public float TileSize;
         /// <summary>World position of the grid's south-west corner.</summary>
         public float3 Origin;
+        /// <summary>The grid's turn around Origin (yaw only).</summary>
+        public quaternion Rotation;
         /// <summary>Cell the player spawns in.</summary>
         public int2 PlayerStart;
 

@@ -137,11 +137,24 @@ namespace LevelGeneration
             _cornerRulesHeight = CornerHeight;
         }
 
-        /// <summary>World position of a corner (at this object's height).</summary>
-        public Vector3 CornerPosition(int x, int y) => transform.position + new Vector3(x * TileSize, 0f, y * TileSize);
+        /// <summary>The grid's turn: only the Transform's Y rotation, so the level always stays flat.</summary>
+        public Quaternion Yaw => Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
+
+        /// <summary>World position of a grid point (in cells) at this object's height, turned by Yaw around this object.</summary>
+        public Vector3 GridToWorld(float x, float y) => transform.position + Yaw * new Vector3(x * TileSize, 0f, y * TileSize);
+
+        /// <summary>Grid coordinates (in cells) of a world position, ignoring height.</summary>
+        public Vector2 WorldToGrid(Vector3 world)
+        {
+            var local = Quaternion.Inverse(Yaw) * (world - transform.position);
+            return new Vector2(local.x, local.z) / TileSize;
+        }
+
+        /// <summary>World position of a corner.</summary>
+        public Vector3 CornerPosition(int x, int y) => GridToWorld(x, y);
 
         /// <summary>World position of a cell's center.</summary>
-        public Vector3 CellCenter(int x, int y) => transform.position + new Vector3((x + 0.5f) * TileSize, 0f, (y + 0.5f) * TileSize);
+        public Vector3 CellCenter(int x, int y) => GridToWorld(x + 0.5f, y + 0.5f);
 
         void OnValidate()
         {
@@ -156,6 +169,9 @@ namespace LevelGeneration
             var cells = PreviewCells != null && PreviewCells.Length == Width * Height ? PreviewCells : SavedCells;
             if (TileSet == null) return;
             var corners = new WfcTerrain[4];
+            // Drawn in grid space, turned with the layout
+            var previousMatrix = Gizmos.matrix;
+            Gizmos.matrix = Matrix4x4.TRS(transform.position, Yaw, Vector3.one);
 
             if (cells != null)
                 for (int y = 0; y < Height; y++)
@@ -186,11 +202,13 @@ namespace LevelGeneration
                         DrawCell(placed.Cell.x + px, placed.Cell.y + py, corners);
                     }
             }
+            Gizmos.matrix = previousMatrix;
         }
 
+        // In grid space (Gizmos.matrix places the grid)
         void DrawCell(int x, int y, WfcTerrain[] corners)
         {
-            var center = CellCenter(x, y);
+            var center = new Vector3((x + 0.5f) * TileSize, 0f, (y + 0.5f) * TileSize);
             float quarter = TileSize * 0.25f;
             for (int k = 0; k < 4; k++)
             {

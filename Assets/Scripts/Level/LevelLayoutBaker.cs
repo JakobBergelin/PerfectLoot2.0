@@ -28,6 +28,7 @@ namespace LevelGeneration
             root.Height = authoring.Height;
             root.TileSize = authoring.TileSize;
             root.Origin = transform.position;
+            root.Rotation = authoring.Yaw;
             root.PlayerStart = new int2(authoring.PlayerStart.x, authoring.PlayerStart.y);
 
             int variants = compiled.Variants.Count;

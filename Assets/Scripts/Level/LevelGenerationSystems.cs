@@ -30,7 +30,7 @@ namespace LevelGeneration
                 spawned.ValueRW.ReadyAnnounced = true;
                 announce = true;
                 ref var blob = ref layout.ValueRO.Blob.Value;
-                ready.PlayerStart = blob.Origin + new float3((blob.PlayerStart.x + 0.5f) * blob.TileSize, 0f, (blob.PlayerStart.y + 0.5f) * blob.TileSize);
+                ready.PlayerStart = GridToWorld(ref blob, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
             }
             if (announce && !SystemAPI.HasSingleton<LevelReady>()) EntityManager.CreateSingleton(ready, "LevelReady");
 
@@ -72,8 +72,8 @@ namespace LevelGeneration
                     if (cell < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(cell);
                     if (tile >= tilePrefabs.Length || tilePrefabs[tile].Value == Entity.Null) { missingPrefabs++; continue; }
-                    var position = blob.Origin + new float3((x + 0.5f) * blob.TileSize, 0f, (y + 0.5f) * blob.TileSize);
-                    Spawn(tilePrefabs[tile].Value, position, LevelLayoutAuthoring.PackedRotation(cell));
+                    var position = GridToWorld(ref blob, x + 0.5f, y + 0.5f);
+                    Spawn(tilePrefabs[tile].Value, position, Turn(ref blob, LevelLayoutAuthoring.PackedRotation(cell)));
                     tiles++;
                 }
 
@@ -82,8 +82,8 @@ namespace LevelGeneration
                 var piece = blob.Pieces[i];
                 if (piece.Piece >= piecePrefabs.Length || piecePrefabs[piece.Piece].Value == Entity.Null) { missingPrefabs++; continue; }
                 var center = new float2(piece.Cell) + new float2(piece.Size) * 0.5f;
-                var position = blob.Origin + new float3(center.x * blob.TileSize, 0f, center.y * blob.TileSize);
-                Spawn(piecePrefabs[piece.Piece].Value, position, piece.Rotation);
+                var position = GridToWorld(ref blob, center.x, center.y);
+                Spawn(piecePrefabs[piece.Piece].Value, position, Turn(ref blob, piece.Rotation));
                 pieces++;
             }
 
@@ -149,10 +149,17 @@ namespace LevelGeneration
             return array;
         }
 
-        void Spawn(Entity prefab, float3 position, int rotation)
+        /// <summary>World position of a grid point (in cells): turned around the origin with the layout.</summary>
+        public static float3 GridToWorld(ref LevelLayoutBlob blob, float x, float y) =>
+            blob.Origin + math.mul(blob.Rotation, new float3(x * blob.TileSize, 0f, y * blob.TileSize));
+
+        // A tile's or piece's 90° steps, on top of the layout's turn
+        static quaternion Turn(ref LevelLayoutBlob blob, int rotation) =>
+            math.mul(blob.Rotation, quaternion.RotateY(math.radians(90f * rotation)));
+
+        void Spawn(Entity prefab, float3 position, quaternion turn)
         {
             var root = EntityManager.Instantiate(prefab);
-            var turn = quaternion.RotateY(math.radians(90f * rotation));
             if (EntityManager.HasComponent<LocalTransform>(root))
             {
                 var transform = EntityManager.GetComponentData<LocalTransform>(root);
