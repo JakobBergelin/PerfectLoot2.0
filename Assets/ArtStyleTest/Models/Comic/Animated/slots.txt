@@ -1,0 +1,2 @@
+# object|material slots in submesh order
+PL_Player_Animated|PL_Player_Cloth,PL_Player_Leather,PL_Player_Metal,PL_Player_Hair,PL_Player_Cloak

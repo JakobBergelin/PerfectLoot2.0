@@ -107,6 +107,39 @@ namespace LevelGeneration
             }
         }
 
+        /// <summary>
+        /// Normals averaged over vertices that share a position, in tangent space in UV3: PerfectLoot/Comic's outline
+        /// uses them so hard-edged level geometry gets unbroken ink lines (like ToonOutlineNormalsPostprocessor does for
+        /// imported models; merging drops the tiles' own).
+        /// </summary>
+        static void BakeOutlineNormals(Mesh mesh)
+        {
+            var vertices = mesh.vertices;
+            var normals = mesh.normals;
+            var tangents = mesh.tangents;
+            if (normals.Length != vertices.Length || tangents.Length != vertices.Length) return;
+
+            var sum = new Dictionary<Vector3Int, Vector3>(vertices.Length);
+            Vector3Int Key(Vector3 p) => new Vector3Int(Mathf.RoundToInt(p.x * 1000f), Mathf.RoundToInt(p.y * 1000f), Mathf.RoundToInt(p.z * 1000f));
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var key = Key(vertices[i]);
+                sum.TryGetValue(key, out var s);
+                sum[key] = s + normals[i];
+            }
+
+            var smooth = new List<Vector3>(vertices.Length);
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var s = sum[Key(vertices[i])].normalized;
+                var n = normals[i];
+                var t = (Vector3)tangents[i];
+                var b = Vector3.Cross(n, t) * tangents[i].w;
+                smooth.Add(new Vector3(Vector3.Dot(s, t), Vector3.Dot(s, b), Vector3.Dot(s, n)));
+            }
+            mesh.SetUVs(3, smooth);
+        }
+
         // A point in the part's own space, turned with the part, placed on the bent grid; its height stays on top
         float3 Bend(quaternion turn, float2 center, float3 local)
         {
@@ -137,6 +170,7 @@ namespace LevelGeneration
                 mesh.SetTriangles(batch.Indices, 0);
                 mesh.RecalculateNormals();
                 mesh.RecalculateTangents();
+                BakeOutlineNormals(mesh);
                 mesh.RecalculateBounds();
                 meshes[i] = mesh;
                 createdMeshes.Add(mesh);
