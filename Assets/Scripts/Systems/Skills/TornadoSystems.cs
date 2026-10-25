@@ -59,7 +59,9 @@ public partial class TornadoSystem : SystemBase
                 commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.ValueRO.Radius, TimeRemaining = tornado.ValueRO.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.ValueRO.TickRate, HitForce = tornado.ValueRO.HitForce});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
                 commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
-                commandBuffer.AddComponent(newEntity, new TornadoBehavior{DirectionDuration = tornado.ValueRO.DirectionDuration, Speed = tornado.ValueRO.Speed, Elapsed = 0.0f, Direction = desiredDirection.ValueRO.Direction, Position = startPos, Sway = new float3(1.0f,0.0f,0.0f)});
+                // A projectile (so projectile bonuses apply) that wanders along the ground and passes through walls
+                commandBuffer.AddComponent(newEntity, new Projectile{Direction = desiredDirection.ValueRO.Direction, Speed = tornado.ValueRO.Speed, DestroyOnHit = false, FollowGround = true, PassThroughWalls = true});
+                commandBuffer.AddComponent(newEntity, new WanderingProjectile{DirectionDuration = tornado.ValueRO.DirectionDuration, SwayRadius = 0.3f, SwaySpeed = 6.6f});
                 commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
 
                 tornado.ValueRW.Elapsed = 0.0f;
@@ -67,20 +69,6 @@ public partial class TornadoSystem : SystemBase
                 SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -tornado.ValueRO.ResourceCost});
             }
         }
-
-        foreach (var (tornado, localTransform, entity) in SystemAPI.Query<RefRW<TornadoBehavior>, RefRW<LocalTransform>>().WithEntityAccess())
-        {
-            tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime;
-            if(tornado.ValueRO.Elapsed >= tornado.ValueRO.DirectionDuration)
-            {
-                tornado.ValueRW.Elapsed = 0.0f;
-                tornado.ValueRW.Direction = new float3(_random.NextFloat(-1.0f, 1.0f), 0.0f, _random.NextFloat(-1.0f, 1.0f));
-            }
-            
-            tornado.ValueRW.Sway = Quaternion.Euler(0.0f, (float)Math.PI * 2.0f, 0.0f) * tornado.ValueRO.Sway;
-            tornado.ValueRW.Position += tornado.ValueRO.Direction * tornado.ValueRO.Speed * SystemAPI.Time.DeltaTime;
-            localTransform.ValueRW.Position = tornado.ValueRO.Position + math.normalize(tornado.ValueRO.Sway) * 0.3f;
-        }
-
+        // Spawned tornadoes move as wandering projectiles (WanderingProjectileSystem, ProjectileSystem)
     }
 }

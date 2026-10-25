@@ -466,15 +466,15 @@ MonoBehaviour:
   Height: 20
   TileSize: 5
   TileSet: {fileID: 11400000, guid: 34c0833752aa3234bb1a3174860e26c0, type: 2}
-  Border: 2
+  Border: 3
   Mode: 0
   RandomSeedEachPlay: 1
   Seed: 2
   MaxAttempts: 20
-  WobbleStrength: 0.1133
-  WobbleScale: 0.25
-  BendAngle: 34.4
-  HillHeight: 1.54
+  WobbleStrength: 0.1161
+  WobbleScale: 0.61
+  BendAngle: 35.7
+  HillHeight: 2.3
   HillScale: 0.15
   PlayerStart: {x: 9, y: 9}
   ForcedTiles: []

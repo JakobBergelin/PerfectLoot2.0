@@ -8,6 +8,15 @@ public struct Projectile : IComponentData
     public bool DestroyOnHit;
     public int PierceCount;
     public int BounceCount;
+    /// <summary>
+    /// Moves flat and keeps the height above the ground it was spawned at, following slopes and hills. The ground never
+    /// stops it; walls still do (unless PassThroughWalls). Off: flies freely in 3D and hits the ground (e.g. homing missiles).
+    /// </summary>
+    public bool FollowGround;
+    public bool PassThroughWalls;
+    /// <summary>Height above the ground, measured on the first move (FollowGround). Negative when there was no ground under it.</summary>
+    public float GroundHeight;
+    public bool GroundHeightSet;
 }
 
 public enum HomingType
@@ -24,4 +33,20 @@ public struct HomingProjectile : IComponentData
     public float TurnAcceleration;
 
     public HomingType HomingType;
+}
+
+/// <summary>
+/// Picks a new random flat direction every DirectionDuration seconds and sways in a small circle around its path
+/// (e.g. Tornado). Steers Projectile.Direction before ProjectileSystem moves it.
+/// </summary>
+public struct WanderingProjectile : IComponentData
+{
+    public float DirectionDuration;
+    public float Elapsed;
+    public float SwayRadius;
+    /// <summary>Radians per second around the sway circle.</summary>
+    public float SwaySpeed;
+    public float SwayAngle;
+    /// <summary>The sway offset applied last frame, replaced by the new one each frame.</summary>
+    public float3 SwayOffset;
 }

@@ -136,17 +136,6 @@ public struct Tornado : IComponentData, IEnableableComponent
     public float Elapsed;
 }
 
-// On each spawned tornado
-public struct TornadoBehavior : IComponentData
-{
-    public float DirectionDuration;
-    public float Speed;
-    public float Elapsed;
-    public float3 Direction;
-    public float3 Position;
-    public float3 Sway;
-}
-
 /// <summary>
 /// One-frame event on every unit: enabled by a mobility skill (Dash, ...) when it is used, read by reactions such as
 /// Refractionist at the end of SkillSystemGroup, and disabled again by MobilitySkillEventSystem at the start of the next one.
