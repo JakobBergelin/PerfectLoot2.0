@@ -1,0 +1,13 @@
+# object|material slots in submesh order
+SW_BloatToad|SW_ToadSkin,SW_ToadBelly,SW_EyeDark,SW_SickEye,TR_Poison,SW_Bone
+SW_BogShaman|SW_Cloak,SW_Moss,SW_Bark,TR_Shield
+SW_MireCrawler|SW_Chitin,SW_Bone,SW_SickEye
+SW_ENV_Tree_1|SW_Bark,SW_Moss
+SW_ENV_Tree_2|SW_Bark,SW_Moss
+SW_ENV_Mushrooms|SW_Mushroom,SW_Cap,SW_Bone
+SW_ENV_Reeds|SW_Moss,SW_Bark
+SW_ENV_Rock_1|SW_Stone,SW_Mud,SW_Moss
+SW_ENV_Rock_2|SW_Stone,SW_Mud,SW_Moss
+SW_ENV_Idol|SW_Stone,SW_EyeDark,SW_Moss,SW_Mud
+SW_ENV_BogPool|SW_Water,SW_Moss,SW_Mud
+SW_ENV_GroundTile|SW_Mud,SW_Water,SW_Moss,SW_Stone,SW_Bark

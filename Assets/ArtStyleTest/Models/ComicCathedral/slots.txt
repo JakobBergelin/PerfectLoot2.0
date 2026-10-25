@@ -1,0 +1,12 @@
+# object|material slots in submesh order
+CT_Revenant|CT_Iron,TR_Armor,CT_Cloth,CT_DarkStone,CT_GhostEye
+CT_Wraith|CT_WraithCloth,CT_DarkStone,CT_GhostEye,CT_Pale,TR_Shield
+CT_BellRinger|CT_Cloth,CT_Bone,TR_Summon,CT_Wood,CT_Iron
+CT_ENV_Pillar|CT_Stone,CT_DarkStone
+CT_ENV_Wall|CT_Stone,CT_DarkStone,CT_GlassRed,CT_GlassBlue
+CT_ENV_Tombs_1|CT_Stone,CT_DarkStone
+CT_ENV_Tombs_2|CT_Stone,CT_DarkStone
+CT_ENV_Pews|CT_Wood
+CT_ENV_Candelabra|CT_Iron,CT_Wax,CT_Flame
+CT_ENV_Rubble|CT_DarkStone,CT_Stone
+CT_ENV_FloorTile|CT_DarkStone,CT_Stone
