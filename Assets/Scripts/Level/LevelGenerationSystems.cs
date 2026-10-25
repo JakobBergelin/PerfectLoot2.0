@@ -12,7 +12,7 @@ namespace LevelGeneration
 {
     /// <summary>
     /// Builds baked level layouts: solves the whole level with WfcSolveJob (or takes the saved layout) and bends the grid
-    /// (LevelDeformation, seeded like the solve), then streams the geometry in chunks of LevelMeshBuilder.ChunkSize cells:
+    /// (LevelDeformation, seeded like the solve), then streams the geometry in chunks of LevelChunkBuilder.ChunkSize cells (built with Burst jobs that finish on later frames):
     /// the chunks within LoadDistance of the player start before the level is ready, the rest as the player comes within
     /// LoadDistance (nearest first, at most ChunksPerFrame per frame). Built chunks stay. LevelReady is announced a frame
     /// after the first chunks. Frees the meshes and colliders it made when destroyed.
@@ -26,6 +26,7 @@ namespace LevelGeneration
             public Entity Layout;
             public int[] Packed;            // Per cell: Tile * 4 + Rotation, or negative for nothing
             public float3[] Corners;        // Bent grid
+            public NativeArray<float3> JobCorners;  // The same, for the chunk jobs
             public Material[] Materials;
             public Entity[] PropPrefabs;
             public int ChunksX, ChunksY;
@@ -35,7 +36,15 @@ namespace LevelGeneration
             public int ChunksPerFrame;
         }
 
+        // A chunk whose jobs are running; finished (meshes and entities made) on a later frame once they're done
+        class PendingChunk
+        {
+            public LevelStream Stream;
+            public LevelChunkBuilder Builder;
+        }
+
         readonly List<LevelStream> _streams = new List<LevelStream>();
+        readonly List<PendingChunk> _pending = new List<PendingChunk>();
         readonly List<Mesh> _meshes = new List<Mesh>();
         readonly List<BlobAssetReference<Unity.Physics.Collider>> _colliders = new List<BlobAssetReference<Unity.Physics.Collider>>();
 
@@ -46,11 +55,14 @@ namespace LevelGeneration
 
         protected override void OnDestroy()
         {
+            foreach (var pending in _pending) pending.Builder.Dispose();
+            foreach (var stream in _streams) if (stream.JobCorners.IsCreated) stream.JobCorners.Dispose();
             foreach (var collider in _colliders) if (collider.IsCreated) collider.Dispose();
             foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
+            _pending.Clear();
+            _streams.Clear();
             _colliders.Clear();
             _meshes.Clear();
-            _streams.Clear();
         }
 
         protected override void OnUpdate()
@@ -74,6 +86,16 @@ namespace LevelGeneration
                 EntityManager.AddComponentData(entity, new LevelSpawned { PlayerStart = playerStart });
             }
 
+            // Finish chunks whose jobs are done (started on earlier frames, so the main thread never waits for them)
+            for (int i = _pending.Count - 1; i >= 0; i--)
+            {
+                var started = _pending[i];
+                if (!started.Builder.Handle.IsCompleted) continue;
+                _pending.RemoveAt(i);
+                if (IsAlive(started.Stream)) Finish(started);
+                else started.Builder.Dispose();
+            }
+
             // Stream chunks around the player (before it spawns, the start's chunks are already built)
             if (_streams.Count == 0) return;
             float3? player = null;
@@ -84,14 +106,17 @@ namespace LevelGeneration
             for (int i = _streams.Count - 1; i >= 0; i--)
             {
                 var stream = _streams[i];
-                if (!EntityManager.Exists(stream.Layout) || !EntityManager.HasComponent<LevelLayout>(stream.Layout))
+                if (!IsAlive(stream))
                 {
+                    if (stream.JobCorners.IsCreated && !_pending.Exists(p => p.Stream == stream)) stream.JobCorners.Dispose();
                     _streams.RemoveAt(i);
                     continue;
                 }
-                StreamChunks(stream, player.Value, stream.ChunksPerFrame);
+                _pending.AddRange(StartChunks(stream, player.Value, stream.ChunksPerFrame));
             }
         }
+
+        bool IsAlive(LevelStream stream) => EntityManager.Exists(stream.Layout) && EntityManager.HasComponent<LevelLayout>(stream.Layout);
 
         /// <summary>Solves the level and builds the chunks around the player start; returns the player start on it.</summary>
         float3 Build(Entity layoutEntity)
@@ -117,12 +142,14 @@ namespace LevelGeneration
 
             var deformation = blob.Deformation;
             deformation.Seed = seed;
-            int chunkSize = LevelMeshBuilder.ChunkSize;
+            int chunkSize = LevelChunkBuilder.ChunkSize;
+            var corners = deformation.BuildCorners();
             var stream = new LevelStream
             {
                 Layout = layoutEntity,
                 Packed = packed.ToArray(),
-                Corners = deformation.BuildCorners(),
+                Corners = corners,
+                JobCorners = new NativeArray<float3>(corners, Allocator.Persistent),
                 ChunksX = (blob.Width + chunkSize - 1) / chunkSize,
                 ChunksY = (blob.Height + chunkSize - 1) / chunkSize,
                 LoadDistance = layout.LoadDistance,
@@ -155,23 +182,25 @@ namespace LevelGeneration
                 EntityManager.SetComponentData(entity, spawner);
             }
 
-            // The start's surroundings, all at once: the player spawns on them
+            // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Corners, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
             long chunksStart = timer.ElapsedMilliseconds;
-            int built = StreamChunks(stream, playerStart, int.MaxValue);
+            var first = StartChunks(stream, playerStart, int.MaxValue);
+            foreach (var chunk in first) Finish(chunk);
 
             Debug.Log($"Level built: {blob.Width}x{blob.Height} cells of {blob.TileSize} m, seed {seed}. Solve {solveMs} ms; " +
-                      $"first {built} of {stream.Built.Length} chunks {timer.ElapsedMilliseconds - chunksStart} ms; " +
+                      $"first {first.Count} of {stream.Built.Length} chunks {timer.ElapsedMilliseconds - chunksStart} ms; " +
                       $"the rest stream in within {stream.LoadDistance} m of the player.");
             return playerStart;
         }
 
-        /// <summary>Builds up to budget unbuilt chunks within LoadDistance of focus, nearest first. Returns how many.</summary>
-        int StreamChunks(LevelStream stream, float3 focus, int budget)
+        /// <summary>Starts up to budget unbuilt chunks within LoadDistance of focus, nearest first.</summary>
+        List<PendingChunk> StartChunks(LevelStream stream, float3 focus, int budget)
         {
+            var started = new List<PendingChunk>();
             var layout = EntityManager.GetComponentData<LevelLayout>(stream.Layout);
             ref var blob = ref layout.Blob.Value;
-            int chunkSize = LevelMeshBuilder.ChunkSize;
+            int chunkSize = LevelChunkBuilder.ChunkSize;
             // A chunk counts as near when any part of it could be: its center's distance minus half its diagonal
             float halfDiagonal = chunkSize * blob.TileSize * 0.7072f;
 
@@ -188,21 +217,22 @@ namespace LevelGeneration
                     float distance = math.distance(center.xz, focus.xz) - halfDiagonal;
                     if (distance <= stream.LoadDistance) candidates.Add((distance, chunk));
                 }
-            if (candidates.Count == 0) return 0;
+            if (candidates.Count == 0) return started;
             candidates.Sort((a, b) => a.Distance.CompareTo(b.Distance));
 
-            int count = math.min(budget, candidates.Count);
-            for (int i = 0; i < count; i++)
-                BuildChunk(stream, ref blob, ref layout.Geometry.Value, candidates[i].Chunk);
-            return count;
+            for (int i = 0; i < math.min(budget, candidates.Count); i++)
+                started.Add(StartChunk(stream, ref blob, layout.Geometry, candidates[i].Chunk));
+            return started;
         }
 
-        void BuildChunk(LevelStream stream, ref LevelLayoutBlob blob, ref LevelGeometryBlob geometry, int chunk)
+        // Lists the chunk's tiles and pieces and starts its jobs
+        PendingChunk StartChunk(LevelStream stream, ref LevelLayoutBlob blob, BlobAssetReference<LevelGeometryBlob> geometryBlob, int chunk)
         {
             stream.Built[chunk] = true;
-            int chunkSize = LevelMeshBuilder.ChunkSize;
+            ref var geometry = ref geometryBlob.Value;
+            int chunkSize = LevelChunkBuilder.ChunkSize;
             int cx = chunk % stream.ChunksX, cy = chunk / stream.ChunksX;
-            var builder = new LevelMeshBuilder(stream.Corners, blob.Width, blob.Height, blob.TileSize);
+            var instances = new List<LevelChunkBuilder.Instance>();
 
             for (int y = cy * chunkSize; y < math.min(blob.Height, (cy + 1) * chunkSize); y++)
                 for (int x = cx * chunkSize; x < math.min(blob.Width, (cx + 1) * chunkSize); x++)
@@ -211,7 +241,10 @@ namespace LevelGeneration
                     if (cell < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(cell);
                     if (tile >= geometry.Tiles.Length) continue;
-                    builder.Add(ref geometry.Tiles[tile], new float2(x + 0.5f, y + 0.5f), LevelLayoutAuthoring.PackedRotation(cell), new int2(x, y));
+                    instances.Add(new LevelChunkBuilder.Instance
+                    {
+                        Part = tile, Center = new float2(x + 0.5f, y + 0.5f), Rotation = LevelLayoutAuthoring.PackedRotation(cell),
+                    });
                 }
 
             if (stream.PiecesByChunk[chunk] != null)
@@ -219,11 +252,24 @@ namespace LevelGeneration
                 {
                     var piece = blob.Pieces[i];
                     if (piece.Piece >= geometry.Pieces.Length) continue;
-                    builder.Add(ref geometry.Pieces[piece.Piece], new float2(piece.Cell) + new float2(piece.Size) * 0.5f, piece.Rotation, piece.Cell);
+                    instances.Add(new LevelChunkBuilder.Instance
+                    {
+                        IsPiece = true, Part = piece.Piece, Center = new float2(piece.Cell) + new float2(piece.Size) * 0.5f, Rotation = piece.Rotation,
+                    });
                 }
 
-            builder.CreateEntities(EntityManager, blob.Origin, blob.Rotation, stream.Materials, _meshes, _colliders);
-            foreach (var prop in builder.Props)
+            var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, blob.Width, blob.Height, blob.TileSize, instances);
+            return new PendingChunk { Stream = stream, Builder = builder };
+        }
+
+        // Makes the chunk's meshes, colliders and props (waits for its jobs if they're still running)
+        void Finish(PendingChunk pending)
+        {
+            var stream = pending.Stream;
+            var layout = EntityManager.GetComponentData<LevelLayout>(stream.Layout);
+            ref var blob = ref layout.Blob.Value;
+            pending.Builder.Finish(EntityManager, blob.Origin, blob.Rotation, stream.Materials, _meshes, _colliders);
+            foreach (var prop in pending.Builder.Props)
             {
                 if (prop.Prefab < 0 || prop.Prefab >= stream.PropPrefabs.Length || stream.PropPrefabs[prop.Prefab] == Entity.Null) continue;
                 Spawn(stream.PropPrefabs[prop.Prefab], blob.Origin + math.mul(blob.Rotation, prop.Position), math.mul(blob.Rotation, prop.Rotation));
@@ -247,6 +293,12 @@ namespace LevelGeneration
                 MaxAttempts = layout.MaxAttempts,
                 Result = new NativeArray<int>(cells, Allocator.TempJob),
                 Attempts = new NativeReference<int>(Allocator.TempJob),
+                Connect = blob.Connect,
+                StartCorner = blob.StartCorner,
+                FillPocketsSmallerThan = blob.FillPocketsSmallerThan,
+                LockedCorners = Copy(ref blob.LockedCorners, Allocator.TempJob),
+                Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
+                UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
             };
             job.Schedule().Complete();
 
@@ -258,7 +310,15 @@ namespace LevelGeneration
                     int v = job.Result[i];
                     packed[i] = v >= 0 && v < variants ? LevelLayoutAuthoring.Pack(blob.VariantTile[v], blob.VariantRotation[v]) : v;
                 }
-                Debug.Log($"Level generated with seed {seed}" + (attempts > 1 ? $" (attempt {attempts})." : "."));
+                int carved = 0, filled = 0;
+                foreach (var repair in job.Repairs)
+                {
+                    if (repair == WfcSolver.RepairCarved) carved++;
+                    else if (repair == WfcSolver.RepairFilled) filled++;
+                }
+                string connected = !blob.Connect ? "" : $" Connected: {carved} corners carved, {filled} filled" +
+                                   (job.UnconnectedPockets.Value > 0 ? $", {job.UnconnectedPockets.Value} pockets left (locked corners in the way)." : ".");
+                Debug.Log($"Level generated with seed {seed}" + (attempts > 1 ? $" (attempt {attempts})." : ".") + connected);
             }
             else
             {
@@ -271,6 +331,9 @@ namespace LevelGeneration
             job.InitialCornerMasks.Dispose();
             job.InitialCells.Dispose();
             job.Result.Dispose();
+            job.LockedCorners.Dispose();
+            job.Repairs.Dispose();
+            job.UnconnectedPockets.Dispose();
             job.Attempts.Dispose();
             return attempts > 0;
         }

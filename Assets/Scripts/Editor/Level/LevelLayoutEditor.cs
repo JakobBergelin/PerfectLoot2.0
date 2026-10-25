@@ -25,11 +25,14 @@ public class LevelLayoutEditor : Editor
     static readonly Color PieceColor = new Color(1f, 0.5f, 0.15f);
     static readonly Color StartColor = new Color(0.3f, 1f, 0.4f);
     static readonly Color SpawnerColor = new Color(1f, 0.25f, 0.25f);
+    static readonly Color CarvedColor = new Color(1f, 0.6f, 0.1f);
+    static readonly Color FilledColor = new Color(0.5f, 0.05f, 0.05f);
 
     // Static so the brush survives reselecting the layout
     static Brush _brush;
     static WfcCornerRule _rule = WfcCornerRule.Wall;
     static int _tile, _piece, _rotation;
+    static bool _showRepairs = true;
 
     string _status;
     MessageType _statusType;
@@ -126,6 +129,12 @@ public class LevelLayoutEditor : Editor
     {
         var layout = Layout;
         EditorGUILayout.LabelField("Generation", EditorStyles.boldLabel);
+        var showRepairs = EditorGUILayout.Toggle(new GUIContent("Show repairs", "Highlight the corners the connectivity repair carved (orange) or filled (dark red) in the preview"), _showRepairs);
+        if (showRepairs != _showRepairs)
+        {
+            _showRepairs = showRepairs;
+            SceneView.RepaintAll();
+        }
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("Generate Preview")) GeneratePreview(layout);
@@ -138,6 +147,7 @@ public class LevelLayoutEditor : Editor
                 if (GUILayout.Button("Clear Preview"))
                 {
                     layout.PreviewCells = null;
+                    layout.PreviewRepairs = null;
                     _status = null;
                     SceneView.RepaintAll();
                 }
@@ -203,6 +213,12 @@ public class LevelLayoutEditor : Editor
             MaxAttempts = layout.MaxAttempts,
             Result = new NativeArray<int>(cells, Allocator.TempJob),
             Attempts = new NativeReference<int>(Allocator.TempJob),
+            Connect = layout.ConnectWalkableAreas,
+            StartCorner = compiled.StartCorner,
+            FillPocketsSmallerThan = layout.FillPocketsSmallerThan,
+            LockedCorners = new NativeArray<byte>(compiled.LockedCorners, Allocator.TempJob),
+            Repairs = new NativeArray<byte>(compiled.CornerMasks.Length, Allocator.TempJob),
+            UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
         };
 
         var timer = Stopwatch.StartNew();
@@ -210,18 +226,33 @@ public class LevelLayoutEditor : Editor
         timer.Stop();
 
         int attempts = job.Attempts.Value;
-        if (attempts > 0) layout.PreviewCells = compiled.ToPackedCells(job.Result.ToArray());
+        int carved = 0, filled = 0, unconnected = job.UnconnectedPockets.Value;
+        if (attempts > 0)
+        {
+            layout.PreviewCells = compiled.ToPackedCells(job.Result.ToArray());
+            layout.PreviewRepairs = job.Repairs.ToArray();
+            foreach (var repair in layout.PreviewRepairs)
+            {
+                if (repair == WfcSolver.RepairCarved) carved++;
+                else if (repair == WfcSolver.RepairFilled) filled++;
+            }
+        }
         job.VariantCorners.Dispose();
         job.VariantWeights.Dispose();
         job.InitialCornerMasks.Dispose();
         job.InitialCells.Dispose();
         job.Result.Dispose();
         job.Attempts.Dispose();
+        job.LockedCorners.Dispose();
+        job.Repairs.Dispose();
+        job.UnconnectedPockets.Dispose();
 
+        string connected = !layout.ConnectWalkableAreas ? "" : $" Connected: {carved} corners carved, {filled} filled" +
+                           (unconnected > 0 ? $"; {unconnected} pockets couldn't be reached without changing painted or forced corners." : ".");
         string warnings = compiled.Warnings.Count > 0 ? "\n" + string.Join("\n", compiled.Warnings) : "";
         if (attempts > 0)
-            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms.{warnings}",
-                      compiled.Warnings.Count > 0 ? MessageType.Warning : MessageType.Info);
+            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms.{connected}{warnings}",
+                      compiled.Warnings.Count > 0 || unconnected > 0 ? MessageType.Warning : MessageType.Info);
         else
             SetStatus($"No solution after {layout.MaxAttempts} attempts with seed {layout.Seed}. The rules may conflict, or the tile set " +
                       $"lacks tiles for some corner combinations (see its coverage).{warnings}", MessageType.Error);
@@ -444,6 +475,17 @@ public class LevelLayoutEditor : Editor
             foreach (var entry in spawner.Group) if (entry?.Definition != null) count += entry.Count;
             Handles.Label(center + Vector3.up * 1.5f, $"Spawner {spawner.Cell}: {count} enemies", EditorStyles.miniBoldLabel);
         }
+
+        // What the connectivity repair changed in the preview
+        if (_showRepairs && layout.PreviewRepairs != null && layout.PreviewRepairs.Length == (layout.Width + 1) * (layout.Height + 1))
+            for (int y = 0; y <= layout.Height; y++)
+                for (int x = 0; x <= layout.Width; x++)
+                {
+                    byte repair = layout.PreviewRepairs[x + y * (layout.Width + 1)];
+                    if (repair == WfcSolver.RepairNone) continue;
+                    Handles.color = repair == WfcSolver.RepairCarved ? CarvedColor : FilledColor;
+                    Handles.DrawSolidDisc(layout.CornerPosition(x, y) + Vector3.up * 3.2f, Vector3.up, layout.TileSize * 0.18f);
+                }
 
         DrawHover(layout);
     }

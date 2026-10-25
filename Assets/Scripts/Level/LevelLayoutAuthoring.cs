@@ -53,6 +53,12 @@ namespace LevelGeneration
         [Tooltip("Restarts with the next seed when the solver gets stuck, up to this many times")]
         [Min(1)] public int MaxAttempts = 20;
 
+        [Header("Connectivity")]
+        [Tooltip("After solving, every walkable area is connected to the player start: small pockets become wall, larger ones get a corridor carved through wall or water")]
+        public bool ConnectWalkableAreas = true;
+        [Tooltip("Pockets with fewer walkable corners than this are filled with wall instead of connected (unless they contain painted or forced corners)")]
+        [Min(0)] public int FillPocketsSmallerThan = 6;
+
         [Header("Streaming")]
         [Tooltip("Chunks (8x8 cells) are built when the player comes within this many meters; keep it above every spawner's trigger + spawn radius")]
         [Min(5f)] public float LoadDistance = 60f;
@@ -99,6 +105,8 @@ namespace LevelGeneration
 
         /// <summary>Editor preview, same format as the saved layout. Not saved with the scene.</summary>
         [NonSerialized] public int[] PreviewCells;
+        /// <summary>What the connectivity repair changed in the preview, per corner (WfcSolver.Repair*). Not saved.</summary>
+        [NonSerialized] public byte[] PreviewRepairs;
 
         public int CornerWidth => Width + 1;
         public int CornerHeight => Height + 1;

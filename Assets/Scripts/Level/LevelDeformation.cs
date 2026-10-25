@@ -84,5 +84,17 @@ namespace LevelGeneration
             var north = math.lerp(corners[cx + (cy + 1) * stride], corners[cx + 1 + (cy + 1) * stride], fx);
             return math.lerp(south, north, fy);
         }
+
+        /// <summary>Sample for jobs (Burst): the same, on a NativeArray of the bent corners.</summary>
+        public static float3 Sample(Unity.Collections.NativeArray<float3> corners, int width, int height, float x, float y)
+        {
+            int cx = math.clamp((int)math.floor(x), 0, width - 1);
+            int cy = math.clamp((int)math.floor(y), 0, height - 1);
+            float fx = x - cx, fy = y - cy;
+            int stride = width + 1;
+            var south = math.lerp(corners[cx + cy * stride], corners[cx + 1 + cy * stride], fx);
+            var north = math.lerp(corners[cx + (cy + 1) * stride], corners[cx + 1 + (cy + 1) * stride], fx);
+            return math.lerp(south, north, fy);
+        }
     }
 }

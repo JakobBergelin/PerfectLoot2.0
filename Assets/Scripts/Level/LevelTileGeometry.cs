@@ -24,6 +24,8 @@ namespace LevelGeneration
     {
         public int Material;    // Index into the LevelMaterial buffer
         public BlobArray<float3> Vertices;
+        public BlobArray<float3> Normals;
+        public BlobArray<float4> Tangents;
         public BlobArray<float2> Uvs;
         public BlobArray<int> Indices;
     }
@@ -75,6 +77,8 @@ namespace LevelGeneration
         {
             public int Material;
             public Vector3[] Vertices;
+            public Vector3[] Normals;
+            public Vector4[] Tangents;
             public Vector2[] Uvs;
             public int[] Indices;
         }
@@ -145,10 +149,33 @@ namespace LevelGeneration
                 return;
             }
             var uvs = mesh.uv;
-            var moved = new Vector3[vertices.Length];
-            for (int i = 0; i < vertices.Length; i++) moved[i] = matrix.MultiplyPoint3x4(vertices[i]);
             if (uvs.Length != vertices.Length) uvs = new Vector2[vertices.Length];
             bool mirrored = matrix.determinant < 0f;
+
+            // The artist's normals and tangents, carried into the level (computed on a copy when the mesh has none)
+            var normals = mesh.normals;
+            var tangents = mesh.tangents;
+            if (normals.Length != vertices.Length || tangents.Length != vertices.Length)
+            {
+                var copy = Object.Instantiate(mesh);
+                if (normals.Length != vertices.Length) copy.RecalculateNormals();
+                copy.RecalculateTangents();
+                normals = copy.normals;
+                tangents = copy.tangents;
+                Object.DestroyImmediate(copy);
+            }
+
+            var moved = new Vector3[vertices.Length];
+            var movedNormals = new Vector3[vertices.Length];
+            var movedTangents = new Vector4[vertices.Length];
+            var normalMatrix = matrix.inverse.transpose;
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                moved[i] = matrix.MultiplyPoint3x4(vertices[i]);
+                movedNormals[i] = normalMatrix.MultiplyVector(normals[i]).normalized;
+                var tangent = matrix.MultiplyVector(tangents[i]).normalized;
+                movedTangents[i] = new Vector4(tangent.x, tangent.y, tangent.z, mirrored ? -tangents[i].w : tangents[i].w);
+            }
 
             for (int s = 0; s < mesh.subMeshCount; s++)
             {
@@ -160,7 +187,7 @@ namespace LevelGeneration
 
                 var indices = mesh.GetTriangles(s);
                 if (mirrored) FlipWinding(indices);
-                part.Meshes.Add(new MeshPiece { Material = index, Vertices = moved, Uvs = uvs, Indices = indices });
+                part.Meshes.Add(new MeshPiece { Material = index, Vertices = moved, Normals = movedNormals, Tangents = movedTangents, Uvs = uvs, Indices = indices });
             }
         }
 
@@ -246,8 +273,16 @@ namespace LevelGeneration
                 var source = part.Meshes[i];
                 meshes[i].Material = source.Material;
                 var vertices = builder.Allocate(ref meshes[i].Vertices, source.Vertices.Length);
+                var normals = builder.Allocate(ref meshes[i].Normals, source.Vertices.Length);
+                var tangents = builder.Allocate(ref meshes[i].Tangents, source.Vertices.Length);
                 var uvs = builder.Allocate(ref meshes[i].Uvs, source.Uvs.Length);
-                for (int v = 0; v < source.Vertices.Length; v++) { vertices[v] = source.Vertices[v]; uvs[v] = source.Uvs[v]; }
+                for (int v = 0; v < source.Vertices.Length; v++)
+                {
+                    vertices[v] = source.Vertices[v];
+                    normals[v] = source.Normals[v];
+                    tangents[v] = source.Tangents[v];
+                    uvs[v] = source.Uvs[v];
+                }
                 var indices = builder.Allocate(ref meshes[i].Indices, source.Indices.Length);
                 for (int n = 0; n < source.Indices.Length; n++) indices[n] = source.Indices[n];
             }

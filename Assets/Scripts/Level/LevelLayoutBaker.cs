@@ -51,6 +51,11 @@ namespace LevelGeneration
             for (int i = 0; i < compiled.CornerMasks.Length; i++) cornerMasks[i] = compiled.CornerMasks[i];
             var initialCells = builder.Allocate(ref root.InitialCells, compiled.InitialCells.Length);
             for (int i = 0; i < compiled.InitialCells.Length; i++) initialCells[i] = compiled.InitialCells[i];
+            root.Connect = authoring.ConnectWalkableAreas;
+            root.StartCorner = compiled.StartCorner;
+            root.FillPocketsSmallerThan = authoring.FillPocketsSmallerThan;
+            var lockedCorners = builder.Allocate(ref root.LockedCorners, compiled.LockedCorners.Length);
+            for (int i = 0; i < compiled.LockedCorners.Length; i++) lockedCorners[i] = compiled.LockedCorners[i];
 
             var pieces = builder.Allocate(ref root.Pieces, compiled.Pieces.Count);
             for (int i = 0; i < compiled.Pieces.Count; i++)

@@ -37,6 +37,11 @@ namespace LevelGeneration
         public BlobArray<int> VariantRotation;
         public BlobArray<byte> CornerMasks;
         public BlobArray<int> InitialCells;
+        // Connectivity repair (WfcSolver.Repair)
+        public bool Connect;
+        public int StartCorner;
+        public int FillPocketsSmallerThan;
+        public BlobArray<byte> LockedCorners;
 
         public BlobArray<LevelPiecePlacement> Pieces;
         /// <summary>Saved layout (Tile * 4 + Rotation per cell), empty when there is none.</summary>

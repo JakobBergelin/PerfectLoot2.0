@@ -29,6 +29,22 @@ namespace LevelGeneration
         public uint Seed;
         public int MaxAttempts;
 
+        // Connectivity repair (see Repair)
+        public bool Connect;
+        /// <summary>A walkable corner every walkable area must connect to (the player start), or -1.</summary>
+        public int StartCorner;
+        /// <summary>Per corner: 1 when the repair may never change it (painted rules, pieces, forced tiles, start, border).</summary>
+        public NativeArray<byte> LockedCorners;
+        /// <summary>Pockets with fewer walkable corners than this (and none locked) are filled with wall; larger ones are carved to.</summary>
+        public int FillPocketsSmallerThan;
+        /// <summary>Output per corner: RepairNone, RepairCarved or RepairFilled.</summary>
+        public NativeArray<byte> Repairs;
+        /// <summary>Output: pockets that couldn't be connected without changing locked corners.</summary>
+        public int UnconnectedPockets;
+
+        public const byte RepairNone = 0, RepairCarved = 1, RepairFilled = 2;
+        const int MaxRepairRounds = 4;
+
         int _variants, _words, _cornerWidth;
         NativeArray<ulong> _support;    // [corner k][terrain t][word]: variants with terrain t at corner k
         NativeArray<ulong> _domains;    // [cell][word]
@@ -64,7 +80,7 @@ namespace LevelGeneration
             for (int attempt = 0; attempt < math.max(1, MaxAttempts); attempt++)
             {
                 var random = new Random(math.max(1u, math.hash(new uint2(Seed, (uint)attempt))));
-                if (TrySolve(ref random))
+                if (TrySolve(ref random, InitialCornerMasks, InitialCells) && (!Connect || Repair(ref random)))
                 {
                     for (int c = 0; c < cells; c++)
                         result[c] = InitialCells[c] == Occupied ? Occupied : FirstVariant(c);
@@ -74,14 +90,15 @@ namespace LevelGeneration
             return 0;
         }
 
-        bool TrySolve(ref Random random)
+        // Solves from these corner masks and cells (Free, Occupied or a forced variant)
+        bool TrySolve(ref Random random, NativeArray<byte> cornerMasks, NativeArray<int> startCells)
         {
             int cells = Width * Height;
-            _cornerMasks.CopyFrom(InitialCornerMasks);
+            _cornerMasks.CopyFrom(cornerMasks);
             _queue.Clear();
             for (int c = 0; c < cells; c++)
             {
-                int initial = InitialCells[c];
+                int initial = startCells[c];
                 for (int w = 0; w < _words; w++)
                 {
                     ulong all = w < _words - 1 || _variants % 64 == 0 ? ~0ul : (1ul << (_variants % 64)) - 1;
@@ -233,6 +250,144 @@ namespace LevelGeneration
                 _domains[cell * _words + w] = chosen / 64 == w ? 1ul << (chosen % 64) : 0ul;
         }
 
+        /// <summary>
+        /// Connects every walkable area to the start corner. Walkable corners next to each other (not diagonally) are
+        /// connected; anything not reached from the start is a pocket. Small pockets (no locked corners) become wall,
+        /// the rest get the shortest corridor to the reached area carved through wall or water, never through locked
+        /// corners. Then only the cells touching changed corners are solved again (every other cell keeps its tile) and
+        /// the check repeats. False when a re-solve fails (no tile fits): the caller rerolls.
+        /// </summary>
+        bool Repair(ref Random random)
+        {
+            int corners = _cornerMasks.Length;
+            for (int c = 0; c < corners; c++) Repairs[c] = RepairNone;
+            UnconnectedPockets = 0;
+            if (StartCorner < 0 || StartCorner >= corners) return true;
+
+            byte walkable = WfcTerrains.Mask(WfcTerrain.Walkable);
+            byte wall = WfcTerrains.Mask(WfcTerrain.Wall);
+            var component = new NativeArray<int>(corners, Allocator.Temp);
+            var queue = new NativeList<int>(corners, Allocator.Temp);
+            var parent = new NativeArray<int>(corners, Allocator.Temp);
+            var masks = new NativeArray<byte>(corners, Allocator.Temp);
+            var changed = new NativeArray<bool>(corners, Allocator.Temp);
+            var cells = new NativeArray<int>(Width * Height, Allocator.Temp);
+
+            for (int round = 0; round < MaxRepairRounds; round++)
+            {
+                // Label walkable areas: 0 is the start's, 1.. are pockets; -1 is not walkable
+                for (int c = 0; c < corners; c++) component[c] = -1;
+                if (_cornerMasks[StartCorner] != walkable) return true;
+                int components = 0;
+                var pocketSize = new NativeList<int>(Allocator.Temp);
+                var pocketLocked = new NativeList<bool>(Allocator.Temp);
+                for (int seed = -1; seed < corners; seed++)
+                {
+                    int from = seed < 0 ? StartCorner : seed;
+                    if (component[from] >= 0 || _cornerMasks[from] != walkable) continue;
+                    int label = components++;
+                    int size = 0;
+                    bool locked = false;
+                    queue.Clear();
+                    queue.Add(from);
+                    component[from] = label;
+                    for (int head = 0; head < queue.Length; head++)
+                    {
+                        int corner = queue[head];
+                        size++;
+                        locked |= LockedCorners[corner] != 0;
+                        for (int n = 0; n < 4; n++)
+                        {
+                            int next = Neighbor(corner, n);
+                            if (next < 0 || component[next] >= 0 || _cornerMasks[next] != walkable) continue;
+                            component[next] = label;
+                            queue.Add(next);
+                        }
+                    }
+                    pocketSize.Add(size);
+                    pocketLocked.Add(locked);
+                }
+                if (components <= 1) return true;
+
+                // Start from the solved corners and change pockets: fill small ones, carve corridors to the rest
+                for (int c = 0; c < corners; c++) { masks[c] = _cornerMasks[c]; changed[c] = false; }
+                int unconnected = 0;
+                bool anyChange = false;
+                for (int pocket = 1; pocket < components; pocket++)
+                {
+                    if (pocketSize[pocket] < FillPocketsSmallerThan && !pocketLocked[pocket])
+                    {
+                        for (int c = 0; c < corners; c++)
+                        {
+                            if (component[c] != pocket || LockedCorners[c] != 0) continue;
+                            masks[c] = wall;
+                            changed[c] = true;
+                            Repairs[c] = RepairFilled;
+                            anyChange = true;
+                        }
+                        continue;
+                    }
+
+                    // Shortest path from the pocket to the start's area, through any corner that isn't locked non-walkable
+                    for (int c = 0; c < corners; c++) parent[c] = -2;
+                    queue.Clear();
+                    for (int c = 0; c < corners; c++)
+                        if (component[c] == pocket) { parent[c] = -1; queue.Add(c); }
+                    int reached = -1;
+                    for (int head = 0; head < queue.Length && reached < 0; head++)
+                    {
+                        int corner = queue[head];
+                        for (int n = 0; n < 4; n++)
+                        {
+                            int next = Neighbor(corner, n);
+                            if (next < 0 || parent[next] != -2) continue;
+                            if (_cornerMasks[next] != walkable && LockedCorners[next] != 0) continue;
+                            parent[next] = corner;
+                            if (component[next] == 0) { reached = next; break; }
+                            queue.Add(next);
+                        }
+                    }
+                    if (reached < 0) { unconnected++; continue; }
+                    for (int c = parent[reached]; c >= 0; c = parent[c])
+                    {
+                        if (masks[c] == walkable) continue;
+                        masks[c] = walkable;
+                        changed[c] = true;
+                        Repairs[c] = RepairCarved;
+                        anyChange = true;
+                    }
+                }
+                UnconnectedPockets = unconnected;
+                if (!anyChange) return true;
+
+                // Solve only the cells touching a changed corner again; the rest keep their tiles
+                for (int y = 0; y < Height; y++)
+                    for (int x = 0; x < Width; x++)
+                    {
+                        int cell = x + y * Width;
+                        if (InitialCells[cell] == Occupied) { cells[cell] = Occupied; continue; }
+                        bool touched = false;
+                        for (int k = 0; k < 4; k++) touched |= changed[CornerIndex(x, y, k)];
+                        cells[cell] = touched ? Free : FirstVariant(cell);
+                    }
+                if (!TrySolve(ref random, masks, cells)) return false;
+            }
+            return true;
+        }
+
+        // Corner next to corner in direction n (0 east, 1 north, 2 west, 3 south), or -1 off the grid
+        int Neighbor(int corner, int n)
+        {
+            int x = corner % _cornerWidth, y = corner / _cornerWidth;
+            switch (n)
+            {
+                case 0: return x + 1 < _cornerWidth ? corner + 1 : -1;
+                case 1: return y + 1 < Height + 1 ? corner + _cornerWidth : -1;
+                case 2: return x > 0 ? corner - 1 : -1;
+                default: return y > 0 ? corner - _cornerWidth : -1;
+            }
+        }
+
         bool Has(int cell, int variant) => (_domains[cell * _words + variant / 64] & (1ul << (variant % 64))) != 0ul;
 
         int FirstVariant(int cell)
@@ -258,10 +413,19 @@ namespace LevelGeneration
         public uint Seed;
         public int MaxAttempts;
 
+        // Connectivity repair (WfcSolver.Repair); LockedCorners and Repairs are always allocated (one per corner)
+        public bool Connect;
+        public int StartCorner;
+        public int FillPocketsSmallerThan;
+        [ReadOnly] public NativeArray<byte> LockedCorners;
+
         /// <summary>Per cell: the chosen variant, or WfcSolver.Occupied. Only valid when Attempts &gt; 0.</summary>
         public NativeArray<int> Result;
         /// <summary>The attempt that succeeded (1-based), or 0 when every attempt failed.</summary>
         public NativeReference<int> Attempts;
+        /// <summary>Per corner: what the repair did (WfcSolver.RepairNone / RepairCarved / RepairFilled).</summary>
+        public NativeArray<byte> Repairs;
+        public NativeReference<int> UnconnectedPockets;
 
         public void Execute()
         {
@@ -271,8 +435,11 @@ namespace LevelGeneration
                 VariantCorners = VariantCorners, VariantWeights = VariantWeights,
                 InitialCornerMasks = InitialCornerMasks, InitialCells = InitialCells,
                 Seed = Seed, MaxAttempts = MaxAttempts,
+                Connect = Connect, StartCorner = StartCorner, FillPocketsSmallerThan = FillPocketsSmallerThan,
+                LockedCorners = LockedCorners, Repairs = Repairs,
             };
             Attempts.Value = solver.Solve(Result);
+            UnconnectedPockets.Value = solver.UnconnectedPockets;
         }
     }
 }

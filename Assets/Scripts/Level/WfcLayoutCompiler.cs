@@ -12,6 +12,10 @@ namespace LevelGeneration
         public byte[] CornerMasks;
         /// <summary>Per cell: WfcSolver.Free, WfcSolver.Occupied or a forced variant index.</summary>
         public int[] InitialCells;
+        /// <summary>Per corner: 1 when the connectivity repair may not change it (painted, piece, forced tile, start, border).</summary>
+        public byte[] LockedCorners;
+        /// <summary>The player start cell's south-west corner: walkable areas connect to it.</summary>
+        public int StartCorner = -1;
         public List<Placement> Pieces = new List<Placement>();
         public List<string> Warnings = new List<string>();
 
@@ -42,6 +46,7 @@ namespace LevelGeneration
             int cornerWidth = layout.CornerWidth, cornerHeight = layout.CornerHeight;
             compiled.CornerMasks = new byte[cornerWidth * cornerHeight];
             compiled.InitialCells = new int[layout.Width * layout.Height];
+            compiled.LockedCorners = new byte[cornerWidth * cornerHeight];
             for (int i = 0; i < compiled.InitialCells.Length; i++) compiled.InitialCells[i] = WfcSolver.Free;
 
             var tileSet = layout.TileSet;
@@ -59,6 +64,7 @@ namespace LevelGeneration
                 {
                     var rule = layout.GetCornerRule(x, y);
                     bool edge = x == 0 || y == 0 || x == cornerWidth - 1 || y == cornerHeight - 1;
+                    if (edge || rule != WfcCornerRule.Any) compiled.LockedCorners[x + y * cornerWidth] = 1;
                     compiled.CornerMasks[x + y * cornerWidth] = rule != WfcCornerRule.Any ? WfcTerrains.Mask(rule)
                                                               : edge ? borderMask : WfcTerrains.AllMask;
                 }
@@ -90,6 +96,7 @@ namespace LevelGeneration
                         if ((compiled.CornerMasks[corner] & mask) == 0)
                             compiled.Warnings.Add($"{piece.Name} at {placed.Cell} overrides a corner rule at {placed.Cell + new Vector2Int(px, py)}.");
                         compiled.CornerMasks[corner] = mask;
+                        compiled.LockedCorners[corner] = 1;
                     }
                 compiled.Pieces.Add(new WfcCompiledLayout.Placement
                 {
@@ -111,8 +118,12 @@ namespace LevelGeneration
                     if ((compiled.CornerMasks[corner] & walkable) == 0)
                         compiled.Warnings.Add($"The player start overrides the corner rule at ({cx}, {cy}) with Walkable.");
                     compiled.CornerMasks[corner] = walkable;
+                    compiled.LockedCorners[corner] = 1;
                 }
             }
+            // Walkable areas connect to the start (under a piece too, through the piece's corners)
+            if (start.x >= 0 && start.y >= 0 && start.x < layout.Width && start.y < layout.Height)
+                compiled.StartCorner = start.x + start.y * cornerWidth;
 
             // Forced tiles: the variant of that tile with the matching rotation
             var corners = new WfcTerrain[4];
@@ -144,6 +155,7 @@ namespace LevelGeneration
                 for (int k = 0; k < 4; k++)
                 {
                     int cx = forced.Cell.x + (k == 1 || k == 2 ? 1 : 0), cy = forced.Cell.y + (k >= 2 ? 1 : 0);
+                    compiled.LockedCorners[cx + cy * cornerWidth] = 1;
                     if ((compiled.CornerMasks[cx + cy * cornerWidth] & WfcTerrains.Mask(corners[k])) == 0)
                         compiled.Warnings.Add($"Forced tile at {forced.Cell} doesn't match the corner rule at ({cx}, {cy}); the level can't be solved.");
                 }
