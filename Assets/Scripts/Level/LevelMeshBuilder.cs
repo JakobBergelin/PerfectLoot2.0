@@ -17,7 +17,8 @@ namespace LevelGeneration
     /// </summary>
     public class LevelMeshBuilder
     {
-        const int ChunkSize = 8;
+        /// <summary>Cells per chunk side: meshes and colliders are merged, and streamed in, per chunk.</summary>
+        public const int ChunkSize = 8;
 
         public struct Prop
         {

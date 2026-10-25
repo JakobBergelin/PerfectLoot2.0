@@ -12,6 +12,9 @@ namespace LevelGeneration
         public bool RandomSeed;
         public bool UseSaved;
         public int MaxAttempts;
+        /// <summary>Chunks are built when the player comes within this many meters (LevelGenerationSystem).</summary>
+        public float LoadDistance;
+        public int ChunksPerFrame;
     }
 
     public struct LevelLayoutBlob

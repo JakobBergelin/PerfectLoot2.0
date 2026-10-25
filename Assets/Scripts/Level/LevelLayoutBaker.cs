@@ -110,6 +110,8 @@ namespace LevelGeneration
                 RandomSeed = authoring.RandomSeedEachPlay,
                 UseSaved = saved != null,
                 MaxAttempts = authoring.MaxAttempts,
+                LoadDistance = authoring.LoadDistance,
+                ChunksPerFrame = authoring.ChunksPerFrame,
             });
 
             var materialBuffer = AddBuffer<LevelMaterial>(entity);

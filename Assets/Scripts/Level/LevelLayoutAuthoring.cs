@@ -53,6 +53,12 @@ namespace LevelGeneration
         [Tooltip("Restarts with the next seed when the solver gets stuck, up to this many times")]
         [Min(1)] public int MaxAttempts = 20;
 
+        [Header("Streaming")]
+        [Tooltip("Chunks (8x8 cells) are built when the player comes within this many meters; keep it above every spawner's trigger + spawn radius")]
+        [Min(5f)] public float LoadDistance = 60f;
+        [Tooltip("Most chunks built per frame while playing (the ones around the player start are built at once)")]
+        [Min(1)] public int ChunksPerFrame = 2;
+
         [Header("Bend (random per seed)")]
         [Tooltip("How far corners move sideways, as a fraction of the tile size")]
         [Range(0f, LevelDeformation.MaxWobble)] public float WobbleStrength;

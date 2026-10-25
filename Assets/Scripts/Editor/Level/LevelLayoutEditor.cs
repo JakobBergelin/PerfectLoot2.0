@@ -163,6 +163,14 @@ public class LevelLayoutEditor : Editor
         string saved = layout.HasSavedLayout ? "A layout is saved" : "No saved layout";
         EditorGUILayout.LabelField($"{saved}. Mode: {ObjectNames.NicifyVariableName(layout.Mode.ToString())}.", EditorStyles.miniLabel);
         if (!string.IsNullOrEmpty(_status)) EditorGUILayout.HelpBox(_status, _statusType);
+
+        // A spawner reaching past the streamed area would spawn enemies over floor that isn't built yet
+        float reach = 0f;
+        foreach (var spawner in layout.EnemySpawners)
+            if (spawner != null) reach = Mathf.Max(reach, spawner.TriggerRadius + spawner.SpawnRadius);
+        if (reach > layout.LoadDistance)
+            EditorGUILayout.HelpBox($"A spawner reaches {reach:0.#} m (trigger + spawn radius), beyond Load Distance ({layout.LoadDistance:0.#} m). " +
+                                    "Its enemies could spawn where the floor isn't built yet.", MessageType.Warning);
     }
 
     void Modify(string undoName, System.Action<LevelLayoutAuthoring> change)
