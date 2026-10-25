@@ -40,13 +40,13 @@ Material:
     - _EmissionPulse: 0.1
     - _EmissionPulseSpeed: 2.5
     - _OutlineJitter: 0.55
-    - _OutlineWidth: 0
+    - _OutlineWidth: 1.5
     - _Pattern: 0
     - _PatternAngle: 25
     - _PatternScale: 8
     - _PatternStrength: 0.55
     - _RimPower: 0.28
-    - _RimStrength: 0.2
+    - _RimStrength: 0.15
     - _ShadeThreshold: 0.62
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1

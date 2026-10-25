@@ -51,11 +51,11 @@ Material:
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1
     m_Colors:
-    - _BaseColor: {r: 0.22745094, g: 0.18823525, b: 0.20392153, a: 1}
+    - _BaseColor: {r: 0.22745098, g: 0.16470589, b: 0.21960784, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _InkColor: {r: 0.07058824, g: 0.047058824, b: 0.078431375, a: 1}
     - _OutlineColor: {r: 1, g: 0.41568628, b: 0.0627451, a: 1}
     - _RimColor: {r: 1, g: 0.8862745, b: 0.7607843, a: 1}
-    - _ShadowColor: {r: 0.41568628, g: 0.3529412, b: 0.5019608, a: 1}
+    - _ShadowColor: {r: 0.36862746, g: 0.32941177, b: 0.5019608, a: 1}
   m_BuildTextureStacks: []
   m_AllowLocking: 1

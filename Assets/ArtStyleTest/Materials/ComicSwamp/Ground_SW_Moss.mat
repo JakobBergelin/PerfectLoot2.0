@@ -40,21 +40,21 @@ Material:
     - _EmissionPulse: 0.1
     - _EmissionPulseSpeed: 2.5
     - _OutlineJitter: 0.55
-    - _OutlineWidth: 0
+    - _OutlineWidth: 1
     - _Pattern: 0
     - _PatternAngle: 25
     - _PatternScale: 8
-    - _PatternStrength: 0.55
+    - _PatternStrength: 0.4
     - _RimPower: 0.28
-    - _RimStrength: 0.2
+    - _RimStrength: 0.08
     - _ShadeThreshold: 0.62
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1
     m_Colors:
-    - _BaseColor: {r: 0.30588236, g: 0.5411765, b: 0.36078432, a: 1}
+    - _BaseColor: {r: 0.22745098, g: 0.26666668, b: 0.21960784, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _InkColor: {r: 0.07058824, g: 0.047058824, b: 0.08627451, a: 1}
-    - _OutlineColor: {r: 0.043137256, g: 0.03137255, b: 0.050980393, a: 1}
+    - _OutlineColor: {r: 0.101960786, g: 0.07058824, b: 0.09411765, a: 1}
     - _RimColor: {r: 0.9490196, g: 0.9019608, b: 0.85490197, a: 1}
     - _ShadowColor: {r: 0.17254902, g: 0.26666668, b: 0.3137255, a: 1}
   m_BuildTextureStacks: []

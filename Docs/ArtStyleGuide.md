@@ -137,3 +137,21 @@ Sprite vs 3D, same look:
 - **No pixel snapping yet**: edges may shimmer slightly when the camera moves. If that bothers you, add a small follow script that rounds the camera position to whole pixels (world units per pixel = 2 × orthographic size ÷ 270). (`PixelArtCamera.cs` still exists for the sprite pixel scene and contains a full snapping version.)
 - **Readability**: the player has a bone-white crest, cape emblem and a light-teal 1 px outline. Enemy outlines use their trait color (Baron fire `#C8501C`, Imp fast `#D7C7A6`, Priest summoner `#FFD36A`); the Elite gets a 2 px `#FFA53A` outline. Per-actor material copies live in `Materials/Doom3D_Pixel/ActorOutlines/`.
 - Lava and fire glow toned down to deep orange so they don't read as yellow/gold (gold = summoner).
+
+## 11. Comic dark fantasy across biomes
+
+![Comic biomes](screenshots/ComicBiomes.png)
+
+Scenes: `ArtStyleTest_Swamp_Comic`, `ArtStyleTest_Cathedral_Comic` (same layout and camera as Ember Forest). Models: `Models/ComicSwamp/`, `Models/ComicCathedral/` (Blender source `ArtSource/ComicBiomes_ArtTest.blend`, helpers in `ArtSource/Tools/pl_blender.py`).
+
+| Biome | Cast (trait) | Mood |
+|---|---|---|
+| Toxic Swamp | Bloat Toad (poison), Mire Crawler (fast), Bog Shaman (magic shield), Elite Toad | plum-brown mud, jade moss, teal bog pools, glowing rose mushrooms, warm low sun |
+| Haunted Cathedral | Armored Revenant (armor), Wraith (magic shield), Bell-Ringer (summoner), Elite Revenant | lilac stone, burgundy cloth, cold moonlight, warm candles, ruby/sapphire stained glass |
+
+**Palette direction: "dark fairytale".** Serious and moody (dark values, ink, hatching) but with rich jewel-tone accents instead of grey-brown mud, so it also appeals to players who aren't into grimdark:
+- Keep values dark and contrast high; put the saturation in a few accents per biome (rose, teal, ruby, sapphire, candle-gold).
+- Warm key light + cool/teal shadows: inviting, not bleak.
+- Accent colors must not collide with trait colors (poison green, shield violet, summoner gold, fire orange). Pink/rose and teal are free for environment use.
+- Gore stays minimal; menace comes from silhouettes, not blood.
+- The palette lives in the Unity material builder (Blender colors are only the starting point), so a biome can be recolored without re-exporting models.

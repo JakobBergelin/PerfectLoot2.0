@@ -10,4 +10,4 @@ SW_ENV_Rock_1|SW_Stone,SW_Mud,SW_Moss
 SW_ENV_Rock_2|SW_Stone,SW_Mud,SW_Moss
 SW_ENV_Idol|SW_Stone,SW_EyeDark,SW_Moss,SW_Mud
 SW_ENV_BogPool|SW_Water,SW_Moss,SW_Mud
-SW_ENV_GroundTile|SW_Mud
+SW_ENV_GroundTile|SW_Mud,SW_Water,SW_Moss,SW_Stone,SW_Bark
