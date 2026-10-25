@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Jobs;
@@ -8,99 +9,133 @@ using UnityEngine;
 namespace LevelGeneration
 {
     /// <summary>
-    /// Builds baked level layouts: solves them with WfcSolveJob (or takes the saved layout), instantiates the tile and
-    /// piece prefabs, then announces LevelReady a frame later, once the tiles' child colliders have world transforms.
+    /// Builds baked level layouts: solves them with WfcSolveJob (or takes the saved layout), bends the grid
+    /// (LevelDeformation, seeded like the solve), builds the merged level meshes and colliders (LevelMeshBuilder),
+    /// spawns the props, then announces LevelReady a frame later. Frees the meshes and colliders it made when destroyed.
     /// </summary>
     [UpdateInGroup(typeof(InitializationSystemGroup))]
     public partial class LevelGenerationSystem : SystemBase
     {
+        readonly List<Mesh> _meshes = new List<Mesh>();
+        readonly List<BlobAssetReference<Unity.Physics.Collider>> _colliders = new List<BlobAssetReference<Unity.Physics.Collider>>();
+
         protected override void OnCreate()
         {
             RequireForUpdate<LevelLayout>();
         }
 
+        protected override void OnDestroy()
+        {
+            foreach (var collider in _colliders) if (collider.IsCreated) collider.Dispose();
+            foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
+            _colliders.Clear();
+            _meshes.Clear();
+        }
+
         protected override void OnUpdate()
         {
-            // Spawned last frame: transforms are calculated now, so the level is ready
+            // Built last frame: transforms are calculated now, so the level is ready
             bool announce = false;
             var ready = new LevelReady();
-            foreach (var (spawned, layout) in SystemAPI.Query<RefRW<LevelSpawned>, RefRO<LevelLayout>>())
+            foreach (var spawned in SystemAPI.Query<RefRW<LevelSpawned>>())
             {
                 if (spawned.ValueRO.ReadyAnnounced) continue;
                 spawned.ValueRW.ReadyAnnounced = true;
                 announce = true;
-                ref var blob = ref layout.ValueRO.Blob.Value;
-                ready.PlayerStart = GridToWorld(ref blob, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
+                ready.PlayerStart = spawned.ValueRO.PlayerStart;
             }
             if (announce && !SystemAPI.HasSingleton<LevelReady>()) EntityManager.CreateSingleton(ready, "LevelReady");
 
             using var pending = SystemAPI.QueryBuilder().WithAll<LevelLayout>().WithNone<LevelSpawned>().Build().ToEntityArray(Allocator.Temp);
             foreach (var entity in pending)
             {
-                Build(entity);
-                EntityManager.AddComponentData(entity, new LevelSpawned());
+                var playerStart = Build(entity);
+                EntityManager.AddComponentData(entity, new LevelSpawned { PlayerStart = playerStart });
             }
         }
 
-        void Build(Entity layoutEntity)
+        /// <summary>Builds the level; returns the player start on it.</summary>
+        float3 Build(Entity layoutEntity)
         {
             var layout = EntityManager.GetComponentData<LevelLayout>(layoutEntity);
             ref var blob = ref layout.Blob.Value;
             int cells = blob.Width * blob.Height;
+            bool useSaved = layout.UseSaved && blob.SavedCells.Length == cells;
+            // A saved layout keeps the editor's seed, so its bend matches the preview too
+            uint seed = useSaved || !layout.RandomSeed ? layout.Seed : (uint)System.DateTime.Now.Ticks;
 
             // Per cell: Tile * 4 + Rotation, or negative for nothing
             var packed = new NativeArray<int>(cells, Allocator.Temp);
-            if (layout.UseSaved && blob.SavedCells.Length == cells)
+            if (useSaved)
             {
                 for (int i = 0; i < cells; i++) packed[i] = blob.SavedCells[i];
             }
-            else if (!Solve(ref blob, layout, packed))
+            else if (!Solve(ref blob, layout, seed, packed))
             {
-                packed.Dispose();
-                return;
+                for (int i = 0; i < cells; i++) packed[i] = WfcSolver.Free;
             }
 
-            // Copy the prefabs out: instantiating is a structural change that invalidates the buffers
-            var tilePrefabs = EntityManager.GetBuffer<LevelTilePrefab>(layoutEntity).ToNativeArray(Allocator.Temp);
-            var piecePrefabs = EntityManager.GetBuffer<LevelPiecePrefab>(layoutEntity).ToNativeArray(Allocator.Temp);
+            var deformation = blob.Deformation;
+            deformation.Seed = seed;
+            var corners = deformation.BuildCorners();
+            var builder = new LevelMeshBuilder(corners, blob.Width, blob.Height, blob.TileSize);
+            ref var geometry = ref layout.Geometry.Value;
 
-            int tiles = 0, pieces = 0, missingPrefabs = 0;
+            int tiles = 0, pieces = 0;
             for (int y = 0; y < blob.Height; y++)
                 for (int x = 0; x < blob.Width; x++)
                 {
                     int cell = packed[x + y * blob.Width];
                     if (cell < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(cell);
-                    if (tile >= tilePrefabs.Length || tilePrefabs[tile].Value == Entity.Null) { missingPrefabs++; continue; }
-                    var position = GridToWorld(ref blob, x + 0.5f, y + 0.5f);
-                    Spawn(tilePrefabs[tile].Value, position, Turn(ref blob, LevelLayoutAuthoring.PackedRotation(cell)));
+                    if (tile >= geometry.Tiles.Length) continue;
+                    builder.Add(ref geometry.Tiles[tile], new float2(x + 0.5f, y + 0.5f), LevelLayoutAuthoring.PackedRotation(cell), new int2(x, y));
                     tiles++;
                 }
 
             for (int i = 0; i < blob.Pieces.Length; i++)
             {
                 var piece = blob.Pieces[i];
-                if (piece.Piece >= piecePrefabs.Length || piecePrefabs[piece.Piece].Value == Entity.Null) { missingPrefabs++; continue; }
-                var center = new float2(piece.Cell) + new float2(piece.Size) * 0.5f;
-                var position = GridToWorld(ref blob, center.x, center.y);
-                Spawn(piecePrefabs[piece.Piece].Value, position, Turn(ref blob, piece.Rotation));
+                if (piece.Piece >= geometry.Pieces.Length) continue;
+                builder.Add(ref geometry.Pieces[piece.Piece], new float2(piece.Cell) + new float2(piece.Size) * 0.5f, piece.Rotation, piece.Cell);
                 pieces++;
             }
-
-            Debug.Log($"Level spawned: {tiles} tiles and {pieces} pieces from {blob.Origin} " +
-                      $"({blob.Width}x{blob.Height} cells of {blob.TileSize} m)" +
-                      (missingPrefabs > 0 ? $". {missingPrefabs} had no prefab and were skipped." : "."));
-
-            tilePrefabs.Dispose();
-            piecePrefabs.Dispose();
             packed.Dispose();
+
+            // Copied out first: creating entities is a structural change that invalidates the buffers
+            var materialBuffer = EntityManager.GetBuffer<LevelMaterial>(layoutEntity);
+            var materials = new Material[materialBuffer.Length];
+            for (int i = 0; i < materials.Length; i++) materials[i] = materialBuffer[i].Value.Value;
+            var propPrefabs = EntityManager.GetBuffer<LevelPropPrefab>(layoutEntity).ToNativeArray(Allocator.Temp);
+
+            var (renderers, colliders) = builder.CreateEntities(EntityManager, blob.Origin, blob.Rotation, materials, _meshes, _colliders);
+            int props = 0;
+            foreach (var prop in builder.Props)
+            {
+                if (prop.Prefab < 0 || prop.Prefab >= propPrefabs.Length || propPrefabs[prop.Prefab].Value == Entity.Null) continue;
+                Spawn(propPrefabs[prop.Prefab].Value, blob.Origin + math.mul(blob.Rotation, prop.Position), math.mul(blob.Rotation, prop.Rotation));
+                props++;
+            }
+            propPrefabs.Dispose();
+
+            // Spawners in this level: their cells' centers on the bent grid
+            using var spawners = SystemAPI.QueryBuilder().WithAllRW<LevelEnemySpawner>().Build().ToEntityArray(Allocator.Temp);
+            foreach (var entity in spawners)
+            {
+                var spawner = EntityManager.GetComponentData<LevelEnemySpawner>(entity);
+                spawner.Position = GridToWorld(ref blob, corners, spawner.Cell.x + 0.5f, spawner.Cell.y + 0.5f);
+                EntityManager.SetComponentData(entity, spawner);
+            }
+
+            Debug.Log($"Level built: {tiles} tiles, {pieces} pieces and {props} props as {renderers} meshes and {colliders} colliders " +
+                      $"({blob.Width}x{blob.Height} cells of {blob.TileSize} m, seed {seed}).");
+            return GridToWorld(ref blob, corners, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
         }
 
-        bool Solve(ref LevelLayoutBlob blob, LevelLayout layout, NativeArray<int> packed)
+        bool Solve(ref LevelLayoutBlob blob, LevelLayout layout, uint seed, NativeArray<int> packed)
         {
             int cells = blob.Width * blob.Height;
             int variants = blob.VariantWeights.Length;
-            uint seed = layout.RandomSeed ? (uint)System.DateTime.Now.Ticks : layout.Seed;
 
             var job = new WfcSolveJob
             {
@@ -149,14 +184,12 @@ namespace LevelGeneration
             return array;
         }
 
-        /// <summary>World position of a grid point (in cells): turned around the origin with the layout.</summary>
-        public static float3 GridToWorld(ref LevelLayoutBlob blob, float x, float y) =>
-            blob.Origin + math.mul(blob.Rotation, new float3(x * blob.TileSize, 0f, y * blob.TileSize));
+        /// <summary>World position of a grid point (in cells) on the bent grid, turned around the origin with the layout.</summary>
+        static float3 GridToWorld(ref LevelLayoutBlob blob, float3[] corners, float x, float y) =>
+            blob.Origin + math.mul(blob.Rotation, LevelDeformation.Sample(corners, blob.Width, blob.Height, x, y));
 
-        // A tile's or piece's 90° steps, on top of the layout's turn
-        static quaternion Turn(ref LevelLayoutBlob blob, int rotation) =>
-            math.mul(blob.Rotation, quaternion.RotateY(math.radians(90f * rotation)));
-
+        // Props are prefabs: placed whole. Unity Physics bakes static colliders unparented, in the prefab's space, so
+        // those are moved the same way; parented parts follow the root.
         void Spawn(Entity prefab, float3 position, quaternion turn)
         {
             var root = EntityManager.Instantiate(prefab);
@@ -168,8 +201,6 @@ namespace LevelGeneration
                 EntityManager.SetComponentData(root, transform);
             }
 
-            // Unity Physics bakes static colliders unparented, in the prefab's space (e.g. the placeholder blocks).
-            // They don't follow the root, so move them the same way; parented parts already follow it.
             if (!EntityManager.HasBuffer<LinkedEntityGroup>(root)) return;
             var linked = EntityManager.GetBuffer<LinkedEntityGroup>(root).ToNativeArray(Allocator.Temp);
             foreach (var member in linked)

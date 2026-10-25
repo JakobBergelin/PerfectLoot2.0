@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
 using LevelGeneration;
@@ -280,7 +281,7 @@ public class LevelLayoutEditor : Editor
         }
     }
 
-    // The corner (corner brush) or cell (tile/piece brush) under the mouse
+    // The corner (corner brush) or cell (other brushes) under the mouse, on the bent grid seen from above
     void UpdateHover(LevelLayoutAuthoring layout, Vector2 mousePosition)
     {
         var ray = HandleUtility.GUIPointToWorldRay(mousePosition);
@@ -288,18 +289,8 @@ public class LevelLayoutEditor : Editor
         _hoverValid = false;
         if (!plane.Raycast(ray, out float distance)) return;
 
-        var grid = layout.WorldToGrid(ray.GetPoint(distance));
-        var local = new Vector3(grid.x, 0f, grid.y);
-        if (_brush == Brush.Corners)
-        {
-            _hover = new Vector2Int(Mathf.RoundToInt(local.x), Mathf.RoundToInt(local.z));
-            _hoverValid = _hover.x >= 0 && _hover.y >= 0 && _hover.x <= layout.Width && _hover.y <= layout.Height;
-        }
-        else
-        {
-            _hover = new Vector2Int(Mathf.FloorToInt(local.x), Mathf.FloorToInt(local.z));
-            _hoverValid = _hover.x >= 0 && _hover.y >= 0 && _hover.x < layout.Width && _hover.y < layout.Height;
-        }
+        var point = ray.GetPoint(distance);
+        _hoverValid = _brush == Brush.Corners ? layout.TryPickCorner(point, out _hover) : layout.TryPickCell(point, out _hover);
     }
 
     void Apply(LevelLayoutAuthoring layout, Vector2Int at)
@@ -384,13 +375,17 @@ public class LevelLayoutEditor : Editor
         float size = layout.TileSize;
         var lift = Vector3.up * 0.05f;
 
-        // Grid
-        var lines = new Vector3[(layout.Width + layout.Height + 2) * 2];
-        int n = 0;
-        for (int x = 0; x <= layout.Width; x++) { lines[n++] = layout.CornerPosition(x, 0) + lift; lines[n++] = layout.CornerPosition(x, layout.Height) + lift; }
-        for (int y = 0; y <= layout.Height; y++) { lines[n++] = layout.CornerPosition(0, y) + lift; lines[n++] = layout.CornerPosition(layout.Width, y) + lift; }
+        // Grid, one segment per cell edge so it follows the bend
+        var lines = new List<Vector3>((layout.Width + 1) * layout.Height * 2 + (layout.Height + 1) * layout.Width * 2);
+        for (int y = 0; y <= layout.Height; y++)
+            for (int x = 0; x <= layout.Width; x++)
+            {
+                var corner = layout.CornerPosition(x, y) + lift;
+                if (x < layout.Width) { lines.Add(corner); lines.Add(layout.CornerPosition(x + 1, y) + lift); }
+                if (y < layout.Height) { lines.Add(corner); lines.Add(layout.CornerPosition(x, y + 1) + lift); }
+            }
         Handles.color = GridColor;
-        Handles.DrawLines(lines);
+        Handles.DrawLines(lines.ToArray());
 
         // Corner rules
         for (int y = 0; y <= layout.Height; y++)

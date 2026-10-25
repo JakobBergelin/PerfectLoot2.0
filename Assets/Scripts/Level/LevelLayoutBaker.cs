@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -30,6 +31,7 @@ namespace LevelGeneration
             root.Origin = transform.position;
             root.Rotation = authoring.Yaw;
             root.PlayerStart = new int2(authoring.PlayerStart.x, authoring.PlayerStart.y);
+            root.Deformation = authoring.Deformation(authoring.Seed);
 
             int variants = compiled.Variants.Count;
             var corners = builder.Allocate(ref root.VariantCorners, variants * 4);
@@ -72,37 +74,57 @@ namespace LevelGeneration
             builder.Dispose();
             AddBlobAsset(ref blob, out _);
 
+            // Tile and piece art: stretched meshes and colliders, plus props (spawned whole)
+            var materials = new List<Material>();
+            var propPrefabs = new List<GameObject>();
+            var geometryWarnings = new List<string>();
+            var tileParts = new List<LevelGeometryExtractor.Part>();
+            foreach (var tile in tileSet.Tiles) tileParts.Add(Extract(tile?.Prefab, materials, geometryWarnings));
+            var pieceParts = new List<LevelGeometryExtractor.Part>();
+            foreach (var piece in tileSet.Pieces) pieceParts.Add(Extract(piece?.Prefab, materials, geometryWarnings));
+            foreach (var warning in geometryWarnings) Debug.LogWarning($"Level layout: {warning}", authoring);
+
+            int PropIndex(GameObject prefab)
+            {
+                int index = propPrefabs.IndexOf(prefab);
+                if (index < 0) { index = propPrefabs.Count; propPrefabs.Add(prefab); }
+                return index;
+            }
+
+            var geometryBuilder = new BlobBuilder(Allocator.Temp);
+            ref var geometryRoot = ref geometryBuilder.ConstructRoot<LevelGeometryBlob>();
+            var tileGeometry = geometryBuilder.Allocate(ref geometryRoot.Tiles, tileParts.Count);
+            for (int i = 0; i < tileParts.Count; i++) LevelGeometryExtractor.Write(geometryBuilder, ref tileGeometry[i], tileParts[i], PropIndex);
+            var pieceGeometry = geometryBuilder.Allocate(ref geometryRoot.Pieces, pieceParts.Count);
+            for (int i = 0; i < pieceParts.Count; i++) LevelGeometryExtractor.Write(geometryBuilder, ref pieceGeometry[i], pieceParts[i], PropIndex);
+            var geometry = geometryBuilder.CreateBlobAssetReference<LevelGeometryBlob>(Allocator.Persistent);
+            geometryBuilder.Dispose();
+            AddBlobAsset(ref geometry, out _);
+
             var entity = GetEntity(TransformUsageFlags.None);
             AddComponent(entity, new LevelLayout
             {
                 Blob = blob,
+                Geometry = geometry,
                 Seed = authoring.Seed,
                 RandomSeed = authoring.RandomSeedEachPlay,
                 UseSaved = saved != null,
                 MaxAttempts = authoring.MaxAttempts,
             });
 
-            var tilePrefabs = AddBuffer<LevelTilePrefab>(entity);
-            foreach (var tile in tileSet.Tiles)
-            {
-                if (tile?.Prefab != null) DependsOn(tile.Prefab);
-                tilePrefabs.Add(new LevelTilePrefab { Value = tile?.Prefab != null ? GetEntity(tile.Prefab, TransformUsageFlags.Dynamic) : Entity.Null });
-            }
-            var piecePrefabs = AddBuffer<LevelPiecePrefab>(entity);
-            foreach (var piece in tileSet.Pieces)
-            {
-                if (piece?.Prefab != null) DependsOn(piece.Prefab);
-                piecePrefabs.Add(new LevelPiecePrefab { Value = piece?.Prefab != null ? GetEntity(piece.Prefab, TransformUsageFlags.Dynamic) : Entity.Null });
-            }
+            var materialBuffer = AddBuffer<LevelMaterial>(entity);
+            foreach (var material in materials) materialBuffer.Add(new LevelMaterial { Value = material });
+            var propBuffer = AddBuffer<LevelPropPrefab>(entity);
+            foreach (var prefab in propPrefabs) propBuffer.Add(new LevelPropPrefab { Value = GetEntity(prefab, TransformUsageFlags.Dynamic) });
 
-            // Enemy spawners: one entity each, at its cell's center (GroundPlacement puts the enemies on the floor)
+            // Enemy spawners: one entity each, at its cell (the position on the bent level is set when it's built)
             foreach (var marker in authoring.EnemySpawners)
             {
                 if (marker == null) continue;
                 var spawner = CreateAdditionalEntity(TransformUsageFlags.None, entityName: $"EnemySpawner {marker.Cell}");
                 AddComponent(spawner, new LevelEnemySpawner
                 {
-                    Position = authoring.CellCenter(marker.Cell.x, marker.Cell.y),
+                    Cell = new int2(marker.Cell.x, marker.Cell.y),
                     TriggerRadius = marker.TriggerRadius,
                     SpawnRadius = marker.SpawnRadius,
                 });
@@ -114,6 +136,14 @@ namespace LevelGeneration
                     entries.Add(new LevelEnemySpawnerEntry { Definition = entry.Definition, Count = entry.Count });
                 }
             }
+        }
+
+        LevelGeometryExtractor.Part Extract(GameObject prefab, List<Material> materials, List<string> warnings)
+        {
+            if (prefab == null) return new LevelGeometryExtractor.Part();
+            DependsOn(prefab);
+            foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true)) DependsOn(filter.sharedMesh);
+            return LevelGeometryExtractor.Extract(prefab, materials, warnings);
         }
     }
 }

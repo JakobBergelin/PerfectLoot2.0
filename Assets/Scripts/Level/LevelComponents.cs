@@ -7,6 +7,7 @@ namespace LevelGeneration
     public struct LevelLayout : IComponentData
     {
         public BlobAssetReference<LevelLayoutBlob> Blob;
+        public BlobAssetReference<LevelGeometryBlob> Geometry;
         public uint Seed;
         public bool RandomSeed;
         public bool UseSaved;
@@ -23,6 +24,8 @@ namespace LevelGeneration
         public quaternion Rotation;
         /// <summary>Cell the player spawns in.</summary>
         public int2 PlayerStart;
+        /// <summary>Bend settings; its Seed is set when the level is built (the solve seed).</summary>
+        public LevelDeformation Deformation;
 
         // Solver input (WfcCompiledLayout)
         public BlobArray<byte> VariantCorners;
@@ -43,22 +46,12 @@ namespace LevelGeneration
         public int2 Cell, Size;
     }
 
-    /// <summary>Baked tile prefabs, indexed like WfcTileSet.Tiles (Entity.Null for tiles without a prefab).</summary>
-    public struct LevelTilePrefab : IBufferElementData
-    {
-        public Entity Value;
-    }
-
-    /// <summary>Baked piece prefabs, indexed like WfcTileSet.Pieces.</summary>
-    public struct LevelPiecePrefab : IBufferElementData
-    {
-        public Entity Value;
-    }
-
-    /// <summary>On a layout entity once its tiles are spawned. LevelReady follows a frame later.</summary>
+    /// <summary>On a layout entity once its level is built. LevelReady follows a frame later.</summary>
     public struct LevelSpawned : IComponentData
     {
         public bool ReadyAnnounced;
+        /// <summary>Center of the player start cell on the bent level.</summary>
+        public float3 PlayerStart;
     }
 
     /// <summary>
@@ -99,6 +92,8 @@ namespace LevelGeneration
     /// </summary>
     public struct LevelEnemySpawner : IComponentData
     {
+        public int2 Cell;
+        /// <summary>World position of the cell's center on the bent level; set when the level is built.</summary>
         public float3 Position;
         public float TriggerRadius;
         public float SpawnRadius;

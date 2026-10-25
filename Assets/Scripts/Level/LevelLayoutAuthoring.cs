@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace LevelGeneration
@@ -51,6 +52,17 @@ namespace LevelGeneration
         public uint Seed = 1;
         [Tooltip("Restarts with the next seed when the solver gets stuck, up to this many times")]
         [Min(1)] public int MaxAttempts = 20;
+
+        [Header("Bend (random per seed)")]
+        [Tooltip("How far corners move sideways, as a fraction of the tile size")]
+        [Range(0f, LevelDeformation.MaxWobble)] public float WobbleStrength;
+        [Tooltip("Noise frequency per cell: lower is broader and smoother")]
+        [Min(0.01f)] public float WobbleScale = 0.25f;
+        [Tooltip("Degrees the whole grid curves over its width (0 = straight)")]
+        [Range(-90f, 90f)] public float BendAngle;
+        [Tooltip("Meters the ground rises or sinks at most. Keep slopes gentle: units walk with horizontal movement.")]
+        [Min(0f)] public float HillHeight;
+        [Min(0.01f)] public float HillScale = 0.15f;
 
         [Serializable]
         public class SpawnerMarker
@@ -140,21 +152,90 @@ namespace LevelGeneration
         /// <summary>The grid's turn: only the Transform's Y rotation, so the level always stays flat.</summary>
         public Quaternion Yaw => Quaternion.Euler(0f, transform.eulerAngles.y, 0f);
 
-        /// <summary>World position of a grid point (in cells) at this object's height, turned by Yaw around this object.</summary>
-        public Vector3 GridToWorld(float x, float y) => transform.position + Yaw * new Vector3(x * TileSize, 0f, y * TileSize);
-
-        /// <summary>Grid coordinates (in cells) of a world position, ignoring height.</summary>
-        public Vector2 WorldToGrid(Vector3 world)
+        /// <summary>The bend settings for a seed (the runtime uses the solve seed; the editor uses Seed).</summary>
+        public LevelDeformation Deformation(uint seed) => new LevelDeformation
         {
-            var local = Quaternion.Inverse(Yaw) * (world - transform.position);
-            return new Vector2(local.x, local.z) / TileSize;
+            Width = Width, Height = Height, TileSize = TileSize, Seed = seed,
+            WobbleStrength = WobbleStrength, WobbleScale = WobbleScale, BendAngle = BendAngle,
+            HillHeight = HillHeight, HillScale = HillScale,
+        };
+
+        // Bent corners for Seed (grid space), rebuilt when a setting changes
+        [NonSerialized] float3[] _bentCorners;
+        [NonSerialized] int _bentCornersKey;
+
+        public float3[] BentCorners()
+        {
+            int key = HashCode.Combine(Width, Height, TileSize, Seed, WobbleStrength, WobbleScale, BendAngle, HashCode.Combine(HillHeight, HillScale));
+            if (_bentCorners == null || key != _bentCornersKey)
+            {
+                _bentCorners = Deformation(Seed).BuildCorners();
+                _bentCornersKey = key;
+            }
+            return _bentCorners;
         }
+
+        /// <summary>World position of a grid point (in cells) on the bent grid with Seed, turned by Yaw around this object.</summary>
+        public Vector3 GridToWorld(float x, float y) =>
+            transform.position + Yaw * (Vector3)LevelDeformation.Sample(BentCorners(), Width, Height, x, y);
 
         /// <summary>World position of a corner.</summary>
         public Vector3 CornerPosition(int x, int y) => GridToWorld(x, y);
 
         /// <summary>World position of a cell's center.</summary>
         public Vector3 CellCenter(int x, int y) => GridToWorld(x + 0.5f, y + 0.5f);
+
+        /// <summary>The cell whose bent outline contains the world position (seen from above).</summary>
+        public bool TryPickCell(Vector3 world, out Vector2Int cell)
+        {
+            var point = new Vector2(world.x, world.z);
+            for (int y = 0; y < Height; y++)
+                for (int x = 0; x < Width; x++)
+                {
+                    var a = Flat(CornerPosition(x, y));
+                    var b = Flat(CornerPosition(x + 1, y));
+                    var c = Flat(CornerPosition(x + 1, y + 1));
+                    var d = Flat(CornerPosition(x, y + 1));
+                    if (InTriangle(point, a, b, c) || InTriangle(point, a, c, d))
+                    {
+                        cell = new Vector2Int(x, y);
+                        return true;
+                    }
+                }
+            cell = default;
+            return false;
+        }
+
+        /// <summary>The bent corner nearest the world position (seen from above), within half a tile.</summary>
+        public bool TryPickCorner(Vector3 world, out Vector2Int corner)
+        {
+            var point = new Vector2(world.x, world.z);
+            float best = TileSize * TileSize * 0.25f;
+            corner = default;
+            bool found = false;
+            for (int y = 0; y <= Height; y++)
+                for (int x = 0; x <= Width; x++)
+                {
+                    float distance = (Flat(CornerPosition(x, y)) - point).sqrMagnitude;
+                    if (distance >= best) continue;
+                    best = distance;
+                    corner = new Vector2Int(x, y);
+                    found = true;
+                }
+            return found;
+        }
+
+        static Vector2 Flat(Vector3 v) => new Vector2(v.x, v.z);
+
+        static bool InTriangle(Vector2 p, Vector2 a, Vector2 b, Vector2 c)
+        {
+            float d1 = Cross(p, a, b), d2 = Cross(p, b, c), d3 = Cross(p, c, a);
+            bool negative = d1 < 0f || d2 < 0f || d3 < 0f;
+            bool positive = d1 > 0f || d2 > 0f || d3 > 0f;
+            return !(negative && positive);
+        }
+
+        static float Cross(Vector2 p, Vector2 a, Vector2 b) => (p.x - b.x) * (a.y - b.y) - (a.x - b.x) * (p.y - b.y);
 
         void OnValidate()
         {
@@ -163,15 +244,13 @@ namespace LevelGeneration
         }
 
 #if UNITY_EDITOR
-        // The preview (or saved layout) as colored blocks: each quarter of a cell shows its corner's terrain
+        // The preview (or saved layout) on the bent grid: each quarter of a cell is a patch in its corner's terrain
+        // color (walls raised, water lowered)
         void OnDrawGizmos()
         {
             var cells = PreviewCells != null && PreviewCells.Length == Width * Height ? PreviewCells : SavedCells;
             if (TileSet == null) return;
             var corners = new WfcTerrain[4];
-            // Drawn in grid space, turned with the layout
-            var previousMatrix = Gizmos.matrix;
-            Gizmos.matrix = Matrix4x4.TRS(transform.position, Yaw, Vector3.one);
 
             if (cells != null)
                 for (int y = 0; y < Height; y++)
@@ -202,24 +281,23 @@ namespace LevelGeneration
                         DrawCell(placed.Cell.x + px, placed.Cell.y + py, corners);
                     }
             }
-            Gizmos.matrix = previousMatrix;
         }
 
-        // In grid space (Gizmos.matrix places the grid)
         void DrawCell(int x, int y, WfcTerrain[] corners)
         {
-            var center = new Vector3((x + 0.5f) * TileSize, 0f, (y + 0.5f) * TileSize);
-            float quarter = TileSize * 0.25f;
+            var points = new Vector3[4];
             for (int k = 0; k < 4; k++)
             {
-                var offset = new Vector3(k == 1 || k == 2 ? quarter : -quarter, 0f, k >= 2 ? quarter : -quarter);
+                // Quarter k: SW, SE, NE, NW half of the cell in each direction
+                float x0 = x + (k == 1 || k == 2 ? 0.5f : 0f), y0 = y + (k >= 2 ? 0.5f : 0f);
                 var terrain = corners[k];
-                Gizmos.color = WfcTerrains.Color(terrain);
-                var size = new Vector3(TileSize * 0.5f, 0.2f, TileSize * 0.5f);
-                var position = center + offset + Vector3.down * 0.1f;
-                if (terrain == WfcTerrain.Wall) { size.y = 3f; position.y = center.y + 1.5f; }
-                else if (terrain == WfcTerrain.Water) position.y = center.y - 0.3f;
-                Gizmos.DrawCube(position, size);
+                var lift = Vector3.up * (terrain == WfcTerrain.Wall ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
+                points[0] = GridToWorld(x0, y0) + lift;
+                points[1] = GridToWorld(x0 + 0.5f, y0) + lift;
+                points[2] = GridToWorld(x0 + 0.5f, y0 + 0.5f) + lift;
+                points[3] = GridToWorld(x0, y0 + 0.5f) + lift;
+                UnityEditor.Handles.color = WfcTerrains.Color(terrain);
+                UnityEditor.Handles.DrawAAConvexPolygon(points);
             }
         }
 #endif
