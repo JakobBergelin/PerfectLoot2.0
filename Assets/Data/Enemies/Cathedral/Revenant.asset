@@ -1,0 +1,60 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be91b521b825c8b2afba6fb6d8827fc6, type: 3}
+  m_Name: Revenant
+  m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
+  Name: Armored Revenant
+  Prefab: {fileID: 2911774525336884866, guid: bc39dbad3b8923d4f80e0a8b3eb1b307, type: 3}
+  OverrideColor: 0
+  Tint: {r: 1, g: 1, b: 1, a: 1}
+  BodyType: 0
+  Scale: 1
+  Mass: 3
+  Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 1
+    Damage: 0
+    Health: 40
+    HealthRegeneration: 1
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceSteal: 0
+    Lifesteal: 0
+    Pierce: 0
+    Bounces: 0
+    Armor: 5
+    MovementSpeed: 1.6
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0
+    CriticalChance: 0.2
+    CriticalDamage: 1
+    BlockChance: 0.05
+    DodgeChance: 0
+  HasAI: 1
+  DetectionRadius: 15
+  AttackRadius: 3
+  TurnSpeed: 1.6
+  TurnAcceleration: 1
+  MeleeDamage: 1.6
+  SecondsBetweenAttacks: 1.6

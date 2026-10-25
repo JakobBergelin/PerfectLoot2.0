@@ -71,17 +71,25 @@ partial struct CheckDeathSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var toDestroy = new NativeList<Entity>(Allocator.Temp);
+        var toAnimate = new NativeList<Entity>(Allocator.Temp);
+        var animators = SystemAPI.GetComponentLookup<RigidAnimator>(true);
         foreach (var (health, entity) in SystemAPI.Query<RefRO<Health>>().WithEntityAccess())
         {
             if(health.ValueRO.CurrentValue <= 0.0f)
             {
-                toDestroy.Add(entity);
+                // Rigid models with a Death clip play it first (RigidDeathSystem destroys them afterwards)
+                if (animators.HasComponent(entity) && RigidDeathUtility.HasDeathClip(animators[entity])) toAnimate.Add(entity);
+                else toDestroy.Add(entity);
             }
         }
 
         if(!toDestroy.IsEmpty)
         {
             state.EntityManager.AddComponent<DestroyWithChildren>(toDestroy.AsArray());
+        }
+        if (!toAnimate.IsEmpty)
+        {
+            RigidDeathUtility.StartDying(state.EntityManager, toAnimate.AsArray());
         }
     }
 }
