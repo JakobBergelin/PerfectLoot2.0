@@ -46,7 +46,7 @@ Material:
     - _PatternScale: 5
     - _PatternStrength: 0.85
     - _RimPower: 0.28
-    - _RimStrength: 0.55
+    - _RimStrength: 0.9
     - _ShadeThreshold: 0.62
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1

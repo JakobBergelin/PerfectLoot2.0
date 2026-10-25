@@ -51,7 +51,7 @@ Material:
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1
     m_Colors:
-    - _BaseColor: {r: 0.22745098, g: 0.26666668, b: 0.21960784, a: 1}
+    - _BaseColor: {r: 0.1933333, g: 0.22666666, b: 0.18666664, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _InkColor: {r: 0.07058824, g: 0.047058824, b: 0.08627451, a: 1}
     - _OutlineColor: {r: 0.101960786, g: 0.07058824, b: 0.09411765, a: 1}

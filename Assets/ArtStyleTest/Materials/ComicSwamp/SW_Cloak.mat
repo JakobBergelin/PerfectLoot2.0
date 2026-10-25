@@ -46,12 +46,12 @@ Material:
     - _PatternScale: 5
     - _PatternStrength: 0.85
     - _RimPower: 0.28
-    - _RimStrength: 0.55
+    - _RimStrength: 0.9
     - _ShadeThreshold: 0.62
     - _ShadowReceive: 1
     - _UseSmoothNormals: 1
     m_Colors:
-    - _BaseColor: {r: 0.18431373, g: 0.3529412, b: 0.32156864, a: 1}
+    - _BaseColor: {r: 0.2901961, g: 0.5411765, b: 0.49411765, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
     - _InkColor: {r: 0.07058824, g: 0.047058824, b: 0.08627451, a: 1}
     - _OutlineColor: {r: 0.043137256, g: 0.03137255, b: 0.050980393, a: 1}
