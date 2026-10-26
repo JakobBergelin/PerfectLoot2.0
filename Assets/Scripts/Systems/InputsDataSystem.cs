@@ -16,8 +16,11 @@ public partial class InputsDataSystem : SystemBase
     private InputSystem_Actions inputs;
     private InputAction[] skillActions;
 
-    protected override void OnCreate()
+    // Not in OnCreate: the world is created before the first scene loads, and in a build the Input System resets every
+    // enabled action right then (InputActionState.InitializeGlobalActionState), so actions enabled earlier read nothing
+    protected override void OnStartRunning()
     {
+        if (inputs != null) return;
         inputs = new InputSystem_Actions();
         inputs.Enable();
         skillActions = new[] { inputs.Player.Skill1, inputs.Player.Skill2, inputs.Player.Skill3, inputs.Player.Skill4 };
@@ -25,6 +28,7 @@ public partial class InputsDataSystem : SystemBase
 
     protected override void OnDestroy()
     {
+        if (inputs == null) return;
         inputs.Disable();
         inputs.Dispose();
     }
