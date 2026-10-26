@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: PlatePauldrons
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableShouldersItem
   Name: Plate Pauldrons
+  Id: c0d022c5fdae4084b7cfe655dc312173
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

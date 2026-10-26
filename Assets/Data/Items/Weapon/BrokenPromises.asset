@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: BrokenPromises
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryWeaponItem
   Name: Broken Promises
+  Id: d2f4d8f7830b4916b7794a4298c87a23
+  Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 0
@@ -44,4 +46,5 @@ MonoBehaviour:
     Max: 10
   WeaponCooldown: 0.8
   WeaponDamageRange: 1.8
+  WeaponReach: 1.1
   LegendaryPower: {fileID: 11400000, guid: 422584afdc1f4de44bd5b4242ec6d428, type: 2}

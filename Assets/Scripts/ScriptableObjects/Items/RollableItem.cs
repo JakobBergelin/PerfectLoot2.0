@@ -11,6 +11,8 @@ namespace Equipment
         static readonly Rarity[] DroppableRarities = { Rarity.Normal, Rarity.Magic, Rarity.Rare };
 
         public string Name;
+        [Tooltip("Stable ID for save files: the asset's GUID, set automatically in the editor (Tools → Assign Item IDs)")]
+        public string Id;
         public Sprite Icon;                     // Shown in inventory/loot UI and editor tooling
         public abstract ItemType ItemType { get; }
 
@@ -55,6 +57,23 @@ namespace Equipment
         {
             get { yield break; }
         }
+
+#if UNITY_EDITOR
+        // Also corrects a duplicated asset, which starts with the original's ID
+        void OnValidate() => AssignId();
+
+        /// <summary>Sets Id to the asset's GUID. True if it changed (the asset is then dirty).</summary>
+        public bool AssignId()
+        {
+            string path = UnityEditor.AssetDatabase.GetAssetPath(this);
+            if (string.IsNullOrEmpty(path)) return false;
+            string guid = UnityEditor.AssetDatabase.AssetPathToGUID(path);
+            if (string.IsNullOrEmpty(guid) || guid == Id) return false;
+            Id = guid;
+            UnityEditor.EditorUtility.SetDirty(this);
+            return true;
+        }
+#endif
 
         public override List<Loot> Explore()
         {

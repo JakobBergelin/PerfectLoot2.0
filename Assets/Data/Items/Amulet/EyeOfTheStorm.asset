@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: EyeOfTheStorm
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
   Name: Eye of the Storm
+  Id: 0c6a9d85175b47d5a0c10afcd1a481dd
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 26
     RollRange:
@@ -43,3 +45,4 @@ MonoBehaviour:
     RollRange:
       Min: 0.01
       Max: 0.05
+  LegendaryPower: {fileID: 0}

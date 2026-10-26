@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: ShortSword
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableWeaponItem
   Name: Short Sword
+  Id: 67bb9dcccf9e4824bb0b8dfedf5e0bbf
+  Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 0
@@ -44,3 +46,4 @@ MonoBehaviour:
     Max: 5
   WeaponCooldown: 0.9
   WeaponDamageRange: 1.8
+  WeaponReach: 1.1

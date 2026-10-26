@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: GreatHelm
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableHeadItem
   Name: Great Helm
+  Id: 214de991ae2f425a92650b3cf7a8d532
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

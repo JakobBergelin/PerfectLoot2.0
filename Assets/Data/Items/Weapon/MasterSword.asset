@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: MasterSword
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueWeaponItem
   Name: Master Sword
+  Id: 9475d1ebf16247f41adf0c178dc02bde
   Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:

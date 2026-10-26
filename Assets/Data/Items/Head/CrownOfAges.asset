@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: CrownOfAges
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryHeadItem
   Name: Crown of Ages
+  Id: f6b3bdb4fe3f49cf94cbee26c371d5f3
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -43,3 +45,4 @@ MonoBehaviour:
     RollRange:
       Min: 10
       Max: 40
+  LegendaryPower: {fileID: 0}

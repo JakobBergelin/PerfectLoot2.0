@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Buckler
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableOffhandItem
   Name: Buckler
+  Id: e3dfff5dda7a414f9d162a18c100af6e
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

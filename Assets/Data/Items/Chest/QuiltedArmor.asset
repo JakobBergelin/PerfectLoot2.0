@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: QuiltedArmor
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableChestItem
   Name: Quilted Armor
+  Id: e893a748bbcc4bdfbb2b89e62cc3ef40
+  Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 24

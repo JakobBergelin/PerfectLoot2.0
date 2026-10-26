@@ -65,20 +65,29 @@ public class AccountManager : MonoBehaviour
     /// <summary>Raised after SignIn changed the account.</summary>
     public event Action AccountChanged;
 
-    /// <summary>Plays as this account from now on and remembers the name for the next launch. False if it isn't valid.</summary>
+    /// <summary>
+    /// Plays as this account from now on and remembers the name for the next launch. A new account gets an empty item
+    /// database saved. The database is loaded for the account the next time it's used. False if the name isn't valid.
+    /// </summary>
     public bool SignIn(string name)
     {
         if (!IsValidName(name)) return false;
         _accountName = name;
         PlayerPrefs.SetString(LastNameKey, name);
         PlayerPrefs.Save();
+
+        if (!AccountSaves.HasItemDatabase(AccountId)) AccountSaves.WriteItemDatabase(AccountId, null);
+        _itemsInitialized = false;
+        _pendingDrops.Clear();
         AccountChanged?.Invoke();
+        PendingDropsChanged?.Invoke();
         return true;
     }
 
     [SerializeField, Tooltip("Read-only: one entry per item kind and rarity, empty until found")]
     ItemDatabase _items = new ItemDatabase();
     bool _itemsInitialized;
+    bool _loadingItems;     // Storing saved items doesn't save them again
 
     // Item kind -> names of the loot tables that contain it
     readonly Dictionary<RollableItem, List<string>> _sources = new Dictionary<RollableItem, List<string>>();
@@ -93,7 +102,8 @@ public class AccountManager : MonoBehaviour
 
     /// <summary>
     /// The account's item database. Built on first use from every item in LootGenerationManager's loot tables (items
-    /// that can't drop get no entries), so it's ready no matter which manager's Start runs first.
+    /// that can't drop get no entries), so it's ready no matter which manager's Start runs first, and then filled from
+    /// the account's save. Saved again after every change.
     /// </summary>
     public ItemDatabase Items
     {
@@ -109,6 +119,7 @@ public class AccountManager : MonoBehaviour
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
         DontDestroyOnLoad(gameObject);
+        _items.ItemChanged += OnItemChanged;
     }
 
     void OnDestroy()
@@ -131,7 +142,44 @@ public class AccountManager : MonoBehaviour
             CollectItems(table, visited);
 
         _items.Initialize(_sources.Keys);
+        LoadItems();
         _itemsInitialized = true;
+    }
+
+    // Fills the freshly built database from the account's save (a new account gets its empty database saved)
+    void LoadItems()
+    {
+        var itemsById = new Dictionary<string, RollableItem>();
+        int missingIds = 0;
+        foreach (var item in _sources.Keys)
+        {
+            if (string.IsNullOrEmpty(item.Id)) { missingIds++; continue; }
+            if (!itemsById.TryAdd(item.Id, item))
+                Debug.LogWarning($"AccountManager: {item.name} and {itemsById[item.Id].name} have the same Id. Run Tools → Assign Item IDs.", this);
+        }
+        if (missingIds > 0)
+            Debug.LogWarning($"AccountManager: {missingIds} items have no Id, so they can't be loaded or saved. Run Tools → Assign Item IDs.", this);
+
+        if (!AccountSaves.HasItemDatabase(AccountId))
+        {
+            AccountSaves.WriteItemDatabase(AccountId, _items);
+            return;
+        }
+        _loadingItems = true;
+        try
+        {
+            int loaded = AccountSaves.ReadItemDatabase(AccountId, _items, itemsById);
+            if (loaded >= 0) Debug.Log($"AccountManager: loaded {loaded} items for account '{AccountName}'.", this);
+        }
+        finally
+        {
+            _loadingItems = false;
+        }
+    }
+
+    void OnItemChanged(ItemKey key)
+    {
+        if (!_loadingItems && _itemsInitialized) AccountSaves.WriteItemDatabase(AccountId, _items);
     }
 
     // Walks nested loot tables; each table once, so cycles can't loop forever

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: CopperRing
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableRingItem
   Name: Copper Ring
+  Id: d62acfd7c1364e02bd3c4142bfe43623
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 4
     RollRange:

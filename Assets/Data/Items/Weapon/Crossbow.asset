@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Crossbow
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableWeaponItem
   Name: Crossbow
+  Id: 891292c906744eefa9e01442dcec83d6
   Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:

@@ -20,10 +20,6 @@ public class LootGenerationManager : MonoBehaviour
     public LootTable AllRingLootTable;
     public LootTable AllOffhandLootTable;
 
-    [Header("Testing")]
-    [Tooltip("At game start, roll a Standard item into the account database for every empty inventory slot and equip it.")]
-    public bool RollAndEquipOnStart = true;
-
     // Rerolls per slot when the table gives a Legendary/Unique, an already equipped key, or nothing
     const int MaxRollAttempts = 50;
 
@@ -39,16 +35,14 @@ public class LootGenerationManager : MonoBehaviour
         Instance = this;
     }
 
-    // InventoryManager subscribes to its slots in Awake, so equips here reach EquipmentStats
-    void Start()
-    {
-        if (RollAndEquipOnStart) RollAndEquip(onlyIfEmpty: true);
-    }
-
     [ContextMenu("Roll And Equip All")] // right-click the component in Play mode to test
     public void RollAndEquipAll() => RollAndEquip(onlyIfEmpty: false);
 
-    void RollAndEquip(bool onlyIfEmpty)
+    /// <summary>
+    /// Rolls a Standard item into the account database for every (empty) inventory slot and equips it. Not run at game
+    /// start anymore (saved accounts start empty); kept for giving a new character its first gear later.
+    /// </summary>
+    public void RollAndEquip(bool onlyIfEmpty)
     {
         var inv = InventoryManager.Instance;
         if (inv == null) { Debug.LogError("No InventoryManager in the scene."); return; }

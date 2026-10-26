@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: GoldRing
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableRingItem
   Name: Gold Ring
+  Id: 2d64619da4bf42f288851d66520d7298
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 4
     RollRange:

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: LeatherBoots
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableBootsItem
   Name: Leather Boots
+  Id: 15fe6c59dd6f44f28425b4991082b045
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

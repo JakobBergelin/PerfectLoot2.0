@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: TowerShield
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableOffhandItem
   Name: Tower Shield
+  Id: 4ba43c1703f842ab9ebc30668cd74514
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

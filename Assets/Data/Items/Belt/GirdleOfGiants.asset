@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: GirdleOfGiants
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryBeltItem
   Name: Girdle of Giants
+  Id: 7fb339696af84064bf018e1cefcfcd47
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -49,3 +51,4 @@ MonoBehaviour:
   ResourceRegeneration:
     Min: 1
     Max: 2
+  LegendaryPower: {fileID: 0}

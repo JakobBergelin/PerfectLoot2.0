@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Cap
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableHeadItem
   Name: Cap
+  Id: 281ace68cb604966ad4663377aaac89f
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

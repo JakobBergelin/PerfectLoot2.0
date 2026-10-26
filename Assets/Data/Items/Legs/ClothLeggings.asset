@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: ClothLeggings
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegsItem
   Name: Cloth Leggings
+  Id: 0b06f65e60b4469ea31048f9734f5c33
+  Icon: {fileID: 0}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 1

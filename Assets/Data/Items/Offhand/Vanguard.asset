@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Vanguard
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryOffhandItem
   Name: Vanguard
+  Id: 95459cc4030f4eabb2e3506cd2bb7140
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: GravityOrb
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueOffhandItem
   Name: Gravity Orb
+  Id: c6c2ab5b57a34b98bdff098abff77482
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:

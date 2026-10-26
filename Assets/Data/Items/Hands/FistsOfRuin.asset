@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: FistsOfRuin
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryHandsItem
   Name: Fists of Ruin
+  Id: ba726c5ced974699ada804b618194344
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -43,3 +45,4 @@ MonoBehaviour:
     RollRange:
       Min: 0.1
       Max: 0.4
+  LegendaryPower: {fileID: 0}

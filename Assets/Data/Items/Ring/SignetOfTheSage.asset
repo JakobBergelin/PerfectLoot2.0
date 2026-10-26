@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: SignetOfTheSage
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryRingItem
   Name: Signet of the Sage
+  Id: ce2b8d96b52e49dd97d7d8d94ad81a4e
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 4
     RollRange:
@@ -43,3 +45,4 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.12
+  LegendaryPower: {fileID: 0}

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: MantleOfTheWatcher
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryShouldersItem
   Name: Mantle of the Watcher
+  Id: b7b74036ea8049289130a591472bbdcc
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -43,3 +45,4 @@ MonoBehaviour:
     RollRange:
       Min: 0.5
       Max: 2
+  LegendaryPower: {fileID: 0}

@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: PlatedBelt
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableBeltItem
   Name: Plated Belt
+  Id: 9f850d9dc03e4038a43a8a53c66b14d2
+  Icon: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
