@@ -1,0 +1,23 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MainMenu.uss" />
+    <ui:VisualElement name="mainMenuRoot" class="main-menu-root">
+        <ui:Label text="PerfectLoot" class="mm-title" />
+
+        <!-- Name screen: the name stands in for an account until there is a real one -->
+        <ui:VisualElement name="nameScreen" class="mm-panel">
+            <ui:Label text="Enter your name" class="mm-heading" />
+            <ui:TextField name="nameField" class="mm-name-field" />
+            <ui:Label text="Letters, digits, - and _ · A new name starts a new play-through" class="mm-hint" />
+            <ui:Button name="continueButton" text="Continue" class="mm-button mm-button--primary" />
+        </ui:VisualElement>
+
+        <!-- Main screen -->
+        <ui:VisualElement name="mainScreen" class="mm-panel mm-screen--hidden">
+            <ui:Label name="signedIn" class="mm-heading" />
+            <ui:Button name="characterSelectButton" text="Character Select" class="mm-button mm-button--primary" />
+            <ui:Button name="optionsButton" text="Options" class="mm-button" />
+            <ui:Button name="exitButton" text="Exit" class="mm-button" />
+            <ui:Button name="changeNameButton" text="Change name" class="mm-link" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

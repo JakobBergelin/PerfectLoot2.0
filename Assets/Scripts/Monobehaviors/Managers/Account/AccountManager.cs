@@ -1,11 +1,13 @@
 using System;
 using System.Collections.Generic;
+using System.Text;
 using Equipment;
 using Loottables;
 using UnityEngine;
 
 /// <summary>
-/// Account-wide state that outlives scenes: the item database shared by all characters (later also the characters
+/// Account-wide state that outlives scenes: who is playing (the name given in the main menu, standing in for a real
+/// account and used as the ID for saved data), the item database shared by all characters (later also the characters
 /// themselves), and the queue of dropped items waiting for the player (DropPopupHUD). Play mode only for now.
 /// </summary>
 public class AccountManager : MonoBehaviour
@@ -24,6 +26,55 @@ public class AccountManager : MonoBehaviour
     }
 
     public static AccountManager Instance;
+
+    // ---------- Account ----------
+
+    /// <summary>The account used when a game scene is played without going through the main menu.</summary>
+    public const string DefaultAccountName = "Dev";
+    public const int MaxNameLength = 20;
+    const string LastNameKey = "PerfectLoot.LastAccountName";
+
+    string _accountName = DefaultAccountName;
+
+    /// <summary>The name as the player typed it.</summary>
+    public string AccountName => _accountName;
+
+    /// <summary>The ID for saved data: the name in lowercase, so "Matt" and "matt" are the same account.</summary>
+    public string AccountId => ToAccountId(_accountName);
+
+    /// <summary>The name last signed in with (on this machine), or empty.</summary>
+    public static string LastAccountName => CleanName(PlayerPrefs.GetString(LastNameKey, ""));
+
+    public static bool IsValidNameCharacter(char c) =>
+        (c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9') || c == '-' || c == '_';
+
+    /// <summary>The name without the characters a name can't have, at most MaxNameLength long.</summary>
+    public static string CleanName(string name)
+    {
+        if (string.IsNullOrEmpty(name)) return "";
+        var clean = new StringBuilder(name.Length);
+        foreach (char c in name)
+            if (IsValidNameCharacter(c) && clean.Length < MaxNameLength) clean.Append(c);
+        return clean.ToString();
+    }
+
+    public static bool IsValidName(string name) => !string.IsNullOrEmpty(name) && CleanName(name) == name;
+
+    public static string ToAccountId(string name) => name.ToLowerInvariant();
+
+    /// <summary>Raised after SignIn changed the account.</summary>
+    public event Action AccountChanged;
+
+    /// <summary>Plays as this account from now on and remembers the name for the next launch. False if it isn't valid.</summary>
+    public bool SignIn(string name)
+    {
+        if (!IsValidName(name)) return false;
+        _accountName = name;
+        PlayerPrefs.SetString(LastNameKey, name);
+        PlayerPrefs.Save();
+        AccountChanged?.Invoke();
+        return true;
+    }
 
     [SerializeField, Tooltip("Read-only: one entry per item kind and rarity, empty until found")]
     ItemDatabase _items = new ItemDatabase();
