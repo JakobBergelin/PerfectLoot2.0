@@ -27,12 +27,12 @@ public class LevelLayoutEditor : Editor
     static readonly Color SpawnerColor = new Color(1f, 0.25f, 0.25f);
     static readonly Color CarvedColor = new Color(1f, 0.6f, 0.1f);
     static readonly Color FilledColor = new Color(0.5f, 0.05f, 0.05f);
+    static readonly Color PlacedPropColor = new Color(0.2f, 0.85f, 0.9f);
 
     // Static so the brush survives reselecting the layout
     static Brush _brush;
     static WfcCornerRule _rule = WfcCornerRule.Wall;
     static int _tile, _piece, _rotation;
-    static bool _showRepairs = true;
 
     string _status;
     MessageType _statusType;
@@ -125,16 +125,53 @@ public class LevelLayoutEditor : Editor
         return false;
     }
 
+    // ---------- Scene view visibility (remembered in EditorPrefs) ----------
+
+    const string ViewPrefs = LevelLayoutView.Prefs;
+    static bool _viewLoaded, _viewFoldout = true;
+
+    // The checkboxes themselves load in LevelLayoutView; only the foldout state lives here
+    static void LoadView()
+    {
+        if (_viewLoaded) return;
+        _viewLoaded = true;
+        _viewFoldout = EditorPrefs.GetBool(ViewPrefs + "Foldout", true);
+    }
+
+    void DrawViewGUI()
+    {
+        LoadView();
+        bool foldout = EditorGUILayout.Foldout(_viewFoldout, "Scene View", true);
+        if (foldout != _viewFoldout) EditorPrefs.SetBool(ViewPrefs + "Foldout", _viewFoldout = foldout);
+        if (!_viewFoldout) return;
+
+        EditorGUI.indentLevel++;
+        LevelLayoutView.Grid = ViewToggle("Grid", "Grid lines", LevelLayoutView.Grid);
+        LevelLayoutView.CornerRules = ViewToggle("CornerRules", "Corner rules", LevelLayoutView.CornerRules, "Painted corners (Any corners still show while painting)");
+        LevelLayoutView.TilePreview = ViewToggle("TilePreview", "Tile preview", LevelLayoutView.TilePreview, "The previewed or saved layout as colored patches");
+        LevelLayoutView.Props = ViewToggle("Props", "Placed props", LevelLayoutView.Props);
+        LevelLayoutView.Spawners = ViewToggle("Spawners", "Spawners", LevelLayoutView.Spawners, "Hand-placed and placed enemy spawners");
+        LevelLayoutView.TriggerRings = ViewToggle("TriggerRings", "Trigger rings", LevelLayoutView.TriggerRings);
+        LevelLayoutView.Labels = ViewToggle("Labels", "Labels", LevelLayoutView.Labels, "Names on forced tiles, pieces, spawners and placements (slow with many)");
+        LevelLayoutView.Repairs = ViewToggle("Repairs", "Repairs", LevelLayoutView.Repairs, "Corners the connectivity repair carved (orange) or filled (dark red)");
+        EditorGUI.indentLevel--;
+        EditorGUILayout.Space(4);
+    }
+
+    static bool ViewToggle(string key, string label, bool value, string tooltip = null)
+    {
+        bool changed = EditorGUILayout.Toggle(new GUIContent(label, tooltip), value);
+        if (changed == value) return value;
+        EditorPrefs.SetBool(ViewPrefs + key, changed);
+        SceneView.RepaintAll();
+        return changed;
+    }
+
     void DrawGenerationGUI()
     {
         var layout = Layout;
+        DrawViewGUI();
         EditorGUILayout.LabelField("Generation", EditorStyles.boldLabel);
-        var showRepairs = EditorGUILayout.Toggle(new GUIContent("Show repairs", "Highlight the corners the connectivity repair carved (orange) or filled (dark red) in the preview"), _showRepairs);
-        if (showRepairs != _showRepairs)
-        {
-            _showRepairs = showRepairs;
-            SceneView.RepaintAll();
-        }
         using (new EditorGUILayout.HorizontalScope())
         {
             if (GUILayout.Button("Generate Preview")) GeneratePreview(layout);
@@ -148,6 +185,7 @@ public class LevelLayoutEditor : Editor
                 {
                     layout.PreviewCells = null;
                     layout.PreviewRepairs = null;
+                    layout.PreviewPlacements = null;
                     _status = null;
                     SceneView.RepaintAll();
                 }
@@ -250,13 +288,57 @@ public class LevelLayoutEditor : Editor
         string connected = !layout.ConnectWalkableAreas ? "" : $" Connected: {carved} corners carved, {filled} filled" +
                            (unconnected > 0 ? $"; {unconnected} pockets couldn't be reached without changing painted or forced corners." : ".");
         string warnings = compiled.Warnings.Count > 0 ? "\n" + string.Join("\n", compiled.Warnings) : "";
+        string placed = attempts > 0 ? PreviewPlacement(layout, compiled) : "";
         if (attempts > 0)
-            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms.{connected}{warnings}",
+            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms.{connected}{placed}{warnings}",
                       compiled.Warnings.Count > 0 || unconnected > 0 ? MessageType.Warning : MessageType.Info);
         else
             SetStatus($"No solution after {layout.MaxAttempts} attempts with seed {layout.Seed}. The rules may conflict, or the tile set " +
                       $"lacks tiles for some corner combinations (see its coverage).{warnings}", MessageType.Error);
         SceneView.RepaintAll();
+    }
+
+    // Runs the placement rules on the preview, like the game does; returns a status line with counts per rule
+    static string PreviewPlacement(LevelLayoutAuthoring layout, WfcCompiledLayout compiled)
+    {
+        layout.PreviewPlacements = null;
+        var set = layout.Placements;
+        if (set == null || set.Rules.Count == 0 || layout.PreviewCells == null || layout.TileSet == null) return "";
+
+        var tileCorners = new byte[layout.TileSet.Tiles.Count * 4];
+        for (int t = 0; t < layout.TileSet.Tiles.Count; t++)
+        {
+            var terrain = layout.TileSet.Tiles[t]?.Corners;
+            for (int k = 0; k < 4; k++) tileCorners[t * 4 + k] = terrain != null ? (byte)terrain[k] : LevelPlacement.Unknown;
+        }
+        var cornerTerrain = LevelPlacement.CornerTerrain(layout.Width, layout.Height, layout.PreviewCells, tileCorners, compiled.CornerMasks);
+        var occupied = compiled.InitialCells.Select(cell => cell == WfcSolver.Occupied).ToArray();
+        var rules = set.Rules.Select(rule => rule == null ? new PlacementRuleData() : new PlacementRuleData
+        {
+            Kind = rule.Kind, Spacing = rule.Spacing, ClearRadius = rule.ClearRadius,
+            MinDistanceFromStart = rule.MinDistanceFromStart, MaxSlope = rule.MaxSlope,
+        }).ToArray();
+
+        var job = new LevelPlacementJob
+        {
+            Width = layout.Width, Height = layout.Height, TileSize = layout.TileSize, Seed = layout.Seed,
+            StartCorner = compiled.StartCorner, Start = new Unity.Mathematics.float2(layout.PlayerStart.x + 0.5f, layout.PlayerStart.y + 0.5f),
+            CornerTerrain = new NativeArray<byte>(cornerTerrain, Allocator.TempJob),
+            OccupiedCells = new NativeArray<bool>(occupied, Allocator.TempJob),
+            BentCorners = new NativeArray<Unity.Mathematics.float3>(layout.BentCorners(), Allocator.TempJob),
+            Rules = new NativeArray<PlacementRuleData>(rules, Allocator.TempJob),
+            Points = new NativeList<PlacementPoint>(Allocator.TempJob),
+        };
+        job.Schedule().Complete();
+        layout.PreviewPlacements = job.Points.AsArray().ToArray();
+        job.CornerTerrain.Dispose();
+        job.OccupiedCells.Dispose();
+        job.BentCorners.Dispose();
+        job.Rules.Dispose();
+        job.Points.Dispose();
+
+        var counts = set.Rules.Select((rule, i) => $"{(string.IsNullOrEmpty(rule?.Name) ? $"Rule {i}" : rule.Name)}: {layout.PreviewPlacements.Count(p => p.Rule == i)}");
+        return "\nPlaced " + string.Join(", ", counts) + ".";
     }
 
     void SetStatus(string text, MessageType type)
@@ -273,6 +355,7 @@ public class LevelLayoutEditor : Editor
         var layout = Layout;
         var e = Event.current;
 
+        LoadView();
         if (e.type == EventType.Repaint) DrawLayout(layout);
         if (_brush == Brush.Off) return;
 
@@ -284,7 +367,13 @@ public class LevelLayoutEditor : Editor
         }
         if (e.alt) return;   // Alt+drag orbits the camera
 
-        UpdateHover(layout, e.mousePosition);
+        // Only mouse events move the hover; a move repaints only when it lands on a different cell or corner
+        if (e.isMouse)
+        {
+            var previous = (_hover, _hoverValid);
+            UpdateHover(layout, e.mousePosition);
+            if (e.type == EventType.MouseMove && (_hover, _hoverValid) != previous) SceneView.RepaintAll();
+        }
 
         switch (e.type)
         {
@@ -314,9 +403,6 @@ public class LevelLayoutEditor : Editor
                 e.Use();
                 break;
 
-            case EventType.MouseMove:
-                SceneView.RepaintAll();
-                break;
         }
     }
 
@@ -409,46 +495,53 @@ public class LevelLayoutEditor : Editor
                placed.Cell.y < cell.y + size.y && cell.y < placed.Cell.y + placedSize.y;
     }
 
+    // Everything is behind its Scene View checkbox (LevelLayoutView); labels are the slowest, so they're off by default
     void DrawLayout(LevelLayoutAuthoring layout)
     {
         float size = layout.TileSize;
         var lift = Vector3.up * 0.05f;
+        bool labels = LevelLayoutView.Labels;
 
         // Grid, one segment per cell edge so it follows the bend
-        var lines = new List<Vector3>((layout.Width + 1) * layout.Height * 2 + (layout.Height + 1) * layout.Width * 2);
-        for (int y = 0; y <= layout.Height; y++)
-            for (int x = 0; x <= layout.Width; x++)
-            {
-                var corner = layout.CornerPosition(x, y) + lift;
-                if (x < layout.Width) { lines.Add(corner); lines.Add(layout.CornerPosition(x + 1, y) + lift); }
-                if (y < layout.Height) { lines.Add(corner); lines.Add(layout.CornerPosition(x, y + 1) + lift); }
-            }
-        Handles.color = GridColor;
-        Handles.DrawLines(lines.ToArray());
+        if (LevelLayoutView.Grid)
+        {
+            var lines = new Vector3[((layout.Width + 1) * layout.Height + (layout.Height + 1) * layout.Width) * 2];
+            int n = 0;
+            for (int y = 0; y <= layout.Height; y++)
+                for (int x = 0; x <= layout.Width; x++)
+                {
+                    var corner = layout.CornerPosition(x, y) + lift;
+                    if (x < layout.Width) { lines[n++] = corner; lines[n++] = layout.CornerPosition(x + 1, y) + lift; }
+                    if (y < layout.Height) { lines[n++] = corner; lines[n++] = layout.CornerPosition(x, y + 1) + lift; }
+                }
+            Handles.color = GridColor;
+            Handles.DrawLines(lines);
+        }
 
-        // Corner rules
-        for (int y = 0; y <= layout.Height; y++)
-            for (int x = 0; x <= layout.Width; x++)
-            {
-                var rule = layout.GetCornerRule(x, y);
-                var position = layout.CornerPosition(x, y) + lift;
-                if (rule == WfcCornerRule.Any)
+        // Corner rules (and, while painting corners, the Any corners)
+        if (LevelLayoutView.CornerRules || _brush == Brush.Corners)
+            for (int y = 0; y <= layout.Height; y++)
+                for (int x = 0; x <= layout.Width; x++)
                 {
-                    if (_brush != Brush.Corners) continue;
-                    Handles.color = new Color(1f, 1f, 1f, 0.35f);
-                    Handles.DrawWireDisc(position, Vector3.up, size * 0.08f);
+                    var rule = layout.GetCornerRule(x, y);
+                    if (rule == WfcCornerRule.Any)
+                    {
+                        if (_brush != Brush.Corners) continue;
+                        Handles.color = new Color(1f, 1f, 1f, 0.35f);
+                        Handles.DrawWireDisc(layout.CornerPosition(x, y) + lift, Vector3.up, size * 0.08f);
+                    }
+                    else
+                    {
+                        Handles.color = WfcTerrains.Color((WfcTerrain)((int)rule - 1));
+                        Handles.DrawSolidDisc(layout.CornerPosition(x, y) + lift, Vector3.up, size * 0.12f);
+                    }
                 }
-                else
-                {
-                    Handles.color = WfcTerrains.Color((WfcTerrain)((int)rule - 1));
-                    Handles.DrawSolidDisc(position, Vector3.up, size * 0.12f);
-                }
-            }
 
         // Forced tiles and pieces
         foreach (var forced in layout.ForcedTiles)
         {
             DrawCellRect(layout, forced.Cell, Vector2Int.one, ForcedColor);
+            if (!labels) continue;
             string name = layout.TileSet != null && forced.Tile >= 0 && forced.Tile < layout.TileSet.Tiles.Count ? layout.TileSet.Tiles[forced.Tile].Name : "?";
             Handles.Label(layout.CellCenter(forced.Cell.x, forced.Cell.y) + Vector3.up, $"{name} {forced.Rotation * 90}°", EditorStyles.miniBoldLabel);
         }
@@ -457,27 +550,53 @@ public class LevelLayoutEditor : Editor
             if (layout.TileSet == null || placed.Piece < 0 || placed.Piece >= layout.TileSet.Pieces.Count) continue;
             var piece = layout.TileSet.Pieces[placed.Piece];
             DrawCellRect(layout, placed.Cell, RotatedSize(piece, placed.Rotation), PieceColor);
-            Handles.Label(layout.CellCenter(placed.Cell.x, placed.Cell.y) + Vector3.up, $"{piece.Name} {placed.Rotation * 90}°", EditorStyles.miniBoldLabel);
+            if (labels) Handles.Label(layout.CellCenter(placed.Cell.x, placed.Cell.y) + Vector3.up, $"{piece.Name} {placed.Rotation * 90}°", EditorStyles.miniBoldLabel);
         }
 
-        // Player start and enemy spawners (trigger radius as a ring)
+        // Player start (always: it's one cell) and hand-placed spawners
         DrawCellRect(layout, layout.PlayerStart, Vector2Int.one, StartColor);
         Handles.Label(layout.CellCenter(layout.PlayerStart.x, layout.PlayerStart.y) + Vector3.up * 1.5f, "Player Start", EditorStyles.boldLabel);
-        foreach (var spawner in layout.EnemySpawners)
-        {
-            if (spawner == null) continue;
-            var center = layout.CellCenter(spawner.Cell.x, spawner.Cell.y) + Vector3.up * 0.1f;
-            Handles.color = SpawnerColor;
-            Handles.DrawSolidDisc(center, Vector3.up, Mathf.Max(0.3f, spawner.SpawnRadius));
-            Handles.color = new Color(SpawnerColor.r, SpawnerColor.g, SpawnerColor.b, 0.35f);
-            Handles.DrawWireDisc(center, Vector3.up, spawner.TriggerRadius);
-            int count = 0;
-            foreach (var entry in spawner.Group) if (entry?.Definition != null) count += entry.Count;
-            Handles.Label(center + Vector3.up * 1.5f, $"Spawner {spawner.Cell}: {count} enemies", EditorStyles.miniBoldLabel);
-        }
+        if (LevelLayoutView.Spawners)
+            foreach (var spawner in layout.EnemySpawners)
+            {
+                if (spawner == null) continue;
+                var center = layout.CellCenter(spawner.Cell.x, spawner.Cell.y) + Vector3.up * 0.1f;
+                Handles.color = SpawnerColor;
+                Handles.DrawSolidDisc(center, Vector3.up, Mathf.Max(0.3f, spawner.SpawnRadius));
+                if (LevelLayoutView.TriggerRings)
+                {
+                    Handles.color = new Color(SpawnerColor.r, SpawnerColor.g, SpawnerColor.b, 0.35f);
+                    Handles.DrawWireDisc(center, Vector3.up, spawner.TriggerRadius);
+                }
+                if (!labels) continue;
+                int count = 0;
+                foreach (var entry in spawner.Group) if (entry?.Definition != null) count += entry.Count;
+                Handles.Label(center + Vector3.up * 1.5f, $"Spawner {spawner.Cell}: {count} enemies", EditorStyles.miniBoldLabel);
+            }
+
+        // Procedural placements in the preview: props as a disc with a yaw line, spawners as a bigger disc with their trigger ring
+        if (layout.PreviewPlacements != null && layout.Placements != null && (LevelLayoutView.Props || LevelLayoutView.Spawners))
+            foreach (var placed in layout.PreviewPlacements)
+            {
+                if (placed.Rule < 0 || placed.Rule >= layout.Placements.Rules.Count || layout.Placements.Rules[placed.Rule] == null) continue;
+                var rule = layout.Placements.Rules[placed.Rule];
+                bool spawner = rule.Kind == PlacementKind.EnemySpawner;
+                if (spawner ? !LevelLayoutView.Spawners : !LevelLayoutView.Props) continue;
+                var position = layout.GridToWorld(placed.Grid.x, placed.Grid.y) + Vector3.up * 0.15f;
+                Handles.color = spawner ? SpawnerColor : PlacedPropColor;
+                Handles.DrawSolidDisc(position, Vector3.up, spawner ? 1.2f : 0.6f);
+                var facing = layout.Yaw * Quaternion.Euler(0f, placed.Yaw * Mathf.Rad2Deg, 0f) * Vector3.forward;
+                Handles.DrawLine(position, position + facing * (spawner ? 2f : 1.2f));
+                if (spawner && LevelLayoutView.TriggerRings)
+                {
+                    Handles.color = new Color(SpawnerColor.r, SpawnerColor.g, SpawnerColor.b, 0.2f);
+                    Handles.DrawWireDisc(position, Vector3.up, rule.TriggerRadius);
+                }
+                if (labels) Handles.Label(position + Vector3.up * 1.2f, rule.Name, EditorStyles.miniLabel);
+            }
 
         // What the connectivity repair changed in the preview
-        if (_showRepairs && layout.PreviewRepairs != null && layout.PreviewRepairs.Length == (layout.Width + 1) * (layout.Height + 1))
+        if (LevelLayoutView.Repairs && layout.PreviewRepairs != null && layout.PreviewRepairs.Length == (layout.Width + 1) * (layout.Height + 1))
             for (int y = 0; y <= layout.Height; y++)
                 for (int x = 0; x <= layout.Width; x++)
                 {
@@ -489,6 +608,7 @@ public class LevelLayoutEditor : Editor
 
         DrawHover(layout);
     }
+
 
     void DrawHover(LevelLayoutAuthoring layout)
     {

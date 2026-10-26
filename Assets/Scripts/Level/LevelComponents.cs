@@ -46,6 +46,39 @@ namespace LevelGeneration
         public BlobArray<LevelPiecePlacement> Pieces;
         /// <summary>Saved layout (Tile * 4 + Rotation per cell), empty when there is none.</summary>
         public BlobArray<int> SavedCells;
+
+        /// <summary>4 terrains per tile (SW, SE, NE, NW), to know every corner's terrain from the placed tiles.</summary>
+        public BlobArray<byte> TileCorners;
+        // Procedural placement (LevelPlacementSet)
+        public BlobArray<LevelPlacementRuleBlob> PlacementRules;
+        public BlobArray<LevelPlacementGroupBlob> PlacementGroups;
+    }
+
+    public struct LevelPlacementRuleBlob
+    {
+        public PlacementRuleData Data;
+        public int Prefab;          // Index into the LevelPlacementPrefab buffer, or -1
+        public float TriggerRadius, SpawnRadius;
+        public int GroupStart, GroupCount;
+    }
+
+    public struct LevelPlacementGroupBlob
+    {
+        public float Weight;
+        public int EnemyStart, EnemyCount;  // Range in the LevelPlacementEnemy buffer
+    }
+
+    /// <summary>Baked prefabs of placement rules (LevelPlacementRuleBlob.Prefab).</summary>
+    public struct LevelPlacementPrefab : IBufferElementData
+    {
+        public Entity Value;
+    }
+
+    /// <summary>The enemies of placement rules' groups (LevelPlacementGroupBlob.EnemyStart).</summary>
+    public struct LevelPlacementEnemy : IBufferElementData
+    {
+        public UnityObjectRef<Enemies.EnemyDefinition> Definition;
+        public int Count;
     }
 
     public struct LevelPiecePlacement

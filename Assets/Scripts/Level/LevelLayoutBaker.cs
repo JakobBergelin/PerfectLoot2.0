@@ -75,6 +75,62 @@ namespace LevelGeneration
             var savedCells = builder.Allocate(ref root.SavedCells, saved?.Length ?? 0);
             for (int i = 0; i < (saved?.Length ?? 0); i++) savedCells[i] = saved[i];
 
+            var tileCorners = builder.Allocate(ref root.TileCorners, tileSet.Tiles.Count * 4);
+            for (int t = 0; t < tileSet.Tiles.Count; t++)
+            {
+                var terrain = tileSet.Tiles[t]?.Corners;
+                for (int k = 0; k < 4; k++) tileCorners[t * 4 + k] = terrain != null ? (byte)terrain[k] : LevelPlacement.Unknown;
+            }
+
+            // Placement rules; their prefabs and enemies go in buffers below
+            var placementSet = authoring.Placements;
+            DependsOn(placementSet);
+            var rules = placementSet != null ? placementSet.Rules : new List<PlacementRule>();
+            var placementPrefabs = new List<GameObject>();
+            var placementEnemies = new List<EnemySpawner.Entry>();
+            var ruleBlobs = builder.Allocate(ref root.PlacementRules, rules.Count);
+            int groupCount = 0;
+            foreach (var rule in rules) groupCount += rule?.Kind == PlacementKind.EnemySpawner ? rule.Groups.Count : 0;
+            var groupBlobs = builder.Allocate(ref root.PlacementGroups, groupCount);
+            int group = 0;
+            for (int r = 0; r < rules.Count; r++)
+            {
+                var rule = rules[r];
+                if (rule == null) { ruleBlobs[r] = new LevelPlacementRuleBlob { Prefab = -1 }; continue; }
+                int prefab = -1;
+                if (rule.Kind == PlacementKind.Prop && rule.Prefab != null)
+                {
+                    prefab = placementPrefabs.IndexOf(rule.Prefab);
+                    if (prefab < 0) { prefab = placementPrefabs.Count; placementPrefabs.Add(rule.Prefab); }
+                }
+                ruleBlobs[r] = new LevelPlacementRuleBlob
+                {
+                    Data = new PlacementRuleData
+                    {
+                        Kind = rule.Kind, Spacing = rule.Spacing, ClearRadius = rule.ClearRadius,
+                        MinDistanceFromStart = rule.MinDistanceFromStart, MaxSlope = rule.MaxSlope,
+                    },
+                    Prefab = prefab,
+                    TriggerRadius = rule.TriggerRadius,
+                    SpawnRadius = rule.SpawnRadius,
+                    GroupStart = group,
+                    GroupCount = rule.Kind == PlacementKind.EnemySpawner ? rule.Groups.Count : 0,
+                };
+                if (rule.Kind != PlacementKind.EnemySpawner) continue;
+                foreach (var enemyGroup in rule.Groups)
+                {
+                    int start = placementEnemies.Count;
+                    if (enemyGroup != null)
+                        foreach (var entry in enemyGroup.Enemies)
+                            if (entry?.Definition != null && entry.Count > 0) placementEnemies.Add(entry);
+                    groupBlobs[group++] = new LevelPlacementGroupBlob
+                    {
+                        Weight = enemyGroup != null ? enemyGroup.Weight : 0f,
+                        EnemyStart = start, EnemyCount = placementEnemies.Count - start,
+                    };
+                }
+            }
+
             var blob = builder.CreateBlobAssetReference<LevelLayoutBlob>(Allocator.Persistent);
             builder.Dispose();
             AddBlobAsset(ref blob, out _);
@@ -123,6 +179,18 @@ namespace LevelGeneration
             foreach (var material in materials) materialBuffer.Add(new LevelMaterial { Value = material });
             var propBuffer = AddBuffer<LevelPropPrefab>(entity);
             foreach (var prefab in propPrefabs) propBuffer.Add(new LevelPropPrefab { Value = GetEntity(prefab, TransformUsageFlags.Dynamic) });
+            var placementPrefabBuffer = AddBuffer<LevelPlacementPrefab>(entity);
+            foreach (var prefab in placementPrefabs)
+            {
+                DependsOn(prefab);
+                placementPrefabBuffer.Add(new LevelPlacementPrefab { Value = GetEntity(prefab, TransformUsageFlags.Dynamic) });
+            }
+            var placementEnemyBuffer = AddBuffer<LevelPlacementEnemy>(entity);
+            foreach (var entry in placementEnemies)
+            {
+                DependsOn(entry.Definition);
+                placementEnemyBuffer.Add(new LevelPlacementEnemy { Definition = entry.Definition, Count = entry.Count });
+            }
 
             // Enemy spawners: one entity each, at its cell (the position on the bent level is set when it's built)
             foreach (var marker in authoring.EnemySpawners)

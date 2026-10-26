@@ -42,6 +42,8 @@ namespace LevelGeneration
         [Tooltip("Meters per cell. Tile prefabs aren't scaled, so they must be made for this size.")]
         [Min(0.1f)] public float TileSize = 5f;
         public WfcTileSet TileSet;
+        [Tooltip("What to place procedurally (props, enemy spawners) and where")]
+        public LevelPlacementSet Placements;
         [Tooltip("Terrain of every corner on the edge of the grid (unless painted otherwise). Wall closes the level.")]
         public WfcCornerRule Border = WfcCornerRule.Wall;
 
@@ -107,6 +109,8 @@ namespace LevelGeneration
         [NonSerialized] public int[] PreviewCells;
         /// <summary>What the connectivity repair changed in the preview, per corner (WfcSolver.Repair*). Not saved.</summary>
         [NonSerialized] public byte[] PreviewRepairs;
+        /// <summary>Procedural placements in the preview (LevelPlacementJob). Not saved.</summary>
+        [NonSerialized] public PlacementPoint[] PreviewPlacements;
 
         public int CornerWidth => Width + 1;
         public int CornerHeight => Height + 1;
@@ -189,22 +193,71 @@ namespace LevelGeneration
             return _bentCorners;
         }
 
+        // World positions of the bent corners, rebuilt when the grid, bend, seed, position or turn changes
+        [NonSerialized] Vector3[] _worldCorners;
+        [NonSerialized] int _worldCornersKey;
+        [NonSerialized] float3[] _worldCornersFrom;
+
+        Vector3[] WorldCorners()
+        {
+            var bent = BentCorners();
+            var position = transform.position;
+            var yaw = Yaw;
+            int key = HashCode.Combine(position, yaw);
+            if (_worldCorners == null || key != _worldCornersKey || !ReferenceEquals(bent, _worldCornersFrom))
+            {
+                _worldCorners = new Vector3[bent.Length];
+                for (int i = 0; i < bent.Length; i++) _worldCorners[i] = position + yaw * (Vector3)bent[i];
+                _worldCornersKey = key;
+                _worldCornersFrom = bent;
+            }
+            return _worldCorners;
+        }
+
         /// <summary>World position of a grid point (in cells) on the bent grid with Seed, turned by Yaw around this object.</summary>
-        public Vector3 GridToWorld(float x, float y) =>
-            transform.position + Yaw * (Vector3)LevelDeformation.Sample(BentCorners(), Width, Height, x, y);
+        public Vector3 GridToWorld(float x, float y)
+        {
+            // Blending the world corners is the same as bending, then moving and turning (both are linear)
+            var corners = WorldCorners();
+            int cx = Mathf.Clamp(Mathf.FloorToInt(x), 0, Width - 1), cy = Mathf.Clamp(Mathf.FloorToInt(y), 0, Height - 1);
+            float fx = x - cx, fy = y - cy;
+            int stride = Width + 1;
+            var south = Vector3.LerpUnclamped(corners[cx + cy * stride], corners[cx + 1 + cy * stride], fx);
+            var north = Vector3.LerpUnclamped(corners[cx + (cy + 1) * stride], corners[cx + 1 + (cy + 1) * stride], fx);
+            return Vector3.LerpUnclamped(south, north, fy);
+        }
 
         /// <summary>World position of a corner.</summary>
-        public Vector3 CornerPosition(int x, int y) => GridToWorld(x, y);
+        public Vector3 CornerPosition(int x, int y)
+        {
+            var corners = WorldCorners();
+            return corners[Mathf.Clamp(x, 0, Width) + Mathf.Clamp(y, 0, Height) * (Width + 1)];
+        }
 
         /// <summary>World position of a cell's center.</summary>
         public Vector3 CellCenter(int x, int y) => GridToWorld(x + 0.5f, y + 0.5f);
 
+        // Where the unbent grid puts a world position (in cells): a good first guess for picking
+        Vector2 UnbentGrid(Vector3 world)
+        {
+            var local = Quaternion.Inverse(Yaw) * (world - transform.position);
+            return new Vector2(local.x, local.z) / TileSize;
+        }
+
         /// <summary>The cell whose bent outline contains the world position (seen from above).</summary>
         public bool TryPickCell(Vector3 world, out Vector2Int cell)
         {
+            // Around the unbent guess first; the whole grid only when a strong bend moved it further
+            var guess = UnbentGrid(world);
+            var near = new RectInt(Mathf.FloorToInt(guess.x) - 3, Mathf.FloorToInt(guess.y) - 3, 7, 7);
+            return TryPickCell(world, near, out cell) || TryPickCell(world, new RectInt(0, 0, Width, Height), out cell);
+        }
+
+        bool TryPickCell(Vector3 world, RectInt area, out Vector2Int cell)
+        {
             var point = new Vector2(world.x, world.z);
-            for (int y = 0; y < Height; y++)
-                for (int x = 0; x < Width; x++)
+            for (int y = Mathf.Max(0, area.yMin); y < Mathf.Min(Height, area.yMax); y++)
+                for (int x = Mathf.Max(0, area.xMin); x < Mathf.Min(Width, area.xMax); x++)
                 {
                     var a = Flat(CornerPosition(x, y));
                     var b = Flat(CornerPosition(x + 1, y));
@@ -223,12 +276,19 @@ namespace LevelGeneration
         /// <summary>The bent corner nearest the world position (seen from above), within half a tile.</summary>
         public bool TryPickCorner(Vector3 world, out Vector2Int corner)
         {
+            var guess = UnbentGrid(world);
+            var near = new RectInt(Mathf.RoundToInt(guess.x) - 3, Mathf.RoundToInt(guess.y) - 3, 7, 7);
+            return TryPickCorner(world, near, out corner) || TryPickCorner(world, new RectInt(0, 0, Width + 1, Height + 1), out corner);
+        }
+
+        bool TryPickCorner(Vector3 world, RectInt area, out Vector2Int corner)
+        {
             var point = new Vector2(world.x, world.z);
             float best = TileSize * TileSize * 0.25f;
             corner = default;
             bool found = false;
-            for (int y = 0; y <= Height; y++)
-                for (int x = 0; x <= Width; x++)
+            for (int y = Mathf.Max(0, area.yMin); y < Mathf.Min(Height + 1, area.yMax); y++)
+                for (int x = Mathf.Max(0, area.xMin); x < Mathf.Min(Width + 1, area.xMax); x++)
                 {
                     float distance = (Flat(CornerPosition(x, y)) - point).sqrMagnitude;
                     if (distance >= best) continue;
@@ -258,12 +318,54 @@ namespace LevelGeneration
         }
 
 #if UNITY_EDITOR
-        // The preview (or saved layout) on the bent grid: each quarter of a cell is a patch in its corner's terrain
-        // color (walls raised, water lowered)
+        // The preview (or saved layout) on the bent grid, as one cached mesh per terrain: each quarter of a cell is a
+        // patch in its corner's terrain color (walls raised, water lowered). Rebuilt only when what it shows changes.
+        [NonSerialized] Mesh[] _previewMeshes;
+        [NonSerialized] int _previewKey;
+
         void OnDrawGizmos()
         {
+            if (!LevelLayoutView.TilePreview || TileSet == null) return;
             var cells = PreviewCells != null && PreviewCells.Length == Width * Height ? PreviewCells : SavedCells;
-            if (TileSet == null) return;
+            int key = PreviewKey(cells);
+            if (_previewMeshes == null || key != _previewKey)
+            {
+                BuildPreviewMeshes(cells);
+                _previewKey = key;
+            }
+
+            var previousMatrix = Gizmos.matrix;
+            Gizmos.matrix = Matrix4x4.TRS(transform.position, Yaw, Vector3.one);
+            for (int t = 0; t < _previewMeshes.Length; t++)
+            {
+                if (_previewMeshes[t] == null || _previewMeshes[t].vertexCount == 0) continue;
+                Gizmos.color = WfcTerrains.Color((WfcTerrain)t);
+                Gizmos.DrawMesh(_previewMeshes[t]);
+            }
+            Gizmos.matrix = previousMatrix;
+        }
+
+        void OnDisable()
+        {
+            if (_previewMeshes != null)
+                foreach (var mesh in _previewMeshes) if (mesh != null) DestroyImmediate(mesh);
+            _previewMeshes = null;
+        }
+
+        // Changes when the shown cells, pieces, tile set or bend change (the mesh is in this object's space)
+        int PreviewKey(int[] cells)
+        {
+            int key = HashCode.Combine(cells != null ? cells.GetHashCode() : 0, TileSet.GetHashCode(), _bentCornersKey, Pieces.Count);
+            foreach (var placed in Pieces) key = HashCode.Combine(key, placed.Cell, placed.Piece, placed.Rotation);
+            BentCorners();
+            return HashCode.Combine(key, _bentCornersKey);
+        }
+
+        void BuildPreviewMeshes(int[] cells)
+        {
+            var vertices = new List<Vector3>[WfcTerrains.Count];
+            var indices = new List<int>[WfcTerrains.Count];
+            for (int t = 0; t < WfcTerrains.Count; t++) { vertices[t] = new List<Vector3>(); indices[t] = new List<int>(); }
             var corners = new WfcTerrain[4];
 
             if (cells != null)
@@ -275,7 +377,7 @@ namespace LevelGeneration
                         int tile = PackedTile(packed);
                         if (tile >= TileSet.Tiles.Count || TileSet.Tiles[tile] == null) continue;
                         WfcRotation.RotateCorners(TileSet.Tiles[tile].Corners, PackedRotation(packed), corners);
-                        DrawCell(x, y, corners);
+                        AddCell(x, y, corners, vertices, indices);
                     }
 
             // Pieces are rules, so they show with or without a preview
@@ -292,28 +394,68 @@ namespace LevelGeneration
                         corners[1] = grid[px + 1 + py * (w + 1)];
                         corners[2] = grid[px + 1 + (py + 1) * (w + 1)];
                         corners[3] = grid[px + (py + 1) * (w + 1)];
-                        DrawCell(placed.Cell.x + px, placed.Cell.y + py, corners);
+                        AddCell(placed.Cell.x + px, placed.Cell.y + py, corners, vertices, indices);
                     }
+            }
+
+            if (_previewMeshes == null) _previewMeshes = new Mesh[WfcTerrains.Count];
+            for (int t = 0; t < WfcTerrains.Count; t++)
+            {
+                if (_previewMeshes[t] == null)
+                    _previewMeshes[t] = new Mesh { name = "Level preview", hideFlags = HideFlags.HideAndDontSave, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                var mesh = _previewMeshes[t];
+                mesh.Clear();
+                mesh.SetVertices(vertices[t]);
+                mesh.SetTriangles(indices[t], 0);
+                mesh.RecalculateNormals();
+                mesh.RecalculateBounds();
             }
         }
 
-        void DrawCell(int x, int y, WfcTerrain[] corners)
+        // The cell's 4 quarters (SW, SE, NE, NW) as patches on the bent grid, in this object's space
+        void AddCell(int x, int y, WfcTerrain[] corners, List<Vector3>[] vertices, List<int>[] indices)
         {
-            var points = new Vector3[4];
+            if (x < 0 || y < 0 || x >= Width || y >= Height) return;
+            var bent = BentCorners();
             for (int k = 0; k < 4; k++)
             {
-                // Quarter k: SW, SE, NE, NW half of the cell in each direction
                 float x0 = x + (k == 1 || k == 2 ? 0.5f : 0f), y0 = y + (k >= 2 ? 0.5f : 0f);
                 var terrain = corners[k];
                 var lift = Vector3.up * (terrain == WfcTerrain.Wall ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
-                points[0] = GridToWorld(x0, y0) + lift;
-                points[1] = GridToWorld(x0 + 0.5f, y0) + lift;
-                points[2] = GridToWorld(x0 + 0.5f, y0 + 0.5f) + lift;
-                points[3] = GridToWorld(x0, y0 + 0.5f) + lift;
-                UnityEditor.Handles.color = WfcTerrains.Color(terrain);
-                UnityEditor.Handles.DrawAAConvexPolygon(points);
+                var list = vertices[(int)terrain];
+                int start = list.Count;
+                list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0) + lift);
+                list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0 + 0.5f) + lift);
+                list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0 + 0.5f, y0 + 0.5f) + lift);
+                list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0 + 0.5f, y0) + lift);
+                var triangles = indices[(int)terrain];
+                triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
+                triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
             }
         }
 #endif
     }
+
+#if UNITY_EDITOR
+    /// <summary>What the level layout shows in the Scene view. Set from the LevelLayout Inspector (remembered in EditorPrefs).</summary>
+    public static class LevelLayoutView
+    {
+        public const string Prefs = "PerfectLoot.LevelLayout.Show.";
+
+        public static bool Grid, CornerRules, TilePreview, Props, Spawners, TriggerRings, Labels, Repairs;
+
+        // Loaded on first use, so gizmos respect it even before the Inspector is opened
+        static LevelLayoutView()
+        {
+            Grid = UnityEditor.EditorPrefs.GetBool(Prefs + "Grid", true);
+            CornerRules = UnityEditor.EditorPrefs.GetBool(Prefs + "CornerRules", true);
+            TilePreview = UnityEditor.EditorPrefs.GetBool(Prefs + "TilePreview", true);
+            Props = UnityEditor.EditorPrefs.GetBool(Prefs + "Props", true);
+            Spawners = UnityEditor.EditorPrefs.GetBool(Prefs + "Spawners", true);
+            TriggerRings = UnityEditor.EditorPrefs.GetBool(Prefs + "TriggerRings", true);
+            Labels = UnityEditor.EditorPrefs.GetBool(Prefs + "Labels", false);
+            Repairs = UnityEditor.EditorPrefs.GetBool(Prefs + "Repairs", true);
+        }
+    }
+#endif
 }

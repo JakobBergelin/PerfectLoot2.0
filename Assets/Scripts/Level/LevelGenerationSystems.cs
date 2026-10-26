@@ -32,6 +32,8 @@ namespace LevelGeneration
             public int ChunksX, ChunksY;
             public bool[] Built;
             public List<int>[] PiecesByChunk; // Piece placements, by the chunk of their south-west cell
+            public List<PlacementPoint>[] PlacedPropsByChunk;   // Procedural props, spawned with their chunk
+            public Entity[] PlacementPrefabs;
             public float LoadDistance;
             public int ChunksPerFrame;
         }
@@ -41,6 +43,7 @@ namespace LevelGeneration
         {
             public LevelStream Stream;
             public LevelChunkBuilder Builder;
+            public int Chunk;
         }
 
         readonly List<LevelStream> _streams = new List<LevelStream>();
@@ -171,6 +174,10 @@ namespace LevelGeneration
             var propBuffer = EntityManager.GetBuffer<LevelPropPrefab>(layoutEntity);
             stream.PropPrefabs = new Entity[propBuffer.Length];
             for (int i = 0; i < stream.PropPrefabs.Length; i++) stream.PropPrefabs[i] = propBuffer[i].Value;
+            var placementPrefabBuffer = EntityManager.GetBuffer<LevelPlacementPrefab>(layoutEntity);
+            stream.PlacementPrefabs = new Entity[placementPrefabBuffer.Length];
+            for (int i = 0; i < stream.PlacementPrefabs.Length; i++) stream.PlacementPrefabs[i] = placementPrefabBuffer[i].Value;
+            stream.PlacedPropsByChunk = new List<PlacementPoint>[stream.Built.Length];
             _streams.Add(stream);
 
             // Spawners in this level: their cells' centers on the bent grid (known without their chunks)
@@ -182,6 +189,9 @@ namespace LevelGeneration
                 EntityManager.SetComponentData(entity, spawner);
             }
 
+            // Procedural placement: spawners now, props with their chunks
+            var (placedProps, placedSpawners) = Place(stream, ref blob, seed);
+
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Corners, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
             long chunksStart = timer.ElapsedMilliseconds;
@@ -189,6 +199,7 @@ namespace LevelGeneration
             foreach (var chunk in first) Finish(chunk);
 
             Debug.Log($"Level built: {blob.Width}x{blob.Height} cells of {blob.TileSize} m, seed {seed}. Solve {solveMs} ms; " +
+                      $"placed {placedProps} props and {placedSpawners} spawners; " +
                       $"first {first.Count} of {stream.Built.Length} chunks {timer.ElapsedMilliseconds - chunksStart} ms; " +
                       $"the rest stream in within {stream.LoadDistance} m of the player.");
             return playerStart;
@@ -259,7 +270,7 @@ namespace LevelGeneration
                 }
 
             var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, blob.Width, blob.Height, blob.TileSize, instances);
-            return new PendingChunk { Stream = stream, Builder = builder };
+            return new PendingChunk { Stream = stream, Builder = builder, Chunk = chunk };
         }
 
         // Makes the chunk's meshes, colliders and props (waits for its jobs if they're still running)
@@ -269,6 +280,16 @@ namespace LevelGeneration
             var layout = EntityManager.GetComponentData<LevelLayout>(stream.Layout);
             ref var blob = ref layout.Blob.Value;
             pending.Builder.Finish(EntityManager, blob.Origin, blob.Rotation, stream.Materials, _meshes, _colliders);
+            // Procedural props placed in this chunk: on the bent floor, turned by their yaw
+            int chunkIndex = pending.Chunk;
+            if (stream.PlacedPropsByChunk[chunkIndex] != null)
+                foreach (var placed in stream.PlacedPropsByChunk[chunkIndex])
+                {
+                    int prefab = blob.PlacementRules[placed.Rule].Prefab;
+                    if (prefab < 0 || prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[prefab] == Entity.Null) continue;
+                    Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Corners, placed.Grid.x, placed.Grid.y),
+                          math.mul(blob.Rotation, quaternion.RotateY(placed.Yaw)));
+                }
             foreach (var prop in pending.Builder.Props)
             {
                 if (prop.Prefab < 0 || prop.Prefab >= stream.PropPrefabs.Length || stream.PropPrefabs[prop.Prefab] == Entity.Null) continue;
@@ -336,6 +357,83 @@ namespace LevelGeneration
             job.UnconnectedPockets.Dispose();
             job.Attempts.Dispose();
             return attempts > 0;
+        }
+
+        /// <summary>
+        /// Runs the placement rules (LevelPlacementJob) on the finished layout: spawners become LevelEnemySpawner entities
+        /// with a group picked by weight, props are kept per chunk until it's built. Returns how many of each.
+        /// </summary>
+        (int Props, int Spawners) Place(LevelStream stream, ref LevelLayoutBlob blob, uint seed)
+        {
+            if (blob.PlacementRules.Length == 0) return (0, 0);
+            int cells = blob.Width * blob.Height;
+            var terrain = LevelPlacement.CornerTerrain(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.CornerMasks.ToArray());
+            var occupied = new NativeArray<bool>(cells, Allocator.TempJob);
+            for (int i = 0; i < cells && i < blob.InitialCells.Length; i++) occupied[i] = blob.InitialCells[i] == WfcSolver.Occupied;
+            var rules = new NativeArray<PlacementRuleData>(blob.PlacementRules.Length, Allocator.TempJob);
+            for (int r = 0; r < rules.Length; r++) rules[r] = blob.PlacementRules[r].Data;
+
+            var job = new LevelPlacementJob
+            {
+                Width = blob.Width, Height = blob.Height, TileSize = blob.TileSize, Seed = seed,
+                StartCorner = blob.StartCorner, Start = new float2(blob.PlayerStart) + 0.5f,
+                CornerTerrain = new NativeArray<byte>(terrain, Allocator.TempJob),
+                OccupiedCells = occupied, BentCorners = stream.JobCorners, Rules = rules,
+                Points = new NativeList<PlacementPoint>(Allocator.TempJob),
+            };
+            job.Schedule().Complete();
+
+            // Copied out first: creating spawner entities is a structural change that invalidates the buffer
+            var enemies = EntityManager.GetBuffer<LevelPlacementEnemy>(stream.Layout).ToNativeArray(Allocator.Temp);
+            int props = 0, spawners = 0;
+            for (int i = 0; i < job.Points.Length; i++)
+            {
+                var point = job.Points[i];
+                ref var rule = ref blob.PlacementRules[point.Rule];
+                if (rule.Data.Kind == PlacementKind.Prop)
+                {
+                    var chunkCell = math.clamp((int2)math.floor(point.Grid), 0, new int2(blob.Width - 1, blob.Height - 1)) / LevelChunkBuilder.ChunkSize;
+                    int chunk = chunkCell.x + chunkCell.y * stream.ChunksX;
+                    (stream.PlacedPropsByChunk[chunk] ??= new List<PlacementPoint>()).Add(point);
+                    props++;
+                    continue;
+                }
+
+                // A spawner: pick a group by weight (deterministic per seed and point)
+                float total = 0f;
+                for (int g = 0; g < rule.GroupCount; g++) total += math.max(0f, blob.PlacementGroups[rule.GroupStart + g].Weight);
+                if (total <= 0f) continue;
+                var random = new Unity.Mathematics.Random(math.max(1u, math.hash(new uint2(seed, (uint)i + 7919u))));
+                float pick = random.NextFloat(total);
+                int chosen = rule.GroupStart;
+                for (int g = 0; g < rule.GroupCount; g++)
+                {
+                    pick -= math.max(0f, blob.PlacementGroups[rule.GroupStart + g].Weight);
+                    if (pick <= 0f) { chosen = rule.GroupStart + g; break; }
+                }
+                var group = blob.PlacementGroups[chosen];
+                if (group.EnemyCount == 0) continue;
+
+                var spawner = EntityManager.CreateEntity();
+                EntityManager.AddComponentData(spawner, new LevelEnemySpawner
+                {
+                    Cell = (int2)math.floor(point.Grid),
+                    Position = GridToWorld(ref blob, stream.Corners, point.Grid.x, point.Grid.y),
+                    TriggerRadius = rule.TriggerRadius,
+                    SpawnRadius = rule.SpawnRadius,
+                });
+                var entries = EntityManager.AddBuffer<LevelEnemySpawnerEntry>(spawner);
+                for (int e = group.EnemyStart; e < group.EnemyStart + group.EnemyCount; e++)
+                    entries.Add(new LevelEnemySpawnerEntry { Definition = enemies[e].Definition, Count = enemies[e].Count });
+                spawners++;
+            }
+
+            enemies.Dispose();
+            job.CornerTerrain.Dispose();
+            job.OccupiedCells.Dispose();
+            job.Rules.Dispose();
+            job.Points.Dispose();
+            return (props, spawners);
         }
 
         static NativeArray<T> Copy<T>(ref BlobArray<T> source, Allocator allocator) where T : unmanaged
