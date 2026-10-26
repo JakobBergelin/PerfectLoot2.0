@@ -12,6 +12,9 @@ public class MovementSettings : ScriptableObject
         SeparationSpacing = 1.2f,
         PhysicsSeparationStrength = 2f,
         SwarmSeparationStrength = 5f,
+        StepHeight = 0.4f,
+        MaxSlope = 50f,
+        OverlapPushSpeed = 4f,
     };
 }
 
@@ -31,6 +34,14 @@ public struct MovementConfig : IComponentData
     public float PhysicsSeparationStrength;
     [Tooltip("Same for Swarm-body enemies; higher, since nothing else keeps them apart")]
     public float SwarmSeparationStrength;
+
+    [Header("Unit movement (UnitMoverSystem)")]
+    [Tooltip("Ledges and steps up to this high (meters) are walked up; bigger drops count as no floor")]
+    public float StepHeight;
+    [Tooltip("Steepest ground (degrees) units walk on; steeper ground blocks like a wall")]
+    public float MaxSlope;
+    [Tooltip("Meters per second units are pushed out of anything they overlap (gently, never a launch)")]
+    public float OverlapPushSpeed;
 
     public float SeparationStrength(BodyType bodyType) => bodyType == BodyType.Swarm ? SwarmSeparationStrength : PhysicsSeparationStrength;
 }

@@ -40,3 +40,22 @@ public struct Steering : IComponentData
     public float Radius;        // Body radius used for spacing
     public BodyType BodyType;   // Picks the separation strength from MovementConfig
 }
+
+/// <summary>
+/// On every unit (player and enemies): the horizontal velocity its movement wants this frame (input, AI, steering),
+/// which UnitMoverSystem moves it by (plus knockback), colliding and sliding. Actual is how fast it really moved.
+/// </summary>
+public struct UnitMotion : IComponentData
+{
+    public float3 Velocity;
+    public float3 Actual;
+}
+
+/// <summary>A unit's weight, for knockback (heavier units are pushed less). Units are kinematic, so physics mass is 0.</summary>
+public struct BodyMass : IComponentData
+{
+    public float InverseMass;
+}
+
+/// <summary>Enabled: the unit treats water as floor (UnitMoverSystem). For skills or passives that let it walk on water.</summary>
+public struct WaterWalking : IComponentData, IEnableableComponent {}

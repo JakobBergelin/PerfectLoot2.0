@@ -18,3 +18,6 @@ MonoBehaviour:
     SeparationSpacing: 1.2
     PhysicsSeparationStrength: 2
     SwarmSeparationStrength: 5
+    StepHeight: 0.4
+    MaxSlope: 50
+    OverlapPushSpeed: 4

@@ -103,21 +103,9 @@ public class EnemyManager : MonoBehaviour
         var template = entityManager.Instantiate(prefab);
         EnemyEntitySetup.AddGameplayComponents(entityManager, template, definition);
 
-        // Rising out of the ground: start a body height under the spawn point, immovable and weightless (SpawnRiseSystem)
+        // Rising out of the ground: start a body height under the spawn point; it doesn't move or act until risen (SpawnRiseSystem)
         float riseDepth = 2f * Mathf.Max(0.01f, definition.Scale);
-        if (riseIn && entityManager.HasComponent<PhysicsMass>(template))
-        {
-            var mass = entityManager.GetComponentData<PhysicsMass>(template);
-            entityManager.AddComponentData(template, new SpawnRise { Depth = riseDepth, Duration = RiseDuration, InverseMass = mass.InverseMass });
-            mass.InverseMass = 0f;
-            entityManager.SetComponentData(template, mass);
-            if (entityManager.HasComponent<PhysicsGravityFactor>(template)) entityManager.SetComponentData(template, new PhysicsGravityFactor { Value = 0f });
-            else entityManager.AddComponentData(template, new PhysicsGravityFactor { Value = 0f });
-        }
-        else
-        {
-            riseIn = false;
-        }
+        if (riseIn) entityManager.AddComponentData(template, new SpawnRise { Depth = riseDepth, Duration = RiseDuration });
         if (entityManager.HasBuffer<LinkedEntityGroup>(template))
         {
             using var group = entityManager.GetBuffer<LinkedEntityGroup>(template).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);

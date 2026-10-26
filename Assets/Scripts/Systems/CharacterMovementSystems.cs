@@ -24,7 +24,7 @@ public partial class CharacterMovementSystem : SystemBase
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
-        foreach (var(movementSpeed, inputs, transform, velocity, entity) in SystemAPI.Query<RefRO<MovementSpeed>, RefRO<InputsData>, RefRW<LocalTransform>, RefRW<PhysicsVelocity>>().WithEntityAccess())
+        foreach (var(movementSpeed, inputs, transform, velocity, entity) in SystemAPI.Query<RefRO<MovementSpeed>, RefRO<InputsData>, RefRW<LocalTransform>, RefRW<UnitMotion>>().WithEntityAccess())
         {
             float3 position = transform.ValueRO.Position;
             bool moving = false;
@@ -46,17 +46,16 @@ public partial class CharacterMovementSystem : SystemBase
                     speed = math.remap(0.0f, 180.0f, movementConfig.MovementSpeed * (1.0f + movementSpeed.ValueRO.Value) , 0.0f, Quaternion.Angle(transform.ValueRW.Rotation, newQuaternion));
                 }
 
-                // Horizontal only: Y is left to gravity
+                // Horizontal only: UnitMoverSystem moves it, colliding and following the floor
                 speed *= modifiers.SpeedMultiplier;
-                velocity.ValueRW.Linear = new float3(direction.x * speed, velocity.ValueRO.Linear.y, direction.z * speed);
+                velocity.ValueRW.Velocity = new float3(direction.x * speed, 0f, direction.z * speed);
                 moving = true;
             }
             else
             {
-                // Stop when there is no input (keeping the fall speed)
-                velocity.ValueRW.Linear = new float3(0f, velocity.ValueRO.Linear.y, 0f);
+                // Stop when there is no input
+                velocity.ValueRW.Velocity = float3.zero;
             }
-            velocity.ValueRW.Angular = float3.zero;
 
             if(moving && !SystemAPI.HasComponent<StandingStill>(entity))
             {

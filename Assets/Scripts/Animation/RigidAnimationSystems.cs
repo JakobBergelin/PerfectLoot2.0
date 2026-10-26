@@ -31,7 +31,7 @@ public partial struct RigidAnimationSystem : ISystem
         var behaviors = SystemAPI.GetComponentLookup<NpcBehavior>(true);
         var flashes = SystemAPI.GetComponentLookup<HitFlash>(true);
         var deaths = SystemAPI.GetComponentLookup<RigidDeath>(true);
-        var velocities = SystemAPI.GetComponentLookup<PhysicsVelocity>(true);
+        var motions = SystemAPI.GetComponentLookup<UnitMotion>(true);
 
         foreach (var (animatorRef, bones, entity) in SystemAPI.Query<RefRW<RigidAnimator>, DynamicBuffer<RigidBone>>().WithEntityAccess())
         {
@@ -50,9 +50,9 @@ public partial struct RigidAnimationSystem : ISystem
                 animator.LastFlashTimer = flashTimer;
             }
 
-            // Bodies: their velocity (physics steps at a fixed rate, so most rendered frames don't move them at all)
-            float speed = velocities.HasComponent(entity)
-                ? math.length(velocities[entity].Linear.xz)
+            // Units: how fast UnitMoverSystem actually moved them; anything else from its position change
+            float speed = motions.HasComponent(entity)
+                ? math.length(motions[entity].Actual.xz)
                 : math.length((position - animator.LastPosition).xz) / deltaTime;
             // The melee timer drops from full to 0 when the attack fires (and resets every frame while not attacking)
             bool attacked = attacks.HasComponent(entity) && behaviors.HasComponent(entity) && behaviors[entity].IsAttacking &&

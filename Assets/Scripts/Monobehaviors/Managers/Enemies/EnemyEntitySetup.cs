@@ -23,12 +23,7 @@ public static class EnemyEntitySetup
         var transform = entityManager.GetComponentData<LocalTransform>(entity);
         transform.Scale = math.max(0.01f, definition.Scale);
         entityManager.SetComponentData(entity, transform);
-        if (entityManager.HasComponent<PhysicsMass>(entity))
-        {
-            var mass = entityManager.GetComponentData<PhysicsMass>(entity);
-            mass.InverseMass = 1f / math.max(0.01f, definition.Mass);
-            entityManager.SetComponentData(entity, mass);
-        }
+        AddOrSet(entityManager, entity, new BodyMass { InverseMass = 1f / math.max(0.01f, definition.Mass) });
 
         // Spacing in crowds
         AddOrSet(entityManager, entity, new Steering { Radius = definition.BodyRadius, BodyType = definition.BodyType });

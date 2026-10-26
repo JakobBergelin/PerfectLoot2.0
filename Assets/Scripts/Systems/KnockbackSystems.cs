@@ -5,8 +5,8 @@ using Unity.Physics;
 using Unity.Transforms;
 
 /// <summary>
-/// Pushes units that were hit and lets the push die out. Physics bodies get it added to their velocity after the
-/// movement systems have written theirs, so walls and other bodies stop the push. Units without a body are moved directly.
+/// Lets the push of units that were hit die out. UnitMoverSystem moves units by it (so walls, water and edges stop it);
+/// anything without UnitMotion is moved directly here.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(DamagingSystem))]
@@ -33,17 +33,11 @@ public partial struct KnockbackSystem : ISystem
                 continue;
             }
 
-            // Horizontal only, so a push never lifts a unit or sinks it into the ground
+            // Horizontal only, so a push never lifts a unit or sinks it into the ground. Units are moved by
+            // UnitMoverSystem (walls, water and edges stop the push); anything else is moved directly.
             velocity.y = 0f;
-            if (SystemAPI.HasComponent<PhysicsVelocity>(entity))
-            {
-                var physicsVelocity = SystemAPI.GetComponentRW<PhysicsVelocity>(entity);
-                physicsVelocity.ValueRW.Linear += velocity;
-            }
-            else
-            {
+            if (!SystemAPI.HasComponent<UnitMotion>(entity))
                 localTransform.ValueRW.Position += velocity * deltaTime;
-            }
             knockback.ValueRW.Velocity = velocity * decay;
         }
     }

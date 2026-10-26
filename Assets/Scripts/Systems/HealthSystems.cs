@@ -242,7 +242,7 @@ public partial class DamagingSystem : SystemBase
                     if(instance.HitForce > 0.0f && SystemAPI.HasComponent<Knockback>(entity))
                     {
                         // HitForce is an impulse: heavier units are pushed less (mass 1 = HitForce as speed)
-                        float inverseMass = SystemAPI.HasComponent<Unity.Physics.PhysicsMass>(entity) ? SystemAPI.GetComponent<Unity.Physics.PhysicsMass>(entity).InverseMass : 1.0f;
+                        float inverseMass = SystemAPI.HasComponent<BodyMass>(entity) ? SystemAPI.GetComponent<BodyMass>(entity).InverseMass : 1.0f;
                         SystemAPI.GetComponentRW<Knockback>(entity).ValueRW.Velocity += instance.HitDirection * instance.HitForce * inverseMass;
                     }
 

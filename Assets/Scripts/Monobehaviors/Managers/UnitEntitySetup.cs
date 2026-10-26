@@ -49,17 +49,26 @@ public static class UnitEntitySetup
         AddOrSet(entityManager, entity, new MovementModifiers { SpeedMultiplier = 1f });
         AddOrSet(entityManager, entity, new EffectDamageText());
 
-        // Units never tip over. Rigidbody constraints don't bake into Unity Physics, so the rotation is locked here.
+        // Kinematic bodies: the physics solver never pushes, drops or launches units. UnitMoverSystem moves them (collide
+        // and slide, floor follow) from UnitMotion; their colliders still take hits and block. The baked weight is kept
+        // in BodyMass for knockback (an enemy definition overrides it).
+        float inverseMass = 1f;
         if (entityManager.HasComponent<PhysicsMass>(entity))
         {
             var mass = entityManager.GetComponentData<PhysicsMass>(entity);
+            if (mass.InverseMass > 0f) inverseMass = mass.InverseMass;
+            mass.InverseMass = 0f;
             mass.InverseInertia = float3.zero;
             entityManager.SetComponentData(entity, mass);
         }
-
-        // Smooth the rendered motion between fixed physics steps. Extrapolation only (no PhysicsGraphicalInterpolationBuffer):
-        // interpolation would render an older rotation than LocalTransform, which the health/resource bars counter-rotate against.
-        AddOrSet(entityManager, entity, new PhysicsGraphicalSmoothing { ApplySmoothing = 1 });
+        if (entityManager.HasComponent<PhysicsVelocity>(entity)) entityManager.SetComponentData(entity, new PhysicsVelocity());
+        if (entityManager.HasComponent<PhysicsVelocity>(entity)) AddOrSet(entityManager, entity, new PhysicsGravityFactor { Value = 0f });
+        // Moved every rendered frame now: the Rigidbody's baked smoothing would draw it at the last physics step instead
+        if (entityManager.HasComponent<PhysicsGraphicalSmoothing>(entity)) entityManager.RemoveComponent<PhysicsGraphicalSmoothing>(entity);
+        if (entityManager.HasComponent<PhysicsGraphicalInterpolationBuffer>(entity)) entityManager.RemoveComponent<PhysicsGraphicalInterpolationBuffer>(entity);
+        AddOrSet(entityManager, entity, new BodyMass { InverseMass = inverseMass });
+        AddOrSet(entityManager, entity, new UnitMotion());
+        AddDisabled(entityManager, entity, new WaterWalking());
 
         // Fill health (and resource) once the stats have been calculated
         AddOrSet(entityManager, entity, new FillHealthAndResource());

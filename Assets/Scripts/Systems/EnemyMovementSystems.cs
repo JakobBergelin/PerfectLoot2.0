@@ -8,7 +8,7 @@ using Unity.Transforms;
 /// <summary>
 /// Enemy AI movement, in parallel: notices the player within DetectionRadius, chases it, stops within AttackRadius,
 /// and steers away from nearby units (UnitSpatialGrid) so crowds spread out around the player instead of piling up.
-/// Only writes horizontal velocity, so gravity keeps enemies on the ground.
+/// Only writes the wanted horizontal velocity (UnitMotion); UnitMoverSystem moves them.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(UnitSpatialGridSystem))]
@@ -53,10 +53,9 @@ public partial struct EnemyMovementSystem : ISystem
     [WithNone(typeof(NpcBehavior))]
     partial struct StationaryEnemyJob : IJobEntity
     {
-        void Execute(ref PhysicsVelocity velocity)
+        void Execute(ref UnitMotion motion)
         {
-            velocity.Linear = new float3(0f, velocity.Linear.y, 0f);
-            velocity.Angular = float3.zero;
+            motion.Velocity = float3.zero;
         }
     }
 
@@ -71,15 +70,14 @@ public partial struct EnemyMovementSystem : ISystem
         public MovementConfig Config;
         public float DeltaTime;
 
-        void Execute(Entity entity, ref NpcBehavior npc, ref LocalTransform transform, ref PhysicsVelocity velocity,
+        void Execute(Entity entity, ref NpcBehavior npc, ref LocalTransform transform, ref UnitMotion motion,
             in MovementSpeed movementSpeed, in Steering steering, in MovementModifiers modifiers)
         {
             // Frozen and similar: stand still (knockback still pushes) and don't turn or attack
             if (modifiers.PreventsActions)
             {
                 npc.IsAttacking = false;
-                velocity.Linear = new float3(0f, velocity.Linear.y, 0f);
-                velocity.Angular = float3.zero;
+                motion.Velocity = float3.zero;
                 return;
             }
 
@@ -120,9 +118,8 @@ public partial struct EnemyMovementSystem : ISystem
             float desiredSpeed = math.length(desired);
             if (desiredSpeed > maxSpeed) desired *= maxSpeed / desiredSpeed;
 
-            // Horizontal only: Y is left to gravity
-            velocity.Linear = new float3(desired.x, velocity.Linear.y, desired.z);
-            velocity.Angular = float3.zero;
+            // Horizontal only: UnitMoverSystem moves it, colliding and following the floor
+            motion.Velocity = new float3(desired.x, 0f, desired.z);
         }
 
         float3 Separation(Entity self, float3 position, float radius)
