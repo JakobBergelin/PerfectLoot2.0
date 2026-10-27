@@ -1,18 +1,22 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using Equipment;
 using UnityEngine;
 
 /// <summary>
 /// Reads and writes account save data: one folder per account under persistentDataPath/Accounts, named by the account
-/// ID. JSON, so it can be read while debugging. Only found items are written, pointing to their base item by Id; rarity
-/// and affixes are saved by name, so reordering those enums can't change a saved item.
+/// ID. JSON, so it can be read while debugging. Only found items are written. An item is its base item (by Id), seed and
+/// roll version: loading rolls it again from those, so balance changes reach saved items and edited values do nothing.
+/// The saved rarity and affixes are only there to read; an item whose saved rarity isn't what its seed rolls, that fails
+/// ItemValidation, or that shares its Guid is loaded marked Unverified.
 /// </summary>
 public static class AccountSaves
 {
     const string ItemDatabaseFile = "ItemDatabase.json";
-    const int ItemDatabaseVersion = 1;
+    // 2: items are rolled from their seed. Older saves had no seeds; during development their items are dropped.
+    const int ItemDatabaseVersion = 2;
 
     [Serializable]
     class ItemDatabaseData
@@ -24,8 +28,13 @@ public static class AccountSaves
     [Serializable]
     class ItemData
     {
+        public string Guid;
         public string BaseItemId;
         public string BaseItemName;     // Only for reading the file
+        public uint Seed;
+        public int RollVersion;
+        public bool Unverified;
+        // Only for reading the file (and to notice an edited rarity); loading rolls them from the seed
         public string Rarity;
         public List<AffixData> BaseAffixes = new List<AffixData>();
         public List<AffixData> RollableAffixes = new List<AffixData>();
@@ -59,13 +68,19 @@ public static class AccountSaves
     }
 
     /// <summary>
-    /// Stores the account's saved items in the database, which must have its entries already. Items whose base item
-    /// isn't in itemsById are skipped with a warning. Returns how many were stored, or -1 when the save can't be read
-    /// (it's then copied aside as .unreadable, since the next save replaces it).
+    /// Rolls the account's saved items from their seeds into the database, which must have its entries already. Items
+    /// whose base item isn't in itemsById are skipped with a warning. Returns how many were stored, or -1 when the save
+    /// can't be read (it's then copied aside as .unreadable, since the next save replaces it).
     /// </summary>
-    public static int ReadItemDatabase(string accountId, ItemDatabase database, IReadOnlyDictionary<string, RollableItem> itemsById)
+    public static int ReadItemDatabase(string accountId, ItemDatabase database, IReadOnlyDictionary<string, RollableItem> itemsById,
+                                       GenerationSettings settings)
     {
         string path = ItemDatabasePath(accountId);
+        if (settings == null)
+        {
+            Debug.LogError($"Can't load {path}: no GenerationSettings to roll the items with.");
+            return -1;
+        }
         ItemDatabaseData data = null;
         try
         {
@@ -82,12 +97,30 @@ public static class AccountSaves
             return -1;
         }
 
-        int stored = 0;
+        if (data.Version < ItemDatabaseVersion)
+        {
+            Debug.LogWarning($"{path} is an older save format (version {data.Version}); its items are removed.");
+            WriteItemDatabase(accountId, null);
+            return 0;
+        }
+
+        var items = new List<Item>();
         foreach (var saved in data.Items)
         {
-            var item = FromData(saved, itemsById, path);
-            if (item != null && database.Store(item)) stored++;
+            var item = FromData(saved, itemsById, settings, path);
+            if (item != null) items.Add(item);
         }
+
+        // A Guid is one item: every item sharing one is suspect
+        foreach (var group in items.Where(item => !string.IsNullOrEmpty(item.Guid)).GroupBy(item => item.Guid).Where(group => group.Count() > 1))
+        {
+            foreach (var item in group) item.Unverified = true;
+            Debug.LogWarning($"{path}: {group.Count()} items share the Guid {group.Key}; they're marked Unverified.");
+        }
+
+        int stored = 0;
+        foreach (var item in items)
+            if (database.Store(item)) stored++;
         return stored;
     }
 
@@ -104,8 +137,12 @@ public static class AccountSaves
     {
         var data = new ItemData
         {
+            Guid = item.Guid,
             BaseItemId = item.BaseItem.Id,
             BaseItemName = item.BaseItem.Name,
+            Seed = item.Seed,
+            RollVersion = item.RollVersion,
+            Unverified = item.Unverified,
             Rarity = item.Rarity.ToString(),
         };
         AddAffixes(item.BaseAffixes, data.BaseAffixes);
@@ -120,7 +157,8 @@ public static class AccountSaves
             if (rolled != null) data.Add(new AffixData { Affix = rolled.Affix.ToString(), Value = rolled.Value });
     }
 
-    static Item FromData(ItemData data, IReadOnlyDictionary<string, RollableItem> itemsById, string path)
+    // The item rolled again from its seed, marked Unverified when something about it doesn't add up
+    static Item FromData(ItemData data, IReadOnlyDictionary<string, RollableItem> itemsById, GenerationSettings settings, string path)
     {
         if (data == null) return null;
         if (string.IsNullOrEmpty(data.BaseItemId) || !itemsById.TryGetValue(data.BaseItemId, out var baseItem))
@@ -128,29 +166,26 @@ public static class AccountSaves
             Debug.LogWarning($"{path}: no item with ID {data.BaseItemId} ({data.BaseItemName}) can drop anymore, skipping it.");
             return null;
         }
-        if (!Enum.TryParse(data.Rarity, out Rarity rarity))
+        if (data.RollVersion != RollableItem.CurrentRollVersion)
         {
-            Debug.LogWarning($"{path}: {data.BaseItemName} has an unknown rarity '{data.Rarity}', skipping it.");
+            Debug.LogWarning($"{path}: {data.BaseItemName} ({data.Guid}) has roll version {data.RollVersion}, which can't be rolled " +
+                             $"anymore (current is {RollableItem.CurrentRollVersion}); skipping it.");
             return null;
         }
 
-        var item = baseItem.CreateItem();
-        item.Rarity = rarity;
-        ReadAffixes(data.BaseAffixes, item.BaseAffixes, data, path);
-        ReadAffixes(data.RollableAffixes, item.RollableAffixes, data, path);
-        return item;
-    }
+        var item = baseItem.RollFromSeed(data.Seed, settings);
+        item.Guid = data.Guid;
+        item.Unverified = data.Unverified;
 
-    static void ReadAffixes(List<AffixData> data, List<Rolled> affixes, ItemData item, string path)
-    {
-        if (data == null) return;
-        foreach (var saved in data)
+        var problems = ItemValidation.Check(item, settings);
+        if (!Enum.TryParse(data.Rarity, out Rarity savedRarity) || savedRarity != item.Rarity)
+            problems.Add($"saved as {data.Rarity}, but its seed rolls {item.Rarity}");
+        if (problems.Count > 0)
         {
-            if (saved != null && Enum.TryParse(saved.Affix, out Affix affix))
-                affixes.Add(new Rolled { Affix = affix, Value = saved.Value });
-            else
-                Debug.LogWarning($"{path}: {item.BaseItemName} has an unknown affix '{saved?.Affix}', leaving it out.");
+            item.Unverified = true;
+            Debug.LogWarning($"{path}: {data.BaseItemName} ({data.Guid}) is marked Unverified: {string.Join("; ", problems)}.");
         }
+        return item;
     }
 
     // Through a temporary file, so a crash mid-write can't leave half a save

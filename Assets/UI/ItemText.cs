@@ -53,6 +53,13 @@ public static class ItemText
             sb.AppendLine($"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>");
             sb.AppendLine(legendary.Power.FormattedDescription);
         }
+
+        // Failed a check when loaded (ItemValidation): kept, but it won't count for leaderboards
+        if (item.Unverified)
+        {
+            sb.AppendLine();
+            sb.AppendLine($"<color={WorseColor}>Unverified</color>");
+        }
         return sb.Length > 0 ? sb.ToString().TrimEnd() : "No stats";
     }
 

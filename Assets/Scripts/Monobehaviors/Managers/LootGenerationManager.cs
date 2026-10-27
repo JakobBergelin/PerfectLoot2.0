@@ -138,9 +138,11 @@ public class LootGenerationManager : MonoBehaviour
     /// <summary>A new item of this base, rolled at its forced rarity (Legendary/Unique) or a random one.</summary>
     public Item RollItem(RollableItem baseItem)
     {
-        var item = baseItem.CreateItem();
-        item.Rarity = baseItem.ForcedRarity ?? RollableItem.GetRandomRarity();
-        baseItem.Roll(ref item);
+        // A random seed for now; later a server hands it out and records the Guid, so leaderboards can trust the item
+        var guid = System.Guid.NewGuid();
+        uint seed = System.BitConverter.ToUInt32(System.Guid.NewGuid().ToByteArray(), 0);
+        var item = baseItem.RollFromSeed(seed, GenerationSettings);
+        item.Guid = guid.ToString("N");
         return item;
     }
 }

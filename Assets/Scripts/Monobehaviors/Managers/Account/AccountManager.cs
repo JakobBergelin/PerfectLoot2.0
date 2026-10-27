@@ -142,12 +142,12 @@ public class AccountManager : MonoBehaviour
             CollectItems(table, visited);
 
         _items.Initialize(_sources.Keys);
-        LoadItems();
+        LoadItems(loot.GenerationSettings);
         _itemsInitialized = true;
     }
 
     // Fills the freshly built database from the account's save (a new account gets its empty database saved)
-    void LoadItems()
+    void LoadItems(GenerationSettings settings)
     {
         var itemsById = new Dictionary<string, RollableItem>();
         int missingIds = 0;
@@ -168,7 +168,7 @@ public class AccountManager : MonoBehaviour
         _loadingItems = true;
         try
         {
-            int loaded = AccountSaves.ReadItemDatabase(AccountId, _items, itemsById);
+            int loaded = AccountSaves.ReadItemDatabase(AccountId, _items, itemsById, settings);
             if (loaded >= 0) Debug.Log($"AccountManager: loaded {loaded} items for account '{AccountName}'.", this);
         }
         finally

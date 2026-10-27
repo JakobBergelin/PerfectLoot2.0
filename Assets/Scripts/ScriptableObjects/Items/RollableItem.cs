@@ -80,10 +80,41 @@ namespace Equipment
             return new List<Loot> { CreateItem() };
         }
 
-        /// <summary>Random rarity for a standard drop: Normal, Magic or Rare with equal odds.</summary>
-        public static Rarity GetRandomRarity()
+        /// <summary>
+        /// The rolling rules RollFromSeed follows: which random draws happen, in which order. Bump it when changing
+        /// them, and keep the old rules for items of older versions (or drop those items, as during development).
+        /// </summary>
+        public const int CurrentRollVersion = 1;
+
+        /// <summary>
+        /// The item this base item rolls from the seed: always the same for the same seed, rolling rules
+        /// (CurrentRollVersion) and data. Draws in this order: rarity (Standard items: Normal, Magic or Rare with equal
+        /// odds), the intrinsic stats, BaseAffixes, then picking and rolling RollableAffixes. Guid is left to the caller.
+        /// </summary>
+        public Item RollFromSeed(uint seed, GenerationSettings settings)
         {
-            return DroppableRarities[UnityEngine.Random.Range(0, DroppableRarities.Length)];
+            var item = CreateItem();
+            item.Seed = seed;
+            item.RollVersion = CurrentRollVersion;
+            var random = Unity.Mathematics.Random.CreateFromIndex(seed);
+            item.Rarity = ForcedRarity ?? DroppableRarities[random.NextInt(DroppableRarities.Length)];
+            RollBaseAffixes(item, settings, ref random);
+            RollRollableAffixes(item, settings, ref random);
+            return item;
+        }
+
+        /// <summary>How many RollableAffixes an item of this rarity gets.</summary>
+        public int RollableAffixCount(Rarity rarity)
+        {
+            int count = rarity switch
+            {
+                Rarity.Unique => RollableAffixes.Count,
+                Rarity.Magic => 1,
+                Rarity.Rare => 3,
+                Rarity.Legendary => 2,
+                _ => 0
+            };
+            return Mathf.Min(count, RollableAffixes.Count);
         }
 
         public Item CreateItem()
@@ -96,15 +127,6 @@ namespace Equipment
                 BaseAffixes = new List<Rolled>(),
                 RollableAffixes = new List<Rolled>()
             };
-        }
-
-        public void Roll(ref Item item)
-        {
-            if (item.Rarity == Rarity.Unrolled) return;
-
-            var settings = LootGenerationManager.Instance.GenerationSettings;
-            RollBaseAffixes(item, settings);
-            RollRollableAffixes(item, settings);
         }
 
         /// <summary>
@@ -145,28 +167,20 @@ namespace Equipment
             return null;
         }
 
-        void RollBaseAffixes(Item item, GenerationSettings settings)
+        void RollBaseAffixes(Item item, GenerationSettings settings, ref Unity.Mathematics.Random random)
         {
             var (min, max) = settings.GetBaseRange(item.Rarity);
 
             foreach (var (affix, range) in IntrinsicAffixes)
-                item.BaseAffixes.Add(new Rolled { Affix = affix, Value = range.Random(min, max) });
+                item.BaseAffixes.Add(new Rolled { Affix = affix, Value = range.Random(ref random, min, max) });
 
             foreach (var baseAffix in BaseAffixes)
-                item.BaseAffixes.Add(new Rolled { Affix = baseAffix.Affix, Value = baseAffix.RollRange.Random(min, max) });
+                item.BaseAffixes.Add(new Rolled { Affix = baseAffix.Affix, Value = baseAffix.RollRange.Random(ref random, min, max) });
         }
 
-        void RollRollableAffixes(Item item, GenerationSettings settings)
+        void RollRollableAffixes(Item item, GenerationSettings settings, ref Unity.Mathematics.Random random)
         {
-            int count = item.Rarity switch
-            {
-                Rarity.Unique => RollableAffixes.Count,
-                Rarity.Magic => 1,
-                Rarity.Rare => 3,
-                Rarity.Legendary => 2,
-                _ => 0
-            };
-            count = Mathf.Min(count, RollableAffixes.Count);
+            int count = RollableAffixCount(item.Rarity);
             if (count == 0) return;
 
             var (min, max) = settings.GetAffixRange(item.Rarity);
@@ -177,10 +191,10 @@ namespace Equipment
                 // Partial shuffle so the same affix is never picked twice (skipped when taking all).
                 if (count < pool.Count)
                 {
-                    int j = UnityEngine.Random.Range(i, pool.Count);
+                    int j = random.NextInt(i, pool.Count);
                     (pool[i], pool[j]) = (pool[j], pool[i]);
                 }
-                item.RollableAffixes.Add(new Rolled { Affix = pool[i].Affix, Value = pool[i].RollRange.Random(min, max) });
+                item.RollableAffixes.Add(new Rolled { Affix = pool[i].Affix, Value = pool[i].RollRange.Random(ref random, min, max) });
             }
         }
     }
