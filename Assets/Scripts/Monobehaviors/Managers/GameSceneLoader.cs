@@ -4,8 +4,8 @@ using UnityEngine.SceneManagement;
 
 /// <summary>
 /// Loads a game scene with a fresh ECS world. Unloading a scene only removes its subscene's entities; everything made
-/// while playing (player, enemies, projectiles, the generated level) would stay in the world. So the world is replaced,
-/// and the new scene's managers set up the selected character again (AccountManager outlives scenes).
+/// while playing (player, enemies, projectiles, the generated level) would stay in the world. So the world is replaced;
+/// the managers kept between scenes (GameBootstrap's rig) notice the new world and spawn the character in it.
 /// </summary>
 public static class GameSceneLoader
 {

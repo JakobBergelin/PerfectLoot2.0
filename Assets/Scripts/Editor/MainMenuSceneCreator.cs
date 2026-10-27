@@ -5,27 +5,24 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Builds the MainMenu scene (camera, AccountManager, LootGenerationManager and the menu UI) and makes it the first scene in Build Settings,
-/// so the game starts there. Run it again to rebuild the scene.
+/// Builds the MainMenu scene (camera and the menu UI; AccountManager and LootGenerationManager come from GameBootstrap's
+/// GameServices) and makes it the first scene in Build Settings, so the game starts there. Run it again to rebuild the
+/// scene.
 /// </summary>
 public static class MainMenuSceneCreator
 {
     const string ScenePath = "Assets/Scenes/MainMenu.unity";
     const string UxmlPath = "Assets/UI/MainMenu/MainMenu.uxml";
     const string PanelSettingsPath = "Assets/UI/PanelSettings.asset";
-    const string AccountManagerPath = "Assets/Prefabs/AccountManager.prefab";
-    const string LootGenerationManagerPath = "Assets/Prefabs/LootGenerationManager.prefab";
 
     [MenuItem("Tools/Create Main Menu Scene")]
     static void Create()
     {
         var uxml = AssetDatabase.LoadAssetAtPath<VisualTreeAsset>(UxmlPath);
         var panelSettings = AssetDatabase.LoadAssetAtPath<PanelSettings>(PanelSettingsPath);
-        var accountManager = AssetDatabase.LoadAssetAtPath<GameObject>(AccountManagerPath);
-        var lootGenerationManager = AssetDatabase.LoadAssetAtPath<GameObject>(LootGenerationManagerPath);
-        if (uxml == null || panelSettings == null || accountManager == null || lootGenerationManager == null)
+        if (uxml == null || panelSettings == null)
         {
-            Debug.LogError($"Create Main Menu Scene: missing {UxmlPath}, {PanelSettingsPath}, {AccountManagerPath} or {LootGenerationManagerPath}.");
+            Debug.LogError($"Create Main Menu Scene: missing {UxmlPath} or {PanelSettingsPath}.");
             return;
         }
         if (AssetDatabase.LoadAssetAtPath<SceneAsset>(ScenePath) != null &&
@@ -39,10 +36,6 @@ public static class MainMenuSceneCreator
         var camera = cameraObject.AddComponent<Camera>();
         camera.clearFlags = CameraClearFlags.SolidColor;
         camera.backgroundColor = new Color32(13, 14, 18, 255);
-
-        PrefabUtility.InstantiatePrefab(accountManager, scene);
-        // The item database is built from its loot tables, and new characters' starting items are rolled with it
-        PrefabUtility.InstantiatePrefab(lootGenerationManager, scene);
 
         var menu = new GameObject("MainMenu");
         var hud = menu.AddComponent<MainMenuHUD>();       // Adds the PanelRenderer

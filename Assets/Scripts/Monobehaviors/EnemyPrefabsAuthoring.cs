@@ -5,8 +5,9 @@ using Unity.Entities;
 using UnityEngine;
 
 /// <summary>
-/// Bakes the visual prefab of every listed enemy definition so EnemyManager can spawn them at runtime.
-/// Must be in the Entities subscene (Bakers only run there). Prefabs are looked up by the definition's asset name.
+/// Bakes the visual prefab of every listed enemy definition so EnemyManager can spawn them at runtime: the enemies
+/// available everywhere (in the CoreEntities subscene). A level's own enemies come from its LevelLayout, which bakes
+/// the same list for every enemy its spawners and placement rules use. Prefabs are looked up by the definition's asset name.
 /// </summary>
 public class EnemyPrefabsAuthoring : MonoBehaviour
 {

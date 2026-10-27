@@ -226,6 +226,30 @@ namespace LevelGeneration
                     entries.Add(new LevelEnemySpawnerEntry { Definition = entry.Definition, Count = entry.Count });
                 }
             }
+
+            // The level's enemy list (EnemyManager looks in this and the core EnemyPrefabs): every enemy it can spawn
+            var enemyPrefabs = AddBuffer<EnemyPrefabElement>(entity);
+            var seen = new HashSet<string>();
+            var used = new List<Enemies.EnemyDefinition>();
+            foreach (var entry in placementEnemies) used.Add(entry.Definition);
+            foreach (var marker in authoring.EnemySpawners)
+                if (marker != null)
+                    foreach (var entry in marker.Group)
+                        if (entry?.Definition != null && entry.Count > 0) used.Add(entry.Definition);
+            foreach (var definition in used)
+            {
+                if (!seen.Add(definition.name)) continue;
+                if (definition.Prefab == null)
+                {
+                    Debug.LogWarning($"Level layout: enemy {definition.name} has no Prefab, so it can't spawn.", authoring);
+                    continue;
+                }
+                enemyPrefabs.Add(new EnemyPrefabElement
+                {
+                    Key = definition.name,
+                    Prefab = GetEntity(definition.Prefab, TransformUsageFlags.Dynamic),
+                });
+            }
         }
 
         LevelGeometryExtractor.Part Extract(GameObject prefab, List<Material> materials, List<string> warnings)

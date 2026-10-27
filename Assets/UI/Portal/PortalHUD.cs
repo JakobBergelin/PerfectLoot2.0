@@ -4,6 +4,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -35,15 +36,20 @@ public class PortalHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
+        SceneManager.sceneLoaded += OnSceneLoaded;
     }
 
     void OnDisable()
     {
+        SceneManager.sceneLoaded -= OnSceneLoaded;
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _boundVersion = -1;
         _card = null;
         SetHovered(false);
     }
+
+    // The HUD is kept between scenes (GameBootstrap's rig): the portal entered is behind us
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode) => _entering = false;
 
     void OnUIReload(PanelRenderer panelRenderer, VisualElement root, int version)
     {

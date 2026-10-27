@@ -21,8 +21,6 @@ public class CharacterManager : MonoBehaviour
     [Header("Spawning")]
     [Tooltip("Base stats before class, gear, passives and buffs")]
     public PlayerBaseStats BaseStats;
-    [Tooltip("Where the player spawns. Uses this object's position when empty.")]
-    public Transform SpawnPoint;
     [Tooltip("Seconds between the player dying and respawning")]
     public float RespawnDelay = 3f;
 
@@ -122,6 +120,7 @@ public class CharacterManager : MonoBehaviour
     }
 
     Entity _player;
+    World _playerWorld;     // GameSceneLoader replaces the world on scene changes; _player belongs to this one
     bool _hasSpawned;
     float _respawnTimer;
 
@@ -165,6 +164,15 @@ public class CharacterManager : MonoBehaviour
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null || !world.IsCreated) return;
         var entityManager = world.EntityManager;
+
+        // A new scene's world: spawn there at once (the old entity could even match one in the new world)
+        if (world != _playerWorld)
+        {
+            _playerWorld = world;
+            _player = Entity.Null;
+            _hasSpawned = false;
+            _groundWait = 0f;
+        }
 
         // Died: CheckDeathSystem destroyed the entity
         if (_player != Entity.Null && !entityManager.Exists(_player))
@@ -235,13 +243,13 @@ public class CharacterManager : MonoBehaviour
     float _groundWait;
 
     /// <summary>
-    /// The level's player start (or SpawnPoint without a level), standing on the ground below it. False while the ground
+    /// The level's player start (or this object's position without a level), standing on the ground below it. False while the ground
     /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait it gives up and uses the
     /// plain position.
     /// </summary>
     bool TryFindSpawnPosition(EntityManager entityManager, Entity prefab, out Vector3 position)
     {
-        position = SpawnPoint != null ? SpawnPoint.position : transform.position;
+        position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
 
         float bottomOffset = LevelGeneration.GroundPlacement.BottomOffset(entityManager, prefab);

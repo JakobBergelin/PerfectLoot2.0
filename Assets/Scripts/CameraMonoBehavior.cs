@@ -2,28 +2,22 @@ using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
 
-
+/// <summary>
+/// Copies the CameraFollow entity's transform (CoreEntities subscene) to this camera. Reads the current world every
+/// frame: the camera is part of GameBootstrap's rig, and GameSceneLoader replaces the world on every scene change.
+/// </summary>
 public class CameraMonoBehavior : MonoBehaviour
 {
-    EntityManager entityManager;
-    // Start is called once before the first execution of Update after the MonoBehaviour is created
-    void Start()
-    {
-        entityManager = World.DefaultGameObjectInjectionWorld.EntityManager;        
-    }
-
-    // Update is called once per frame
     void LateUpdate()
     {
-        var cameraQuery = entityManager.CreateEntityQuery(typeof(LocalTransform), typeof(CameraFollow));
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
 
-        if (cameraQuery.IsEmpty == false)
-        {
-            var cameraTransform = cameraQuery.GetSingleton<LocalTransform>();
+        using var cameraQuery = world.EntityManager.CreateEntityQuery(typeof(LocalTransform), typeof(CameraFollow));
+        if (cameraQuery.IsEmpty) return;
 
-            transform.position = cameraTransform.Position;
-            transform.rotation = cameraTransform.Rotation;
-        }
-
+        var cameraTransform = cameraQuery.GetSingleton<LocalTransform>();
+        transform.position = cameraTransform.Position;
+        transform.rotation = cameraTransform.Rotation;
     }
 }

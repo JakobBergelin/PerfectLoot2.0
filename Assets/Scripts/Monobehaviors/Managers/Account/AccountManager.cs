@@ -272,7 +272,7 @@ public class AccountManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
-        DontDestroyOnLoad(gameObject);
+        DontDestroyOnLoad(transform.root.gameObject);     // Only roots can be kept (usually GameBootstrap's Services)
         _items.ItemChanged += OnItemChanged;
     }
 

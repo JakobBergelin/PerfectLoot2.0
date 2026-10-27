@@ -42,8 +42,8 @@ public class EnemyManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    /// <summary>True once the Entities subscene with EnemyPrefabsAuthoring is loaded.</summary>
-    public bool IsReady => TryGetPrefabs(out _, out _);
+    /// <summary>True once the CoreEntities subscene with EnemyPrefabsAuthoring is loaded.</summary>
+    public bool IsReady => TryGetPrefabs(out _);
 
     /// <summary>Spawns one enemy at the position. Returns Entity.Null if not ready or the definition isn't registered.</summary>
     public Entity Spawn(EnemyDefinition definition, Vector3 position, bool riseIn = false)
@@ -87,14 +87,14 @@ public class EnemyManager : MonoBehaviour
     Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions, bool riseIn)
     {
         if (definition == null) { Debug.LogWarning("EnemyManager.Spawn: no definition.", this); return Entity.Null; }
-        if (!TryGetPrefabs(out var entityManager, out var prefabs))
+        if (!TryGetPrefabs(out var entityManager))
         {
-            Debug.LogWarning("EnemyManager.Spawn: enemy prefabs aren't loaded yet. Is EnemyPrefabs in the Entities subscene?", this);
+            Debug.LogWarning("EnemyManager.Spawn: enemy prefabs aren't loaded yet. Is EnemyPrefabs in the CoreEntities subscene?", this);
             return Entity.Null;
         }
-        if (!TryFindPrefab(prefabs, definition, out var prefab))
+        if (!TryFindPrefab(entityManager, definition, out var prefab))
         {
-            Debug.LogWarning($"EnemyManager.Spawn: {definition.name} isn't in EnemyPrefabsAuthoring's Definitions.", this);
+            Debug.LogWarning($"EnemyManager.Spawn: {definition.name} isn't in the core EnemyPrefabs list, and the level layout doesn't use it.", this);
             return Entity.Null;
         }
 
@@ -166,10 +166,10 @@ public class EnemyManager : MonoBehaviour
         return transform.position;
     }
 
-    bool TryGetPrefabs(out EntityManager entityManager, out DynamicBuffer<EnemyPrefabElement> prefabs)
+    // Ready when an enemy list is loaded (and the level, if there is one)
+    bool TryGetPrefabs(out EntityManager entityManager)
     {
         entityManager = default;
-        prefabs = default;
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null || !world.IsCreated) return false;
 
@@ -183,21 +183,23 @@ public class EnemyManager : MonoBehaviour
         // Nothing spawns before a generated level exists
         if (!LevelGeneration.LevelState.IsReady(entityManager)) return false;
 
-        prefabs = entityManager.GetBuffer<EnemyPrefabElement>(_prefabsQuery.GetSingletonEntity(), isReadOnly: true);
         return true;
     }
 
-    static bool TryFindPrefab(DynamicBuffer<EnemyPrefabElement> prefabs, EnemyDefinition definition, out Entity prefab)
+    // Every enemy list: the core one (EnemyPrefabsAuthoring) and the level's (the enemies its layout uses)
+    bool TryFindPrefab(EntityManager entityManager, EnemyDefinition definition, out Entity prefab)
     {
         var key = new FixedString64Bytes(definition.name);
-        foreach (var element in prefabs)
-        {
-            if (element.Key == key && element.Prefab != Entity.Null)
+        using var lists = _prefabsQuery.ToEntityArray(Allocator.Temp);
+        foreach (var list in lists)
+            foreach (var element in entityManager.GetBuffer<EnemyPrefabElement>(list, isReadOnly: true))
             {
-                prefab = element.Prefab;
-                return true;
+                if (element.Key == key && element.Prefab != Entity.Null)
+                {
+                    prefab = element.Prefab;
+                    return true;
+                }
             }
-        }
         prefab = Entity.Null;
         return false;
     }
