@@ -246,7 +246,7 @@ public class CharacterManager : MonoBehaviour
     /// <summary>
     /// The level's player start (or this object's position without a level), standing on the ground below it. False while the ground
     /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait at the same position it gives up and
-    /// uses the plain position.
+    /// uses the plain position, with the player's feet at its height.
     /// </summary>
     bool TryFindSpawnPosition(EntityManager entityManager, Entity prefab, out Vector3 position)
     {
@@ -272,6 +272,8 @@ public class CharacterManager : MonoBehaviour
         if (_groundWait < MaxGroundWait) return false;
         Debug.LogWarning($"CharacterManager: no ground under the spawn position {position}; spawning there anyway.", this);
         _groundWait = 0f;
+        // Feet at the start's height rather than the capsule's middle, so the floor (if there is one) can still be followed
+        position.y += bottomOffset + LevelGeneration.GroundPlacement.Skin;
         return true;
     }
 

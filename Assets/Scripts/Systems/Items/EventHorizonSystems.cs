@@ -85,6 +85,8 @@ public partial struct OrbitSteeringSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
+        // The lookups are read here on the main thread: UnitMoverSystem's job may still be writing LocalTransform
+        state.CompleteDependency();
         var transforms = SystemAPI.GetComponentLookup<LocalTransform>(true);
         var horizons = SystemAPI.GetComponentLookup<EventHorizon>(true);
         float deltaTime = SystemAPI.Time.DeltaTime;

@@ -116,7 +116,7 @@ public class EnemyManager : MonoBehaviour
             entityManager.AddComponent<Prefab>(template);
         }
 
-        // On the ground: the collider's lowest point just above the floor under each position (unchanged where there's none)
+        // On the ground: the collider's lowest point just above the floor under each position (at the position's height where there's none)
         float bottomOffset = GroundPlacement.BottomOffset(entityManager, template);
         bool hasPhysics = GroundPlacement.TryGetCollisionWorld(entityManager, out var collisionWorld);
 
@@ -126,8 +126,11 @@ public class EnemyManager : MonoBehaviour
         {
             var transform = templateTransform;
             transform.Position = positions[i];
-            if (hasPhysics && GroundPlacement.TryPlace(collisionWorld, transform.Position, bottomOffset, out var placed))
+            if (hasPhysics)
+            {
+                GroundPlacement.TryPlace(collisionWorld, transform.Position, bottomOffset, out var placed);
                 transform.Position = placed;
+            }
             if (riseIn)
             {
                 var rise = entityManager.GetComponentData<SpawnRise>(enemies[i]);
