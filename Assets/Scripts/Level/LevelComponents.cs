@@ -52,6 +52,17 @@ namespace LevelGeneration
         // Procedural placement (LevelPlacementSet)
         public BlobArray<LevelPlacementRuleBlob> PlacementRules;
         public BlobArray<LevelPlacementGroupBlob> PlacementGroups;
+        // Hand-placed prefabs (LevelLayoutAuthoring.Prefabs)
+        public BlobArray<LevelPrefabPlacement> Prefabs;
+    }
+
+    /// <summary>A prefab painted on a cell, spawned at the cell's center when its chunk is built.</summary>
+    public struct LevelPrefabPlacement
+    {
+        public int2 Cell;
+        public int Prefab;              // Index into the LevelPlacementPrefab buffer
+        public int Rotation;            // Quarter turns, with the bent grid's local direction
+        public float ReservedRadius;    // Meters procedural placements keep away from the cell's center
     }
 
     public struct LevelPlacementRuleBlob
@@ -68,7 +79,7 @@ namespace LevelGeneration
         public int EnemyStart, EnemyCount;  // Range in the LevelPlacementEnemy buffer
     }
 
-    /// <summary>Baked prefabs of placement rules (LevelPlacementRuleBlob.Prefab).</summary>
+    /// <summary>Baked prefabs of placement rules (LevelPlacementRuleBlob.Prefab) and hand-placed prefabs (LevelPrefabPlacement.Prefab).</summary>
     public struct LevelPlacementPrefab : IBufferElementData
     {
         public Entity Value;

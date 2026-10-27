@@ -47,8 +47,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 87efb48078a44bc5a6efab3ada62edf0, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PortalAuthoring
-  Scene: {fileID: 0}
-  DisplayName: 
+  Scene: {fileID: 102900000, guid: 3bc923f868a8c2a44a79e62ec0cd75df, type: 3}
+  DisplayName: Haunted Cathedral
   Range: 3
   RangeRing: {fileID: 389956208044422960}
 --- !u!1 &2664312830002856340

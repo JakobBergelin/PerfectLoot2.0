@@ -12,7 +12,7 @@ namespace LevelGeneration
         public byte[] CornerMasks;
         /// <summary>Per cell: WfcSolver.Free, WfcSolver.Occupied or a forced variant index.</summary>
         public int[] InitialCells;
-        /// <summary>Per corner: 1 when the connectivity repair may not change it (painted, piece, forced tile, start, border).</summary>
+        /// <summary>Per corner: 1 when the connectivity repair may not change it (painted, piece, forced tile, start, walkable prefab, border).</summary>
         public byte[] LockedCorners;
         /// <summary>The player start cell's south-west corner: walkable areas connect to it.</summary>
         public int StartCorner = -1;
@@ -40,6 +40,22 @@ namespace LevelGeneration
 
     public static class WfcLayoutCompiler
     {
+        // Makes a cell's 4 corners Walkable and locks them, unless a piece covers the cell (then the piece decides)
+        static void ForceWalkable(WfcCompiledLayout compiled, Vector2Int cell, int cornerWidth, string what)
+        {
+            if (compiled.InitialCells[cell.x + cell.y * compiled.Width] == WfcSolver.Occupied) return;
+            byte walkable = WfcTerrains.Mask(WfcTerrain.Walkable);
+            for (int k = 0; k < 4; k++)
+            {
+                int cx = cell.x + (k == 1 || k == 2 ? 1 : 0), cy = cell.y + (k >= 2 ? 1 : 0);
+                int corner = cx + cy * cornerWidth;
+                if ((compiled.CornerMasks[corner] & walkable) == 0)
+                    compiled.Warnings.Add($"{what} overrides the corner rule at ({cx}, {cy}) with Walkable.");
+                compiled.CornerMasks[corner] = walkable;
+                compiled.LockedCorners[corner] = 1;
+            }
+        }
+
         public static WfcCompiledLayout Compile(LevelLayoutAuthoring layout)
         {
             var compiled = new WfcCompiledLayout { Width = layout.Width, Height = layout.Height };
@@ -107,23 +123,22 @@ namespace LevelGeneration
 
             // Player start: always floor (unless a piece is there; then the piece decides)
             var start = layout.PlayerStart;
-            if (start.x >= 0 && start.y >= 0 && start.x < layout.Width && start.y < layout.Height &&
-                compiled.InitialCells[start.x + start.y * layout.Width] != WfcSolver.Occupied)
-            {
-                byte walkable = WfcTerrains.Mask(WfcTerrain.Walkable);
-                for (int k = 0; k < 4; k++)
-                {
-                    int cx = start.x + (k == 1 || k == 2 ? 1 : 0), cy = start.y + (k >= 2 ? 1 : 0);
-                    int corner = cx + cy * cornerWidth;
-                    if ((compiled.CornerMasks[corner] & walkable) == 0)
-                        compiled.Warnings.Add($"The player start overrides the corner rule at ({cx}, {cy}) with Walkable.");
-                    compiled.CornerMasks[corner] = walkable;
-                    compiled.LockedCorners[corner] = 1;
-                }
-            }
+            if (layout.InGrid(start)) ForceWalkable(compiled, start, cornerWidth, "The player start");
             // Walkable areas connect to the start (under a piece too, through the piece's corners)
-            if (start.x >= 0 && start.y >= 0 && start.x < layout.Width && start.y < layout.Height)
+            if (layout.InGrid(start))
                 compiled.StartCorner = start.x + start.y * cornerWidth;
+
+            // Hand-placed prefabs: the same, when they ask for it
+            foreach (var placed in layout.Prefabs)
+            {
+                if (placed == null) continue;
+                if (placed.Prefab == null)
+                    compiled.Warnings.Add($"The placed prefab at {placed.Cell} has no prefab; skipped.");
+                else if (!layout.InGrid(placed.Cell))
+                    compiled.Warnings.Add($"{placed.Prefab.name} at {placed.Cell} is outside the grid; skipped.");
+                else if (placed.ForceWalkable)
+                    ForceWalkable(compiled, placed.Cell, cornerWidth, $"{placed.Prefab.name} at {placed.Cell}");
+            }
 
             // Forced tiles: the variant of that tile with the matching rotation
             var corners = new WfcTerrain[4];

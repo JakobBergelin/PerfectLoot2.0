@@ -33,6 +33,7 @@ namespace LevelGeneration
             public bool[] Built;
             public List<int>[] PiecesByChunk; // Piece placements, by the chunk of their south-west cell
             public List<PlacementPoint>[] PlacedPropsByChunk;   // Procedural props, spawned with their chunk
+            public List<int>[] PrefabsByChunk;  // Hand-placed prefabs (LevelLayoutBlob.Prefabs), spawned with their chunk
             public Entity[] PlacementPrefabs;
             public float LoadDistance;
             public int ChunksPerFrame;
@@ -167,6 +168,13 @@ namespace LevelGeneration
                 int chunk = cell.x + cell.y * stream.ChunksX;
                 (stream.PiecesByChunk[chunk] ??= new List<int>()).Add(i);
             }
+            stream.PrefabsByChunk = new List<int>[stream.Built.Length];
+            for (int i = 0; i < blob.Prefabs.Length; i++)
+            {
+                var cell = math.clamp(blob.Prefabs[i].Cell, 0, new int2(blob.Width - 1, blob.Height - 1)) / chunkSize;
+                int chunk = cell.x + cell.y * stream.ChunksX;
+                (stream.PrefabsByChunk[chunk] ??= new List<int>()).Add(i);
+            }
 
             var materialBuffer = EntityManager.GetBuffer<LevelMaterial>(layoutEntity);
             stream.Materials = new Material[materialBuffer.Length];
@@ -199,7 +207,7 @@ namespace LevelGeneration
             foreach (var chunk in first) Finish(chunk);
 
             Debug.Log($"Level built: {blob.Width}x{blob.Height} cells of {blob.TileSize} m, seed {seed}. Solve {solveMs} ms; " +
-                      $"placed {placedProps} props and {placedSpawners} spawners; " +
+                      $"placed {placedProps} props and {placedSpawners} spawners, plus {blob.Prefabs.Length} hand-placed prefabs; " +
                       $"first {first.Count} of {stream.Built.Length} chunks {timer.ElapsedMilliseconds - chunksStart} ms; " +
                       $"the rest stream in within {stream.LoadDistance} m of the player.");
             return playerStart;
@@ -290,6 +298,17 @@ namespace LevelGeneration
                     Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Corners, placed.Grid.x, placed.Grid.y),
                           math.mul(blob.Rotation, quaternion.RotateY(placed.Yaw)));
                 }
+            // Hand-placed prefabs: at their cell's center, turned with the bent grid there
+            if (stream.PrefabsByChunk[chunkIndex] != null)
+                foreach (int i in stream.PrefabsByChunk[chunkIndex])
+                {
+                    var placed = blob.Prefabs[i];
+                    if (placed.Prefab < 0 || placed.Prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[placed.Prefab] == Entity.Null) continue;
+                    var turn = math.mul(LevelDeformation.CellTurn(stream.Corners, blob.Width, blob.Height, placed.Cell.x, placed.Cell.y),
+                                        quaternion.RotateY(math.radians(90f * placed.Rotation)));
+                    Spawn(stream.PlacementPrefabs[placed.Prefab], GridToWorld(ref blob, stream.Corners, placed.Cell.x + 0.5f, placed.Cell.y + 0.5f),
+                          math.mul(blob.Rotation, turn));
+                }
             foreach (var prop in pending.Builder.Props)
             {
                 if (prop.Prefab < 0 || prop.Prefab >= stream.PropPrefabs.Length || stream.PropPrefabs[prop.Prefab] == Entity.Null) continue;
@@ -372,13 +391,15 @@ namespace LevelGeneration
             for (int i = 0; i < cells && i < blob.InitialCells.Length; i++) occupied[i] = blob.InitialCells[i] == WfcSolver.Occupied;
             var rules = new NativeArray<PlacementRuleData>(blob.PlacementRules.Length, Allocator.TempJob);
             for (int r = 0; r < rules.Length; r++) rules[r] = blob.PlacementRules[r].Data;
+            var reserved = new NativeArray<float3>(blob.Prefabs.Length, Allocator.TempJob);
+            for (int i = 0; i < reserved.Length; i++) reserved[i] = new float3(new float2(blob.Prefabs[i].Cell) + 0.5f, blob.Prefabs[i].ReservedRadius);
 
             var job = new LevelPlacementJob
             {
                 Width = blob.Width, Height = blob.Height, TileSize = blob.TileSize, Seed = seed,
                 StartCorner = blob.StartCorner, Start = new float2(blob.PlayerStart) + 0.5f,
                 CornerTerrain = new NativeArray<byte>(terrain, Allocator.TempJob),
-                OccupiedCells = occupied, BentCorners = stream.JobCorners, Rules = rules,
+                OccupiedCells = occupied, BentCorners = stream.JobCorners, Rules = rules, Reserved = reserved,
                 Points = new NativeList<PlacementPoint>(Allocator.TempJob),
             };
             job.Schedule().Complete();
@@ -432,6 +453,7 @@ namespace LevelGeneration
             job.CornerTerrain.Dispose();
             job.OccupiedCells.Dispose();
             job.Rules.Dispose();
+            job.Reserved.Dispose();
             job.Points.Dispose();
             return (props, spawners);
         }

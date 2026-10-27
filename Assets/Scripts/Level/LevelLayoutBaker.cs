@@ -131,6 +131,21 @@ namespace LevelGeneration
                 }
             }
 
+            // Hand-placed prefabs share the placement prefab buffer (the compiler warns about the ones skipped here)
+            var placedPrefabs = authoring.Prefabs.FindAll(p => p != null && p.Prefab != null && authoring.InGrid(p.Cell));
+            var prefabBlobs = builder.Allocate(ref root.Prefabs, placedPrefabs.Count);
+            for (int i = 0; i < placedPrefabs.Count; i++)
+            {
+                var placed = placedPrefabs[i];
+                int prefab = placementPrefabs.IndexOf(placed.Prefab);
+                if (prefab < 0) { prefab = placementPrefabs.Count; placementPrefabs.Add(placed.Prefab); }
+                prefabBlobs[i] = new LevelPrefabPlacement
+                {
+                    Cell = new int2(placed.Cell.x, placed.Cell.y), Prefab = prefab,
+                    Rotation = ((placed.Rotation % 4) + 4) % 4, ReservedRadius = math.max(0f, placed.ReservedRadius),
+                };
+            }
+
             var blob = builder.CreateBlobAssetReference<LevelLayoutBlob>(Allocator.Persistent);
             builder.Dispose();
             AddBlobAsset(ref blob, out _);

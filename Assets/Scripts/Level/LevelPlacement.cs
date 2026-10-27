@@ -60,6 +60,7 @@ namespace LevelGeneration
     /// Fills the level with placements, rule by rule: points spread at least the rule's Spacing apart (Bridson's
     /// Poisson-disk sampling, restarted in every region it hasn't reached) on the floor reachable from the start, kept
     /// only where no wall or water is within ClearRadius, not on a piece, at least MinDistanceFromStart from the start,
+    /// outside every hand-placed prefab's reserved radius,
     /// and for spawners on ground no steeper than MaxSlope and Spacing away from every other spawner. Deterministic per
     /// seed; used by the editor preview and at runtime.
     /// </summary>
@@ -77,6 +78,8 @@ namespace LevelGeneration
         [ReadOnly] public NativeArray<bool> OccupiedCells;
         [ReadOnly] public NativeArray<float3> BentCorners;
         [ReadOnly] public NativeArray<PlacementRuleData> Rules;
+        /// <summary>Kept clear around hand-placed prefabs: x, y the center in cells, z the radius in meters.</summary>
+        [ReadOnly] public NativeArray<float3> Reserved;
         public NativeList<PlacementPoint> Points;
 
         public void Execute()
@@ -176,6 +179,8 @@ namespace LevelGeneration
                 }
 
             if (math.distance(point, Start) * TileSize < rule.MinDistanceFromStart) return false;
+            for (int i = 0; i < Reserved.Length; i++)
+                if (math.distance(point, Reserved[i].xy) * TileSize < Reserved[i].z) return false;
             if (rule.Kind == PlacementKind.EnemySpawner && Slope(point) > rule.MaxSlope) return false;
             return true;
         }

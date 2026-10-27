@@ -85,6 +85,17 @@ namespace LevelGeneration
             return math.lerp(south, north, fy);
         }
 
+        /// <summary>
+        /// Grid-space turn of a cell: its east direction on the bent grid (through its middle), so things turned in 90°
+        /// steps inside it line up with its bent walls.
+        /// </summary>
+        public static quaternion CellTurn(float3[] corners, int width, int height, int x, int y)
+        {
+            var east = Sample(corners, width, height, x + 1f, y + 0.5f) - Sample(corners, width, height, x, y + 0.5f);
+            // RotateY(a) turns +X to (cos a, 0, -sin a)
+            return quaternion.RotateY(math.atan2(-east.z, east.x));
+        }
+
         /// <summary>Sample for jobs (Burst): the same, on a NativeArray of the bent corners.</summary>
         public static float3 Sample(Unity.Collections.NativeArray<float3> corners, int width, int height, float x, float y)
         {

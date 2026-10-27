@@ -9,15 +9,16 @@ using UnityEngine;
 
 /// <summary>
 /// Level layout Inspector and Scene view tools. Brushes: paint corner rules (Walkable / Wall / Water / Any), force a
-/// tile on a cell, or place a multi-cell piece. Generate Preview runs the same solver as the game and draws the
-/// result as gizmo blocks; Save Layout keeps it so the game spawns exactly that level.
+/// tile on a cell, place a multi-cell piece, the player start, an enemy spawner or a prefab. Generate Preview runs the
+/// same solver as the game and draws the result as gizmo blocks; Save Layout keeps it so the game spawns exactly that
+/// level. Layouts are drawn in the Scene view whether selected or not (gizmos).
 /// </summary>
 [CustomEditor(typeof(LevelLayoutAuthoring))]
 public class LevelLayoutEditor : Editor
 {
-    enum Brush { Off, Corners, Tile, Piece, Start, Spawner }
+    enum Brush { Off, Corners, Tile, Piece, Start, Spawner, Prefab }
 
-    static readonly string[] BrushNames = { "Off", "Corners", "Tile", "Piece", "Start", "Spawner" };
+    static readonly string[] BrushNames = { "Off", "Corners", "Tile", "Piece", "Start", "Spawner", "Prefab" };
     static readonly string[] RuleNames = { "Any", "Walkable", "Wall", "Water" };
     static readonly string[] RotationNames = { "0°", "90°", "180°", "270°" };
     static readonly Color GridColor = new Color(1f, 1f, 1f, 0.2f);
@@ -28,17 +29,24 @@ public class LevelLayoutEditor : Editor
     static readonly Color CarvedColor = new Color(1f, 0.6f, 0.1f);
     static readonly Color FilledColor = new Color(0.5f, 0.05f, 0.05f);
     static readonly Color PlacedPropColor = new Color(0.2f, 0.85f, 0.9f);
+    static readonly Color PrefabColor = new Color(0.75f, 0.45f, 1f);
 
     // Static so the brush survives reselecting the layout
     static Brush _brush;
     static WfcCornerRule _rule = WfcCornerRule.Wall;
     static int _tile, _piece, _rotation;
+    static GameObject _prefab;
+    static bool _forceWalkable = true;
+    static float _reservedRadius = 5f;
+
+    // Static because the hover is drawn by the gizmo drawer (DrawGizmos), which has no editor instance
+    static LevelLayoutAuthoring _hoverLayout;
+    static Vector2Int _hover;
+    static bool _hoverValid;
+    static Vector2Int? _rectStart;
 
     string _status;
     MessageType _statusType;
-    Vector2Int _hover;
-    bool _hoverValid;
-    Vector2Int? _rectStart;
     bool _erasing;
 
     LevelLayoutAuthoring Layout => (LevelLayoutAuthoring)target;
@@ -46,6 +54,8 @@ public class LevelLayoutEditor : Editor
     void OnDisable()
     {
         Tools.hidden = false;
+        _hoverValid = false;
+        _rectStart = null;
     }
 
     // ---------- Inspector ----------
@@ -106,6 +116,19 @@ public class LevelLayoutEditor : Editor
                 EditorGUILayout.HelpBox("Click a cell to add an enemy spawner there, right-click to remove it. Set each spawner's enemies " +
                                         "in the Enemy Spawners list above.", MessageType.None);
                 break;
+            case Brush.Prefab:
+                LoadRecentPrefabs();
+                var picked = (GameObject)EditorGUILayout.ObjectField("Prefab", _prefab, typeof(GameObject), false);
+                if (picked != _prefab) UsePrefab(picked);
+                DrawRecentPrefabs();
+                _rotation = GUILayout.Toolbar(_rotation, RotationNames);
+                _forceWalkable = EditorGUILayout.Toggle(new GUIContent("Force walkable", "New placements: the cell's 4 corners are always Walkable"), _forceWalkable);
+                _reservedRadius = Mathf.Max(0f, EditorGUILayout.FloatField(
+                    new GUIContent("Reserved radius", "New placements: Placement Set props and spawners stay this many meters away"), _reservedRadius));
+                EditorGUILayout.HelpBox(_prefab == null ? "Pick a prefab to paint." :
+                                        "Click a cell to place the prefab at its center, right-click to remove it. R rotates. " +
+                                        "Edit placed prefabs in the Prefabs list above.", MessageType.None);
+                break;
         }
 
         using (new EditorGUILayout.HorizontalScope())
@@ -114,8 +137,54 @@ public class LevelLayoutEditor : Editor
                 Modify("Clear corner rules", l => l.ClearCornerRules());
             if (GUILayout.Button("Clear forced tiles")) Modify("Clear forced tiles", l => l.ForcedTiles.Clear());
             if (GUILayout.Button("Clear pieces")) Modify("Clear pieces", l => l.Pieces.Clear());
-            if (GUILayout.Button("Clear spawners")) Modify("Clear enemy spawners", l => l.EnemySpawners.Clear());
         }
+        using (new EditorGUILayout.HorizontalScope())
+        {
+            if (GUILayout.Button("Clear spawners")) Modify("Clear enemy spawners", l => l.EnemySpawners.Clear());
+            if (GUILayout.Button("Clear prefabs")) Modify("Clear placed prefabs", l => l.Prefabs.Clear());
+        }
+    }
+
+    // ---------- Recent prefabs (remembered in EditorPrefs) ----------
+
+    const string RecentPrefabsPrefs = "PerfectLoot.LevelLayout.RecentPrefabs";
+    const int MaxRecentPrefabs = 6;
+    static List<GameObject> _recentPrefabs;
+
+    static void LoadRecentPrefabs()
+    {
+        if (_recentPrefabs != null) return;
+        _recentPrefabs = EditorPrefs.GetString(RecentPrefabsPrefs, "").Split(';')
+            .Select(guid => AssetDatabase.LoadAssetAtPath<GameObject>(AssetDatabase.GUIDToAssetPath(guid)))
+            .Where(prefab => prefab != null).Distinct().Take(MaxRecentPrefabs).ToList();
+        if (_prefab == null) _prefab = _recentPrefabs.FirstOrDefault();
+    }
+
+    // Selects the prefab to paint and moves it to the front of the recent ones
+    static void UsePrefab(GameObject prefab)
+    {
+        _prefab = prefab;
+        if (prefab == null) return;
+        LoadRecentPrefabs();
+        _recentPrefabs.Remove(prefab);
+        _recentPrefabs.Insert(0, prefab);
+        if (_recentPrefabs.Count > MaxRecentPrefabs) _recentPrefabs.RemoveRange(MaxRecentPrefabs, _recentPrefabs.Count - MaxRecentPrefabs);
+        EditorPrefs.SetString(RecentPrefabsPrefs, string.Join(";", _recentPrefabs.Select(p => AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(p)))));
+    }
+
+    static void DrawRecentPrefabs()
+    {
+        _recentPrefabs.RemoveAll(prefab => prefab == null);
+        const int perRow = 3;
+        for (int row = 0; row < _recentPrefabs.Count; row += perRow)
+            using (new EditorGUILayout.HorizontalScope())
+                for (int i = row; i < Mathf.Min(row + perRow, _recentPrefabs.Count); i++)
+                {
+                    var prefab = _recentPrefabs[i];
+                    // Reordering on click would move the buttons under the mouse, so only select
+                    if (GUILayout.Toggle(prefab == _prefab, prefab.name, EditorStyles.miniButton) && prefab != _prefab)
+                        _prefab = prefab;
+                }
     }
 
     static bool HasTiles(LevelLayoutAuthoring layout)
@@ -150,9 +219,10 @@ public class LevelLayoutEditor : Editor
         LevelLayoutView.CornerRules = ViewToggle("CornerRules", "Corner rules", LevelLayoutView.CornerRules, "Painted corners (Any corners still show while painting)");
         LevelLayoutView.TilePreview = ViewToggle("TilePreview", "Tile preview", LevelLayoutView.TilePreview, "The previewed or saved layout as colored patches");
         LevelLayoutView.Props = ViewToggle("Props", "Placed props", LevelLayoutView.Props);
+        LevelLayoutView.Prefabs = ViewToggle("Prefabs", "Hand-placed prefabs", LevelLayoutView.Prefabs, "Prefabs painted with the Prefab brush, drawn as their meshes, with their reserved radius");
         LevelLayoutView.Spawners = ViewToggle("Spawners", "Spawners", LevelLayoutView.Spawners, "Hand-placed and placed enemy spawners");
         LevelLayoutView.TriggerRings = ViewToggle("TriggerRings", "Trigger rings", LevelLayoutView.TriggerRings);
-        LevelLayoutView.Labels = ViewToggle("Labels", "Labels", LevelLayoutView.Labels, "Names on forced tiles, pieces, spawners and placements (slow with many)");
+        LevelLayoutView.Labels = ViewToggle("Labels", "Labels", LevelLayoutView.Labels, "Names on forced tiles, pieces, spawners, prefabs and placements (slow with many)");
         LevelLayoutView.Repairs = ViewToggle("Repairs", "Repairs", LevelLayoutView.Repairs, "Corners the connectivity repair carved (orange) or filled (dark red)");
         EditorGUI.indentLevel--;
         EditorGUILayout.Space(4);
@@ -318,6 +388,9 @@ public class LevelLayoutEditor : Editor
             Kind = rule.Kind, Spacing = rule.Spacing, ClearRadius = rule.ClearRadius,
             MinDistanceFromStart = rule.MinDistanceFromStart, MaxSlope = rule.MaxSlope,
         }).ToArray();
+        // Matches the baker: prefabs with a prefab, inside the grid
+        var reserved = layout.Prefabs.Where(p => p != null && p.Prefab != null && layout.InGrid(p.Cell))
+                             .Select(p => new Unity.Mathematics.float3(p.Cell.x + 0.5f, p.Cell.y + 0.5f, Mathf.Max(0f, p.ReservedRadius))).ToArray();
 
         var job = new LevelPlacementJob
         {
@@ -327,6 +400,7 @@ public class LevelLayoutEditor : Editor
             OccupiedCells = new NativeArray<bool>(occupied, Allocator.TempJob),
             BentCorners = new NativeArray<Unity.Mathematics.float3>(layout.BentCorners(), Allocator.TempJob),
             Rules = new NativeArray<PlacementRuleData>(rules, Allocator.TempJob),
+            Reserved = new NativeArray<Unity.Mathematics.float3>(reserved, Allocator.TempJob),
             Points = new NativeList<PlacementPoint>(Allocator.TempJob),
         };
         job.Schedule().Complete();
@@ -335,6 +409,7 @@ public class LevelLayoutEditor : Editor
         job.OccupiedCells.Dispose();
         job.BentCorners.Dispose();
         job.Rules.Dispose();
+        job.Reserved.Dispose();
         job.Points.Dispose();
 
         var counts = set.Rules.Select((rule, i) => $"{(string.IsNullOrEmpty(rule?.Name) ? $"Rule {i}" : rule.Name)}: {layout.PreviewPlacements.Count(p => p.Rule == i)}");
@@ -350,13 +425,22 @@ public class LevelLayoutEditor : Editor
 
     // ---------- Scene view ----------
 
+    // Every layout, selected or not; the brush's hover only on the one being painted. Gizmos, so the Scene view's
+    // Gizmos button (and its LevelLayoutAuthoring entry) hides them too.
+    [DrawGizmo(GizmoType.Selected | GizmoType.NonSelected)]
+    static void DrawGizmos(LevelLayoutAuthoring layout, GizmoType type)
+    {
+        bool selected = (type & GizmoType.Selected) != 0;
+        DrawLayout(layout, selected);
+        if (selected && layout == _hoverLayout) DrawHover(layout);
+    }
+
     void OnSceneGUI()
     {
         var layout = Layout;
         var e = Event.current;
 
         LoadView();
-        if (e.type == EventType.Repaint) DrawLayout(layout);
         if (_brush == Brush.Off) return;
 
         int id = GUIUtility.GetControlID(FocusType.Passive);
@@ -377,10 +461,11 @@ public class LevelLayoutEditor : Editor
 
         switch (e.type)
         {
-            case EventType.KeyDown when e.keyCode == KeyCode.R && (_brush == Brush.Tile || _brush == Brush.Piece):
+            case EventType.KeyDown when e.keyCode == KeyCode.R && (_brush == Brush.Tile || _brush == Brush.Piece || _brush == Brush.Prefab):
                 _rotation = (_rotation + 1) % 4;
                 e.Use();
                 Repaint();
+                SceneView.RepaintAll();
                 break;
 
             case EventType.MouseDown when (e.button == 0 || e.button == 1) && _hoverValid:
@@ -407,10 +492,11 @@ public class LevelLayoutEditor : Editor
     }
 
     // The corner (corner brush) or cell (other brushes) under the mouse, on the bent grid seen from above
-    void UpdateHover(LevelLayoutAuthoring layout, Vector2 mousePosition)
+    static void UpdateHover(LevelLayoutAuthoring layout, Vector2 mousePosition)
     {
         var ray = HandleUtility.GUIPointToWorldRay(mousePosition);
         var plane = new Plane(Vector3.up, layout.transform.position);
+        _hoverLayout = layout;
         _hoverValid = false;
         if (!plane.Raycast(ray, out float distance)) return;
 
@@ -467,6 +553,27 @@ public class LevelLayoutEditor : Editor
                 if (layout.EnemySpawners.Exists(s => s != null && s.Cell == at)) return;
                 Modify("Add enemy spawner", l => l.EnemySpawners.Add(new LevelLayoutAuthoring.SpawnerMarker { Cell = at }));
                 break;
+
+            case Brush.Prefab:
+                if (_erasing)
+                {
+                    if (layout.Prefabs.Exists(p => p != null && p.Cell == at))
+                        Modify("Remove placed prefab", l => l.Prefabs.RemoveAll(p => p != null && p.Cell == at));
+                    break;
+                }
+                if (_prefab == null || layout.Prefabs.Exists(p => p != null && p.Cell == at && p.Prefab == _prefab && p.Rotation == _rotation)) return;
+                // One per cell: replaces what's there
+                Modify("Place prefab", l =>
+                {
+                    l.Prefabs.RemoveAll(p => p == null || p.Cell == at);
+                    l.Prefabs.Add(new LevelLayoutAuthoring.PlacedPrefab
+                    {
+                        Cell = at, Prefab = _prefab, Rotation = _rotation, ForceWalkable = _forceWalkable, ReservedRadius = _reservedRadius,
+                    });
+                });
+                UsePrefab(_prefab);
+                Repaint();
+                break;
         }
     }
 
@@ -496,11 +603,12 @@ public class LevelLayoutEditor : Editor
     }
 
     // Everything is behind its Scene View checkbox (LevelLayoutView); labels are the slowest, so they're off by default
-    void DrawLayout(LevelLayoutAuthoring layout)
+    static void DrawLayout(LevelLayoutAuthoring layout, bool selected)
     {
         float size = layout.TileSize;
         var lift = Vector3.up * 0.05f;
         bool labels = LevelLayoutView.Labels;
+        bool paintingCorners = selected && _brush == Brush.Corners;
 
         // Grid, one segment per cell edge so it follows the bend
         if (LevelLayoutView.Grid)
@@ -519,14 +627,14 @@ public class LevelLayoutEditor : Editor
         }
 
         // Corner rules (and, while painting corners, the Any corners)
-        if (LevelLayoutView.CornerRules || _brush == Brush.Corners)
+        if (LevelLayoutView.CornerRules || paintingCorners)
             for (int y = 0; y <= layout.Height; y++)
                 for (int x = 0; x <= layout.Width; x++)
                 {
                     var rule = layout.GetCornerRule(x, y);
                     if (rule == WfcCornerRule.Any)
                     {
-                        if (_brush != Brush.Corners) continue;
+                        if (!paintingCorners) continue;
                         Handles.color = new Color(1f, 1f, 1f, 0.35f);
                         Handles.DrawWireDisc(layout.CornerPosition(x, y) + lift, Vector3.up, size * 0.08f);
                     }
@@ -574,6 +682,24 @@ public class LevelLayoutEditor : Editor
                 Handles.Label(center + Vector3.up * 1.5f, $"Spawner {spawner.Cell}: {count} enemies", EditorStyles.miniBoldLabel);
             }
 
+        // Hand-placed prefabs: their meshes where the game spawns them, their facing and their reserved radius
+        if (LevelLayoutView.Prefabs)
+            foreach (var placed in layout.Prefabs)
+            {
+                if (placed == null || !layout.InGrid(placed.Cell)) continue;
+                DrawCellRect(layout, placed.Cell, Vector2Int.one, PrefabColor);
+                var center = layout.CellCenter(placed.Cell.x, placed.Cell.y);
+                var turn = layout.CellRotation(placed.Cell, placed.Rotation);
+                DrawPrefabGhost(placed.Prefab, center, turn, 1f);
+                DrawFacing(center, turn, size, PrefabColor);
+                if (placed.ReservedRadius > 0f)
+                {
+                    Handles.color = new Color(PrefabColor.r, PrefabColor.g, PrefabColor.b, 0.4f);
+                    Handles.DrawWireDisc(center + Vector3.up * 0.1f, Vector3.up, placed.ReservedRadius);
+                }
+                if (labels) Handles.Label(center + Vector3.up * 1.5f, placed.Prefab != null ? placed.Prefab.name : "(no prefab)", EditorStyles.miniBoldLabel);
+            }
+
         // Procedural placements in the preview: props as a disc with a yaw line, spawners as a bigger disc with their trigger ring
         if (layout.PreviewPlacements != null && layout.Placements != null && (LevelLayoutView.Props || LevelLayoutView.Spawners))
             foreach (var placed in layout.PreviewPlacements)
@@ -605,12 +731,42 @@ public class LevelLayoutEditor : Editor
                     Handles.color = repair == WfcSolver.RepairCarved ? CarvedColor : FilledColor;
                     Handles.DrawSolidDisc(layout.CornerPosition(x, y) + Vector3.up * 3.2f, Vector3.up, layout.TileSize * 0.18f);
                 }
-
-        DrawHover(layout);
     }
 
+    // The prefab's meshes as gizmos, tinted with their materials' base colors (gizmos can't use the real materials)
+    static void DrawPrefabGhost(GameObject prefab, Vector3 position, Quaternion rotation, float alpha)
+    {
+        if (prefab == null) return;
+        var root = Matrix4x4.TRS(position, rotation, Vector3.one) * prefab.transform.worldToLocalMatrix;
+        var previous = Gizmos.matrix;
+        foreach (var renderer in prefab.GetComponentsInChildren<MeshRenderer>())
+        {
+            var filter = renderer.GetComponent<MeshFilter>();
+            if (!renderer.enabled || filter == null || filter.sharedMesh == null) continue;
+            var mesh = filter.sharedMesh;
+            var materials = renderer.sharedMaterials;
+            Gizmos.matrix = root * renderer.transform.localToWorldMatrix;
+            for (int s = 0; s < mesh.subMeshCount; s++)
+            {
+                var material = s < materials.Length ? materials[s] : null;
+                var color = material != null && material.HasProperty("_BaseColor") ? material.GetColor("_BaseColor")
+                          : material != null && material.HasProperty("_Color") ? material.color : Color.gray;
+                color.a = alpha;
+                Gizmos.color = color;
+                Gizmos.DrawMesh(mesh, s);
+            }
+        }
+        Gizmos.matrix = previous;
+    }
 
-    void DrawHover(LevelLayoutAuthoring layout)
+    static void DrawFacing(Vector3 center, Quaternion turn, float tileSize, Color color)
+    {
+        var from = center + Vector3.up * 0.15f;
+        Handles.color = color;
+        Handles.DrawLine(from, from + turn * Vector3.forward * tileSize * 0.45f, 2f);
+    }
+
+    static void DrawHover(LevelLayoutAuthoring layout)
     {
         if (_brush == Brush.Off || !_hoverValid) return;
         float size = layout.TileSize;
@@ -637,6 +793,13 @@ public class LevelLayoutEditor : Editor
             case Brush.Piece:
                 if (layout.TileSet == null || layout.TileSet.Pieces.Count == 0) break;
                 DrawCellRect(layout, _hover, RotatedSize(layout.TileSet.Pieces[Mathf.Clamp(_piece, 0, layout.TileSet.Pieces.Count - 1)], _rotation), Color.white);
+                break;
+            case Brush.Prefab:
+                DrawCellRect(layout, _hover, Vector2Int.one, Color.white);
+                var center = layout.CellCenter(_hover.x, _hover.y);
+                var turn = layout.CellRotation(_hover, _rotation);
+                DrawPrefabGhost(_prefab, center, turn, 0.45f);
+                DrawFacing(center, turn, size, Color.white);
                 break;
         }
     }

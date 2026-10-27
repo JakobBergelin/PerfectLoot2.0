@@ -13,8 +13,8 @@ namespace LevelGeneration
 
     /// <summary>
     /// A level built by wave function collapse: a grid of Width x Height cells of TileSize meters, starting at this
-    /// object's position (its south-west corner; rotation is ignored). Corner rules, forced tiles and pieces are painted
-    /// in the Scene view (LevelLayoutEditor). Must be in the Entities subscene: the baker turns it into the request
+    /// object's position (its south-west corner; rotation is ignored). Corner rules, forced tiles, pieces, spawners and
+    /// prefabs are painted in the Scene view (LevelLayoutEditor). Must be in the Entities subscene: the baker turns it into the request
     /// LevelGenerationSystem builds the level from.
     /// </summary>
     public class LevelLayoutAuthoring : MonoBehaviour
@@ -89,6 +89,20 @@ namespace LevelGeneration
             public List<EnemySpawner.Entry> Group = new List<EnemySpawner.Entry>();
         }
 
+        [Serializable]
+        public class PlacedPrefab
+        {
+            public Vector2Int Cell;
+            [Tooltip("Spawned as an entity at the cell's center on the bent level when its chunk is built (like Placement Set props)")]
+            public GameObject Prefab;
+            [Tooltip("Quarter turns, with the bent grid's local direction")]
+            [Range(0, 3)] public int Rotation;
+            [Tooltip("The cell's 4 corners are always Walkable, like the player start (unless a piece covers the cell)")]
+            public bool ForceWalkable = true;
+            [Tooltip("Placement Set props and spawners stay at least this many meters from the cell's center")]
+            [Min(0f)] public float ReservedRadius = 5f;
+        }
+
         [Header("Rules (painted in the Scene view)")]
         [Tooltip("Where the player spawns. Its 4 corners are always Walkable.")]
         public Vector2Int PlayerStart = new Vector2Int(10, 10);
@@ -96,6 +110,8 @@ namespace LevelGeneration
         public List<PlacedPiece> Pieces = new List<PlacedPiece>();
         [Tooltip("Enemy groups that rise out of the ground once, when the player first comes within TriggerRadius")]
         public List<SpawnerMarker> EnemySpawners = new List<SpawnerMarker>();
+        [Tooltip("Prefabs painted on cells with the Prefab brush (portals, chests, ...)")]
+        public List<PlacedPrefab> Prefabs = new List<PlacedPrefab>();
 
         // (Width + 1) x (Height + 1) WfcCornerRule values, row by row from the south-west
         [SerializeField, HideInInspector] byte[] _cornerRules = Array.Empty<byte>();
@@ -236,6 +252,12 @@ namespace LevelGeneration
 
         /// <summary>World position of a cell's center.</summary>
         public Vector3 CellCenter(int x, int y) => GridToWorld(x + 0.5f, y + 0.5f);
+
+        /// <summary>World turn of something in a cell turned by quarter turns: with the layout and the bent grid there.</summary>
+        public Quaternion CellRotation(Vector2Int cell, int rotation) =>
+            Yaw * (Quaternion)LevelDeformation.CellTurn(BentCorners(), Width, Height, cell.x, cell.y) * Quaternion.Euler(0f, 90f * rotation, 0f);
+
+        public bool InGrid(Vector2Int cell) => cell.x >= 0 && cell.y >= 0 && cell.x < Width && cell.y < Height;
 
         // Where the unbent grid puts a world position (in cells): a good first guess for picking
         Vector2 UnbentGrid(Vector3 world)
@@ -442,7 +464,7 @@ namespace LevelGeneration
     {
         public const string Prefs = "PerfectLoot.LevelLayout.Show.";
 
-        public static bool Grid, CornerRules, TilePreview, Props, Spawners, TriggerRings, Labels, Repairs;
+        public static bool Grid, CornerRules, TilePreview, Props, Prefabs, Spawners, TriggerRings, Labels, Repairs;
 
         // Loaded on first use, so gizmos respect it even before the Inspector is opened
         static LevelLayoutView()
@@ -451,6 +473,7 @@ namespace LevelGeneration
             CornerRules = UnityEditor.EditorPrefs.GetBool(Prefs + "CornerRules", true);
             TilePreview = UnityEditor.EditorPrefs.GetBool(Prefs + "TilePreview", true);
             Props = UnityEditor.EditorPrefs.GetBool(Prefs + "Props", true);
+            Prefabs = UnityEditor.EditorPrefs.GetBool(Prefs + "Prefabs", true);
             Spawners = UnityEditor.EditorPrefs.GetBool(Prefs + "Spawners", true);
             TriggerRings = UnityEditor.EditorPrefs.GetBool(Prefs + "TriggerRings", true);
             Labels = UnityEditor.EditorPrefs.GetBool(Prefs + "Labels", false);
