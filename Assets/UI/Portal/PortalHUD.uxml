@@ -1,0 +1,10 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="PortalHUD.uss" />
+    <!-- Positioned above the nearest portal in range by PortalHUD -->
+    <ui:VisualElement name="portalRoot" class="portal-root" picking-mode="Ignore">
+        <ui:VisualElement name="portalCard" class="portal-card portal-card--hidden">
+            <ui:Label name="portalName" class="portal-name" />
+            <ui:Button name="enterButton" text="Enter" class="portal-button" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

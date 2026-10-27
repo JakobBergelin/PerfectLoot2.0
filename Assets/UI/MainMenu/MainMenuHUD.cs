@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using Characters;
 using UnityEngine;
 using UnityEngine.InputSystem;
-using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -169,7 +168,7 @@ public class MainMenuHUD : MonoBehaviour
             return;
         }
         if (AccountManager.Instance == null || !AccountManager.Instance.SelectCharacter(character.Guid)) return;
-        SceneManager.LoadScene(GameScene);
+        GameSceneLoader.Load(GameScene);
     }
 
     static void Exit()

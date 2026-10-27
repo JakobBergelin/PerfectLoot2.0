@@ -17,7 +17,7 @@ MonoBehaviour:
     Kind: 1
     Spacing: 20
     ClearRadius: 1
-    MinDistanceFromStart: 10
+    MinDistanceFromStart: 50
     Prefab: {fileID: 0}
     MaxSlope: 30.9
     TriggerRadius: 35

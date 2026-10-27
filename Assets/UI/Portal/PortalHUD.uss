@@ -1,0 +1,61 @@
+/* Variables and font on the HUD's own root so everything inherits them */
+.portal-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --panel-bg: rgba(20, 22, 28, 0.95);
+    --panel-border: #3A3F4B;
+    --text-color: #F2F2F2;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* left/top are set from code to the point above the portal; the card is centered on it and sits above it */
+.portal-card {
+    position: absolute;
+    translate: -50% -100%;
+    align-items: center;
+    padding: 10px 14px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.portal-card--hidden {
+    display: none;
+}
+
+.portal-name {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.portal-button {
+    min-width: 120px;
+    height: 34px;
+    margin: 0;
+    padding: 0 14px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-width: 2px;
+    border-color: #F0C050;
+    border-radius: 6px;
+}
+
+.portal-button:hover {
+    background-color: #F0B030;
+}
+
+.portal-button:active {
+    background-color: #B88010;
+}
