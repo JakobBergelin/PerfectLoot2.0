@@ -19,3 +19,7 @@ MonoBehaviour:
   StrengthPerLevel: 0
   AgilityPerLevel: 1
   IntelligencePerLevel: 2
+  StartingItems:
+  - {fileID: 11400000, guid: 891292c906744eefa9e01442dcec83d6, type: 2}
+  - {fileID: 11400000, guid: 281ace68cb604966ad4663377aaac89f, type: 2}
+  - {fileID: 11400000, guid: e893a748bbcc4bdfbb2b89e62cc3ef40, type: 2}

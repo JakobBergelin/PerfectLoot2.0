@@ -145,4 +145,20 @@ public class LootGenerationManager : MonoBehaviour
         item.Guid = guid.ToString("N");
         return item;
     }
+
+    /// <summary>
+    /// A new item of this base at this rarity, or null when the base can't have it. The rarity still comes from the seed
+    /// (new seeds are tried until one rolls it), so the item passes ItemValidation like any other.
+    /// </summary>
+    public Item RollItem(RollableItem baseItem, Rarity rarity)
+    {
+        if (baseItem == null || !baseItem.PossibleRarities.Contains(rarity)) return null;
+        for (int attempt = 0; attempt < MaxRollAttempts; attempt++)
+        {
+            var item = RollItem(baseItem);
+            if (item.Rarity == rarity) return item;
+        }
+        Debug.LogWarning($"Couldn't roll a {rarity} {baseItem.Name} in {MaxRollAttempts} tries.", this);
+        return null;
+    }
 }

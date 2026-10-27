@@ -26,7 +26,7 @@ public class CharacterManager : MonoBehaviour
     [Tooltip("Seconds between the player dying and respawning")]
     public float RespawnDelay = 3f;
 
-    [Header("Selected (empty = random from the lists below at start)")]
+    [Header("Selected (set from the character picked in Character Select; empty = random from the lists below at start)")]
     public CharacterClass Class;
     public ResourceDefinition Resource;
 
@@ -136,7 +136,24 @@ public class CharacterManager : MonoBehaviour
         Instance = this;
     }
 
-    void Start() => RandomizeEmpty();
+    void Start()
+    {
+        // Picked in Character Select; a game scene played without the main menu has no selected character
+        var selected = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        if (selected != null) UseCharacter(selected);
+        else RandomizeEmpty();
+    }
+
+    void UseCharacter(AccountCharacter character)
+    {
+        Class = AllClasses.Find(c => c != null && c.Type == character.Class);
+        Resource = AllResources.Find(r => r != null && r.Type == character.Resource);
+        StartingLevel = Mathf.Max(1, character.Level);
+        if (Class == null && character.Class != ClassType.None)
+            Debug.LogWarning($"CharacterManager: AllClasses has no {character.Class} for {character.Name}.", this);
+        if (Resource == null && character.Resource != ResourceType.None)
+            Debug.LogWarning($"CharacterManager: AllResources has no {character.Resource} for {character.Name}.", this);
+    }
 
     void OnDestroy()
     {

@@ -138,3 +138,178 @@
 .mm-link:hover {
     color: var(--accent);
 }
+
+.mm-link--danger:hover {
+    color: #E05050;
+}
+
+/* Character Select */
+.mm-panel--wide {
+    width: 780px;
+}
+
+.cs-columns {
+    flex-direction: row;
+    min-height: 420px;
+}
+
+.cs-list-column {
+    width: 300px;
+}
+
+.cs-detail-column {
+    flex-grow: 1;
+    margin-left: 20px;
+    padding-left: 20px;
+    border-left-width: 1px;
+    border-color: var(--panel-border);
+}
+
+.cs-list {
+    flex-grow: 1;
+    max-height: 380px;
+}
+
+.cs-character {
+    padding: 8px 10px;
+    margin: 0 0 6px 0;
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.cs-character:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.cs-character--selected {
+    border-color: var(--accent);
+}
+
+.cs-character-name {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.cs-character-info {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+.cs-no-selection {
+    margin-top: 40px;
+}
+
+.cs-view {
+    flex-grow: 1;
+}
+
+.cs-spacer {
+    flex-grow: 1;
+}
+
+.cs-detail-name {
+    font-size: 28px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.cs-detail-info {
+    font-size: 15px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.cs-label {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 12px 0 6px 0;
+}
+
+.cs-label--first {
+    margin-top: 0;
+}
+
+.cs-description {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+.cs-error {
+    font-size: 12px;
+    color: #E05050;
+    padding: 0;
+    margin: 4px 0 0 0;
+}
+
+/* Class and resource choices, five to a row */
+.cs-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.cs-choice {
+    width: 18.8%;
+    height: 32px;
+    margin: 0 1% 6px 0;
+    padding: 0;
+    font-size: 13px;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 4px;
+}
+
+.cs-choice:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.cs-choice--selected {
+    color: var(--accent);
+    -unity-font-style: bold;
+    border-width: 2px;
+    border-color: var(--accent);
+}
+
+.cs-row {
+    flex-direction: row;
+}
+
+.cs-row-button {
+    flex-grow: 1;
+    flex-basis: 0;
+}
+
+.cs-row-button--gap {
+    margin-left: 10px;
+}
+
+.cs-button--danger {
+    color: #E05050;
+    border-color: #E05050;
+}
+
+.cs-confirm-text {
+    font-size: 14px;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    padding: 0;
+    margin: 12px 0 0 0;
+}

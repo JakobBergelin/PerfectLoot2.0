@@ -36,6 +36,30 @@ public class InventoryManager : MonoBehaviour
         (nameof(Ring1Slot), Ring1Slot), (nameof(Ring2Slot), Ring2Slot), (nameof(OffhandSlot), OffhandSlot),
     };
 
+    /// <summary>The names of the slots an item type goes in (as saved per character), in the order they're filled.</summary>
+    public static string[] SlotNamesFor(ItemType type) => type switch
+    {
+        ItemType.Weapon => new[] { nameof(WeaponSlot) },
+        ItemType.Head => new[] { nameof(HeadSlot) },
+        ItemType.Chest => new[] { nameof(ChestSlot) },
+        ItemType.Legs => new[] { nameof(LegsSlot) },
+        ItemType.Belt => new[] { nameof(BeltSlot) },
+        ItemType.Boots => new[] { nameof(BootsSlot) },
+        ItemType.Hands => new[] { nameof(HandsSlot) },
+        ItemType.Shoulders => new[] { nameof(ShouldersSlot) },
+        ItemType.Amulet => new[] { nameof(AmuletSlot) },
+        ItemType.Ring => new[] { nameof(Ring1Slot), nameof(Ring2Slot) },
+        ItemType.Offhand => new[] { nameof(OffhandSlot) },
+        _ => Array.Empty<string>(),
+    };
+
+    InventorySlot SlotNamed(string slotName)
+    {
+        foreach (var (name, slot) in NamedSlots)
+            if (name == slotName) return slot;
+        return null;
+    }
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -57,7 +81,61 @@ public class InventoryManager : MonoBehaviour
             _database.ItemChanged += OnDatabaseItemChanged;
         }
         else Debug.LogError("No AccountManager: inventory slots have no item database to read from.", this);
+        LoadCharacterEquipment();
         RecalculateStats();
+    }
+
+    // The character picked in Character Select, whose equipment the slots show and save; null when the scene was played
+    // without the main menu (the scene's own slots, not saved)
+    AccountCharacter _character;
+    bool _loadingEquipment;     // Equipping the saved items doesn't save them again
+
+    void LoadCharacterEquipment()
+    {
+        var account = AccountManager.Instance;
+        _character = account != null ? account.SelectedCharacter : null;
+        if (_character == null) return;
+
+        _loadingEquipment = true;
+        try
+        {
+            foreach (var (_, slot) in NamedSlots)
+                if (slot != null) slot.Clear();
+            foreach (var equipped in _character.Equipped)
+            {
+                var slot = SlotNamed(equipped.Slot);
+                var baseItem = account.FindBaseItem(equipped.BaseItemId);
+                if (slot == null || baseItem == null)
+                {
+                    Debug.LogWarning($"{_character.Name}'s {equipped.Rarity} item {equipped.BaseItemId} in {equipped.Slot}: " +
+                                     (slot == null ? "no such slot" : "no such item in the database") + ", skipping it.", this);
+                    continue;
+                }
+                Equip(slot, new ItemKey(baseItem, equipped.Rarity));    // Warns when it can't
+            }
+        }
+        finally
+        {
+            _loadingEquipment = false;
+        }
+    }
+
+    void SaveCharacterEquipment()
+    {
+        if (_character == null || AccountManager.Instance == null) return;
+        var equipped = new List<AccountCharacter.EquippedItem>();
+        foreach (var (name, slot) in NamedSlots)
+        {
+            if (slot == null || !slot.EquippedKey.IsSet) continue;
+            var key = slot.EquippedKey;
+            if (string.IsNullOrEmpty(key.BaseItem.Id))
+            {
+                Debug.LogWarning($"{key} has no Id, so it can't be saved as equipped. Run Tools → Assign Item IDs.", this);
+                continue;
+            }
+            equipped.Add(new AccountCharacter.EquippedItem { Slot = name, BaseItemId = key.BaseItem.Id, Rarity = key.Rarity });
+        }
+        AccountManager.Instance.SetEquipped(_character, equipped);
     }
 
     void OnDestroy()
@@ -69,7 +147,11 @@ public class InventoryManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnSlotChanged(InventorySlot slot) => RecalculateStats();
+    void OnSlotChanged(InventorySlot slot)
+    {
+        RecalculateStats();
+        if (!_loadingEquipment) SaveCharacterEquipment();
+    }
 
     // A database entry got a new item: every slot pointing to it now shows the new one
     void OnDatabaseItemChanged(ItemKey key)

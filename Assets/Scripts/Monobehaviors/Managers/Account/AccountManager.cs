@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 using Equipment;
 using Loottables;
@@ -7,8 +8,8 @@ using UnityEngine;
 
 /// <summary>
 /// Account-wide state that outlives scenes: who is playing (the name given in the main menu, standing in for a real
-/// account and used as the ID for saved data), the item database shared by all characters (later also the characters
-/// themselves), and the queue of dropped items waiting for the player (DropPopupHUD). Play mode only for now.
+/// account and used as the ID for saved data), the account's characters and which one is played, the item database
+/// shared by all characters, and the queue of dropped items waiting for the player (DropPopupHUD). Play mode only for now.
 /// </summary>
 public class AccountManager : MonoBehaviour
 {
@@ -79,15 +80,168 @@ public class AccountManager : MonoBehaviour
         if (!AccountSaves.HasItemDatabase(AccountId)) AccountSaves.WriteItemDatabase(AccountId, null);
         _itemsInitialized = false;
         _pendingDrops.Clear();
+        _charactersLoaded = false;
+        _characters.Clear();
+        SelectedCharacter = null;
         AccountChanged?.Invoke();
         PendingDropsChanged?.Invoke();
+        CharactersChanged?.Invoke();
         return true;
     }
+
+    // ---------- Characters ----------
+
+    readonly List<AccountCharacter> _characters = new List<AccountCharacter>();
+    bool _charactersLoaded;
+    string _lastPlayedGuid;
+
+    /// <summary>The account's characters, oldest first. Loaded from the account's save on first use.</summary>
+    public IReadOnlyList<AccountCharacter> Characters
+    {
+        get
+        {
+            EnsureCharactersLoaded();
+            return _characters;
+        }
+    }
+
+    /// <summary>The character the game scene plays, or null (e.g. a game scene played without the main menu).</summary>
+    public AccountCharacter SelectedCharacter { get; private set; }
+
+    /// <summary>The character the account last went on an adventure with, or null.</summary>
+    public AccountCharacter LastPlayedCharacter => FindCharacter(_lastPlayedGuid);
+
+    /// <summary>Raised after a character was created or deleted, or the account changed.</summary>
+    public event Action CharactersChanged;
+
+    public AccountCharacter FindCharacter(string guid)
+    {
+        if (string.IsNullOrEmpty(guid)) return null;
+        foreach (var character in Characters)
+            if (character.Guid == guid) return character;
+        return null;
+    }
+
+    /// <summary>Whether a character on the account already has this name, ignoring case.</summary>
+    public bool IsCharacterNameTaken(string name)
+    {
+        foreach (var character in Characters)
+            if (string.Equals(character.Name, name, StringComparison.OrdinalIgnoreCase)) return true;
+        return false;
+    }
+
+    /// <summary>
+    /// Adds a level 1 character to the account with its class's starting items equipped, and saves it. Null when the
+    /// name isn't valid (same rules as account names) or taken, or the class or resource is None.
+    /// </summary>
+    public AccountCharacter CreateCharacter(string name, ClassType classType, ResourceType resource,
+                                            IReadOnlyList<RollableItem> startingItems = null)
+    {
+        if (!IsValidName(name) || IsCharacterNameTaken(name) || classType == ClassType.None || resource == ResourceType.None) return null;
+        var character = new AccountCharacter
+        {
+            Guid = Guid.NewGuid().ToString("N"),
+            Name = name,
+            Class = classType,
+            Resource = resource,
+            Level = 1,
+        };
+        GiveStartingItems(character, startingItems);
+        _characters.Add(character);
+        SaveCharacters();
+        CharactersChanged?.Invoke();
+        return character;
+    }
+
+    /// <summary>Replaces what the character has equipped and saves (InventoryManager, after a slot changed).</summary>
+    public void SetEquipped(AccountCharacter character, IEnumerable<AccountCharacter.EquippedItem> equipped)
+    {
+        if (character == null || !_characters.Contains(character)) return;
+        character.Equipped = new List<AccountCharacter.EquippedItem>(equipped);
+        SaveCharacters();
+    }
+
+    // Equips a Normal item of each kind: the account's own if it has found one, otherwise a new one rolled into the
+    // database. Each goes into the first free slot of its type.
+    void GiveStartingItems(AccountCharacter character, IReadOnlyList<RollableItem> startingItems)
+    {
+        if (startingItems == null || startingItems.Count == 0) return;
+        var loot = LootGenerationManager.Instance;
+        if (loot == null)
+        {
+            Debug.LogWarning($"AccountManager: no LootGenerationManager, so {character.Name} gets no starting items. " +
+                             "Run Tools → Create Main Menu Scene to add one to the menu.", this);
+            return;
+        }
+
+        foreach (var baseItem in startingItems)
+        {
+            if (baseItem == null) continue;
+            if (string.IsNullOrEmpty(baseItem.Id))
+            {
+                Debug.LogWarning($"AccountManager: starting item {baseItem.name} has no Id. Run Tools → Assign Item IDs.", this);
+                continue;
+            }
+            var key = new ItemKey(baseItem, Rarity.Normal);
+            if (!Items.Contains(key))
+            {
+                Debug.LogWarning($"AccountManager: starting item {key} isn't in the item database (not in a loot table, or can't be Normal).", this);
+                continue;
+            }
+            if (character.Equipped.Any(equipped => equipped.BaseItemId == baseItem.Id && equipped.Rarity == Rarity.Normal)) continue;
+            if (Items.Get(key) == null && !Items.Store(loot.RollItem(baseItem, Rarity.Normal))) continue;
+
+            string slot = InventoryManager.SlotNamesFor(baseItem.ItemType).FirstOrDefault(name => character.Equipped.All(equipped => equipped.Slot != name));
+            if (slot == null)
+            {
+                Debug.LogWarning($"AccountManager: no free {baseItem.ItemType} slot for {character.Name}'s starting item {key}.", this);
+                continue;
+            }
+            character.Equipped.Add(new AccountCharacter.EquippedItem { Slot = slot, BaseItemId = baseItem.Id, Rarity = Rarity.Normal });
+        }
+    }
+
+    /// <summary>Removes the character from the account and saves. False if the account has no such character.</summary>
+    public bool DeleteCharacter(string guid)
+    {
+        var character = FindCharacter(guid);
+        if (character == null) return false;
+        _characters.Remove(character);
+        if (_lastPlayedGuid == guid) _lastPlayedGuid = null;
+        if (SelectedCharacter == character) SelectedCharacter = null;
+        SaveCharacters();
+        CharactersChanged?.Invoke();
+        return true;
+    }
+
+    /// <summary>Plays this character in the next game scene and remembers it as last played. False if there's no such character.</summary>
+    public bool SelectCharacter(string guid)
+    {
+        var character = FindCharacter(guid);
+        if (character == null) return false;
+        SelectedCharacter = character;
+        _lastPlayedGuid = guid;
+        SaveCharacters();
+        return true;
+    }
+
+    void EnsureCharactersLoaded()
+    {
+        if (_charactersLoaded) return;
+        _charactersLoaded = true;
+        // An unreadable save leaves the account without characters; it was copied aside before the next save replaces it
+        AccountSaves.ReadCharacters(AccountId, _characters, out _lastPlayedGuid);
+    }
+
+    void SaveCharacters() => AccountSaves.WriteCharacters(AccountId, _characters, _lastPlayedGuid);
 
     [SerializeField, Tooltip("Read-only: one entry per item kind and rarity, empty until found")]
     ItemDatabase _items = new ItemDatabase();
     bool _itemsInitialized;
     bool _loadingItems;     // Storing saved items doesn't save them again
+
+    // RollableItem.Id -> item kind, for every kind in the database
+    readonly Dictionary<string, RollableItem> _itemsById = new Dictionary<string, RollableItem>();
 
     // Item kind -> names of the loot tables that contain it
     readonly Dictionary<RollableItem, List<string>> _sources = new Dictionary<RollableItem, List<string>>();
@@ -149,7 +303,8 @@ public class AccountManager : MonoBehaviour
     // Fills the freshly built database from the account's save (a new account gets its empty database saved)
     void LoadItems(GenerationSettings settings)
     {
-        var itemsById = new Dictionary<string, RollableItem>();
+        var itemsById = _itemsById;
+        itemsById.Clear();
         int missingIds = 0;
         foreach (var item in _sources.Keys)
         {
@@ -196,6 +351,13 @@ public class AccountManager : MonoBehaviour
             }
             else if (entry?.Entry is LootTable nested) CollectItems(nested, visited);
         }
+    }
+
+    /// <summary>The database's item kind with this RollableItem.Id, or null.</summary>
+    public RollableItem FindBaseItem(string id)
+    {
+        if (!_itemsInitialized) InitializeItems();
+        return !string.IsNullOrEmpty(id) && _itemsById.TryGetValue(id, out var item) ? item : null;
     }
 
     /// <summary>Where this item kind can drop: the names of the loot tables that contain it. Later also enemies.</summary>

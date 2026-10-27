@@ -19,5 +19,59 @@
             <ui:Button name="exitButton" text="Exit" class="mm-button" />
             <ui:Button name="changeNameButton" text="Change name" class="mm-link" />
         </ui:VisualElement>
+
+        <!-- Character Select (CharacterSelectScreen): the account's characters left, the selected one or the create form right -->
+        <ui:VisualElement name="characterScreen" class="mm-panel mm-panel--wide mm-screen--hidden">
+            <ui:Label text="Character Select" class="mm-heading" />
+            <ui:VisualElement class="cs-columns">
+                <ui:VisualElement class="cs-list-column">
+                    <ui:ScrollView name="characterList" class="cs-list" />
+                    <ui:Label name="noCharacters" text="No characters yet" class="mm-hint" />
+                    <ui:Button name="createCharacterButton" text="Create new character" class="mm-button" />
+                </ui:VisualElement>
+
+                <ui:VisualElement class="cs-detail-column">
+                    <!-- Nothing selected -->
+                    <ui:Label name="noSelection" text="Select a character or create a new one" class="mm-hint cs-no-selection" />
+
+                    <!-- The selected character -->
+                    <ui:VisualElement name="detailsView" class="cs-view mm-screen--hidden">
+                        <ui:Label name="detailName" class="cs-detail-name" />
+                        <ui:Label name="detailClass" class="cs-detail-info" />
+                        <ui:Label name="detailResource" class="cs-detail-info" />
+                        <ui:Label name="detailDescription" class="cs-description" />
+                        <ui:VisualElement class="cs-spacer" />
+                        <ui:Button name="adventureButton" text="Adventure" class="mm-button mm-button--primary" />
+                        <ui:Button name="deleteButton" text="Delete character" class="mm-link mm-link--danger" />
+                        <ui:VisualElement name="deleteConfirm" class="mm-screen--hidden">
+                            <ui:Label name="deleteQuestion" class="cs-confirm-text" />
+                            <ui:VisualElement class="cs-row">
+                                <ui:Button name="deleteYesButton" text="Delete" class="mm-button cs-row-button cs-button--danger" />
+                                <ui:Button name="deleteNoButton" text="Keep" class="mm-button cs-row-button cs-row-button--gap" />
+                            </ui:VisualElement>
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+
+                    <!-- Create new character -->
+                    <ui:VisualElement name="createView" class="cs-view mm-screen--hidden">
+                        <ui:Label text="Name" class="cs-label cs-label--first" />
+                        <ui:TextField name="characterNameField" class="mm-name-field" />
+                        <ui:Label name="nameError" class="cs-error" />
+                        <ui:Label text="Class" class="cs-label" />
+                        <ui:VisualElement name="classGrid" class="cs-grid" />
+                        <ui:Label name="classDescription" class="cs-description" />
+                        <ui:Label text="Resource" class="cs-label" />
+                        <ui:VisualElement name="resourceGrid" class="cs-grid" />
+                        <ui:Label name="resourceDescription" class="cs-description" />
+                        <ui:VisualElement class="cs-spacer" />
+                        <ui:VisualElement class="cs-row">
+                            <ui:Button name="createButton" text="Create" class="mm-button mm-button--primary cs-row-button" />
+                            <ui:Button name="cancelCreateButton" text="Cancel" class="mm-button cs-row-button cs-row-button--gap" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            <ui:Button name="characterBackButton" text="Back" class="mm-link" />
+        </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -10,13 +10,42 @@ using UnityEngine;
 /// ID. JSON, so it can be read while debugging. Only found items are written. An item is its base item (by Id), seed and
 /// roll version: loading rolls it again from those, so balance changes reach saved items and edited values do nothing.
 /// The saved rarity and affixes are only there to read; an item whose saved rarity isn't what its seed rolls, that fails
-/// ItemValidation, or that shares its Guid is loaded marked Unverified.
+/// ItemValidation, or that shares its Guid is loaded marked Unverified. The account's characters are saved next to it.
 /// </summary>
 public static class AccountSaves
 {
     const string ItemDatabaseFile = "ItemDatabase.json";
     // 2: items are rolled from their seed. Older saves had no seeds; during development their items are dropped.
     const int ItemDatabaseVersion = 2;
+    const string CharactersFile = "Characters.json";
+    const int CharactersVersion = 1;
+
+    [Serializable]
+    class CharactersData
+    {
+        public int Version;
+        public string LastPlayedGuid;
+        public List<CharacterData> Characters = new List<CharacterData>();
+    }
+
+    [Serializable]
+    class CharacterData
+    {
+        public string Guid;
+        public string Name;
+        public string Class;
+        public string Resource;
+        public int Level;
+        public List<EquippedData> Equipped = new List<EquippedData>();
+    }
+
+    [Serializable]
+    class EquippedData
+    {
+        public string Slot;
+        public string BaseItemId;
+        public string Rarity;
+    }
 
     [Serializable]
     class ItemDatabaseData
@@ -92,8 +121,7 @@ public static class AccountSaves
         }
         if (data == null || data.Items == null)
         {
-            try { File.Copy(path, path + ".unreadable", true); }
-            catch (Exception exception) { Debug.LogError($"Couldn't copy {path} aside: {exception.Message}"); }
+            CopyAside(path);
             return -1;
         }
 
@@ -122,6 +150,92 @@ public static class AccountSaves
         foreach (var item in items)
             if (database.Store(item)) stored++;
         return stored;
+    }
+
+    static string CharactersPath(string accountId) => Path.Combine(FolderOf(accountId), CharactersFile);
+
+    /// <summary>Writes the account's characters and which of them was played last (null for none).</summary>
+    public static void WriteCharacters(string accountId, IReadOnlyList<AccountCharacter> characters, string lastPlayedGuid)
+    {
+        var data = new CharactersData { Version = CharactersVersion, LastPlayedGuid = lastPlayedGuid ?? "" };
+        foreach (var character in characters)
+        {
+            var saved = new CharacterData
+            {
+                Guid = character.Guid,
+                Name = character.Name,
+                Class = character.Class.ToString(),
+                Resource = character.Resource.ToString(),
+                Level = character.Level,
+            };
+            foreach (var equipped in character.Equipped)
+                saved.Equipped.Add(new EquippedData { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = equipped.Rarity.ToString() });
+            data.Characters.Add(saved);
+        }
+        Write(CharactersPath(accountId), JsonUtility.ToJson(data, true));
+    }
+
+    /// <summary>
+    /// Fills characters with the account's saved characters (none when it has no save yet). False when the save can't be
+    /// read (it's then copied aside as .unreadable, since the next save replaces it).
+    /// </summary>
+    public static bool ReadCharacters(string accountId, List<AccountCharacter> characters, out string lastPlayedGuid)
+    {
+        characters.Clear();
+        lastPlayedGuid = null;
+        string path = CharactersPath(accountId);
+        if (!File.Exists(path)) return true;
+
+        CharactersData data = null;
+        try
+        {
+            data = JsonUtility.FromJson<CharactersData>(File.ReadAllText(path));
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Couldn't read {path}: {exception.Message}");
+        }
+        if (data == null || data.Characters == null)
+        {
+            CopyAside(path);
+            return false;
+        }
+
+        foreach (var saved in data.Characters)
+        {
+            if (saved == null || string.IsNullOrEmpty(saved.Guid))
+            {
+                Debug.LogWarning($"{path}: a character without a Guid, skipping it.");
+                continue;
+            }
+            // A class or resource that was renamed or removed: kept, without one
+            if (!Enum.TryParse(saved.Class, out ClassType classType))
+                Debug.LogWarning($"{path}: {saved.Name} has an unknown class '{saved.Class}'.");
+            if (!Enum.TryParse(saved.Resource, out ResourceType resourceType))
+                Debug.LogWarning($"{path}: {saved.Name} has an unknown resource '{saved.Resource}'.");
+            var character = new AccountCharacter
+            {
+                Guid = saved.Guid,
+                Name = saved.Name,
+                Class = classType,
+                Resource = resourceType,
+                Level = Mathf.Max(1, saved.Level),
+            };
+            // Saves from before equipment have none; whether the items still exist is checked when they're equipped
+            foreach (var equipped in saved.Equipped ?? new List<EquippedData>())
+            {
+                if (equipped == null || string.IsNullOrEmpty(equipped.Slot) || string.IsNullOrEmpty(equipped.BaseItemId) ||
+                    !Enum.TryParse(equipped.Rarity, out Rarity rarity))
+                {
+                    Debug.LogWarning($"{path}: {saved.Name} has an equipped item that can't be read, skipping it.");
+                    continue;
+                }
+                character.Equipped.Add(new AccountCharacter.EquippedItem { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = rarity });
+            }
+            characters.Add(character);
+        }
+        lastPlayedGuid = string.IsNullOrEmpty(data.LastPlayedGuid) ? null : data.LastPlayedGuid;
+        return true;
     }
 
     /// <summary>Deletes everything saved for the account. False if there was nothing.</summary>
@@ -186,6 +300,12 @@ public static class AccountSaves
             Debug.LogWarning($"{path}: {data.BaseItemName} ({data.Guid}) is marked Unverified: {string.Join("; ", problems)}.");
         }
         return item;
+    }
+
+    static void CopyAside(string path)
+    {
+        try { File.Copy(path, path + ".unreadable", true); }
+        catch (Exception exception) { Debug.LogError($"Couldn't copy {path} aside: {exception.Message}"); }
     }
 
     // Through a temporary file, so a crash mid-write can't leave half a save
