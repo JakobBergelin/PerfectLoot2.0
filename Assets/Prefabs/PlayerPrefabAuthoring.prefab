@@ -44,4 +44,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b10b45f7043ec191b718900920459627, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPrefabAuthoring
-  PlayerVisualPrefab: {fileID: 8081721633866840005, guid: d82dc99e95c2a6a4dbcf577b561f48b0, type: 3}
+  PlayerVisualPrefab: {fileID: 1760048247506015315, guid: 78abfc1dab970b546be1d2be2bfd5076, type: 3}
