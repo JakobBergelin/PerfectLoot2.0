@@ -241,16 +241,23 @@ public class CharacterManager : MonoBehaviour
     // Seconds to keep looking for ground before spawning at the plain position anyway
     const float MaxGroundWait = 2f;
     float _groundWait;
+    Vector3 _groundWaitPosition;
 
     /// <summary>
     /// The level's player start (or this object's position without a level), standing on the ground below it. False while the ground
-    /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait it gives up and uses the
-    /// plain position.
+    /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait at the same position it gives up and
+    /// uses the plain position.
     /// </summary>
     bool TryFindSpawnPosition(EntityManager entityManager, Entity prefab, out Vector3 position)
     {
         position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
+        // Time spent waiting for ground somewhere else doesn't count
+        if (position != _groundWaitPosition)
+        {
+            _groundWaitPosition = position;
+            _groundWait = 0f;
+        }
 
         float bottomOffset = LevelGeneration.GroundPlacement.BottomOffset(entityManager, prefab);
         if (LevelGeneration.GroundPlacement.TryGetCollisionWorld(entityManager, out var collisionWorld) &&

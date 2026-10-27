@@ -118,9 +118,17 @@ namespace LevelGeneration
 
     public static class LevelState
     {
-        /// <summary>True when there's no level layout to wait for, or the level has been built.</summary>
+        /// <summary>
+        /// True once every subscene set to load has loaded, and the level (if one of them has a layout) has been built.
+        /// Subscenes finish at different times: without the first check, the core subscene alone looks like a scene without a level.
+        /// </summary>
         public static bool IsReady(EntityManager entityManager)
         {
+            using var scenes = entityManager.CreateEntityQuery(ComponentType.ReadOnly<SceneReference>(), ComponentType.ReadOnly<RequestSceneLoaded>());
+            using var sceneEntities = scenes.ToEntityArray(Unity.Collections.Allocator.Temp);
+            foreach (var scene in sceneEntities)
+                if (!Unity.Scenes.SceneSystem.IsSceneLoaded(entityManager.WorldUnmanaged, scene)) return false;
+
             using var layouts = entityManager.CreateEntityQuery(ComponentType.ReadOnly<LevelLayout>());
             if (layouts.IsEmpty) return true;
             using var ready = entityManager.CreateEntityQuery(ComponentType.ReadOnly<LevelReady>());
