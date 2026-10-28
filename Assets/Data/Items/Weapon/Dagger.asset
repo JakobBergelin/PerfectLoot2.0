@@ -15,20 +15,16 @@ MonoBehaviour:
   Name: Dagger
   Id: 6ea140b3ec25425cab9bd845cd16d438
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 21
+    RollRange:
+      Min: 0.1
+      Max: 0.5
   RollableAffixes:
   - Affix: 9
     RollRange:
       Min: 0.05
       Max: 0.2
-  - Affix: 20
-    RollRange:
-      Min: 0.03
-      Max: 0.12
-  - Affix: 21
-    RollRange:
-      Min: 0.1
-      Max: 0.4
   - Affix: 1
     RollRange:
       Min: 2
@@ -37,13 +33,17 @@ MonoBehaviour:
     RollRange:
       Min: 0.01
       Max: 0.05
-  - Affix: 15
+  - Affix: 26
     RollRange:
-      Min: 0.05
-      Max: 0.25
+      Min: 5
+      Max: 12
+  - Affix: 7
+    RollRange:
+      Min: 0.03
+      Max: 0.1
   WeaponDamage:
     Min: 2
     Max: 3
-  WeaponCooldown: 0.6
-  WeaponDamageRange: 1.2
+  WeaponCooldown: 0.7
+  WeaponDamageRange: 0.5
   WeaponReach: 1.1

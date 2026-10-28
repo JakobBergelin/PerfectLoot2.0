@@ -281,7 +281,21 @@ public class ItemEditorWindow : EditorWindow
                     () => ShowFieldCopyMenu(path));
             else
                 DrawFieldRow(property);
+
+            if (property.name == nameof(RollableWeaponItem.WeaponCooldown)) DrawDpsRow();
         }
+    }
+
+    // Read-only, from the fields being edited (so it follows them before they're applied)
+    void DrawDpsRow()
+    {
+        var damage = _serialized.FindProperty(nameof(RollableWeaponItem.WeaponDamage));
+        var cooldown = _serialized.FindProperty(nameof(RollableWeaponItem.WeaponCooldown));
+        if (damage == null || cooldown == null) return;
+        var (min, max) = ItemEditorFormat.Dps(damage.FindPropertyRelative(nameof(RollRange.Min)).floatValue,
+                                              damage.FindPropertyRelative(nameof(RollRange.Max)).floatValue, cooldown.floatValue);
+        EditorGUILayout.LabelField(new GUIContent("Damage per second", ItemEditorFormat.DpsTooltip),
+                                   new GUIContent($"{min:0.##} – {max:0.##}   (avg {(min + max) * 0.5f:0.##})", ItemEditorFormat.DpsTooltip));
     }
 
     void DrawAffixList(string title, SerializedProperty list)

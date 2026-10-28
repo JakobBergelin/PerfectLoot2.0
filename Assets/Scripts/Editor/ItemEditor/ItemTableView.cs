@@ -25,13 +25,14 @@ public class ItemTableView
     static readonly Color AlternateRow = new Color(1, 1, 1, 0.03f);
     static readonly Color PinnedTint = new Color(1, 1, 1, 0.05f);
 
-    /// <summary>A table column: an affix range, or a fixed (not rolled) number field of the item class.</summary>
+    /// <summary>A table column: an affix range, a fixed (not rolled) number field of the item class, or a computed value.</summary>
     class Column
     {
         public string Header;
         public string Tooltip;
         public Affix Affix;
         public string Field;    // Set for fixed-value columns
+        public Func<RollableItem, string> Computed;     // Set for computed columns (e.g. weapon DPS); empty where it doesn't apply
         public bool Pinned;     // Intrinsic stats and fixed values, shown first with a tinted header
     }
 
@@ -163,6 +164,16 @@ public class ItemTableView
             Field = field.Name,
             Pinned = true,
         }));
+        // Weapon DPS, right after the cooldown it's computed from
+        int cooldown = columns.FindIndex(column => column.Field == nameof(RollableWeaponItem.WeaponCooldown));
+        if (cooldown >= 0)
+            columns.Insert(cooldown + 1, new Column
+            {
+                Header = "Damage Per Second",
+                Tooltip = ItemEditorFormat.DpsTooltip,
+                Computed = item => item is RollableWeaponItem weapon ? ItemEditorFormat.Dps(weapon) : "",
+                Pinned = true,
+            });
         columns.AddRange(others.Select(affix => new Column { Header = ItemEditorFormat.AffixName(affix), Affix = affix }));
         return columns;
     }
@@ -178,7 +189,7 @@ public class ItemTableView
     {
         int lines = 2;
         foreach (var column in columns)
-            if (column.Field == null) lines = Mathf.Max(lines, ranges.Count(r => r.Affix == column.Affix));
+            if (column.Field == null && column.Computed == null) lines = Mathf.Max(lines, ranges.Count(r => r.Affix == column.Affix));
         return lines * LineHeight + 6;
     }
 
@@ -195,6 +206,11 @@ public class ItemTableView
             var field = item.GetType().GetField(column.Field);
             if (field == null) return;
             GUI.Label(cell, new GUIContent(Convert.ToSingle(field.GetValue(item)).ToString("0.##"), column.Tooltip), centered);
+            return;
+        }
+        if (column.Computed != null)
+        {
+            GUI.Label(cell, new GUIContent(column.Computed(item), column.Tooltip), centered);
             return;
         }
 

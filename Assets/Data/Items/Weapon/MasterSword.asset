@@ -21,6 +21,14 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 8
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 12
+  - Affix: 7
+    RollRange:
+      Min: 0.03
+      Max: 0.1
   WeaponDamage:
     Min: 2
     Max: 5
