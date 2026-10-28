@@ -39,6 +39,7 @@ namespace Equipment
                 case Affix.ResourceRegeneration: block.ResourceRegeneration += value; break;
                 case Affix.PoisonResistance: block.PoisonResistance += value; break;
                 case Affix.WeaponReach: block.WeaponReach += value; break;
+                case Affix.ArmorPierce: block.ArmorPierce += value; break;
             }
         }
     }

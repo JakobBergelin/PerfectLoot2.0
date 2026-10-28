@@ -44,4 +44,14 @@ public struct CombatConfig : IComponentData
 
     /// <summary>Fraction of damage mitigated by a defense value: value / (value + constant). 0 when the value is 0 or less.</summary>
     public static float Mitigation(float value, float constant) => value <= 0f ? 0f : value / (value + constant);
+
+    /// <summary>
+    /// Physical damage mitigated by armor: the attacker's pierce ignores that much armor (not below 0), then the multiplier
+    /// (Golem) scales what's left, then Mitigation with ArmorConstant.
+    /// </summary>
+    public static float PhysicalResistance(int armor, float multiplier, float pierce, float armorConstant)
+    {
+        float effectiveArmor = Unity.Mathematics.math.max(0f, armor - Unity.Mathematics.math.max(0f, pierce)) * (1f + multiplier);
+        return Mitigation(effectiveArmor, armorConstant);
+    }
 }

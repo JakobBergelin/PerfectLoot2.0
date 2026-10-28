@@ -29,6 +29,7 @@ public struct StatBlock
     public int Pierce;
     public int Bounces;
     public int Armor;
+    public float ArmorPierce;           // Armor ignored on the targets of this unit's physical hits (flat, before their multipliers)
 
     public float MovementSpeed;
     public float AreaOfEffect;
@@ -69,6 +70,7 @@ public struct StatBlock
         Pierce += other.Pierce;
         Bounces += other.Bounces;
         Armor += other.Armor;
+        ArmorPierce += other.ArmorPierce;
 
         MovementSpeed += other.MovementSpeed;
         AreaOfEffect += other.AreaOfEffect;

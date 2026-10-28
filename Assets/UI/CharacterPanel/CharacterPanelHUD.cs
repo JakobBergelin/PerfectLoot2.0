@@ -297,6 +297,7 @@ public class CharacterPanelHUD : MonoBehaviour
         AddRow(section, "Weapon Reach", () => Flat(_snapshot.Stats.WeaponReach));
         AddRow(section, "Critical Chance", () => Pct(_snapshot.Stats.CriticalChance));
         AddRow(section, "Critical Damage", () => "+" + Pct(_snapshot.Stats.CriticalDamage));
+        AddRow(section, "Armor Pierce", () => Flat(_snapshot.Stats.ArmorPierce));
         AddRow(section, "Area of Effect", () => "+" + Pct(_snapshot.Stats.AreaOfEffect));
         AddRow(section, "Cooldown Reduction", () => Pct(_snapshot.Stats.CooldownReduction));
         AddRow(section, "Resource Cost Reduction", () => Pct(_snapshot.Stats.ResourceCostReduction));
@@ -400,8 +401,7 @@ public class CharacterPanelHUD : MonoBehaviour
     float? ArmorMitigation()
     {
         if (!_snapshot.HasCombatConfig) return null;
-        float effectiveArmor = Mathf.Max(0, _snapshot.Armor.Value) * (1f + _snapshot.Armor.PhysicalResistanceMultiplier);
-        return CombatConfig.Mitigation(effectiveArmor, _snapshot.Combat.ArmorConstant);
+        return CombatConfig.PhysicalResistance(_snapshot.Armor.Value, _snapshot.Armor.PhysicalResistanceMultiplier, 0f, _snapshot.Combat.ArmorConstant);
     }
 
     string Resistance(float resistance)

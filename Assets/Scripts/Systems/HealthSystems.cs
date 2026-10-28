@@ -131,7 +131,13 @@ public partial class CalculateDamageSystem : SystemBase
                         var physicalResistance = 0.0f;
                         if(SystemAPI.HasComponent<Armor>(entity))
                         {
-                            physicalResistance = SystemAPI.GetComponentRO<Armor>(entity).ValueRO.PhysicalResistance;
+                            var armor = SystemAPI.GetComponentRO<Armor>(entity).ValueRO;
+                            physicalResistance = armor.PhysicalResistance;
+                            // The attacker's ArmorPierce ignores some of the armor (none when the attacker is gone)
+                            float pierce = SystemAPI.HasComponent<CalculatedStats>(instance.Source)
+                                ? SystemAPI.GetComponent<CalculatedStats>(instance.Source).Value.ArmorPierce : 0.0f;
+                            if(pierce > 0.0f)
+                                physicalResistance = CombatConfig.PhysicalResistance(armor.Value, armor.PhysicalResistanceMultiplier, pierce, combatConfig.ArmorConstant);
                         }
                         calculatedDamage = calculatedDamage * (1.0f - physicalResistance);
                         break;

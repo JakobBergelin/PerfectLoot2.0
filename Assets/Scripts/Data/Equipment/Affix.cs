@@ -36,5 +36,6 @@ namespace Equipment
         ResourceRegeneration = 27,
         PoisonResistance = 28,
         WeaponReach = 29,
+        ArmorPierce = 30,
     }
 }

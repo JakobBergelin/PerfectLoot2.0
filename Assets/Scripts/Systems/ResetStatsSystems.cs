@@ -72,9 +72,9 @@ partial struct FinalizeStatsSystem : ISystem
         {
             armor.ValueRW.Value = stats.ValueRO.Value.Armor;
             // Mitigation = Armor / (Armor + ArmorConstant): ArmorConstant armor gives 50%. The multiplier (Golem) scales the armor value.
-            float effectiveArmor = math.max(0, armor.ValueRO.Value) * (1.0f + armor.ValueRO.PhysicalResistanceMultiplier);
-            // Armor is the only physical defense, so its mitigation is the final physical resistance
-            armor.ValueRW.PhysicalResistance = CombatConfig.Mitigation(effectiveArmor, combatConfig.ArmorConstant);
+            // Armor is the only physical defense, so its mitigation is the final physical resistance (CalculateDamageSystem
+            // recalculates it for attackers with ArmorPierce)
+            armor.ValueRW.PhysicalResistance = CombatConfig.PhysicalResistance(armor.ValueRO.Value, armor.ValueRO.PhysicalResistanceMultiplier, 0f, combatConfig.ArmorConstant);
         }
 
         foreach (var (movementSpeed, stats) in SystemAPI.Query<RefRW<MovementSpeed>, RefRO<CalculatedStats>>())
