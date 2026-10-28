@@ -15,20 +15,24 @@ MonoBehaviour:
   Name: Broken Promises
   Id: d2f4d8f7830b4916b7794a4298c87a23
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 5
   RollableAffixes:
   - Affix: 0
     RollRange:
       Min: 2
-      Max: 8
-  - Affix: 15
-    RollRange:
-      Min: 0.05
-      Max: 0.25
+      Max: 5
   - Affix: 21
     RollRange:
       Min: 0.1
-      Max: 0.4
+      Max: 0.15
   - Affix: 12
     RollRange:
       Min: 0.01
@@ -36,22 +40,18 @@ MonoBehaviour:
   - Affix: 9
     RollRange:
       Min: 0.05
-      Max: 0.2
+      Max: 0.1
   - Affix: 20
     RollRange:
-      Min: 0.03
-      Max: 0.12
-  - Affix: 26
-    RollRange:
-      Min: 5
-      Max: 12
+      Min: -0.2
+      Max: -0.05
   - Affix: 7
     RollRange:
       Min: 0.03
       Max: 0.1
   WeaponDamage:
-    Min: 6
-    Max: 10
+    Min: 3
+    Max: 5
   WeaponCooldown: 0.8
   WeaponDamageRange: 1.8
   WeaponReach: 1.1

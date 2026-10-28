@@ -15,24 +15,36 @@ MonoBehaviour:
   Name: Master Sword
   Id: 9475d1ebf16247f41adf0c178dc02bde
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 27
+    RollRange:
+      Min: 2
+      Max: 5
   RollableAffixes:
   - Affix: 0
     RollRange:
       Min: 2
-      Max: 8
-  - Affix: 26
+      Max: 5
+  - Affix: 1
     RollRange:
-      Min: 5
-      Max: 12
-  - Affix: 7
+      Min: 2
+      Max: 5
+  - Affix: 2
     RollRange:
-      Min: 0.03
+      Min: 2
+      Max: 5
+  - Affix: 9
+    RollRange:
+      Min: 0.05
       Max: 0.1
   WeaponDamage:
-    Min: 2
-    Max: 5
+    Min: 3
+    Max: 4
   WeaponCooldown: 0.9
   WeaponDamageRange: 1.8
-  WeaponReach: 1.4
+  WeaponReach: 1.6
   LegendaryPower: {fileID: 11400000, guid: 001f49981bfb4e5db21b5696d470e50e, type: 2}

@@ -15,32 +15,24 @@ MonoBehaviour:
   Name: Short Sword
   Id: 67bb9dcccf9e4824bb0b8dfedf5e0bbf
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 30
+    RollRange:
+      Min: 1
+      Max: 5
   RollableAffixes:
   - Affix: 0
     RollRange:
       Min: 2
       Max: 8
-  - Affix: 15
-    RollRange:
-      Min: 0.05
-      Max: 0.25
   - Affix: 9
     RollRange:
       Min: 0.05
       Max: 0.2
-  - Affix: 12
-    RollRange:
-      Min: 0.01
-      Max: 0.05
   - Affix: 20
     RollRange:
       Min: 0.03
       Max: 0.12
-  - Affix: 21
-    RollRange:
-      Min: 0.1
-      Max: 0.4
   - Affix: 26
     RollRange:
       Min: 5
@@ -49,9 +41,13 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.1
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 8
   WeaponDamage:
     Min: 3
-    Max: 5
+    Max: 4
   WeaponCooldown: 0.9
   WeaponDamageRange: 1.8
-  WeaponReach: 1.1
+  WeaponReach: 1.3

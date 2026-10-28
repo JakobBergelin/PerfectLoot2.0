@@ -46,4 +46,4 @@ MonoBehaviour:
     Max: 8
   WeaponCooldown: 1.4
   WeaponDamageRange: 4
-  WeaponReach: 1.1
+  WeaponReach: 1.3
