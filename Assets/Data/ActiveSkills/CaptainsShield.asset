@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2ae1586c08e64537aa112ab02960a421, type: 3}
+  m_Name: CaptainsShield
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.CaptainsShieldSkill
+  Name: Captain's Shield
+  Icon: {fileID: 0}
+  Description:
+  Tags: 1
+  resourceCost: 5
+  Damage: 3
+  ProjectileSpeed: 18
+  Radius: 0.5
+  HitForce: 2
+  Bounces: 1
+  TurnSpeed: 10
+  TurnAcceleration: 20
+  NoTargetDistance: 10

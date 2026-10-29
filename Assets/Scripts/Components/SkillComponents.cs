@@ -45,6 +45,7 @@ public enum SkillType
     Tornado,
     Teleport,
     Invulnerability,
+    CaptainsShield,
 
 }
 
@@ -189,6 +190,23 @@ public struct Invulnerability : IComponentData, IEnableableComponent
     public float Duration;
     public float ResourceCost;
     public float Elapsed;       // Since the last cast, up to Cooldown
+}
+
+/// <summary>
+/// Throws a homing shield (ShieldProjectile) while held, as long as none of the caster's shields is out: no wind-up or
+/// cooldown, so a faster shield means more throws. Damage is scaled by the caster's BlockChance when thrown.
+/// </summary>
+public struct CaptainsShield : IComponentData, IEnableableComponent
+{
+    public float ResourceCost;
+    public float Damage;
+    public float ProjectileSpeed;
+    public float Radius;
+    public float HitForce;
+    public int Bounces;             // Targets after the first, before the Bounces stat
+    public float TurnSpeed;         // Radians per second, at the start and after each new target
+    public float TurnAcceleration;  // Radians per second, per second
+    public float NoTargetDistance;  // How far it flies toward the cursor when there's no enemy to home on
 }
 
 public struct Whirlwind : IComponentData, IEnableableComponent

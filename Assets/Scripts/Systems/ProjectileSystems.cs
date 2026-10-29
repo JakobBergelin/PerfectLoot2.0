@@ -191,7 +191,8 @@ partial struct WanderingProjectileSystem : ISystem
 /// Moves projectiles. Free-flying ones hit the ground and walls; FollowGround ones move flat at their spawn height
 /// above the ground (following slopes) and only hit walls; PassThroughWalls ignores walls. A hit stops the projectile
 /// at the hit point and bounces it off (if it has bounces left) or destroys it at the end of the frame. Hit detection
-/// still runs at the hit point first, so an enemy right next to the wall is still hit.
+/// still runs at the hit point first, so an enemy right next to the wall is still hit. Captain's Shield moves itself
+/// (ShieldProjectileSystem).
 /// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -214,7 +215,7 @@ partial struct ProjectileSystem : ISystem
         var groundFilter = ProjectileUtil.GroundFilter;
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (localTransform, projectile, entity) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<Projectile>>().WithNone<DestroyWithChildren>().WithEntityAccess())
+        foreach (var (localTransform, projectile, entity) in SystemAPI.Query<RefRW<LocalTransform>, RefRW<Projectile>>().WithNone<DestroyWithChildren, ShieldProjectile>().WithEntityAccess())
         {
             var start = localTransform.ValueRO.Position;
             var direction = projectile.ValueRO.Direction;

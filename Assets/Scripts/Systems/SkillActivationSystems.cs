@@ -77,6 +77,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Invulnerability:
                 if (SystemAPI.HasComponent<Invulnerability>(entity)) SystemAPI.SetComponentEnabled<Invulnerability>(entity, enabled);
                 break;
+            case SkillType.CaptainsShield:
+                if (SystemAPI.HasComponent<CaptainsShield>(entity)) SystemAPI.SetComponentEnabled<CaptainsShield>(entity, enabled);
+                break;
         }
     }
 }

@@ -1,3 +1,4 @@
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 
@@ -61,4 +62,21 @@ public struct Orbiting : IComponentData
     public Entity Center;
     public float Radius;
     public uint Order;
+}
+
+/// <summary>
+/// Captain's Shield in flight. A Projectile, so projectile stats and effects apply (BounceCount is how many more
+/// targets it goes for, Speed its speed), but ShieldProjectileSystem moves it and ProjectileSystem skips it. Systems
+/// that move or redirect projectiles should decide whether to skip it too.
+/// </summary>
+public struct ShieldProjectile : IComponentData
+{
+    public Entity Target;           // Null: none (flying out toward the cursor, or returning)
+    public FixedList128Bytes<Entity> Targeted;  // Enemies already homed on, not picked again
+    public bool Returning;
+    public float Distance;          // Flown so far without a target
+    public float NoTargetDistance;
+    public float BaseTurnSpeed;
+    public float TurnSpeed;
+    public float TurnAcceleration;
 }
