@@ -15,20 +15,20 @@ MonoBehaviour:
   Name: Cloth Leggings
   Id: 0b06f65e60b4469ea31048f9734f5c33
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 3
+    RollRange:
+      Min: 0.05
+      Max: 0.1
   RollableAffixes:
   - Affix: 1
     RollRange:
       Min: 2
       Max: 8
-  - Affix: 3
-    RollRange:
-      Min: 0.05
-      Max: 0.15
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 15
   - Affix: 8
     RollRange:
       Min: 0.02
@@ -37,10 +37,10 @@ MonoBehaviour:
     RollRange:
       Min: 3
       Max: 10
-  - Affix: 22
+  - Affix: 26
     RollRange:
-      Min: 2
-      Max: 10
+      Min: 10
+      Max: 30
   Armor:
-    Min: 2
-    Max: 4
+    Min: 1
+    Max: 3

@@ -15,12 +15,16 @@ MonoBehaviour:
   Name: Full Plate Mail
   Id: 502b36b4d92d4760904c95189795d469
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 3
+    RollRange:
+      Min: -0.08
+      Max: -0.04
   RollableAffixes:
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 15
   - Affix: 4
     RollRange:
       Min: 3
@@ -37,10 +41,6 @@ MonoBehaviour:
     RollRange:
       Min: 0.5
       Max: 2
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 10
   Armor:
-    Min: 12
-    Max: 18
+    Min: 14
+    Max: 20

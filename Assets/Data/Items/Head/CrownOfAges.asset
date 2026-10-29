@@ -18,31 +18,35 @@ MonoBehaviour:
   BaseAffixes:
   - Affix: 22
     RollRange:
-      Min: 8
-      Max: 12
-  RollableAffixes:
-  - Affix: 2
-    RollRange:
-      Min: 2
-      Max: 8
+      Min: 4
+      Max: 6
   - Affix: 6
     RollRange:
-      Min: 0.03
-      Max: 0.1
-  - Affix: 7
+      Min: 0.1
+      Max: 0.15
+  - Affix: 2
     RollRange:
-      Min: 0.03
-      Max: 0.1
-  - Affix: 4
-    RollRange:
-      Min: 3
+      Min: 5
       Max: 10
+  - Affix: 3
+    RollRange:
+      Min: -0.06
+      Max: -0.03
+  RollableAffixes:
   - Affix: 26
     RollRange:
       Min: 10
-      Max: 30
-  - Affix: 24
+      Max: 20
+  - Affix: 7
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 0.03
+      Max: 0.06
+  - Affix: 4
+    RollRange:
+      Min: 3
+      Max: 6
+  - Affix: 25
+    RollRange:
+      Min: 0.5
+      Max: 1
   LegendaryPower: {fileID: 0}

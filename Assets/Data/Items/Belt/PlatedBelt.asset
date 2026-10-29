@@ -18,17 +18,13 @@ MonoBehaviour:
   BaseAffixes:
   - Affix: 22
     RollRange:
-      Min: 2
-      Max: 4
+      Min: 3
+      Max: 5
   RollableAffixes:
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
-  - Affix: 26
-    RollRange:
-      Min: 10
-      Max: 30
+      Min: 5
+      Max: 15
   - Affix: 0
     RollRange:
       Min: 2
@@ -37,17 +33,17 @@ MonoBehaviour:
     RollRange:
       Min: 3
       Max: 10
-  - Affix: 22
+  - Affix: 5
     RollRange:
-      Min: 2
-      Max: 10
-  - Affix: 7
+      Min: 0.02
+      Max: 0.05
+  - Affix: 18
     RollRange:
-      Min: 0.03
-      Max: 0.1
+      Min: 10
+      Max: 40
   HealthRegeneration:
-    Min: 1
-    Max: 2
+    Min: 1.5
+    Max: 2.5
   ResourceRegeneration:
-    Min: 0.5
-    Max: 1.5
+    Min: 0.25
+    Max: 0.5

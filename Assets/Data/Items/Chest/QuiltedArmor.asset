@@ -15,17 +15,25 @@ MonoBehaviour:
   Name: Quilted Armor
   Id: e893a748bbcc4bdfbb2b89e62cc3ef40
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 8
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 3
+    RollRange:
+      Min: 0.03
+      Max: 0.06
   RollableAffixes:
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 15
   - Affix: 4
     RollRange:
       Min: 3
       Max: 10
-  - Affix: 0
+  - Affix: 1
     RollRange:
       Min: 2
       Max: 8
@@ -33,14 +41,10 @@ MonoBehaviour:
     RollRange:
       Min: 0.5
       Max: 2
-  - Affix: 5
+  - Affix: 7
     RollRange:
-      Min: 0.02
-      Max: 0.08
-  - Affix: 8
-    RollRange:
-      Min: 0.02
-      Max: 0.08
+      Min: 0.03
+      Max: 0.1
   Armor:
     Min: 4
     Max: 6

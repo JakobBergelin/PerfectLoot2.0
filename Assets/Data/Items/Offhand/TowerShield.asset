@@ -18,29 +18,25 @@ MonoBehaviour:
   BaseAffixes:
   - Affix: 22
     RollRange:
-      Min: 8
-      Max: 12
+      Min: 10
+      Max: 14
   - Affix: 5
     RollRange:
-      Min: 0.1
+      Min: 0.12
       Max: 0.2
-  RollableAffixes:
-  - Affix: 5
+  - Affix: 3
     RollRange:
-      Min: 0.02
-      Max: 0.08
+      Min: -0.1
+      Max: -0.05
+  RollableAffixes:
   - Affix: 4
     RollRange:
       Min: 3
       Max: 10
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 10
+      Min: 5
+      Max: 15
   - Affix: 0
     RollRange:
       Min: 2

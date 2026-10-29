@@ -15,7 +15,15 @@ MonoBehaviour:
   Name: Mail Chausses
   Id: 612e346d413043679e2033cf8d76c514
   Icon: {fileID: 0}
-  BaseAffixes: []
+  BaseAffixes:
+  - Affix: 5
+    RollRange:
+      Min: 0.03
+      Max: 0.05
+  - Affix: 3
+    RollRange:
+      Min: -0.04
+      Max: -0.02
   RollableAffixes:
   - Affix: 0
     RollRange:
@@ -23,24 +31,16 @@ MonoBehaviour:
       Max: 8
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
-  - Affix: 5
-    RollRange:
-      Min: 0.02
-      Max: 0.08
+      Min: 5
+      Max: 15
   - Affix: 4
     RollRange:
       Min: 3
-      Max: 10
-  - Affix: 22
-    RollRange:
-      Min: 2
       Max: 10
   - Affix: 25
     RollRange:
       Min: 0.5
       Max: 2
   Armor:
-    Min: 7
-    Max: 11
+    Min: 8
+    Max: 12

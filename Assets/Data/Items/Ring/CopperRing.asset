@@ -16,15 +16,15 @@ MonoBehaviour:
   Id: d62acfd7c1364e02bd3c4142bfe43623
   Icon: {fileID: 0}
   BaseAffixes:
-  - Affix: 4
-    RollRange:
-      Min: 2
-      Max: 5
-  RollableAffixes:
   - Affix: 12
     RollRange:
-      Min: 0.01
-      Max: 0.05
+      Min: 0.02
+      Max: 0.04
+  - Affix: 4
+    RollRange:
+      Min: 1
+      Max: 3
+  RollableAffixes:
   - Affix: 23
     RollRange:
       Min: 0.01
@@ -37,18 +37,10 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 8
-  - Affix: 2
-    RollRange:
-      Min: 2
-      Max: 8
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
-  - Affix: 26
-    RollRange:
-      Min: 10
-      Max: 30
+      Min: 5
+      Max: 15
   - Affix: 20
     RollRange:
       Min: 0.03

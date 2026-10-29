@@ -24,6 +24,17 @@ public static class ItemAssets
     /// <summary>The rarity used for colors: Legendary/Unique as forced, standard items as Normal.</summary>
     public static Rarity DisplayRarity(RollableItem item) => item.ForcedRarity ?? Rarity.Normal;
 
+    /// <summary>
+    /// Affixes that are always on the item (slot stats and BaseAffixes) and also in its RollableAffixes pool. An affix
+    /// belongs in one of them, never both.
+    /// </summary>
+    public static List<Affix> BaseAndRollableAffixes(RollableItem item)
+    {
+        var ranges = item.AllRanges.ToList();
+        var always = ranges.Where(r => r.Source != AffixSource.Rollable).Select(r => r.Affix).ToHashSet();
+        return ranges.Where(r => r.Source == AffixSource.Rollable && always.Contains(r.Affix)).Select(r => r.Affix).Distinct().ToList();
+    }
+
     public static List<RollableItem> FindAllItems() => FindAll<RollableItem>();
     public static List<LootTable> FindAllLootTables() => FindAll<LootTable>();
 

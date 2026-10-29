@@ -169,15 +169,21 @@ public class ItemEditorWindow : EditorWindow
         IconPreviewEditor.DrawIcon(new Rect(rect.x + 4, rect.y + 3, RowHeight - 6, RowHeight - 6), item.Icon,
             AssetPreview.GetMiniThumbnail(item), RarityColors.Get(rarity));
 
+        var doubled = ItemAssets.BaseAndRollableAffixes(item);
         float textX = rect.x + RowHeight + 4;
-        GUI.Label(new Rect(textX, rect.y + 4, rect.width - RowHeight - 70, 18), item.Name, RarityGUI.LabelStyle(rarity, bold: true));
-        GUI.Label(new Rect(textX, rect.y + 21, rect.width - RowHeight - 70, 16), $"{item.ItemType} · {ItemAssets.TierOf(item)}", EditorStyles.miniLabel);
+        float textWidth = rect.width - RowHeight - (doubled.Count > 0 ? 92 : 70);
+        GUI.Label(new Rect(textX, rect.y + 4, textWidth, 18), item.Name, RarityGUI.LabelStyle(rarity, bold: true));
+        GUI.Label(new Rect(textX, rect.y + 21, textWidth, 16), $"{item.ItemType} · {ItemAssets.TierOf(item)}", EditorStyles.miniLabel);
 
         // Outlier badge: how many ranges are above / below typical for the slot
         var (high, low) = _outliers.Count(item);
         var badge = new Rect(rect.xMax - 62, rect.y + 12, 58, 18);
         if (high > 0) DrawBadge(new Rect(badge.x, badge.y, 28, 18), $"▲{high}", new Color(1f, 0.55f, 0.15f, 0.8f), "Ranges higher than typical for the slot");
         if (low > 0) DrawBadge(new Rect(badge.x + 30, badge.y, 28, 18), $"▼{low}", new Color(0.3f, 0.55f, 1f, 0.8f), "Ranges lower than typical for the slot");
+        // An affix both always on the item and in its rollable pool: left of the outlier badges
+        if (doubled.Count > 0)
+            DrawBadge(new Rect(badge.x - 22, badge.y, 20, 18), "!", new Color(0.85f, 0.2f, 0.2f, 0.9f),
+                $"Both always on the item and rollable: {string.Join(", ", doubled.Select(ItemEditorFormat.AffixName))}");
 
         if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
         {
@@ -209,6 +215,10 @@ public class ItemEditorWindow : EditorWindow
 
         DrawHeader();
         EditorGUILayout.Space(6);
+        var doubled = ItemAssets.BaseAndRollableAffixes(_selected);
+        if (doubled.Count > 0)
+            EditorGUILayout.HelpBox($"{string.Join(", ", doubled.Select(ItemEditorFormat.AffixName))}: both always on the item " +
+                                    "(base affix or slot stat) and in the rollable affixes. Keep each affix in one of them.", MessageType.Warning);
         DrawNameAndIcon();
         DrawOtherFields();
         EditorGUILayout.Space(6);

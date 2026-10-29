@@ -16,39 +16,39 @@ MonoBehaviour:
   Id: 7fb339696af84064bf018e1cefcfcd47
   Icon: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 4
-      Max: 6
-  RollableAffixes:
   - Affix: 24
     RollRange:
-      Min: 10
-      Max: 40
-  - Affix: 26
-    RollRange:
-      Min: 10
-      Max: 30
+      Min: 15
+      Max: 25
   - Affix: 0
     RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 9
+    RollRange:
+      Min: -0.1
+      Max: -0.05
+  RollableAffixes:
+  - Affix: 22
+    RollRange:
       Min: 2
-      Max: 8
+      Max: 6
+  - Affix: 16
+    RollRange:
+      Min: 0.05
+      Max: 0.1
+  - Affix: 21
+    RollRange:
+      Min: 0.1
+      Max: 0.2
   - Affix: 4
     RollRange:
       Min: 3
-      Max: 10
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 10
-  - Affix: 7
-    RollRange:
-      Min: 0.03
-      Max: 0.1
+      Max: 6
   HealthRegeneration:
-    Min: 2
-    Max: 3
-  ResourceRegeneration:
     Min: 1
     Max: 2
+  ResourceRegeneration:
+    Min: 0.5
+    Max: 1
   LegendaryPower: {fileID: 0}
