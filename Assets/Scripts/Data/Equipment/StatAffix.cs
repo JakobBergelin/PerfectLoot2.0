@@ -24,6 +24,7 @@ namespace Equipment
                 case Affix.Lifesteal: block.Lifesteal += value; break;
                 case Affix.ProjectilePierces: block.Pierce += (int)math.round(value); break;
                 case Affix.ProjectileBounces: block.Bounces += (int)math.round(value); break;
+                case Affix.ProjectileSpeed: block.ProjectileSpeed += value; break;
                 case Affix.Damage: block.Damage += value; break;
                 case Affix.AreaOfEffect: block.AreaOfEffect += value; break;
                 case Affix.ColdResistance: block.ColdResistance += value; break;
@@ -40,6 +41,7 @@ namespace Equipment
                 case Affix.PoisonResistance: block.PoisonResistance += value; break;
                 case Affix.WeaponReach: block.WeaponReach += value; break;
                 case Affix.ArmorPierce: block.ArmorPierce += value; break;
+                case Affix.BuffDuration: block.BuffDuration += value; break;
             }
         }
     }

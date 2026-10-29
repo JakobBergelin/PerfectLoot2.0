@@ -28,12 +28,14 @@ public struct StatBlock
 
     public int Pierce;
     public int Bounces;
+    public float ProjectileSpeed;       // Projectiles this unit spawns fly this much faster (negative: slower)
     public int Armor;
     public float ArmorPierce;           // Armor ignored on the targets of this unit's physical hits (flat, before their multipliers)
 
     public float MovementSpeed;
     public float AreaOfEffect;
     public float CooldownReduction;
+    public float BuffDuration;          // Buffs received last this much longer (negative: shorter); see EffectApply.BuffDuration
 
     public float ColdResistance;
     public float FireResistance;
@@ -69,12 +71,14 @@ public struct StatBlock
 
         Pierce += other.Pierce;
         Bounces += other.Bounces;
+        ProjectileSpeed += other.ProjectileSpeed;
         Armor += other.Armor;
         ArmorPierce += other.ArmorPierce;
 
         MovementSpeed += other.MovementSpeed;
         AreaOfEffect += other.AreaOfEffect;
         CooldownReduction += other.CooldownReduction;
+        BuffDuration += other.BuffDuration;
 
         ColdResistance += other.ColdResistance;
         FireResistance += other.FireResistance;

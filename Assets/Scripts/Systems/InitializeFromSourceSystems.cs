@@ -42,6 +42,7 @@ public partial class InitializeFromSourceSystem : SystemBase
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
             projectile.ValueRW.BounceCount += stats.ValueRO.Value.Bounces;
             projectile.ValueRW.PierceCount += stats.ValueRO.Value.Pierce;
+            projectile.ValueRW.Speed *= math.max(0f, 1.0f + stats.ValueRO.Value.ProjectileSpeed);
         }
 
         var commandBuffer = _endSimulationEntityCommandBufferSystem.CreateCommandBuffer();

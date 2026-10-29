@@ -43,6 +43,8 @@ public enum SkillType
     Dash,
     Whirlwind,
     Tornado,
+    Teleport,
+    Invulnerability,
 
 }
 
@@ -59,6 +61,7 @@ public enum SkillTags
     Melee = 1 << 1,
     Mobility = 1 << 2,
     Channeled = 1 << 3,
+    Invulnerable = 1 << 4,
 }
 
 /// <summary>
@@ -164,6 +167,28 @@ public struct Dash : IComponentData, IEnableableComponent
     public bool Dashing;
 
     public float3 NextPosition;
+}
+
+public struct Teleport : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Range;
+    public float CastTime;      // Seconds standing still between pressing it and landing
+    public float ResourceCost;
+    public float Elapsed;       // Since the last cast, up to Cooldown
+
+    public bool Casting;
+    public float CastElapsed;
+    public float3 Target;
+}
+
+/// <summary>Grants the Invulnerable buff for Duration seconds.</summary>
+public struct Invulnerability : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Duration;
+    public float ResourceCost;
+    public float Elapsed;       // Since the last cast, up to Cooldown
 }
 
 public struct Whirlwind : IComponentData, IEnableableComponent

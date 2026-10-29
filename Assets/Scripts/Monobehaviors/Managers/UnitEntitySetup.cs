@@ -69,6 +69,7 @@ public static class UnitEntitySetup
         AddOrSet(entityManager, entity, new BodyMass { InverseMass = inverseMass });
         AddOrSet(entityManager, entity, new UnitMotion());
         AddDisabled(entityManager, entity, new WaterWalking());
+        AddDisabled(entityManager, entity, new Phased());
 
         // Fill health (and resource) once the stats have been calculated
         AddOrSet(entityManager, entity, new FillHealthAndResource());

@@ -19,12 +19,13 @@ namespace Equipment
             // Offense
             Affix.Damage, Affix.CriticalChance, Affix.CriticalDamage, Affix.ArmorPierce, Affix.AreaOfEffect, Affix.CooldownReduction,
             Affix.ResourceCostReduction, Affix.Lifesteal, Affix.ResourceSteal, Affix.ProjectilePierces, Affix.ProjectileBounces,
+            Affix.ProjectileSpeed,
             // Defense
             Affix.Armor, Affix.BlockChance, Affix.DodgeChance,
             // Resistances
             Affix.AllResistance, Affix.FireResistance, Affix.ColdResistance, Affix.LightningResistance, Affix.PoisonResistance,
             // Other
-            Affix.MovementSpeed,
+            Affix.MovementSpeed, Affix.BuffDuration,
         };
 
         static readonly Dictionary<Affix, int> _index = BuildIndex();

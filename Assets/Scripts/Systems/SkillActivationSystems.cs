@@ -40,7 +40,7 @@ public partial class SkillActivationSystem : SystemBase
                 // Effects that change tags add theirs after this, every frame
                 skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
-                skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Whirlwind) override this
+                skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Teleport, Whirlwind) override this
                 skill.State.HasEnoughResource = resource >= skill.State.ResourceCost
                                              && resource >= skill.State.ResourceCostPerSecond * deltaTime;
             }
@@ -70,6 +70,12 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.Tornado:
                 if (SystemAPI.HasComponent<Tornado>(entity)) SystemAPI.SetComponentEnabled<Tornado>(entity, enabled);
+                break;
+            case SkillType.Teleport:
+                if (SystemAPI.HasComponent<Teleport>(entity)) SystemAPI.SetComponentEnabled<Teleport>(entity, enabled);
+                break;
+            case SkillType.Invulnerability:
+                if (SystemAPI.HasComponent<Invulnerability>(entity)) SystemAPI.SetComponentEnabled<Invulnerability>(entity, enabled);
                 break;
         }
     }

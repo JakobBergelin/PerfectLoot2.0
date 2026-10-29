@@ -23,6 +23,10 @@ partial struct ResetStatsSystem : ISystem
         {
             health.ValueRW.MaxHealthMultiplier = 0.0f;
         }
+        foreach (var healthRegeneration in SystemAPI.Query<RefRW<HealthRegeneration>>())
+        {
+            healthRegeneration.ValueRW.Multiplier = 0.0f;
+        }
         foreach (var resource in SystemAPI.Query<RefRW<Resource>>())
         {
             resource.ValueRW.RegenerationMultiplier = 0.0f;
@@ -89,7 +93,7 @@ partial struct FinalizeStatsSystem : ISystem
 
         foreach (var (healthRegeneration, stats) in SystemAPI.Query<RefRW<HealthRegeneration>, RefRO<CalculatedStats>>())
         {
-            healthRegeneration.ValueRW.Value = stats.ValueRO.Value.HealthRegeneration;
+            healthRegeneration.ValueRW.Value = stats.ValueRO.Value.HealthRegeneration * (1.0f + healthRegeneration.ValueRO.Multiplier);
         }
 
         foreach (var (resource, stats) in SystemAPI.Query<RefRW<Resource>, RefRO<CalculatedStats>>())

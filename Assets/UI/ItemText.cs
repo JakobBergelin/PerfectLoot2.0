@@ -112,7 +112,7 @@ public static class ItemText
     {
         Affix.MovementSpeed or Affix.BlockChance or Affix.CooldownReduction or Affix.ResourceCostReduction or
         Affix.DodgeChance or Affix.AttackSpeed or Affix.Lifesteal or Affix.Damage or Affix.AreaOfEffect or
-        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal => true,
+        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal or Affix.BuffDuration or Affix.ProjectileSpeed => true,
         _ => false
     };
 

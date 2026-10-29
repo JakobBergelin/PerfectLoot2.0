@@ -7,7 +7,7 @@ using Unity.Transforms;
 
 /// <summary>
 /// Physics queries for moving units without the physics solver: sweeping a unit's collider to find what blocks it,
-/// and finding the floor under it. Shared by UnitMoverSystem and DashSystem.
+/// and finding the floor under it. Shared by UnitMoverSystem, DashSystem and TeleportSystem.
 /// </summary>
 public static class UnitMovement
 {
@@ -75,9 +75,10 @@ public static class UnitMovement
 /// <summary>
 /// Moves every unit (player and enemies) by its wanted velocity (UnitMotion) plus knockback. Units are kinematic, so
 /// nothing else moves them: overlaps are pushed apart gently, the collider is swept so it slides along walls, props,
-/// steep ground and blocking units (the player and Physics-body enemies block each other; Swarm only hits the world),
+/// steep ground and blocking units (the player and Physics-body enemies block each other unless either is Phased;
+/// Swarm only hits the world),
 /// and it follows the floor up steps and hills. Spots without floor (water, empty cells, the map edge) are never
-/// entered, unless WaterWalking makes water count as floor. Skips rising (SpawnRise) and dashing units.
+/// entered, unless WaterWalking makes water count as floor. Skips rising (SpawnRise), dashing and teleporting units.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(EnemyMovementSystem))]
@@ -101,6 +102,9 @@ public partial struct UnitMoverSystem : ISystem
             World = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld,
             Players = SystemAPI.GetComponentLookup<Player>(true),
             Dashes = SystemAPI.GetComponentLookup<Dash>(true),
+            Teleports = SystemAPI.GetComponentLookup<Teleport>(true),
+            Phaseds = SystemAPI.GetComponentLookup<Phased>(true),
+            PlayerPhased = !SystemAPI.QueryBuilder().WithAll<Player, Phased>().Build().IsEmpty,
             WaterWalkers = SystemAPI.GetComponentLookup<WaterWalking>(true),
             Knockbacks = SystemAPI.GetComponentLookup<Knockback>(true),
             DeltaTime = SystemAPI.Time.DeltaTime,
@@ -120,15 +124,18 @@ public partial struct UnitMoverSystem : ISystem
         [ReadOnly] public CollisionWorld World;
         [ReadOnly] public ComponentLookup<Player> Players;
         [ReadOnly] public ComponentLookup<Dash> Dashes;
+        [ReadOnly] public ComponentLookup<Teleport> Teleports;
+        [ReadOnly] public ComponentLookup<Phased> Phaseds;
         [ReadOnly] public ComponentLookup<WaterWalking> WaterWalkers;
         [ReadOnly] public ComponentLookup<Knockback> Knockbacks;
+        public bool PlayerPhased;   // Enemies move through the player while it's phased
         public float DeltaTime, StepHeight, MinWalkableNormalY, MaxSlopeTangent, OverlapPushSpeed;
 
         void Execute(Entity entity, ref LocalTransform transform, ref UnitMotion motion, in PhysicsCollider collider, in Steering steering)
         {
             if (DeltaTime <= 0f) return;
-            // A dash moves the unit itself (DashSystem)
-            if (Dashes.HasComponent(entity) && Dashes[entity].Dashing)
+            // A dash moves the unit itself (DashSystem); a teleport stands still until it lands (TeleportSystem)
+            if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting))
             {
                 motion.Actual = float3.zero;
                 return;
@@ -139,9 +146,12 @@ public partial struct UnitMoverSystem : ISystem
             var move = new float3(velocity.x, 0f, velocity.z) * DeltaTime;
 
             bool isPlayer = Players.HasComponent(entity);
+            // Phased: other units don't block (nor push it out of them)
+            bool phased = Phaseds.HasComponent(entity) && Phaseds.IsComponentEnabled(entity);
             uint blockLayers = UnitMovement.WorldLayers |
-                               (isPlayer ? (uint)CollisionLayerHelper.Enemy
-                                         : steering.BodyType == BodyType.Physics ? (uint)CollisionLayerHelper.Player : 0u);
+                               (phased ? 0u
+                                : isPlayer ? (uint)CollisionLayerHelper.Enemy
+                                : steering.BodyType == BodyType.Physics && !PlayerPhased ? (uint)CollisionLayerHelper.Player : 0u);
             uint floorLayers = UnitMovement.GroundLayer |
                                (WaterWalkers.HasComponent(entity) && WaterWalkers.IsComponentEnabled(entity) ? (uint)CollisionLayerHelper.Water : 0u);
 

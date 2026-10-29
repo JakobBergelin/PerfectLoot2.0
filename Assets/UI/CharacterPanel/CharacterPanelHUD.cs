@@ -305,6 +305,7 @@ public class CharacterPanelHUD : MonoBehaviour
         AddRow(section, "Resource Steal", () => Pct(_snapshot.Stats.ResourceSteal));
         AddRow(section, "Pierce", () => _snapshot.Stats.Pierce.ToString());
         AddRow(section, "Bounces", () => _snapshot.Stats.Bounces.ToString());
+        AddRow(section, "Projectile Speed", () => (_snapshot.Stats.ProjectileSpeed >= 0f ? "+" : "") + Pct(_snapshot.Stats.ProjectileSpeed));
 
         section = AddSection(list, "Defense");
         AddRow(section, "Armor", () => WithMitigation(_snapshot.Armor.Value, ArmorMitigation()));
@@ -320,6 +321,7 @@ public class CharacterPanelHUD : MonoBehaviour
 
         section = AddSection(list, "Other");
         AddRow(section, "Movement Speed", () => "+" + Pct(_snapshot.Stats.MovementSpeed));
+        AddRow(section, "Buff Duration", () => (_snapshot.Stats.BuffDuration >= 0f ? "+" : "") + Pct(_snapshot.Stats.BuffDuration));
     }
 
     static VisualElement AddSection(VisualElement list, string title, bool first = false)

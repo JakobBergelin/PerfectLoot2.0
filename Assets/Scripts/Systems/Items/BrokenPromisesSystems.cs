@@ -26,6 +26,7 @@ public partial struct BrokenPromisesHitSystem : ISystem
     {
         var brokenPromisesLookup = SystemAPI.GetComponentLookup<BrokenPromises>();
         var buffLookup = SystemAPI.GetComponentLookup<BrokenPromisesBuff>();
+        var statsLookup = SystemAPI.GetComponentLookup<CalculatedStats>(true);
         foreach (var calculatedDamageBuffer in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>())
         {
             foreach (var instance in calculatedDamageBuffer)
@@ -43,8 +44,12 @@ public partial struct BrokenPromisesHitSystem : ISystem
                 if (brokenPromises.ValueRO.NonCritHits < brokenPromises.ValueRO.HitsRequired) continue;
 
                 brokenPromises.ValueRW.NonCritHits = 0;
-                if (buffLookup.HasComponent(instance.Source))
-                    EffectApply.Refresh(buffLookup, instance.Source, brokenPromises.ValueRO.Duration).ValueRW.CriticalChanceBonus = brokenPromises.ValueRO.CriticalChanceBonus;
+                if (!buffLookup.HasComponent(instance.Source)) continue;
+                float duration = statsLookup.HasComponent(instance.Source)
+                    ? EffectApply.BuffDuration(brokenPromises.ValueRO.Duration, statsLookup[instance.Source].Value)
+                    : brokenPromises.ValueRO.Duration;
+                if (duration > 0f)
+                    EffectApply.Refresh(buffLookup, instance.Source, duration).ValueRW.CriticalChanceBonus = brokenPromises.ValueRO.CriticalChanceBonus;
             }
         }
     }

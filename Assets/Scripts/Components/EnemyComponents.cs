@@ -59,3 +59,9 @@ public struct BodyMass : IComponentData
 
 /// <summary>Enabled: the unit treats water as floor (UnitMoverSystem). For skills or passives that let it walk on water.</summary>
 public struct WaterWalking : IComponentData, IEnableableComponent {}
+
+/// <summary>
+/// Enabled: the unit moves through other units, and a phased player is moved through by enemies (UnitMoverSystem).
+/// Walls, water and map edges still block. For skills or passives that grant it (e.g. Ghost).
+/// </summary>
+public struct Phased : IComponentData, IEnableableComponent {}

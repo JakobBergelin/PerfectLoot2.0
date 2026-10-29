@@ -54,6 +54,8 @@ public enum PassiveType
     Medusa,
     Balance,
     Luminosity,
+    Ghost,
+    PixieDust,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -116,4 +118,15 @@ public struct Balance : IComponentData
 {
     // Damage bonus per point of the lowest of Strength, Agility and Intelligence
     public float DamagePerLowestAttribute;
+}
+
+public struct Ghost : IComponentData
+{
+    // Phased while Invulnerable
+}
+
+public struct PixieDust : IComponentData
+{
+    // Added to the health and resource regeneration multipliers while Invulnerable, 2 = +200%
+    public float RegenerationMultiplier;
 }

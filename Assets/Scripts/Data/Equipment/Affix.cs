@@ -37,5 +37,7 @@ namespace Equipment
         PoisonResistance = 28,
         WeaponReach = 29,
         ArmorPierce = 30,
+        BuffDuration = 31,
+        ProjectileSpeed = 32,
     }
 }

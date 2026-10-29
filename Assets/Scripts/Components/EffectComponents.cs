@@ -143,6 +143,12 @@ public struct EffectDisplay : IBufferElementData
 public static class EffectApply
 {
     /// <summary>
+    /// A buff's duration on a unit with these stats: longer or shorter by its BuffDuration (0.25 = +25%). At 0 or less
+    /// the buff isn't applied.
+    /// </summary>
+    public static float BuffDuration(float duration, in StatBlock stats) => duration * (1f + stats.BuffDuration);
+
+    /// <summary>
     /// Starts a timed effect, or restarts its timer if already active. Returns it so the caller can set its other
     /// fields; those keep their old values while it was already active. Check HasComponent first.
     /// </summary>

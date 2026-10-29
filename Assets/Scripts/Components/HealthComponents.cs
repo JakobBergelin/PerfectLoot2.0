@@ -17,6 +17,7 @@ public struct HealthBarUI : IComponentData
 public struct HealthRegeneration : IComponentData
 {
     public float Value;
+    public float Multiplier;    // Added up each frame, 0.2 = +20%; reset by ResetStatsSystem
 }
 
 public struct DamageInstance : IBufferElementData
