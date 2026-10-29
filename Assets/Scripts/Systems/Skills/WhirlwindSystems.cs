@@ -53,7 +53,7 @@ public partial class WhirlwindSystem : SystemBase
 
         foreach (var (whirlwind, localTransform, resource, stats, entity) in SystemAPI.Query<RefRW<Whirlwind>, RefRW<LocalTransform>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
-            var resourceCost = whirlwind.ValueRO.ResourceCostPerSecond * SystemAPI.Time.DeltaTime;
+            var resourceCost = SkillUtil.Cost(whirlwind.ValueRO.ResourceCostPerSecond, stats.ValueRO.Value) * SystemAPI.Time.DeltaTime;
             if(resource.ValueRO.CurrentValue >= resourceCost)
             {
                 whirlwind.ValueRW.Spinning = true;

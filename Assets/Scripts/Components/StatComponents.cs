@@ -34,7 +34,7 @@ public struct StatBlock
 
     public float MovementSpeed;
     public float AreaOfEffect;
-    public float CooldownReduction;
+    public float CooldownReduction;     // Shorter skill cooldowns (Dash, Teleport...); repeated attacks (Fireball...) use AttackSpeed. See SkillUtil.Cooldown
     public float BuffDuration;          // Buffs received last this much longer (negative: shorter); see EffectApply.BuffDuration
 
     public float ColdResistance;

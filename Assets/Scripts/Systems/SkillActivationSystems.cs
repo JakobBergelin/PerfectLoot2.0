@@ -21,6 +21,12 @@ public partial class SkillActivationSystem : SystemBase
             int activeSlot = int.MaxValue;
             // Frozen and similar: no skill can be used (all of them get disabled below)
             bool preventsActions = SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
+            // Ball Lightning in flight: no skills either, nor casts requested by effects
+            if (SystemAPI.HasComponent<BallLightning>(entity) && SystemAPI.GetComponent<BallLightning>(entity).Flying)
+            {
+                preventsActions = true;
+                if (SystemAPI.HasBuffer<SkillCastRequest>(entity)) SystemAPI.GetBuffer<SkillCastRequest>(entity).Clear();
+            }
             foreach (var skill in skills)
             {
                 if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot)
@@ -28,6 +34,7 @@ public partial class SkillActivationSystem : SystemBase
             }
 
             float resource = SystemAPI.HasComponent<Resource>(entity) ? SystemAPI.GetComponent<Resource>(entity).CurrentValue : float.MaxValue;
+            var stats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity).Value : default;
 
             for (int i = 0; i < skills.Length; i++)
             {
@@ -41,8 +48,8 @@ public partial class SkillActivationSystem : SystemBase
                 skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
                 skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Teleport, Whirlwind) override this
-                skill.State.HasEnoughResource = resource >= skill.State.ResourceCost
-                                             && resource >= skill.State.ResourceCostPerSecond * deltaTime;
+                skill.State.HasEnoughResource = resource >= SkillUtil.Cost(skill.State.ResourceCost, stats)
+                                             && resource >= SkillUtil.Cost(skill.State.ResourceCostPerSecond, stats) * deltaTime;
             }
         }
     }
@@ -79,6 +86,9 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.CaptainsShield:
                 if (SystemAPI.HasComponent<CaptainsShield>(entity)) SystemAPI.SetComponentEnabled<CaptainsShield>(entity, enabled);
+                break;
+            case SkillType.BallLightning:
+                if (SystemAPI.HasComponent<BallLightning>(entity)) SystemAPI.SetComponentEnabled<BallLightning>(entity, enabled);
                 break;
         }
     }

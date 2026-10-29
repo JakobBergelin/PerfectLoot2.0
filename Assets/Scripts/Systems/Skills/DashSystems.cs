@@ -38,7 +38,7 @@ public partial struct DashSystem : ISystem
                      .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             dash.ValueRW.Elapsed += deltaTime;
-            dash.ValueRW.Elapsed = Mathf.Min(dash.ValueRW.Elapsed, dash.ValueRO.Cooldown);
+            dash.ValueRW.Elapsed = Mathf.Min(dash.ValueRW.Elapsed, SkillUtil.Cooldown(dash.ValueRO.Cooldown, SystemAPI.GetComponent<CalculatedStats>(entity).Value));
 
             if(dash.ValueRO.Dashing)
             {
@@ -62,7 +62,7 @@ public partial struct DashSystem : ISystem
         foreach (var (dash, localTransform, desiredDirection, collider, skillBuffer, entity) in
                  SystemAPI.Query<RefRW<Dash>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<PhysicsCollider>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
-            if(dash.ValueRO.Elapsed >= dash.ValueRO.Cooldown)
+            if(dash.ValueRO.Elapsed >= SkillUtil.Cooldown(dash.ValueRO.Cooldown, SystemAPI.GetComponent<CalculatedStats>(entity).Value))
             {
                 localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
                 dash.ValueRW.Elapsed = 0.0f;
@@ -77,14 +77,15 @@ public partial struct DashSystem : ISystem
         }
 
         // Report cooldown and dashing state (after SkillActivationSystem's defaults)
-        foreach (var (dash, skillBuffer) in SystemAPI.Query<RefRO<Dash>, DynamicBuffer<Skill>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (dash, skillBuffer, stats) in SystemAPI.Query<RefRO<Dash>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Dash, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
-                skill.State.CooldownDuration = dash.ValueRO.Cooldown;
-                skill.State.CooldownRemaining = math.max(0f, dash.ValueRO.Cooldown - dash.ValueRO.Elapsed);
+                float cooldown = SkillUtil.Cooldown(dash.ValueRO.Cooldown, stats.ValueRO.Value);
+                skill.State.CooldownDuration = cooldown;
+                skill.State.CooldownRemaining = math.max(0f, cooldown - dash.ValueRO.Elapsed);
                 skill.State.IsActive = dash.ValueRO.Dashing;
             }
         }

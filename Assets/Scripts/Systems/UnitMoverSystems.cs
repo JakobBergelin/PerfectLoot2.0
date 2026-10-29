@@ -7,7 +7,7 @@ using Unity.Transforms;
 
 /// <summary>
 /// Physics queries for moving units without the physics solver: sweeping a unit's collider to find what blocks it,
-/// and finding the floor under it. Shared by UnitMoverSystem, DashSystem and TeleportSystem.
+/// and finding the floor under it. Shared by UnitMoverSystem, DashSystem, TeleportSystem and BallLightningSystem.
 /// </summary>
 public static class UnitMovement
 {
@@ -103,6 +103,7 @@ public partial struct UnitMoverSystem : ISystem
             Players = SystemAPI.GetComponentLookup<Player>(true),
             Dashes = SystemAPI.GetComponentLookup<Dash>(true),
             Teleports = SystemAPI.GetComponentLookup<Teleport>(true),
+            BallLightnings = SystemAPI.GetComponentLookup<BallLightning>(true),
             Phaseds = SystemAPI.GetComponentLookup<Phased>(true),
             PlayerPhased = !SystemAPI.QueryBuilder().WithAll<Player, Phased>().Build().IsEmpty,
             WaterWalkers = SystemAPI.GetComponentLookup<WaterWalking>(true),
@@ -125,6 +126,7 @@ public partial struct UnitMoverSystem : ISystem
         [ReadOnly] public ComponentLookup<Player> Players;
         [ReadOnly] public ComponentLookup<Dash> Dashes;
         [ReadOnly] public ComponentLookup<Teleport> Teleports;
+        [ReadOnly] public ComponentLookup<BallLightning> BallLightnings;
         [ReadOnly] public ComponentLookup<Phased> Phaseds;
         [ReadOnly] public ComponentLookup<WaterWalking> WaterWalkers;
         [ReadOnly] public ComponentLookup<Knockback> Knockbacks;
@@ -134,8 +136,9 @@ public partial struct UnitMoverSystem : ISystem
         void Execute(Entity entity, ref LocalTransform transform, ref UnitMotion motion, in PhysicsCollider collider, in Steering steering)
         {
             if (DeltaTime <= 0f) return;
-            // A dash moves the unit itself (DashSystem); a teleport stands still until it lands (TeleportSystem)
-            if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting))
+            // A dash or Ball Lightning moves the unit itself (DashSystem, BallLightningSystem); a teleport stands still until it lands (TeleportSystem)
+            if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting) ||
+                (BallLightnings.HasComponent(entity) && BallLightnings[entity].Flying))
             {
                 motion.Actual = float3.zero;
                 return;

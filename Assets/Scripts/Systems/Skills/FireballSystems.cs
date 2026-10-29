@@ -29,12 +29,13 @@ public partial class FireballSystem : SystemBase
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             float available = resource.ValueRO.CurrentValue;
+            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, SystemAPI.GetComponent<CalculatedStats>(entity).Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Fireball, out var request))
             {
-                if (available < fireball.ValueRO.ResourceCost) continue;
-                available -= fireball.ValueRO.ResourceCost;
+                if (available < cost) continue;
+                available -= cost;
                 Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
-                resourceChanges.Add(new ResourceChanger{Value = -fireball.ValueRO.ResourceCost});
+                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
             }
         }
@@ -52,7 +53,8 @@ public partial class FireballSystem : SystemBase
         foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, entity) in SystemAPI.Query<RefRW<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
-            if(resource.ValueRO.CurrentValue < fireball.ValueRO.ResourceCost)
+            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, SystemAPI.GetComponent<CalculatedStats>(entity).Value);
+            if(resource.ValueRO.CurrentValue < cost)
             {
                 fireball.ValueRW.Elapsed = 0;
                 continue;
@@ -68,7 +70,7 @@ public partial class FireballSystem : SystemBase
                 Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
                 fireball.ValueRW.Elapsed = 0.0f;
 
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -fireball.ValueRO.ResourceCost});
+                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skillBuffer, SkillType.Fireball);
             }
         }

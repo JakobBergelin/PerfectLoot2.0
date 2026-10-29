@@ -33,10 +33,10 @@ public partial struct TeleportSystem : ISystem
         float minWalkableNormalY = math.cos(math.radians(config.MaxSlope));
         float deltaTime = SystemAPI.Time.DeltaTime;
 
-        foreach (var (teleport, localTransform, skillBuffer) in SystemAPI.Query<RefRW<Teleport>, RefRW<LocalTransform>, DynamicBuffer<Skill>>()
+        foreach (var (teleport, localTransform, skillBuffer, stats) in SystemAPI.Query<RefRW<Teleport>, RefRW<LocalTransform>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>()
                      .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
-            teleport.ValueRW.Elapsed = math.min(teleport.ValueRO.Elapsed + deltaTime, teleport.ValueRO.Cooldown);
+            teleport.ValueRW.Elapsed = math.min(teleport.ValueRO.Elapsed + deltaTime, SkillUtil.Cooldown(teleport.ValueRO.Cooldown, stats.ValueRO.Value));
 
             if (teleport.ValueRO.Casting)
             {
@@ -56,8 +56,10 @@ public partial struct TeleportSystem : ISystem
                  SystemAPI.Query<RefRW<Teleport>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<InputsData>, RefRO<PhysicsCollider>, RefRO<Resource>>()
                           .WithEntityAccess())
         {
-            if (teleport.ValueRO.Casting || teleport.ValueRO.Elapsed < teleport.ValueRO.Cooldown) continue;
-            if (resource.ValueRO.CurrentValue < teleport.ValueRO.ResourceCost) continue;
+            var stats = SystemAPI.GetComponent<CalculatedStats>(entity).Value;
+            if (teleport.ValueRO.Casting || teleport.ValueRO.Elapsed < SkillUtil.Cooldown(teleport.ValueRO.Cooldown, stats)) continue;
+            float cost = SkillUtil.Cost(teleport.ValueRO.ResourceCost, stats);
+            if (resource.ValueRO.CurrentValue < cost) continue;
             if (!TryFindLanding(world, collider.ValueRO, localTransform.ValueRO, entity, inputs.ValueRO.MousePosition, teleport.ValueRO.Range,
                                 minWalkableNormalY, config.StepHeight, FloorLayers(ref state, entity), out var target))
                 continue;
@@ -67,18 +69,19 @@ public partial struct TeleportSystem : ISystem
             teleport.ValueRW.Casting = true;
             teleport.ValueRW.CastElapsed = 0f;
             teleport.ValueRW.Target = target;
-            SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -teleport.ValueRO.ResourceCost});
+            SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
         }
 
         // Report cooldown and casting state (after SkillActivationSystem's defaults)
-        foreach (var (teleport, skillBuffer) in SystemAPI.Query<RefRO<Teleport>, DynamicBuffer<Skill>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (teleport, skillBuffer, stats) in SystemAPI.Query<RefRO<Teleport>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Teleport, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
-                skill.State.CooldownDuration = teleport.ValueRO.Cooldown;
-                skill.State.CooldownRemaining = math.max(0f, teleport.ValueRO.Cooldown - teleport.ValueRO.Elapsed);
+                float cooldown = SkillUtil.Cooldown(teleport.ValueRO.Cooldown, stats.ValueRO.Value);
+                skill.State.CooldownDuration = cooldown;
+                skill.State.CooldownRemaining = math.max(0f, cooldown - teleport.ValueRO.Elapsed);
                 skill.State.IsActive = teleport.ValueRO.Casting;
             }
         }
@@ -91,8 +94,9 @@ public partial struct TeleportSystem : ISystem
         return UnitMovement.GroundLayer | (waterWalking ? (uint)CollisionLayerHelper.Water : 0u);
     }
 
-    // The cursor (no further than range), else the closest spot back toward the caster with floor where the collider fits
-    static bool TryFindLanding(in CollisionWorld world, in PhysicsCollider collider, in LocalTransform transform, Entity self, float3 cursor, float range,
+    // The cursor (no further than range), else the closest spot back toward the caster with floor where the collider fits.
+    // Also used by Ball Lightning.
+    public static bool TryFindLanding(in CollisionWorld world, in PhysicsCollider collider, in LocalTransform transform, Entity self, float3 cursor, float range,
                                float minWalkableNormalY, float stepHeight, uint floorLayers, out float3 landing)
     {
         landing = float3.zero;

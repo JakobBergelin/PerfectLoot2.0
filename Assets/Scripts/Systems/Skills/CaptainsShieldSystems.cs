@@ -41,16 +41,17 @@ public partial struct CaptainsShieldSystem : ISystem
                  SystemAPI.Query<RefRO<CaptainsShield>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRO<LocalTransform>, RefRO<CalculatedStats>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
+            float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.CaptainsShield, out var request))
             {
-                if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < shield.ValueRO.ResourceCost) continue;
+                if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < cost) continue;
                 var position = localTransform.ValueRO.Position;
                 var aim = SystemAPI.HasComponent<InputsData>(entity)
                     ? SystemAPI.GetComponent<InputsData>(entity).MousePosition
                     : position + request.Direction * shield.ValueRO.NoTargetDistance;
                 Throw(commandBuffer, entity, shield.ValueRO, stats.ValueRO.Value, position, request.Direction, aim, physics, targets, targetRange);
                 shieldOut.Add(entity);
-                resourceChanges.Add(new ResourceChanger{Value = -shield.ValueRO.ResourceCost});
+                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.CaptainsShield, request.AutoCast);
             }
         }
@@ -60,13 +61,15 @@ public partial struct CaptainsShieldSystem : ISystem
                           .WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
-            if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < shield.ValueRO.ResourceCost) continue;
+            var stats = SystemAPI.GetComponent<CalculatedStats>(entity).Value;
+            float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats);
+            if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < cost) continue;
             if (Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2)) continue;
 
-            Throw(commandBuffer, entity, shield.ValueRO, SystemAPI.GetComponent<CalculatedStats>(entity).Value, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction,
+            Throw(commandBuffer, entity, shield.ValueRO, stats, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction,
                   inputs.ValueRO.MousePosition, physics, targets, targetRange);
             shieldOut.Add(entity);
-            resourceChanges.Add(new ResourceChanger{Value = -shield.ValueRO.ResourceCost});
+            resourceChanges.Add(new ResourceChanger{Value = -cost});
             SkillUtil.MarkUsed(skills, SkillType.CaptainsShield);
         }
 

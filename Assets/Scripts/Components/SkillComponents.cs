@@ -46,6 +46,7 @@ public enum SkillType
     Teleport,
     Invulnerability,
     CaptainsShield,
+    BallLightning,
 
 }
 
@@ -79,6 +80,19 @@ public struct SkillCastRequest : IBufferElementData
 
 public class SkillUtil
 {
+    /// <summary>
+    /// A skill's resource cost (or cost per second) for a caster with these stats: lower by its ResourceCostReduction
+    /// (0.25 = 25% cheaper, negative: dearer), never below 0. Use it for both the check and the payment.
+    /// </summary>
+    public static float Cost(float cost, in StatBlock stats) => cost * math.max(0f, 1f - stats.ResourceCostReduction);
+
+    /// <summary>
+    /// A skill's cooldown for a caster with these stats: shorter by its CooldownReduction (0.25 = 25% shorter, negative:
+    /// longer), never below 0. For skills with a real cooldown (Dash, Teleport, Invulnerability, Ball Lightning); skills
+    /// that repeat an attack (Fireball, Tornado, Barrage, Fists of Thunder, Whirlwind) are timed by AttackSpeed instead.
+    /// </summary>
+    public static float Cooldown(float cooldown, in StatBlock stats) => cooldown * math.max(0f, 1f - stats.CooldownReduction);
+
     /// <summary>Removes and returns the first request for this skill, if there is one.</summary>
     public static bool TryTakeRequest(DynamicBuffer<SkillCastRequest> requests, SkillType type, out SkillCastRequest request)
     {
@@ -207,6 +221,29 @@ public struct CaptainsShield : IComponentData, IEnableableComponent
     public float TurnSpeed;         // Radians per second, at the start and after each new target
     public float TurnAcceleration;  // Radians per second, per second
     public float NoTargetDistance;  // How far it flies toward the cursor when there's no enemy to home on
+}
+
+/// <summary>
+/// Flies the unit to the clicked spot, lifted over the ground and Invulnerable, draining resource; no other skill,
+/// moving or turning meanwhile. Landing releases a lightning attack that grows with the resource spent.
+/// </summary>
+public struct BallLightning : IComponentData, IEnableableComponent
+{
+    public float Cooldown;              // After landing
+    public float ResourceCost;          // To start
+    public float ResourceCostPerSecond; // While flying
+    public float Speed;                 // Meters per second
+    public float Lift;                  // Meters above what's below
+    public float Damage;                // Of the landing attack, before the resource spent
+    public float SpentToDouble;         // Resource spent that doubles the damage
+    public float Radius;
+    public float HitForce;
+
+    public float Elapsed;               // Since landing, up to Cooldown
+    public bool Flying;
+    public float3 Start;
+    public float3 Destination;
+    public float Spent;                 // Resource spent on this flight, start cost included
 }
 
 public struct Whirlwind : IComponentData, IEnableableComponent

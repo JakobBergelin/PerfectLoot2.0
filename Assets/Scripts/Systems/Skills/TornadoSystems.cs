@@ -34,12 +34,13 @@ public partial class TornadoSystem : SystemBase
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             float available = resource.ValueRO.CurrentValue;
+            float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Tornado, out var request))
             {
-                if (available < tornado.ValueRO.ResourceCost) continue;
-                available -= tornado.ValueRO.ResourceCost;
+                if (available < cost) continue;
+                available -= cost;
                 Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, request.Direction, ref _random);
-                resourceChanges.Add(new ResourceChanger{Value = -tornado.ValueRO.ResourceCost});
+                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Tornado, request.AutoCast);
             }
         }
@@ -59,7 +60,8 @@ public partial class TornadoSystem : SystemBase
                 continue;
             }
 
-            if(resource.ValueRO.CurrentValue < tornado.ValueRO.ResourceCost)
+            float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
+            if(resource.ValueRO.CurrentValue < cost)
             {
                 tornado.ValueRW.Elapsed = 0.0f;
                 continue;
@@ -70,7 +72,7 @@ public partial class TornadoSystem : SystemBase
                 Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction, ref _random);
                 tornado.ValueRW.Elapsed = 0.0f;
 
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -tornado.ValueRO.ResourceCost});
+                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
                 if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Tornado);
             }
         }

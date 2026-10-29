@@ -52,7 +52,7 @@ MonoBehaviour:
   WeaponDamage:
     Min: 3
     Max: 5
-  WeaponCooldown: 0.8
+  WeaponCooldown: 0.9
   WeaponDamageRange: 1.8
   WeaponReach: 1.1
   LegendaryPower: {fileID: 11400000, guid: 422584afdc1f4de44bd5b4242ec6d428, type: 2}
