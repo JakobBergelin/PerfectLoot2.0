@@ -27,9 +27,11 @@ public partial class SkillActivationSystem : SystemBase
                 preventsActions = true;
                 if (SystemAPI.HasBuffer<SkillCastRequest>(entity)) SystemAPI.GetBuffer<SkillCastRequest>(entity).Clear();
             }
+            // Sonic Ball rolling: only Sonic Ball itself stays usable (held keeps it rolling)
+            bool rolling = SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling;
             foreach (var skill in skills)
             {
-                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot)
+                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot && (!rolling || skill.Type == SkillType.SonicBall))
                     activeSlot = skill.SlotIndex;
             }
 
@@ -92,6 +94,9 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.Flamethrower:
                 if (SystemAPI.HasComponent<Flamethrower>(entity)) SystemAPI.SetComponentEnabled<Flamethrower>(entity, enabled);
+                break;
+            case SkillType.SonicBall:
+                if (SystemAPI.HasComponent<SonicBall>(entity)) SystemAPI.SetComponentEnabled<SonicBall>(entity, enabled);
                 break;
         }
     }

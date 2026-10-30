@@ -78,7 +78,7 @@ public static class UnitMovement
 /// steep ground and blocking units (the player and Physics-body enemies block each other unless either is Phased;
 /// Swarm only hits the world),
 /// and it follows the floor up steps and hills. Spots without floor (water, empty cells, the map edge) are never
-/// entered, unless WaterWalking makes water count as floor. Skips rising (SpawnRise), dashing and teleporting units.
+/// entered, unless WaterWalking makes water count as floor. Skips rising (SpawnRise), dashing, teleporting, flying and rolling units.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(EnemyMovementSystem))]
@@ -104,6 +104,7 @@ public partial struct UnitMoverSystem : ISystem
             Dashes = SystemAPI.GetComponentLookup<Dash>(true),
             Teleports = SystemAPI.GetComponentLookup<Teleport>(true),
             BallLightnings = SystemAPI.GetComponentLookup<BallLightning>(true),
+            SonicBalls = SystemAPI.GetComponentLookup<SonicBall>(true),
             Phaseds = SystemAPI.GetComponentLookup<Phased>(true),
             PlayerPhased = !SystemAPI.QueryBuilder().WithAll<Player, Phased>().Build().IsEmpty,
             WaterWalkers = SystemAPI.GetComponentLookup<WaterWalking>(true),
@@ -127,6 +128,7 @@ public partial struct UnitMoverSystem : ISystem
         [ReadOnly] public ComponentLookup<Dash> Dashes;
         [ReadOnly] public ComponentLookup<Teleport> Teleports;
         [ReadOnly] public ComponentLookup<BallLightning> BallLightnings;
+        [ReadOnly] public ComponentLookup<SonicBall> SonicBalls;
         [ReadOnly] public ComponentLookup<Phased> Phaseds;
         [ReadOnly] public ComponentLookup<WaterWalking> WaterWalkers;
         [ReadOnly] public ComponentLookup<Knockback> Knockbacks;
@@ -136,9 +138,9 @@ public partial struct UnitMoverSystem : ISystem
         void Execute(Entity entity, ref LocalTransform transform, ref UnitMotion motion, in PhysicsCollider collider, in Steering steering)
         {
             if (DeltaTime <= 0f) return;
-            // A dash or Ball Lightning moves the unit itself (DashSystem, BallLightningSystem); a teleport stands still until it lands (TeleportSystem)
+            // A dash, Ball Lightning or Sonic Ball moves the unit itself (DashSystem, BallLightningSystem, SonicBallSystem); a teleport stands still until it lands (TeleportSystem)
             if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting) ||
-                (BallLightnings.HasComponent(entity) && BallLightnings[entity].Flying))
+                (BallLightnings.HasComponent(entity) && BallLightnings[entity].Flying) || (SonicBalls.HasComponent(entity) && SonicBalls[entity].Rolling))
             {
                 motion.Actual = float3.zero;
                 return;

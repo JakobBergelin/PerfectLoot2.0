@@ -48,6 +48,7 @@ public enum SkillType
     CaptainsShield,
     BallLightning,
     Flamethrower,
+    SonicBall,
 
 }
 
@@ -311,3 +312,28 @@ public struct Flamethrower : IComponentData, IEnableableComponent
     public float Elapsed;           // Seconds toward the next flame
     public bool Spraying;
 }
+
+/// <summary>
+/// Sonic Ball: while held the unit rolls the way it faced when it started, steered only by left/right (turning the ball
+/// itself), bouncing off walls and water. It passes through enemies, hitting them with a physical attack scaled by its
+/// Armor, and gains movement speed, Armor and Fire Resistance meanwhile (SonicBallStatsSystem). No other skill, moving
+/// or turning meanwhile. Free; the cooldown starts when the roll ends.
+/// </summary>
+public struct SonicBall : IComponentData, IEnableableComponent
+{
+    public float Cooldown;              // After the roll ends
+    public float MovementSpeedBonus;    // While rolling (0.3 = +30%)
+    public int ArmorBonus;
+    public float FireResistanceBonus;
+    public float ArmorDamageMultiplier; // Damage per hit = (Armor + ArmorBonus) * this, at the start of the roll
+    public float Radius;
+    public float HitForce;
+    public float TurnSpeed;             // Radians per second left/right turns the ball
+
+    public float Elapsed;               // Since the roll ended, up to Cooldown
+    public bool Rolling;
+    public float3 Heading;              // Flat, normalized
+}
+
+/// <summary>The attack that follows a rolling Sonic Ball (its Source); removed when the roll ends.</summary>
+public struct SonicBallAttack : IComponentData {}
