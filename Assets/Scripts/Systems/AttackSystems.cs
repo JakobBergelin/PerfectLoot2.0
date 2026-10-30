@@ -63,6 +63,10 @@ public partial class AttackSystem : SystemBase
         {
             outHits.Clear();
             physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, attack.ValueRO.Radius, ref outHits, collisionFilter);
+            // The hit target closest to the attack's center, marked IsCenterTarget once all hits are in
+            var centerTarget = Entity.Null;
+            int centerIndex = -1;
+            float centerDistanceSq = float.MaxValue;
             if(!outHits.IsEmpty)
             {
                 foreach(var hit in outHits)
@@ -105,20 +109,36 @@ public partial class AttackSystem : SystemBase
                             bool isCrit = false;
                             var damage = attack.ValueRO.Damage;
 
-                            CalculateCrit(source.ValueRO.Entity, EntityManager, ref _random, ref damage, ref isCrit);
+                            // Sub damage is sized from the hit that caused it, so it doesn't crit again
+                            if(attack.ValueRO.DamageHierarchy == DamageHierarchy.Main)
+                                CalculateCrit(source.ValueRO.Entity, EntityManager, ref _random, ref damage, ref isCrit);
 
                             attack.ValueRW.Events.OnHit = true;
                             attack.ValueRW.Events.OnHitNormal = hit.SurfaceNormal;
                             attack.ValueRW.Events.IsCrit = isCrit;
 
                             // Written directly (not via ECB) so CalculateDamageSystem handles it this frame
-                            var hitDirection = HitDirection(localTransform.ValueRO.Position, SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position, ref _random);
-                            SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
+                            var targetPosition = SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position;
+                            var hitDirection = HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
+                            var damageBuffer = SystemAPI.GetBuffer<DamageInstance>(hit.Entity);
+                            damageBuffer.Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
                             //TODO dynamic graceperiod depending on skill and attackspeed
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = 0.3f});
+
+                            float distanceSq = math.distancesq(localTransform.ValueRO.Position, targetPosition);
+                            if(distanceSq < centerDistanceSq)
+                            {
+                                centerDistanceSq = distanceSq;
+                                centerTarget = hit.Entity;
+                                centerIndex = damageBuffer.Length - 1;
+                            }
                         }
                     }
                 }
+            }
+            if(centerTarget != Entity.Null)
+            {
+                SystemAPI.GetBuffer<DamageInstance>(centerTarget).ElementAt(centerIndex).IsCenterTarget = true;
             }
         }
     }
@@ -206,6 +226,9 @@ public partial class PeriodicAttackSystem : SystemBase
         {
             outHits.Clear();
             physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, periodicAttack.ValueRO.Radius, ref outHits, collisionFilter);
+            // The target closest to the attack's center this frame; its accumulating damage is marked IsCenterTarget
+            var centerTarget = Entity.Null;
+            float centerDistanceSq = float.MaxValue;
             if(!outHits.IsEmpty)
             {
                 foreach(var hit in outHits)
@@ -242,7 +265,14 @@ public partial class PeriodicAttackSystem : SystemBase
                             }
                             float damage = periodicAttack.ValueRO.DamagePerSecond * SystemAPI.Time.DeltaTime;
                             // Away from where the attack is now; the tick uses the latest one
-                            var hitDirection = AttackSystem.HitDirection(localTransform.ValueRO.Position, SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position, ref _random);
+                            var targetPosition = SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position;
+                            var hitDirection = AttackSystem.HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
+                            float distanceSq = math.distancesq(localTransform.ValueRO.Position, targetPosition);
+                            if(distanceSq < centerDistanceSq)
+                            {
+                                centerDistanceSq = distanceSq;
+                                centerTarget = hit.Entity;
+                            }
                             if(index == -1)
                             {
                                 periodicDamageBuffer.Add(new PeriodicDamageInstance{AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity,
@@ -255,7 +285,20 @@ public partial class PeriodicAttackSystem : SystemBase
                                 instance.HitDirection = hitDirection;
                             }
                         }
-                        
+
+                    }
+                }
+            }
+            // Stays marked until the instance ticks
+            if(centerTarget != Entity.Null)
+            {
+                var centerBuffer = SystemAPI.GetBuffer<PeriodicDamageInstance>(centerTarget);
+                for(int i = 0; i < centerBuffer.Length; i++)
+                {
+                    if(centerBuffer[i].Skill == periodicAttack.ValueRO.Skill)
+                    {
+                        centerBuffer.ElementAt(i).IsCenterTarget = true;
+                        break;
                     }
                 }
             }
@@ -308,7 +351,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
 
                     AttackSystem.CalculateCrit(instance.Source, EntityManager, ref _random, ref damage, ref isCrit);
 
-                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce});
+                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
                     periodicDamageInstance.RemoveAt(i);
                     i--;
                 }

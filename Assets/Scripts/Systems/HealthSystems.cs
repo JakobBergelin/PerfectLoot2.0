@@ -197,7 +197,7 @@ public partial class CalculateDamageSystem : SystemBase
                         }
                     }
                 }
-                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce});
+                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
             }
             damageBuffer.Clear();
         }
@@ -275,9 +275,10 @@ public partial class DamagingSystem : SystemBase
                                 EffectApply.AddBurn(burns, burning, entity, damage / statusEffects.BurnDuration, statusEffects.BurnDuration, instance.Source);
                         break;
                         case DamageType.Lightning:
-                            // The jump radius grows with the attacker's area of effect
+                            // One charge per attack: only its center target. The jump radius grows with the attacker's area of effect
+                            if(!instance.IsCenterTarget) break;
                             float chargedRadius = statusEffects.ChargedRadius * (SystemAPI.HasComponent<CalculatedStats>(instance.Source) ? SystemAPI.GetComponent<CalculatedStats>(instance.Source).Value.AreaMultiplier : 1f);
-                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = chargedRadius});
+                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = chargedRadius, Source = instance.Source});
                         break;
                         case DamageType.Poison:
                             if(poisoned.HasComponent(entity))

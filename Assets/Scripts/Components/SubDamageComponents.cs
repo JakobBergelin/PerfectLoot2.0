@@ -5,4 +5,5 @@ public struct ChargedInstance : IBufferElementData
 {
     public float Damage;
     public float Radius;
+    public Entity Source;   // Who landed the lightning hit: the discharge is theirs and never hits them
 }

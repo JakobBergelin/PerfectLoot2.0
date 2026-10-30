@@ -3,7 +3,10 @@ using Unity.Entities;
 using UnityEngine;
 using Unity.Transforms;
 
-/// <summary>Charged (lightning hits): releases the charge as a lightning attack around the unit. Instant, so not an effect.</summary>
+/// <summary>
+/// Charged (lightning hits): releases the charge as a lightning attack around the unit, hitting the others nearby but not
+/// the unit itself or the attacker. Instant, so not an effect.
+/// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(EffectSystemGroup))]
@@ -31,9 +34,9 @@ public partial class LightningSystem : SystemBase
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
                 commandBuffer.AddComponent(newEntity, new Attack{Damage = instances[i].Damage, Type = DamageType.Lightning, Radius = instances[i].Radius, DamageHierarchy = DamageHierarchy.Sub});
                 commandBuffer.AddComponent(newEntity, new DestroyWithChildren{});
-                // TODO source entity
-                commandBuffer.AddComponent(newEntity, new Source{Entity = Entity.Null});
-                // TODO source
+                commandBuffer.AddComponent(newEntity, new Source{Entity = instances[i].Source});
+                // The charge jumps away from the charged unit
+                commandBuffer.AddBuffer<IgnoreEntity>(newEntity).Add(new IgnoreEntity{Entity = entity, GraceTimer = 1f});
                 if(SystemAPI.HasComponent<Enemy>(entity))
                 {
                     commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});

@@ -29,6 +29,7 @@ public struct DamageInstance : IBufferElementData
     public bool IsCrit;
     public float3 HitDirection;     // Normalized, away from the attack; with HitForce, pushes the target (knockback, effects)
     public float HitForce;
+    public bool IsCenterTarget;     // The hit target closest to the attack's center (one per attack; lightning charges only it)
 }
 
 public struct HealingInstance : IBufferElementData
@@ -47,6 +48,7 @@ public struct PeriodicDamageInstance : IBufferElementData
     public Entity Source;
     public float3 HitDirection;     // Away from the attack, updated every frame it overlaps
     public float HitForce;
+    public bool IsCenterTarget;     // Closest to the attack's center on any frame since the last tick
 }
 
 public struct CalculatedDamageInstance : IBufferElementData
@@ -58,4 +60,5 @@ public struct CalculatedDamageInstance : IBufferElementData
     public bool IsCrit;
     public float3 HitDirection;
     public float HitForce;
+    public bool IsCenterTarget;
 }
