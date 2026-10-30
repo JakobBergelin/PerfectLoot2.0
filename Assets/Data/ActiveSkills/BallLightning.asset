@@ -14,14 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.BallLightningSkill
   Name: Ball Lightning
   Icon: {fileID: 0}
-  Description:
+  Description: 
   Tags: 4
   cooldown: 2
-  resourceCost: 5
+  resourceCost: 10
   resourceCostPerSecond: 10
   Speed: 12
   Lift: 1
-  Damage: 5
-  SpentToDouble: 20
+  Damage: 3
+  SpentToDouble: 40
   Radius: 4
   HitForce: 4

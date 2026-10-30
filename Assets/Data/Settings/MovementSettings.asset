@@ -21,3 +21,8 @@ MonoBehaviour:
     StepHeight: 0.4
     MaxSlope: 50
     OverlapPushSpeed: 4
+    FlowCellSize: 1
+    FlowWindowSize: 64
+    FlowClearance: 0.4
+    FlowRecenterDistance: 8
+    DrawFlowField: 0

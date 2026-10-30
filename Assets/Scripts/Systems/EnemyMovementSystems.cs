@@ -6,12 +6,14 @@ using Unity.Physics;
 using Unity.Transforms;
 
 /// <summary>
-/// Enemy AI movement, in parallel: notices the player within DetectionRadius, chases it, stops within AttackRadius,
-/// and steers away from nearby units (UnitSpatialGrid) so crowds spread out around the player instead of piling up.
-/// Only writes the wanted horizontal velocity (UnitMotion); UnitMoverSystem moves them.
+/// Enemy AI movement, in parallel: notices the player within DetectionRadius, chases it (around walls, props, water and
+/// cliffs along the FlowField), stops within AttackRadius, and steers away from nearby units (UnitSpatialGrid) so crowds
+/// spread out around the player instead of piling up. Only writes the wanted horizontal velocity (UnitMotion);
+/// UnitMoverSystem moves them.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(UnitSpatialGridSystem))]
+[UpdateAfter(typeof(FlowFieldSystem))]
 [BurstCompile]
 public partial struct EnemyMovementSystem : ISystem
 {
@@ -21,6 +23,7 @@ public partial struct EnemyMovementSystem : ISystem
     {
         _playerQuery = SystemAPI.QueryBuilder().WithAll<Player, LocalTransform>().Build();
         state.RequireForUpdate<UnitSpatialGrid>();
+        state.RequireForUpdate<FlowField>();
         state.RequireForUpdate<MovementConfig>();
     }
 
@@ -40,6 +43,7 @@ public partial struct EnemyMovementSystem : ISystem
             Player = player,
             PlayerPosition = playerPosition,
             Grid = SystemAPI.GetSingleton<UnitSpatialGrid>().Units,
+            Field = SystemAPI.GetSingleton<FlowField>(),
             Config = SystemAPI.GetSingleton<MovementConfig>(),
             DeltaTime = SystemAPI.Time.DeltaTime,
         }.ScheduleParallel(state.Dependency);
@@ -67,6 +71,7 @@ public partial struct EnemyMovementSystem : ISystem
         public Entity Player;
         public float3 PlayerPosition;
         [ReadOnly] public NativeParallelMultiHashMap<int, GridUnit> Grid;
+        [ReadOnly] public FlowField Field;
         public MovementConfig Config;
         public float DeltaTime;
 
@@ -97,7 +102,8 @@ public partial struct EnemyMovementSystem : ISystem
             var desired = float3.zero;
             if (chasing && distance > 1e-4f)
             {
-                var direction = toPlayer / distance;
+                // Straight at the player when nothing is in the way, else along the flow field
+                var direction = Field.Direction(transform.Position, PlayerPosition);
                 var lookRotation = quaternion.LookRotationSafe(direction, math.up());
                 npc.Direction = direction;
                 npc.DesiredDirection = lookRotation;
