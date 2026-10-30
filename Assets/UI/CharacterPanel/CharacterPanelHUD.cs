@@ -59,7 +59,8 @@ public class CharacterPanelHUD : MonoBehaviour
     VisualElement _root;
     Label _header;
     VisualElement _tooltip;
-    Label _tooltipTitle, _tooltipSubtitle, _tooltipBody;
+    Label _tooltipTitle, _tooltipSubtitle;
+    VisualElement _tooltipBody;
     readonly List<SlotView> _slots = new List<SlotView>();
     readonly List<StatRow> _rows = new List<StatRow>();
     bool _slotsDirty = true;
@@ -127,7 +128,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipSubtitle = root.Q<Label>("tooltipSubtitle");
-        _tooltipBody = root.Q<Label>("tooltipBody");
+        _tooltipBody = root.Q<VisualElement>("tooltipBody");
         if (_root == null || _header == null || slotGrid == null || statList == null || _tooltip == null)
         {
             Debug.LogError("CharacterPanelHUD: CharacterPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
@@ -259,7 +260,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _tooltipTitle.text = item.BaseItem.Name;
         _tooltipTitle.style.color = ItemText.TitleColor(item);
         _tooltipSubtitle.text = ItemText.Subtitle(item);
-        _tooltipBody.text = ItemText.Body(item);
+        ItemStatRows.Fill(_tooltipBody, item);
 
         // Right of the slot, in the root's coordinates
         var position = view.Element.ChangeCoordinatesTo(_root, new Vector2(view.Element.layout.width + 8f, 0f));
@@ -278,50 +279,55 @@ public class CharacterPanelHUD : MonoBehaviour
         _rows.Clear();
 
         var section = AddSection(list, "Vitals", first: true);
-        AddRow(section, "Health", () => $"{_snapshot.Health.CurrentValue:0} / {_snapshot.Health.MaxValue:0}");
-        AddRow(section, "Health Regen", () => $"{Flat(_snapshot.Stats.HealthRegeneration)}/s");
-        AddRow(section, () => ResourceName(_snapshot.ResourceType), () => $"{_snapshot.Resource.CurrentValue:0} / {_snapshot.Resource.MaxValue:0}");
-        AddRow(section, () => $"{ResourceName(_snapshot.ResourceType)} Regen", () => $"{Flat(_snapshot.Resource.Regeneration)}/s");
+        AddRow(section, Affix.Health, "Health", () => $"{_snapshot.Health.CurrentValue:0} / {_snapshot.Health.MaxValue:0}");
+        AddRow(section, Affix.HealthRegeneration, "Health Regen", () => $"{Flat(_snapshot.Stats.HealthRegeneration)}/s");
+        AddRow(section, Affix.Resource, () => ResourceName(_snapshot.ResourceType), () => $"{_snapshot.Resource.CurrentValue:0} / {_snapshot.Resource.MaxValue:0}");
+        AddRow(section, Affix.ResourceRegeneration, () => $"{ResourceName(_snapshot.ResourceType)} Regen", () => $"{Flat(_snapshot.Resource.Regeneration)}/s");
 
         section = AddSection(list, "Attributes");
-        AddRow(section, "Strength", () => Flat(_snapshot.Stats.Strength));
-        AddRow(section, "Agility", () => Flat(_snapshot.Stats.Agility));
-        AddRow(section, "Intelligence", () => Flat(_snapshot.Stats.Intelligence));
+        AddRow(section, Affix.Strength, "Strength", () => Flat(_snapshot.Stats.Strength));
+        AddRow(section, Affix.Agility, "Agility", () => Flat(_snapshot.Stats.Agility));
+        AddRow(section, Affix.Intelligence, "Intelligence", () => Flat(_snapshot.Stats.Intelligence));
 
         section = AddSection(list, "Offense");
-        AddRow(section, "Weapon Damage", () => _snapshot.Stats.WeaponDamageRange > 0f
+        AddRow(section, Affix.WeaponDamage, "Weapon Damage", () => _snapshot.Stats.WeaponDamageRange > 0f
             ? $"{Flat(_snapshot.Stats.WeaponDamage)} ± {Flat(_snapshot.Stats.WeaponDamageRange)}"
             : Flat(_snapshot.Stats.WeaponDamage));
-        AddRow(section, "Damage", () => "+" + Pct(_snapshot.Stats.Damage));
-        AddRow(section, "Attack Speed", () => $"{_snapshot.Stats.AttackSpeed:0.00}");
-        AddRow(section, "Weapon Reach", () => Flat(_snapshot.Stats.WeaponReach));
-        AddRow(section, "Critical Chance", () => Pct(_snapshot.Stats.CriticalChance));
-        AddRow(section, "Critical Damage", () => "+" + Pct(_snapshot.Stats.CriticalDamage));
-        AddRow(section, "Armor Pierce", () => Flat(_snapshot.Stats.ArmorPierce));
-        AddRow(section, "Area of Effect", () => "+" + Pct(_snapshot.Stats.AreaOfEffect));
-        AddRow(section, "Cooldown Reduction", () => Pct(_snapshot.Stats.CooldownReduction));
-        AddRow(section, "Resource Cost Reduction", () => Pct(_snapshot.Stats.ResourceCostReduction));
-        AddRow(section, "Lifesteal", () => Pct(_snapshot.Stats.Lifesteal));
-        AddRow(section, "Resource Steal", () => Pct(_snapshot.Stats.ResourceSteal));
-        AddRow(section, "Pierce", () => _snapshot.Stats.Pierce.ToString());
-        AddRow(section, "Bounces", () => _snapshot.Stats.Bounces.ToString());
-        AddRow(section, "Projectile Speed", () => (_snapshot.Stats.ProjectileSpeed >= 0f ? "+" : "") + Pct(_snapshot.Stats.ProjectileSpeed));
+        AddRow(section, Affix.Damage, "Damage", () => "+" + Pct(_snapshot.Stats.Damage));
+        AddRow(section, Affix.ElementalDamage, "Elemental Damage", () => "+" + Pct(_snapshot.Stats.ElementalDamage));
+        AddRow(section, Affix.FireDamage, "Fire Damage", () => "+" + Pct(_snapshot.Stats.FireDamage));
+        AddRow(section, Affix.ColdDamage, "Cold Damage", () => "+" + Pct(_snapshot.Stats.ColdDamage));
+        AddRow(section, Affix.LightningDamage, "Lightning Damage", () => "+" + Pct(_snapshot.Stats.LightningDamage));
+        AddRow(section, Affix.PoisonDamage, "Poison Damage", () => "+" + Pct(_snapshot.Stats.PoisonDamage));
+        AddRow(section, Affix.AttackSpeed, "Attack Speed", () => $"{_snapshot.Stats.AttackSpeed:0.00}");
+        AddRow(section, Affix.WeaponReach, "Weapon Reach", () => Flat(_snapshot.Stats.WeaponReach));
+        AddRow(section, Affix.CriticalChance, "Critical Chance", () => Pct(_snapshot.Stats.CriticalChance));
+        AddRow(section, Affix.CriticalDamage, "Critical Damage", () => "+" + Pct(_snapshot.Stats.CriticalDamage));
+        AddRow(section, Affix.ArmorPierce, "Armor Pierce", () => Flat(_snapshot.Stats.ArmorPierce));
+        AddRow(section, Affix.AreaOfEffect, "Area of Effect", () => "+" + Pct(_snapshot.Stats.AreaOfEffect));
+        AddRow(section, Affix.CooldownReduction, "Cooldown Reduction", () => Pct(_snapshot.Stats.CooldownReduction));
+        AddRow(section, Affix.ResourceCostReduction, "Resource Cost Reduction", () => Pct(_snapshot.Stats.ResourceCostReduction));
+        AddRow(section, Affix.Lifesteal, "Lifesteal", () => Pct(_snapshot.Stats.Lifesteal));
+        AddRow(section, Affix.ResourceSteal, "Resource Steal", () => Pct(_snapshot.Stats.ResourceSteal));
+        AddRow(section, Affix.ProjectilePierces, "Pierce", () => _snapshot.Stats.Pierce.ToString());
+        AddRow(section, Affix.ProjectileBounces, "Bounces", () => _snapshot.Stats.Bounces.ToString());
+        AddRow(section, Affix.ProjectileSpeed, "Projectile Speed", () => (_snapshot.Stats.ProjectileSpeed >= 0f ? "+" : "") + Pct(_snapshot.Stats.ProjectileSpeed));
 
         section = AddSection(list, "Defense");
-        AddRow(section, "Armor", () => WithMitigation(_snapshot.Armor.Value, ArmorMitigation()));
-        AddRow(section, "Block Chance", () => Pct(_snapshot.Stats.BlockChance));
-        AddRow(section, "Dodge Chance", () => Pct(_snapshot.Stats.DodgeChance));
+        AddRow(section, Affix.Armor, "Armor", () => WithMitigation(_snapshot.Armor.Value, ArmorMitigation()));
+        AddRow(section, Affix.BlockChance, "Block Chance", () => Pct(_snapshot.Stats.BlockChance));
+        AddRow(section, Affix.DodgeChance, "Dodge Chance", () => Pct(_snapshot.Stats.DodgeChance));
 
         section = AddSection(list, "Resistances");
-        AddRow(section, "Fire", () => Resistance(_snapshot.Stats.FireResistance));
-        AddRow(section, "Cold", () => Resistance(_snapshot.Stats.ColdResistance));
-        AddRow(section, "Lightning", () => Resistance(_snapshot.Stats.LightningResistance));
-        AddRow(section, "Poison", () => Resistance(_snapshot.Stats.PoisonResistance));
-        AddRow(section, "All Resistance", () => "+" + Flat(_snapshot.Stats.AllResistance));
+        AddRow(section, Affix.FireResistance, "Fire", () => Resistance(_snapshot.Stats.FireResistance));
+        AddRow(section, Affix.ColdResistance, "Cold", () => Resistance(_snapshot.Stats.ColdResistance));
+        AddRow(section, Affix.LightningResistance, "Lightning", () => Resistance(_snapshot.Stats.LightningResistance));
+        AddRow(section, Affix.PoisonResistance, "Poison", () => Resistance(_snapshot.Stats.PoisonResistance));
+        AddRow(section, Affix.AllResistance, "All Resistance", () => "+" + Flat(_snapshot.Stats.AllResistance));
 
         section = AddSection(list, "Other");
-        AddRow(section, "Movement Speed", () => "+" + Pct(_snapshot.Stats.MovementSpeed));
-        AddRow(section, "Buff Duration", () => (_snapshot.Stats.BuffDuration >= 0f ? "+" : "") + Pct(_snapshot.Stats.BuffDuration));
+        AddRow(section, Affix.MovementSpeed, "Movement Speed", () => "+" + Pct(_snapshot.Stats.MovementSpeed));
+        AddRow(section, Affix.BuffDuration, "Buff Duration", () => (_snapshot.Stats.BuffDuration >= 0f ? "+" : "") + Pct(_snapshot.Stats.BuffDuration));
     }
 
     static VisualElement AddSection(VisualElement list, string title, bool first = false)
@@ -336,14 +342,20 @@ public class CharacterPanelHUD : MonoBehaviour
         return section;
     }
 
-    void AddRow(VisualElement section, string name, Func<string> get) => AddRow(section, null, get, name);
+    void AddRow(VisualElement section, Affix affix, string name, Func<string> get) => AddRow(section, affix, null, get, name);
 
-    void AddRow(VisualElement section, Func<string> getName, Func<string> get) => AddRow(section, getName, get, "");
+    void AddRow(VisualElement section, Affix affix, Func<string> getName, Func<string> get) => AddRow(section, affix, getName, get, "");
 
-    void AddRow(VisualElement section, Func<string> getName, Func<string> get, string name)
+    // The affix's icon, the name, then the value
+    void AddRow(VisualElement section, Affix affix, Func<string> getName, Func<string> get, string name)
     {
         var row = new VisualElement();
         row.AddToClassList("cp-row");
+        var icon = new VisualElement();
+        icon.AddToClassList("cp-row__icon");
+        var sprite = AffixIcons.Get(affix);
+        if (sprite != null) icon.style.backgroundImage = new StyleBackground(sprite);
+        row.Add(icon);
         var nameLabel = new Label(name);
         nameLabel.AddToClassList("cp-row__name");
         var valueLabel = new Label();

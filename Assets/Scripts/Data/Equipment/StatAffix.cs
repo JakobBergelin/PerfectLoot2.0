@@ -26,6 +26,11 @@ namespace Equipment
                 case Affix.ProjectileBounces: block.Bounces += (int)math.round(value); break;
                 case Affix.ProjectileSpeed: block.ProjectileSpeed += value; break;
                 case Affix.Damage: block.Damage += value; break;
+                case Affix.ElementalDamage: block.ElementalDamage += value; break;
+                case Affix.FireDamage: block.FireDamage += value; break;
+                case Affix.ColdDamage: block.ColdDamage += value; break;
+                case Affix.LightningDamage: block.LightningDamage += value; break;
+                case Affix.PoisonDamage: block.PoisonDamage += value; break;
                 case Affix.AreaOfEffect: block.AreaOfEffect += value; break;
                 case Affix.ColdResistance: block.ColdResistance += value; break;
                 case Affix.FireResistance: block.FireResistance += value; break;

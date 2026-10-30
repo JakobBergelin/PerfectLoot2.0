@@ -19,13 +19,24 @@ public static class ItemText
 
     public static string Subtitle(Item item) => $"{item.Rarity} {item.ItemType}";
 
-    /// <summary>
-    /// The item's stats. With compareTo, each affix gets its difference to compareTo's total of that affix (green
-    /// better, red worse), affixes compareTo lacks are marked new, and affixes this item lacks are listed as missing.
-    /// </summary>
-    public static string Body(Item item, Item compareTo = null)
+    /// <summary>One line of an item's stats: rich text, and the affix it's about (for its icon; null for other lines).</summary>
+    public struct StatLine
     {
-        var sb = new StringBuilder();
+        public string Text;
+        public Affix? Affix;
+        public bool Wide;       // Not part of the stat column (the power, notes): no icon space
+    }
+
+    /// <summary>The item's stats as text (Lines joined), for places without icons.</summary>
+    public static string Body(Item item, Item compareTo = null) => string.Join("\n", Lines(item, compareTo).Select(line => line.Text));
+
+    /// <summary>
+    /// The item's stats, a line each. With compareTo, each affix gets its difference to compareTo's total of that affix
+    /// (green better, red worse), affixes compareTo lacks are marked new, and affixes this item lacks are listed as missing.
+    /// </summary>
+    public static List<StatLine> Lines(Item item, Item compareTo = null)
+    {
+        var lines = new List<StatLine>();
         var settings = LootGenerationManager.Instance != null ? LootGenerationManager.Instance.GenerationSettings : null;
         var compared = new HashSet<Affix>();
 
@@ -33,49 +44,50 @@ public static class ItemText
         // cooldown and reach), the base affixes, then the rolled affixes
         var intrinsic = new HashSet<Affix>(item.BaseItem.AllRanges.Where(r => r.Source == AffixSource.Intrinsic).Select(r => r.Affix));
         var baseAffixes = item.BaseAffixes ?? new List<Rolled>();
-        AppendAffixes(sb, item, Sorted(baseAffixes.Where(rolled => intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
+        AddAffixes(lines, item, Sorted(baseAffixes.Where(rolled => intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
         foreach (var line in item.BaseItem.FixedStatLines)
-            sb.AppendLine($"<color={RangeColor}>{line}</color>");
-        AppendAffixes(sb, item, Sorted(baseAffixes.Where(rolled => !intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
-        AppendAffixes(sb, item, Sorted(item.RollableAffixes), isBaseAffix: false, settings, compareTo, compared);
+            lines.Add(new StatLine { Text = $"<color={RangeColor}>{line}</color>" });
+        AddAffixes(lines, item, Sorted(baseAffixes.Where(rolled => !intrinsic.Contains(rolled.Affix))), isBaseAffix: true, settings, compareTo, compared);
+        AddAffixes(lines, item, Sorted(item.RollableAffixes), isBaseAffix: false, settings, compareTo, compared);
 
         if (compareTo != null)
         {
             foreach (var rolled in Sorted(AllAffixes(compareTo).Where(rolled => Total(item, rolled.Affix) == null)))
-                sb.AppendLine($"<color={WorseColor}>Missing: +{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}</color>");
+                lines.Add(new StatLine { Text = $"<color={WorseColor}>Missing: +{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}</color>", Affix = rolled.Affix });
         }
 
         // Legendary/Unique power: name in the item's rarity color, then its description with the numbers filled in
         if (item.BaseItem is ILegendaryItem legendary && legendary.Power != null)
         {
             var color = ColorUtility.ToHtmlStringRGB(TitleColor(item));
-            sb.AppendLine();
-            sb.AppendLine($"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>");
-            sb.AppendLine(legendary.Power.FormattedDescription);
+            if (lines.Count > 0) lines.Add(new StatLine { Text = "", Wide = true });
+            lines.Add(new StatLine { Text = $"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>", Wide = true });
+            lines.Add(new StatLine { Text = legendary.Power.FormattedDescription?.TrimEnd() ?? "", Wide = true });
         }
 
         // Failed a check when loaded (ItemValidation): kept, but it won't count for leaderboards
         if (item.Unverified)
         {
-            sb.AppendLine();
-            sb.AppendLine($"<color={WorseColor}>Unverified</color>");
+            if (lines.Count > 0) lines.Add(new StatLine { Text = "", Wide = true });
+            lines.Add(new StatLine { Text = $"<color={WorseColor}>Unverified</color>", Wide = true });
         }
-        return sb.Length > 0 ? sb.ToString().TrimEnd() : "No stats";
+        if (lines.Count == 0) lines.Add(new StatLine { Text = "No stats", Wide = true });
+        return lines;
     }
 
     // "+177 Strength  [150 – 180]": the range this affix could roll on this item at its rarity, muted
-    static void AppendAffixes(StringBuilder sb, Item item, IEnumerable<Rolled> affixes, bool isBaseAffix, GenerationSettings settings,
-                              Item compareTo, HashSet<Affix> compared)
+    static void AddAffixes(List<StatLine> lines, Item item, IEnumerable<Rolled> affixes, bool isBaseAffix, GenerationSettings settings,
+                           Item compareTo, HashSet<Affix> compared)
     {
         foreach (var rolled in affixes)
         {
-            sb.Append($"+{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}");
+            var sb = new StringBuilder($"+{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}");
             if (item.BaseItem.TryGetRollRange(rolled.Affix, isBaseAffix, item.Rarity, settings, out float min, out float max))
                 sb.Append($"  <color={RangeColor}>[{Format(rolled.Affix, min)} – {Format(rolled.Affix, max)}]</color>");
             // The difference goes on the affix's first line; totals cover affixes that appear more than once
             if (compareTo != null && compared.Add(rolled.Affix))
                 sb.Append("  " + Difference(rolled.Affix, Total(item, rolled.Affix) ?? 0f, Total(compareTo, rolled.Affix)));
-            sb.AppendLine();
+            lines.Add(new StatLine { Text = sb.ToString(), Affix = rolled.Affix });
         }
     }
 
@@ -112,7 +124,8 @@ public static class ItemText
     {
         Affix.MovementSpeed or Affix.BlockChance or Affix.CooldownReduction or Affix.ResourceCostReduction or
         Affix.DodgeChance or Affix.AttackSpeed or Affix.Lifesteal or Affix.Damage or Affix.AreaOfEffect or
-        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal or Affix.BuffDuration or Affix.ProjectileSpeed => true,
+        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal or Affix.BuffDuration or Affix.ProjectileSpeed or
+        Affix.ElementalDamage or Affix.FireDamage or Affix.ColdDamage or Affix.LightningDamage or Affix.PoisonDamage => true,
         _ => false
     };
 

@@ -39,5 +39,10 @@ namespace Equipment
         ArmorPierce = 30,
         BuffDuration = 31,
         ProjectileSpeed = 32,
+        ElementalDamage = 33,
+        FireDamage = 34,
+        ColdDamage = 35,
+        LightningDamage = 36,
+        PoisonDamage = 37,
     }
 }

@@ -16,6 +16,12 @@ namespace ActiveSkills
         public override float Cooldown => cooldown;
         public override float ResourceCost => resourceCost;
 
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Distance), "Range", Range, null, " m"));
+            description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.CastTime), "Cast time", CastTime, null, " s"));
+        }
+
         protected override Teleport Configure(Teleport component, bool isNew)
         {
             component.Cooldown = cooldown;

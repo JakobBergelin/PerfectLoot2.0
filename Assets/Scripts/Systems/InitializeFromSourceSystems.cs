@@ -26,14 +26,14 @@ public partial class InitializeFromSourceSystem : SystemBase
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
-            attack.ValueRW.Damage *= 1.0f + stats.ValueRO.Value.Damage;
+            attack.ValueRW.Damage *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
         }
 
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<PeriodicAttack>>().WithPresent<InitializeFromSource>().WithEntityAccess())
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
-            attack.ValueRW.DamagePerSecond *= 1.0f + stats.ValueRO.Value.Damage;
+            attack.ValueRW.DamagePerSecond *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
         }
 
         foreach (var (source, projectile, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Projectile>>().WithPresent<InitializeFromSource>().WithEntityAccess())

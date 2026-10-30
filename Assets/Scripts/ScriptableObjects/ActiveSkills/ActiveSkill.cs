@@ -1,3 +1,4 @@
+using Equipment;
 using Unity.Entities;
 using UnityEngine;
 
@@ -23,6 +24,58 @@ namespace ActiveSkills
         public abstract void Apply(EntityManager entityManager, Entity entity);
 
         public abstract void Remove(EntityManager entityManager, Entity entity);
+
+        /// <summary>
+        /// The skill's numbers for its tooltip (SkillTooltip): its damage and other effects, using the same formulas as
+        /// its system, so keep the two in step. stats: the caster's current stats, or null without a character (then
+        /// only the make-up is shown, no totals). The Damage % stat and crits aren't included.
+        /// </summary>
+        public virtual void Describe(SkillDescription description, StatBlock? stats) {}
+
+        // ---------- Helpers for Describe ----------
+
+        protected static string Num(float value) => value.ToString("0.##");
+
+        protected static string Pct(float fraction) => (fraction * 100f).ToString("0.#") + "%";
+
+        protected static string RangeText(float min, float max) => Mathf.Approximately(min, max) ? Num(min) : $"{Num(min)}–{Num(max)}";
+
+        /// <summary>"[fire] label: " to continue with the amount.</summary>
+        protected static SkillLine DamageLine(DamageType type, string label) =>
+            new SkillLine().Icon(GameIcons.DamageType(type)).Text(label + ": ");
+
+        /// <summary>
+        /// Flat damage (flatMin to flatMax) plus weapon damage × weaponMultiplier: "14 (5 + 20% [sword])", a range when
+        /// the weapon has one (WeaponDamage ± WeaponDamageRange).
+        /// </summary>
+        protected static SkillLine WeaponDamageLine(DamageType type, string label, float flatMin, float flatMax, float weaponMultiplier, StatBlock? stats)
+        {
+            var line = DamageLine(type, label);
+            if (stats is StatBlock s)
+            {
+                float low = flatMin + (s.WeaponDamage - s.WeaponDamageRange) * weaponMultiplier;
+                float high = flatMax + (s.WeaponDamage + s.WeaponDamageRange) * weaponMultiplier;
+                line.Text(RangeText(low, high) + " (");
+            }
+            if (flatMax > 0f) line.Text(RangeText(flatMin, flatMax) + " + ");
+            line.Text(Pct(weaponMultiplier)).Icon(GameIcons.Affix(Affix.WeaponDamage));
+            if (stats != null) line.Text(")");
+            return line;
+        }
+
+        /// <summary>"[icon] label: 3.6 s (3 s)": the value with the caster's stats, base greyed when they differ.</summary>
+        protected static SkillLine ValueLine(Sprite icon, string label, float baseValue, float? current, string unit = "")
+        {
+            var line = new SkillLine().Icon(icon).Text(label + ": ");
+            if (current is float value && !Mathf.Approximately(value, baseValue))
+                return line.Text($"{Num(value)}{unit} ").Muted($"({Num(baseValue)}{unit})");
+            return line.Text(Num(baseValue) + unit);
+        }
+
+        /// <summary>A wind-up timed by attack speed: seconds / the AttackSpeed stat.</summary>
+        protected static SkillLine WindUpLine(string label, float seconds, StatBlock? stats) =>
+            ValueLine(GameIcons.Affix(Affix.AttackSpeed), label, seconds,
+                      stats is StatBlock s && s.AttackSpeed > 0f ? seconds / s.AttackSpeed : (float?)null, " s");
     }
 
     /// <summary>A skill backed by one enableable ECS component.</summary>

@@ -18,6 +18,13 @@ namespace ActiveSkills
         public override SkillType Type => SkillType.Fireball;
         public override float ResourceCost => resourceCost;
 
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            description.Damage.Add(DamageLine(DamageType.Fire, "Damage").Text(Num(Damage)));
+            description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.AreaOfEffect), "Radius", Radius, null, " m"));
+            description.Effects.Add(WindUpLine("Time per fireball", AttackSpeed, stats));
+        }
+
         protected override FireBall Configure(FireBall component, bool isNew)
         {
             component.AttackSpeed = AttackSpeed;

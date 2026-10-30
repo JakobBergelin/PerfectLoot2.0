@@ -10,6 +10,11 @@ namespace ActiveSkills
         public override SkillType Type => SkillType.Dash;
         public override float Cooldown => cooldown;
 
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Distance), "Distance", DashSystem.Distance, null, " m"));
+        }
+
         protected override Dash Configure(Dash component, bool isNew)
         {
             component.Cooldown = cooldown;

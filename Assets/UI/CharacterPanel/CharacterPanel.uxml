@@ -15,7 +15,7 @@
         <ui:VisualElement name="tooltip" class="cp-tooltip" picking-mode="Ignore">
             <ui:Label name="tooltipTitle" class="cp-tooltip__title" picking-mode="Ignore" />
             <ui:Label name="tooltipSubtitle" class="cp-tooltip__subtitle" picking-mode="Ignore" />
-            <ui:Label name="tooltipBody" class="cp-tooltip__body" picking-mode="Ignore" />
+            <ui:VisualElement name="tooltipBody" class="cp-tooltip__body" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

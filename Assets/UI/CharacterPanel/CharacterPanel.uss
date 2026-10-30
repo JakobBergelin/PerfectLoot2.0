@@ -123,10 +123,19 @@
 .cp-row {
     flex-direction: row;
     justify-content: space-between;
+    align-items: center;
     height: 20px;
 }
 
+.cp-row__icon {
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+    margin: 0 6px 0 0;
+}
+
 .cp-row__name {
+    flex-grow: 1;
     font-size: 14px;
     color: var(--text-muted);
     padding: 0;

@@ -22,9 +22,11 @@ public class DropPopupHUD : MonoBehaviour
     VisualElement _root;
     Label _heading, _queue;
     VisualElement _currentColumn, _currentCard;
-    Label _currentTitle, _currentSubtitle, _currentBody;
+    Label _currentTitle, _currentSubtitle;
+    VisualElement _currentBody;
     VisualElement _newCard;
-    Label _newLabel, _newTitle, _newSubtitle, _newBody;
+    Label _newLabel, _newTitle, _newSubtitle;
+    VisualElement _newBody;
     Button _keepButton, _takeButton, _okButton;
 
     AccountManager _subscribedAccount;
@@ -69,12 +71,12 @@ public class DropPopupHUD : MonoBehaviour
         _currentCard = root.Q<VisualElement>("currentCard");
         _currentTitle = root.Q<Label>("currentTitle");
         _currentSubtitle = root.Q<Label>("currentSubtitle");
-        _currentBody = root.Q<Label>("currentBody");
+        _currentBody = root.Q<VisualElement>("currentBody");
         _newCard = root.Q<VisualElement>("newCard");
         _newLabel = root.Q<Label>("newLabel");
         _newTitle = root.Q<Label>("newTitle");
         _newSubtitle = root.Q<Label>("newSubtitle");
-        _newBody = root.Q<Label>("newBody");
+        _newBody = root.Q<VisualElement>("newBody");
         _keepButton = root.Q<Button>("keepButton");
         _takeButton = root.Q<Button>("takeButton");
         _okButton = root.Q<Button>("okButton");
@@ -161,12 +163,12 @@ public class DropPopupHUD : MonoBehaviour
         SetVisible(true);
     }
 
-    static void Fill(Item item, Label title, Label subtitle, Label body, VisualElement card, Item compareTo)
+    static void Fill(Item item, Label title, Label subtitle, VisualElement body, VisualElement card, Item compareTo)
     {
         title.text = item.BaseItem.Name;
         title.style.color = ItemText.TitleColor(item);
         subtitle.text = ItemText.Subtitle(item);
-        body.text = ItemText.Body(item, compareTo);
+        ItemStatRows.Fill(body, item, compareTo);
 
         var border = ItemText.TitleColor(item);
         card.style.borderTopColor = border;

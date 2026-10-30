@@ -3,7 +3,7 @@
     <ui:VisualElement name="skillBarRoot" class="skill-bar-root" picking-mode="Ignore">
         <ui:VisualElement name="skillBar" class="skill-bar" picking-mode="Ignore">
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
-                <ui:VisualElement name="slot1" class="skill-slot skill-slot--empty" picking-mode="Ignore">
+                <ui:VisualElement name="slot1" class="skill-slot skill-slot--empty">
                     <ui:VisualElement name="icon" class="skill-slot__icon" picking-mode="Ignore" />
                     <ui:Label name="fallback" class="skill-slot__fallback" picking-mode="Ignore" />
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
@@ -12,7 +12,7 @@
                 <ui:Label name="key" text="1" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
-                <ui:VisualElement name="slot2" class="skill-slot skill-slot--empty" picking-mode="Ignore">
+                <ui:VisualElement name="slot2" class="skill-slot skill-slot--empty">
                     <ui:VisualElement name="icon" class="skill-slot__icon" picking-mode="Ignore" />
                     <ui:Label name="fallback" class="skill-slot__fallback" picking-mode="Ignore" />
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
@@ -21,7 +21,7 @@
                 <ui:Label name="key" text="2" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
-                <ui:VisualElement name="slot3" class="skill-slot skill-slot--empty" picking-mode="Ignore">
+                <ui:VisualElement name="slot3" class="skill-slot skill-slot--empty">
                     <ui:VisualElement name="icon" class="skill-slot__icon" picking-mode="Ignore" />
                     <ui:Label name="fallback" class="skill-slot__fallback" picking-mode="Ignore" />
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
@@ -30,7 +30,7 @@
                 <ui:Label name="key" text="3" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
-                <ui:VisualElement name="slot4" class="skill-slot skill-slot--empty" picking-mode="Ignore">
+                <ui:VisualElement name="slot4" class="skill-slot skill-slot--empty">
                     <ui:VisualElement name="icon" class="skill-slot__icon" picking-mode="Ignore" />
                     <ui:Label name="fallback" class="skill-slot__fallback" picking-mode="Ignore" />
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
@@ -38,6 +38,10 @@
                 </ui:VisualElement>
                 <ui:Label name="key" text="4" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
+        </ui:VisualElement>
+        <ui:VisualElement name="tooltip" class="skill-tooltip" picking-mode="Ignore">
+            <ui:Label name="tooltipTitle" class="skill-tooltip__title" picking-mode="Ignore" />
+            <ui:VisualElement name="tooltipBody" class="skill-tooltip__body" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

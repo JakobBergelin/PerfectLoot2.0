@@ -1,3 +1,4 @@
+using Equipment;
 using Unity.Mathematics;
 using UnityEngine;
 
@@ -22,6 +23,12 @@ namespace ActiveSkills
 
         public override SkillType Type => SkillType.Whirlwind;
         public override float ResourceCostPerSecond => resourceCostPerSecond;
+
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            description.Damage.Add(WeaponDamageLine(DamageType.Physical, "Damage per hit", 0f, 0f, WeaponDamageMultiplier, stats));
+            description.Effects.Add(ValueLine(GameIcons.Affix(Affix.AreaOfEffect), "Hit radius", AttackRadius, null, " m"));
+        }
 
         protected override Whirlwind Configure(Whirlwind component, bool isNew)
         {

@@ -1,0 +1,57 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f30dc58eb4b84e319b6f8c72cb3c9770, type: 3}
+  m_Name: Staff
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableWeaponItem
+  Name: Staff
+  Id: 3c73fceddd9842b78e9ca22b14a611f1
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 16
+    RollRange:
+      Min: 0.1
+      Max: 0.2
+  - Affix: 15
+    RollRange:
+      Min: 0.35
+      Max: 0.6
+  - Affix: 3
+    RollRange:
+      Min: -0.06
+      Max: -0.03
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 26
+    RollRange:
+      Min: 8
+      Max: 15
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 15
+  - Affix: 21
+    RollRange:
+      Min: 0.1
+      Max: 0.3
+  WeaponDamage:
+    Min: 2
+    Max: 3
+  WeaponCooldown: 1.3
+  WeaponDamageRange: 0.5
+  WeaponReach: 1.6

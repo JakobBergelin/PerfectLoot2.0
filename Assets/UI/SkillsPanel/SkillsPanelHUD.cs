@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using ActiveSkills;
 using Passives;
 using UnityEngine;
@@ -42,7 +41,8 @@ public class SkillsPanelHUD : MonoBehaviour
 
     VisualElement _root;
     VisualElement _tooltip;
-    Label _tooltipTitle, _tooltipBody;
+    Label _tooltipTitle;
+    VisualElement _tooltipBody;
     readonly List<SlotView> _activeSlots = new List<SlotView>();
     readonly List<SlotView> _passiveSlots = new List<SlotView>();
     SlotView _selected;
@@ -109,7 +109,7 @@ public class SkillsPanelHUD : MonoBehaviour
         var passivePicker = root.Q<VisualElement>("passivePicker");
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
-        _tooltipBody = root.Q<Label>("tooltipBody");
+        _tooltipBody = root.Q<VisualElement>("tooltipBody");
         if (_root == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null)
         {
             Debug.LogError("SkillsPanelHUD: SkillsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
@@ -361,16 +361,13 @@ public class SkillsPanelHUD : MonoBehaviour
         Describe(skill, out var name, out _, out var description);
         _tooltipTitle.text = name;
 
-        var sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(description)) sb.AppendLine(description);
+        // Active skills: tags, cost, cooldown, damage and effects with the player's stats (SkillTooltip); passives: their description
+        _tooltipBody.Clear();
         if (skill is ActiveSkill active)
-        {
-            if (active.Cooldown > 0f) sb.AppendLine($"Cooldown: {active.Cooldown:0.#}s");
-            if (active.ResourceCost > 0f) sb.AppendLine($"Cost: {active.ResourceCost:0.#}");
-            if (active.ResourceCostPerSecond > 0f) sb.AppendLine($"Cost: {active.ResourceCostPerSecond:0.#} per second");
-        }
-        _tooltipBody.text = sb.ToString().TrimEnd();
-        _tooltipBody.style.display = _tooltipBody.text.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+            SkillTooltip.Fill(_tooltipBody, active, SkillTooltip.CurrentStats());
+        else if (!string.IsNullOrEmpty(description))
+            _tooltipBody.Add(new Label(description) { pickingMode = PickingMode.Ignore });
+        _tooltipBody.style.display = _tooltipBody.childCount > 0 ? DisplayStyle.Flex : DisplayStyle.None;
 
         // Right of the hovered element, in the root's coordinates
         var position = anchor.ChangeCoordinatesTo(_root, new Vector2(anchor.layout.width + 8f, 0f));

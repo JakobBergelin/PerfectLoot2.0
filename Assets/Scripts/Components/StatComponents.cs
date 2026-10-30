@@ -17,6 +17,11 @@ public struct StatBlock
     public float WeaponCooldown;        // Multiplies the time between attacks (folded into AttackSpeed when stats are finalized); 1 when 0
     public float AttackSpeed;
     public float Damage;
+    public float ElementalDamage;       // Extra damage on every non-Physical hit; adds to Damage, see DamageMultiplier
+    public float FireDamage;
+    public float ColdDamage;
+    public float LightningDamage;
+    public float PoisonDamage;
 
     public float Health;
     public float HealthRegeneration;
@@ -48,6 +53,23 @@ public struct StatBlock
     public float BlockChance;
     public float DodgeChance;
 
+    /// <summary>
+    /// What a hit of this damage type is multiplied by: 1 + Damage, plus ElementalDamage for non-Physical types, plus
+    /// the type's own damage %. All additive.
+    /// </summary>
+    public float DamageMultiplier(DamageType type)
+    {
+        float bonus = Damage + type switch
+        {
+            DamageType.Fire => ElementalDamage + FireDamage,
+            DamageType.Cold => ElementalDamage + ColdDamage,
+            DamageType.Lightning => ElementalDamage + LightningDamage,
+            DamageType.Poison => ElementalDamage + PoisonDamage,
+            _ => 0f
+        };
+        return 1f + bonus;
+    }
+
     public void Add(in StatBlock other)
     {
         Strength += other.Strength;
@@ -60,6 +82,11 @@ public struct StatBlock
         WeaponCooldown += other.WeaponCooldown;
         AttackSpeed += other.AttackSpeed;
         Damage += other.Damage;
+        ElementalDamage += other.ElementalDamage;
+        FireDamage += other.FireDamage;
+        ColdDamage += other.ColdDamage;
+        LightningDamage += other.LightningDamage;
+        PoisonDamage += other.PoisonDamage;
 
         Health += other.Health;
         HealthRegeneration += other.HealthRegeneration;

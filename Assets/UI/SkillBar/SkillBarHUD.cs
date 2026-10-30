@@ -4,7 +4,8 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// Shows ActiveSkillManager's four slots in SkillBar.uxml: icon, key, cooldown sweep and countdown,
-/// pressed/active highlight and "not enough resource" tint. Read-only: never touches ECS.
+/// pressed/active highlight and "not enough resource" tint. Hovering a slot shows its skill's tooltip (SkillTooltip,
+/// which reads the player's stats). Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 [DefaultExecutionOrder(100)]  // After ActiveSkillManager.LateUpdate has mirrored this frame's state into the slots
@@ -30,9 +31,15 @@ public class SkillBarHUD : MonoBehaviour
         public int ShownCooldownTenths = -1;
     }
 
+    const string TooltipVisibleClass = "skill-tooltip--visible";
+
     PanelRenderer _panelRenderer;
     bool _bound;
     int _boundVersion = -1;
+    VisualElement _barRoot, _tooltip, _tooltipBody;
+    Label _tooltipTitle;
+    int _hovered = -1;              // Slot index under the pointer, -1 for none
+    ActiveSkill _tooltipSkill;      // The skill the tooltip shows
     readonly SlotView[] _views = new SlotView[4];
 
     void OnEnable()
@@ -70,11 +77,49 @@ public class SkillBarHUD : MonoBehaviour
     {
         if (!_bound) return;
 
+        for (int i = 0; i < _views.Length; i++)
+            UpdateSlot(_views[i], SlotAt(i));
+
+        // The hovered slot's skill changed (or it was emptied): refresh or hide its tooltip
+        var hoveredSkill = _hovered >= 0 ? SlotAt(_hovered)?.EquippedSkill : null;
+        if (hoveredSkill != _tooltipSkill) ShowTooltip(_hovered);
+    }
+
+    static ActiveSkillSlot SlotAt(int index)
+    {
         var manager = ActiveSkillManager.Instance;
-        UpdateSlot(_views[0], manager != null ? manager.Slot1 : null);
-        UpdateSlot(_views[1], manager != null ? manager.Slot2 : null);
-        UpdateSlot(_views[2], manager != null ? manager.Slot3 : null);
-        UpdateSlot(_views[3], manager != null ? manager.Slot4 : null);
+        if (manager == null) return null;
+        return index switch { 0 => manager.Slot1, 1 => manager.Slot2, 2 => manager.Slot3, 3 => manager.Slot4, _ => null };
+    }
+
+    // ---------- Tooltip ----------
+
+    // Above the slot, left-aligned with it: name, then SkillTooltip's body with the player's current stats
+    void ShowTooltip(int index)
+    {
+        var skill = index >= 0 ? SlotAt(index)?.EquippedSkill : null;
+        _tooltipSkill = skill;
+        if (skill == null || _tooltip == null)
+        {
+            _tooltip?.RemoveFromClassList(TooltipVisibleClass);
+            return;
+        }
+
+        _tooltipTitle.text = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
+        SkillTooltip.Fill(_tooltipBody, skill, SkillTooltip.CurrentStats());
+
+        var slot = _views[index].Slot;
+        var position = slot.ChangeCoordinatesTo(_barRoot, Vector2.zero);
+        _tooltip.style.left = position.x;
+        _tooltip.style.bottom = _barRoot.layout.height - position.y + 8f;
+        _tooltip.AddToClassList(TooltipVisibleClass);
+    }
+
+    void HideTooltip(int index)
+    {
+        if (_hovered != index) return;
+        _hovered = -1;
+        ShowTooltip(-1);
     }
 
     bool Bind(VisualElement root)
@@ -95,7 +140,22 @@ public class SkillBarHUD : MonoBehaviour
                 CooldownText = slot.Q<Label>("cooldownText"),
                 Sweep = slot.Q<CooldownSweep>("cooldownSweep"),
             };
+            int index = i;
+            slot.RegisterCallback<PointerEnterEvent>(_ => { _hovered = index; ShowTooltip(index); });
+            slot.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip(index));
         }
+
+        _barRoot = root.Q<VisualElement>("skillBarRoot");
+        _tooltip = root.Q<VisualElement>("tooltip");
+        _tooltipTitle = root.Q<Label>("tooltipTitle");
+        _tooltipBody = root.Q<VisualElement>("tooltipBody");
+        if (_barRoot == null || _tooltip == null || _tooltipTitle == null || _tooltipBody == null)
+        {
+            Debug.LogWarning("SkillBarHUD: SkillBar.uxml has no tooltip elements, so hovering a slot shows nothing.", this);
+            _tooltip = null;
+        }
+        _hovered = -1;
+        _tooltipSkill = null;
         return true;
     }
 

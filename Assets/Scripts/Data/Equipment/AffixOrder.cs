@@ -17,7 +17,8 @@ namespace Equipment
             // Vitals
             Affix.Health, Affix.HealthRegeneration, Affix.Resource, Affix.ResourceRegeneration,
             // Offense
-            Affix.Damage, Affix.CriticalChance, Affix.CriticalDamage, Affix.ArmorPierce, Affix.AreaOfEffect, Affix.CooldownReduction,
+            Affix.Damage, Affix.ElementalDamage, Affix.FireDamage, Affix.ColdDamage, Affix.LightningDamage, Affix.PoisonDamage,
+            Affix.CriticalChance, Affix.CriticalDamage, Affix.ArmorPierce, Affix.AreaOfEffect, Affix.CooldownReduction,
             Affix.ResourceCostReduction, Affix.Lifesteal, Affix.ResourceSteal, Affix.ProjectilePierces, Affix.ProjectileBounces,
             Affix.ProjectileSpeed,
             // Defense

@@ -8,7 +8,8 @@ public static class ItemEditorFormat
     {
         Affix.MovementSpeed or Affix.BlockChance or Affix.CooldownReduction or Affix.ResourceCostReduction or
         Affix.DodgeChance or Affix.AttackSpeed or Affix.Lifesteal or Affix.Damage or Affix.AreaOfEffect or
-        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal or Affix.BuffDuration or Affix.ProjectileSpeed => true,
+        Affix.CriticalChance or Affix.CriticalDamage or Affix.ResourceSteal or Affix.BuffDuration or Affix.ProjectileSpeed or
+        Affix.ElementalDamage or Affix.FireDamage or Affix.ColdDamage or Affix.LightningDamage or Affix.PoisonDamage => true,
         _ => false
     };
 

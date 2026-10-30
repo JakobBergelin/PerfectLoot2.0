@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using Equipment;
 using UnityEngine;
 
 namespace ActiveSkills
@@ -38,6 +39,22 @@ namespace ActiveSkills
         };
 
         public override SkillType Type => SkillType.FistOfThunder;
+
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            if (Combo.Count > 0)
+            {
+                float min = float.MaxValue, max = float.MinValue;
+                foreach (var hit in Combo)
+                {
+                    min = Mathf.Min(min, hit.Damage);
+                    max = Mathf.Max(max, hit.Damage);
+                }
+                description.Damage.Add(WeaponDamageLine(DamageType.Lightning, "Damage per punch", min, max, WeaponDamageMultiplier, stats));
+                description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.AttackSpeed)).Text($"Combo: {Combo.Count} punches"));
+            }
+            description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.ResourceRegeneration)).Text($"Resource per punch: +{Num(ResourceGeneration)}"));
+        }
 
         protected override FistsOfThunder Configure(FistsOfThunder component, bool isNew)
         {

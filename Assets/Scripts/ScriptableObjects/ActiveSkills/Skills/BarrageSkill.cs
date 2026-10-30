@@ -18,6 +18,12 @@ namespace ActiveSkills
 
         public override SkillType Type => SkillType.Barrage;
 
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            description.Damage.Add(DamageLine(DamageType.Physical, "Damage per missile").Text(Num(Damage)));
+            description.Effects.Add(WindUpLine("Time per missile", AttackSpeed, stats));
+        }
+
         protected override Barrage Configure(Barrage component, bool isNew)
         {
             component.AttackSpeed = AttackSpeed;

@@ -130,3 +130,33 @@
 .skill-slot--empty {
     opacity: 0.45;
 }
+
+/* Skill tooltip, shown above a hovered slot (SkillBarHUD positions it) */
+.skill-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 300px;
+    padding: 8px 10px;
+    background-color: rgba(8, 9, 12, 0.97);
+    border-width: 1px;
+    border-color: var(--slot-border);
+    border-radius: 4px;
+}
+
+.skill-tooltip--visible {
+    display: flex;
+}
+
+.skill-tooltip__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--slot-border-active);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.skill-tooltip__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+}

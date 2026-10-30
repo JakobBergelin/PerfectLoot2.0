@@ -25,6 +25,23 @@ namespace ActiveSkills
         public override SkillType Type => SkillType.CaptainsShield;
         public override float ResourceCost => resourceCost;
 
+        public override void Describe(SkillDescription description, StatBlock? stats)
+        {
+            // Damage × (1 + block chance), as CaptainsShieldSystem throws it
+            var block = GameIcons.Affix(Equipment.Affix.BlockChance);
+            var damage = DamageLine(DamageType.Physical, "Damage per hit");
+            if (stats is StatBlock s)
+                damage.Text($"{Num(Damage * Mathf.Max(0f, 1f + s.BlockChance))} ({Num(Damage)} × (1 + {Pct(s.BlockChance)}").Icon(block).Text("))");
+            else
+                damage.Text($"{Num(Damage)} × (1 + ").Icon(block).Text(")");
+            description.Damage.Add(damage);
+
+            var bounces = GameIcons.Affix(Equipment.Affix.ProjectileBounces);
+            description.Effects.Add(ValueLine(bounces, "Bounces", Bounces, stats is StatBlock b ? Bounces + b.Bounces : (float?)null));
+            description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.ProjectileSpeed), "Speed", ProjectileSpeed,
+                                              stats is StatBlock p ? ProjectileSpeed * Mathf.Max(0f, 1f + p.ProjectileSpeed) : (float?)null, " m/s"));
+        }
+
         protected override CaptainsShield Configure(CaptainsShield component, bool isNew)
         {
             component.ResourceCost = resourceCost;

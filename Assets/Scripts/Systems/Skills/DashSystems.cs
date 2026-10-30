@@ -15,7 +15,7 @@ using UnityEngine;
 [UpdateInGroup(typeof(SkillSystemGroup))]
 public partial struct DashSystem : ISystem
 {
-    const float Distance = 7f;
+    public const float Distance = 7f;   // Also shown in Dash's tooltip
     const float MoveRate = 25f;         // Fraction of the remaining way per second (eased)
     const float BackOffStep = 0.25f;    // Meters per step when pulling the end back onto floor
 

@@ -77,7 +77,8 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     Label _detailTitle, _detailSubtitle, _detailBody;
     VisualElement _affixPopup;
     VisualElement _tooltip;
-    Label _tooltipTitle, _tooltipSubtitle, _tooltipBody;
+    Label _tooltipTitle, _tooltipSubtitle;
+    VisualElement _tooltipBody;
     readonly List<RowView> _rows = new List<RowView>();
     ItemDatabase _builtFor;
     TileView _selected;
@@ -160,7 +161,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipSubtitle = root.Q<Label>("tooltipSubtitle");
-        _tooltipBody = root.Q<Label>("tooltipBody");
+        _tooltipBody = root.Q<VisualElement>("tooltipBody");
         if (_root == null || _count == null || filters == null || _rowContainer == null || _prevPage == null ||
             _nextPage == null || _pageLabel == null || _detailBody == null || _affixPopup == null || _tooltip == null)
         {
@@ -603,7 +604,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _tooltipTitle.text = item.BaseItem.Name;
         _tooltipTitle.style.color = ItemText.TitleColor(item);
         _tooltipSubtitle.text = ItemText.Subtitle(item);
-        _tooltipBody.text = ItemText.Body(item);
+        ItemStatRows.Fill(_tooltipBody, item);
 
         // Right of the tile, or left of it when there's no room, in the root's coordinates
         var position = tile.Element.ChangeCoordinatesTo(_root, new Vector2(tile.Element.layout.width + 8f, 0f));
