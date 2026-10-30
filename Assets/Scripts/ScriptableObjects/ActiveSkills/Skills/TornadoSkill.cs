@@ -33,7 +33,7 @@ namespace ActiveSkills
         {
             description.Damage.Add(WeaponDamageLine(DamageType.Poison, "Damage per second", DamagePerSecond, DamagePerSecond, WeaponDamagePerSecond, stats));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Lasts", Lifetime, null, " s"));
-            description.Effects.Add(ValueLine(GameIcons.Affix(Affix.AreaOfEffect), "Radius", Radius, null, " m"));
+            description.Effects.Add(AreaLine("Radius", Radius, stats));
             description.Effects.Add(WindUpLine("Time per tornado", AttackSpeed, stats));
         }
 

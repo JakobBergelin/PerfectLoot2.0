@@ -31,7 +31,7 @@ namespace ActiveSkills
             // Damage × (1 + resource spent / SpentToDouble), as BallLightningSystem lands it: no total, it depends on the flight
             description.Damage.Add(DamageLine(DamageType.Lightning, "Landing damage")
                 .Text($"{Num(Damage)} × (1 + ").Icon(GameIcons.Affix(Equipment.Affix.Resource)).Text($" spent / {Num(SpentToDouble)})"));
-            description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.AreaOfEffect), "Landing radius", Radius, null, " m"));
+            description.Effects.Add(AreaLine("Landing radius", Radius, stats));
             description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.MovementSpeed), "Flight speed", Speed, null, " m/s"));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Stat(StatIcon.Duration)).Text("Invulnerable while flying"));
         }

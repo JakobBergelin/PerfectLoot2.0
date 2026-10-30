@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 
 /// <summary>
 /// Every stat a unit can have. Shared by BaseStats, EquipmentStats and CalculatedStats.
@@ -52,6 +53,9 @@ public struct StatBlock
     public float CriticalDamage;
     public float BlockChance;
     public float DodgeChance;
+
+    /// <summary>What the radius of this unit's attacks and areas is multiplied by: 1 + AreaOfEffect, never below 0.</summary>
+    public float AreaMultiplier => math.max(0f, 1f + AreaOfEffect);
 
     /// <summary>
     /// What a hit of this damage type is multiplied by: 1 + Damage, plus ElementalDamage for non-Physical types, plus

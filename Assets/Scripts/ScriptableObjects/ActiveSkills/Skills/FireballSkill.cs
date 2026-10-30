@@ -21,7 +21,7 @@ namespace ActiveSkills
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
             description.Damage.Add(DamageLine(DamageType.Fire, "Damage").Text(Num(Damage)));
-            description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.AreaOfEffect), "Radius", Radius, null, " m"));
+            description.Effects.Add(AreaLine("Radius", Radius, stats));
             description.Effects.Add(WindUpLine("Time per fireball", AttackSpeed, stats));
         }
 

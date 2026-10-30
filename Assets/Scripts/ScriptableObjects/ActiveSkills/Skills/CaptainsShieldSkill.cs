@@ -37,6 +37,7 @@ namespace ActiveSkills
             description.Damage.Add(damage);
 
             var bounces = GameIcons.Affix(Equipment.Affix.ProjectileBounces);
+            description.Effects.Add(AreaLine("Hit radius", Radius, stats));
             description.Effects.Add(ValueLine(bounces, "Bounces", Bounces, stats is StatBlock b ? Bounces + b.Bounces : (float?)null));
             description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.ProjectileSpeed), "Speed", ProjectileSpeed,
                                               stats is StatBlock p ? ProjectileSpeed * Mathf.Max(0f, 1f + p.ProjectileSpeed) : (float?)null, " m/s"));

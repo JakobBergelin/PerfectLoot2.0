@@ -275,7 +275,9 @@ public partial class DamagingSystem : SystemBase
                                 EffectApply.AddBurn(burns, burning, entity, damage / statusEffects.BurnDuration, statusEffects.BurnDuration, instance.Source);
                         break;
                         case DamageType.Lightning:
-                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = statusEffects.ChargedRadius});
+                            // The jump radius grows with the attacker's area of effect
+                            float chargedRadius = statusEffects.ChargedRadius * (SystemAPI.HasComponent<CalculatedStats>(instance.Source) ? SystemAPI.GetComponent<CalculatedStats>(instance.Source).Value.AreaMultiplier : 1f);
+                            SystemAPI.GetBuffer<ChargedInstance>(entity).Add(new ChargedInstance{Damage = damage * statusEffects.ChargedDamageMultiplier , Radius = chargedRadius});
                         break;
                         case DamageType.Poison:
                             if(poisoned.HasComponent(entity))

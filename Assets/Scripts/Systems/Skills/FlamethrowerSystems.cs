@@ -92,7 +92,7 @@ public partial class FlamethrowerSystem : SystemBase
         direction = math.normalizesafe(direction, new float3(0f, 0f, 1f));
         direction = math.rotate(quaternion.RotateY(random.NextFloat(-flamethrower.Spread, flamethrower.Spread)), direction);
 
-        float size = math.max(0f, 1f + stats.AreaOfEffect);
+        float size = stats.AreaMultiplier;
         float startRadius = flamethrower.StartRadius * size;
         float endRadius = flamethrower.EndRadius * size;
 

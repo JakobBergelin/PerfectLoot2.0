@@ -27,6 +27,7 @@ public partial class InitializeFromSourceSystem : SystemBase
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
             attack.ValueRW.Damage *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
+            attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
         }
 
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<PeriodicAttack>>().WithPresent<InitializeFromSource>().WithEntityAccess())
@@ -34,6 +35,15 @@ public partial class InitializeFromSourceSystem : SystemBase
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
             attack.ValueRW.DamagePerSecond *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
+            // Growing flames scale their own start and end radius (FlamethrowerSystem)
+            if (!SystemAPI.HasComponent<GrowingFlame>(entity))
+                attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
+        }
+
+        foreach (var (source, heal) in SystemAPI.Query<RefRO<Source>, RefRW<Heal>>().WithPresent<InitializeFromSource>())
+        {
+            var stats = SystemAPI.GetComponentRO<CalculatedStats>(source.ValueRO.Entity);
+            heal.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
         }
 
         foreach (var (source, projectile, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Projectile>>().WithPresent<InitializeFromSource>().WithEntityAccess())

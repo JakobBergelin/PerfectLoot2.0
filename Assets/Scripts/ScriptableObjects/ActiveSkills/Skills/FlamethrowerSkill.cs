@@ -40,7 +40,7 @@ namespace ActiveSkills
             description.Damage.Add(DamageLine(DamageType.Fire, "Damage per second per flame").Text(Num(DamagePerSecond)));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Flames last", Lifetime, null, " s"));
             // Grows from start to end radius, both scaled by the AoE stat as FlamethrowerSystem spawns them
-            float scale = stats is StatBlock s ? math.max(0f, 1f + s.AreaOfEffect) : 1f;
+            float scale = stats is StatBlock s ? s.AreaMultiplier : 1f;
             var radius = new SkillLine().Icon(GameIcons.Affix(Affix.AreaOfEffect)).Text($"Flame radius: {Num(StartRadius * scale)} → {Num(EndRadius * scale)} m");
             if (!Mathf.Approximately(scale, 1f)) radius.Text(" ").Muted($"({Num(StartRadius)} → {Num(EndRadius)} m)");
             description.Effects.Add(radius);

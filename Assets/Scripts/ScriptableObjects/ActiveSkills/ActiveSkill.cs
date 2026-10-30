@@ -72,6 +72,10 @@ namespace ActiveSkills
             return line.Text(Num(baseValue) + unit);
         }
 
+        /// <summary>A radius scaled by the area of effect stat (StatBlock.AreaMultiplier), in meters.</summary>
+        protected static SkillLine AreaLine(string label, float radius, StatBlock? stats) =>
+            ValueLine(GameIcons.Affix(Affix.AreaOfEffect), label, radius, stats is StatBlock s ? radius * s.AreaMultiplier : (float?)null, " m");
+
         /// <summary>A wind-up timed by attack speed: seconds / the AttackSpeed stat.</summary>
         protected static SkillLine WindUpLine(string label, float seconds, StatBlock? stats) =>
             ValueLine(GameIcons.Affix(Affix.AttackSpeed), label, seconds,

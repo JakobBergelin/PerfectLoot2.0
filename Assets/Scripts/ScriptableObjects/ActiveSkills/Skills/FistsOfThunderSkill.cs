@@ -53,6 +53,7 @@ namespace ActiveSkills
                 description.Damage.Add(WeaponDamageLine(DamageType.Lightning, "Damage per punch", min, max, WeaponDamageMultiplier, stats));
                 description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.AttackSpeed)).Text($"Combo: {Combo.Count} punches"));
             }
+            description.Effects.Add(AreaLine("Punch radius", Radius, stats));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.ResourceRegeneration)).Text($"Resource per punch: +{Num(ResourceGeneration)}"));
         }
 

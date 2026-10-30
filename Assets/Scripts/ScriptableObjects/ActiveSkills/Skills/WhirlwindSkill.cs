@@ -27,7 +27,7 @@ namespace ActiveSkills
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
             description.Damage.Add(WeaponDamageLine(DamageType.Physical, "Damage per hit", 0f, 0f, WeaponDamageMultiplier, stats));
-            description.Effects.Add(ValueLine(GameIcons.Affix(Affix.AreaOfEffect), "Hit radius", AttackRadius, null, " m"));
+            description.Effects.Add(AreaLine("Hit radius", AttackRadius, stats));
         }
 
         protected override Whirlwind Configure(Whirlwind component, bool isNew)
