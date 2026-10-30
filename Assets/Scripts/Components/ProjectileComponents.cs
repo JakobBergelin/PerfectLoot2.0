@@ -80,3 +80,14 @@ public struct ShieldProjectile : IComponentData
     public float TurnSpeed;
     public float TurnAcceleration;
 }
+
+/// <summary>
+/// A PeriodicAttack whose radius grows from StartRadius to EndRadius over Lifetime (its TimeRemaining counts down from
+/// Lifetime). Flamethrower's flames.
+/// </summary>
+public struct GrowingFlame : IComponentData
+{
+    public float StartRadius;
+    public float EndRadius;
+    public float Lifetime;
+}

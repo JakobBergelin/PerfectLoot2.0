@@ -47,6 +47,7 @@ public enum SkillType
     Invulnerability,
     CaptainsShield,
     BallLightning,
+    Flamethrower,
 
 }
 
@@ -288,3 +289,25 @@ public struct MobilitySkillUsed : IComponentData, IEnableableComponent {}
 /// punch, each Whirlwind tick), read by reactions such as Echoing Blade.
 /// </summary>
 public struct MeleeAttackUsed : IComponentData, IEnableableComponent {}
+
+/// <summary>
+/// Flamethrower: channeled while held. Pays ResourceCost when the spray starts, then drains ResourceCostPerSecond and
+/// sprays FlamesPerSecond growing fire flames (GrowingFlame) in a cone toward the cursor. The unit is slowed meanwhile.
+/// </summary>
+public struct Flamethrower : IComponentData, IEnableableComponent
+{
+    public float ResourceCost;
+    public float ResourceCostPerSecond;
+    public float FlamesPerSecond;
+    public float Spread;            // Radians each side of the aim a flame can leave at
+    public float Speed;
+    public float Lifetime;
+    public float StartRadius;
+    public float EndRadius;
+    public float DamagePerSecond;   // Per flame, to every enemy inside it
+    public float TickRate;
+    public float HitForce;
+    public float Slow;              // Movement speed taken off while spraying (0.4 = 40%)
+    public float Elapsed;           // Seconds toward the next flame
+    public bool Spraying;
+}

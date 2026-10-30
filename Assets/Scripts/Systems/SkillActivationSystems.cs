@@ -90,6 +90,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.BallLightning:
                 if (SystemAPI.HasComponent<BallLightning>(entity)) SystemAPI.SetComponentEnabled<BallLightning>(entity, enabled);
                 break;
+            case SkillType.Flamethrower:
+                if (SystemAPI.HasComponent<Flamethrower>(entity)) SystemAPI.SetComponentEnabled<Flamethrower>(entity, enabled);
+                break;
         }
     }
 }
