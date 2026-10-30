@@ -3,7 +3,8 @@ using Unity.Entities;
 
 /// <summary>
 /// Turns this frame's skill uses into events by tag: a used Melee skill enables MeleeAttackUsed, a used Mobility skill
-/// MobilitySkillUsed. First in SkillReactionSystemGroup, so every reaction sees them.
+/// MobilitySkillUsed (only the tags its uses were marked as, see SkillUtil.MarkUsed). First in SkillReactionSystemGroup,
+/// so every reaction sees them.
 /// </summary>
 [UpdateInGroup(typeof(SkillReactionSystemGroup), OrderFirst = true)]
 [BurstCompile]
@@ -19,7 +20,7 @@ public partial struct SkillTagEventSystem : ISystem
         {
             var used = SkillTags.None;
             foreach (var skill in skills)
-                if (skill.events.OnUsed) used |= skill.Tags;
+                if (skill.events.OnUsed) used |= skill.Tags & skill.events.UsedAs;
 
             if ((used & SkillTags.Melee) != 0 && melee.HasComponent(entity)) melee.SetComponentEnabled(entity, true);
             if ((used & SkillTags.Mobility) != 0 && mobility.HasComponent(entity)) mobility.SetComponentEnabled(entity, true);

@@ -29,6 +29,9 @@ public partial class SkillActivationSystem : SystemBase
             }
             // Sonic Ball rolling: only Sonic Ball itself stays usable (held keeps it rolling)
             bool rolling = SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling;
+            // Hookshot Slash out or pulling: no skills (its own system carries on without being held)
+            if (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle)
+                preventsActions = true;
             foreach (var skill in skills)
             {
                 if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot && (!rolling || skill.Type == SkillType.SonicBall))
@@ -46,6 +49,7 @@ public partial class SkillActivationSystem : SystemBase
 
                 skill.events.OnUsed = false;
                 skill.events.AutoCast = false;
+                skill.events.UsedAs = SkillTags.None;
                 // Effects that change tags add theirs after this, every frame
                 skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
@@ -97,6 +101,9 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.SonicBall:
                 if (SystemAPI.HasComponent<SonicBall>(entity)) SystemAPI.SetComponentEnabled<SonicBall>(entity, enabled);
+                break;
+            case SkillType.HookshotSlash:
+                if (SystemAPI.HasComponent<HookshotSlash>(entity)) SystemAPI.SetComponentEnabled<HookshotSlash>(entity, enabled);
                 break;
         }
     }

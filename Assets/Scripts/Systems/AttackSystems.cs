@@ -122,8 +122,8 @@ public partial class AttackSystem : SystemBase
                             var hitDirection = HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
                             var damageBuffer = SystemAPI.GetBuffer<DamageInstance>(hit.Entity);
                             damageBuffer.Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
-                            //TODO dynamic graceperiod depending on skill and attackspeed
-                            ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = 0.3f});
+                            float gracePeriod = attack.ValueRO.GracePeriod > 0f ? attack.ValueRO.GracePeriod : Attack.DefaultGracePeriod;
+                            ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = gracePeriod});
 
                             float distanceSq = math.distancesq(localTransform.ValueRO.Position, targetPosition);
                             if(distanceSq < centerDistanceSq)

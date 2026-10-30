@@ -9,6 +9,9 @@ public struct Attack : IComponentData
     public float Radius;
     // Push on hit, away from the attack's position (knockback now; particles and ragdoll can use it too). 0 = no push.
     public float HitForce;
+    // Seconds before it can hit the same target again (e.g. long for one hit per target). 0 = DefaultGracePeriod.
+    public float GracePeriod;
+    public const float DefaultGracePeriod = 0.3f;
     public struct Triggers
     {
         public bool OnHit;

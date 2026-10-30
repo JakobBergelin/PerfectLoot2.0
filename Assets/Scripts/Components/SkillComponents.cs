@@ -18,6 +18,7 @@ public struct Skill : IBufferElementData
     {
         public bool OnUsed;
         public bool AutoCast;   // OnUsed came from an effect (e.g. Echoing Blade), not the player pressing the skill
+        public SkillTags UsedAs;    // Which of the skill's tags this frame's uses raise events for (see MarkUsed)
     }
 
     public Triggers events;
@@ -49,6 +50,7 @@ public enum SkillType
     BallLightning,
     Flamethrower,
     SonicBall,
+    HookshotSlash,
 
 }
 
@@ -111,16 +113,20 @@ public class SkillUtil
 
     /// <summary>
     /// Raises the skill's OnUsed event this frame (autoCast: cast by an effect, not the player). Every use counts: a
-    /// cast, a punch, a Whirlwind tick. Melee and Mobility skills also raise MeleeAttackUsed / MobilitySkillUsed from it.
+    /// cast, a punch, a Whirlwind tick. Melee and Mobility skills also raise MeleeAttackUsed / MobilitySkillUsed from it;
+    /// usedAs limits that to some of its tags (e.g. Hookshot Slash: its launch is a Mobility use, each hit a Melee use).
     /// </summary>
-    public static void MarkUsed(DynamicBuffer<Skill> buffer, SkillType type, bool autoCast = false)
+    public static void MarkUsed(DynamicBuffer<Skill> buffer, SkillType type, bool autoCast = false, SkillTags usedAs = AllTags)
     {
         int index = -1;
         if (!FindSkill(buffer, type, ref index)) return;
         ref var skill = ref buffer.ElementAt(index);
         skill.events.OnUsed = true;
         skill.events.AutoCast |= autoCast;
+        skill.events.UsedAs |= usedAs;
     }
+
+    public const SkillTags AllTags = (SkillTags)~0;
 
     public static bool FindSkill(DynamicBuffer<Skill> buffer,SkillType type, ref int index)
     {
@@ -337,3 +343,36 @@ public struct SonicBall : IComponentData, IEnableableComponent
 
 /// <summary>The attack that follows a rolling Sonic Ball (its Source); removed when the roll ends.</summary>
 public struct SonicBallAttack : IComponentData {}
+
+public enum HookshotState : byte
+{
+    Idle,
+    Firing,     // The hook flies out; the unit stands still
+    Pulling,    // Latched: the unit is pulled to it
+}
+
+/// <summary>
+/// Hookshot Slash: pressing it fires a hook toward the cursor (up to Range) that latches there or on the first wall, then
+/// pulls the unit to it over water and through enemies, slashing each one it passes once for weapon damage. No other
+/// skill, moving or turning meanwhile. No cooldown; costs ResourceCost.
+/// </summary>
+public struct HookshotSlash : IComponentData, IEnableableComponent
+{
+    public float ResourceCost;
+    public float Range;
+    public float HookSpeed;             // Meters per second
+    public float PullSpeed;             // Meters per second
+    public float WeaponDamageMultiplier;
+    public float Radius;
+    public float HitForce;
+
+    public HookshotState State;
+    public float3 Direction;            // Flat, toward the cursor when fired
+    public float3 HookPosition;
+    public float HookDistance;          // How far the hook flies: to the cursor, at most Range
+    public float3 PullEnd;              // Where the pull stops: before walls, on floor
+    public int HitsSeen;                // Enemies its attack has hit this pull (each one a Melee use)
+}
+
+/// <summary>The attack that travels with a Hookshot Slash pull (its Source); removed when the pull ends.</summary>
+public struct HookshotSlashAttack : IComponentData {}
