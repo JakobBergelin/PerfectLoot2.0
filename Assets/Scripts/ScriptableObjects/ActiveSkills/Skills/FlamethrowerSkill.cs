@@ -37,7 +37,7 @@ namespace ActiveSkills
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
-            description.Damage.Add(DamageLine(DamageType.Fire, "Damage per second per flame").Text(Num(DamagePerSecond)));
+            description.Damage.Add(DamageLine(DamageType.Fire, "Damage per second per flame", stats).Text(Num(DamagePerSecond)));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Flames last", Lifetime, null, " s"));
             // Grows from start to end radius, both scaled by the AoE stat as FlamethrowerSystem spawns them
             float scale = stats is StatBlock s ? s.AreaMultiplier : 1f;

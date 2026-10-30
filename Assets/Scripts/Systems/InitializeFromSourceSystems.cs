@@ -26,6 +26,8 @@ public partial class InitializeFromSourceSystem : SystemBase
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
+            // Converted first, so the new element's damage % applies
+            attack.ValueRW.Type = stats.ValueRO.Value.ConvertedType(attack.ValueRO.Type);
             attack.ValueRW.Damage *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
             attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
         }
@@ -34,6 +36,7 @@ public partial class InitializeFromSourceSystem : SystemBase
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
+            attack.ValueRW.Type = stats.ValueRO.Value.ConvertedType(attack.ValueRO.Type);
             attack.ValueRW.DamagePerSecond *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
             // Growing flames scale their own start and end radius (FlamethrowerSystem)
             if (!SystemAPI.HasComponent<GrowingFlame>(entity))

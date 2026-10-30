@@ -54,6 +54,14 @@ public struct StatBlock
     public float BlockChance;
     public float DodgeChance;
 
+    // Elemental conversion legendary powers: every skill hit and area of this unit deals ConvertDamageTo instead.
+    // Set each frame by ElementalConversionSystem, not by items' stats (Add leaves them alone).
+    [System.NonSerialized] public bool ConvertsDamage;
+    [System.NonSerialized] public DamageType ConvertDamageTo;
+
+    /// <summary>The damage type this unit's skills deal instead of type (type itself without a conversion).</summary>
+    public DamageType ConvertedType(DamageType type) => ConvertsDamage ? ConvertDamageTo : type;
+
     /// <summary>What the radius of this unit's attacks and areas is multiplied by: 1 + AreaOfEffect, never below 0.</summary>
     public float AreaMultiplier => math.max(0f, 1f + AreaOfEffect);
 

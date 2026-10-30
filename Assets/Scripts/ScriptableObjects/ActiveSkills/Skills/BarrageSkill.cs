@@ -20,7 +20,7 @@ namespace ActiveSkills
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
-            description.Damage.Add(DamageLine(DamageType.Physical, "Damage per missile").Text(Num(Damage)));
+            description.Damage.Add(DamageLine(DamageType.Physical, "Damage per missile", stats).Text(Num(Damage)));
             description.Effects.Add(AreaLine("Hit radius", Radius, stats));
             description.Effects.Add(WindUpLine("Time per missile", AttackSpeed, stats));
         }

@@ -25,6 +25,15 @@ public struct EchoingBlade : IComponentData
 }
 
 /// <summary>
+/// Elemental conversion (Pyromancy, Frostbound, Stormborn, Venomous): every skill hit and area of the wearer deals Type
+/// damage instead, status effect included (ElementalConversionSystem sets it on the stats, InitializeFromSourceSystem converts).
+/// </summary>
+public struct ElementalConversion : IComponentData
+{
+    public DamageType Type;
+}
+
+/// <summary>
 /// Event Horizon (Gravity Orb): the wearer's projectiles orbit it, up to MaxProjectiles; each new one pushes the oldest
 /// out. Faster projectiles orbit further out (EventHorizonSystems).
 /// </summary>

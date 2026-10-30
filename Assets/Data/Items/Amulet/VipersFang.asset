@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c55a96dc5324353bdc09d584a7af52a, type: 3}
+  m_Name: VipersFang
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
+  Name: Viper's Fang
+  Id: 6133207e6c5c4d36bfa177ec419e44e7
+  Icon: {fileID: 0}
+  BaseAffixes: []
+  RollableAffixes: []
+  LegendaryPower: {fileID: 11400000, guid: abacb5a4624e4e0cac44a1b0265593a1, type: 2}

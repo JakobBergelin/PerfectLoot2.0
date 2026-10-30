@@ -29,7 +29,7 @@ namespace ActiveSkills
         {
             // Damage × (1 + block chance), as CaptainsShieldSystem throws it
             var block = GameIcons.Affix(Equipment.Affix.BlockChance);
-            var damage = DamageLine(DamageType.Physical, "Damage per hit");
+            var damage = DamageLine(DamageType.Physical, "Damage per hit", stats);
             if (stats is StatBlock s)
                 damage.Text($"{Num(Damage * Mathf.Max(0f, 1f + s.BlockChance))} ({Num(Damage)} × (1 + {Pct(s.BlockChance)}").Icon(block).Text("))");
             else

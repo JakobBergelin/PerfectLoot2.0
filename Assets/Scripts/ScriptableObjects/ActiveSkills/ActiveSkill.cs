@@ -40,9 +40,9 @@ namespace ActiveSkills
 
         protected static string RangeText(float min, float max) => Mathf.Approximately(min, max) ? Num(min) : $"{Num(min)}–{Num(max)}";
 
-        /// <summary>"[fire] label: " to continue with the amount.</summary>
-        protected static SkillLine DamageLine(DamageType type, string label) =>
-            new SkillLine().Icon(GameIcons.DamageType(type)).Text(label + ": ");
+        /// <summary>"[fire] label: " to continue with the amount. The icon is the element the caster's conversion turns type into.</summary>
+        protected static SkillLine DamageLine(DamageType type, string label, StatBlock? stats) =>
+            new SkillLine().Icon(GameIcons.DamageType(stats is StatBlock s ? s.ConvertedType(type) : type)).Text(label + ": ");
 
         /// <summary>
         /// Flat damage (flatMin to flatMax) plus weapon damage × weaponMultiplier: "14 (5 + 20% [sword])", a range when
@@ -50,7 +50,7 @@ namespace ActiveSkills
         /// </summary>
         protected static SkillLine WeaponDamageLine(DamageType type, string label, float flatMin, float flatMax, float weaponMultiplier, StatBlock? stats)
         {
-            var line = DamageLine(type, label);
+            var line = DamageLine(type, label, stats);
             if (stats is StatBlock s)
             {
                 float low = flatMin + (s.WeaponDamage - s.WeaponDamageRange) * weaponMultiplier;
