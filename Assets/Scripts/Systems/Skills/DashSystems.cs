@@ -8,8 +8,8 @@ using UnityEngine;
 
 /// <summary>
 /// Dash: a quick move toward the cursor. It passes through enemies and over water or empty cells, but stops at walls
-/// and always ends on floor: the path is swept against the world when the dash starts and pulled back to the last spot
-/// with floor. While dashing it moves the unit itself (UnitMoverSystem skips it), following the floor where there is any.
+/// and always ends on floor: the path is checked against the world when the dash starts (DashEnd) and ends at the last
+/// spot with floor. While dashing it moves the unit itself (UnitMoverSystem skips it), following the floor where there is any.
 /// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(SkillSystemGroup))]
@@ -17,7 +17,7 @@ public partial struct DashSystem : ISystem
 {
     public const float Distance = 7f;   // Also shown in Dash's tooltip
     const float MoveRate = 25f;         // Fraction of the remaining way per second (eased)
-    const float BackOffStep = 0.25f;    // Meters per step when pulling the end back onto floor
+    const float PathStep = 0.25f;       // Meters per step when checking the path (DashEnd)
 
     [BurstCompile]
     public void OnCreate(ref SystemState state)
@@ -99,28 +99,39 @@ public partial struct DashSystem : ISystem
     }
 
     /// <summary>
-    /// Where a unit moved distance along direction ends up: as far as it gets before a wall (enemies and water don't stop
-    /// it), then back along the path to the last spot with floor. Also used by Hookshot Slash's pull.
+    /// Where a unit moved distance along direction ends up: as far as it gets before a wall, a prop or a cliff (enemies and
+    /// water don't stop it), at the last spot along the way with floor. The path is checked in short steps, each swept
+    /// from a step's height above the floor, so slopes, small steps and floor seams don't stop it. Also used by Hookshot
+    /// Slash's pull.
     /// </summary>
     public static float3 DashEnd(in CollisionWorld world, in PhysicsCollider collider, in LocalTransform transform, Entity self, float3 direction, float distance,
                           float minWalkableNormalY, float stepHeight, uint floorLayers)
     {
-        var start = transform.Position;
         var flat = math.normalizesafe(new float3(direction.x, 0f, direction.z));
-        var move = flat * distance;
         var hits = new NativeList<ColliderCastHit>(8, Allocator.Temp);
-        float fraction = UnitMovement.Sweep(world, collider, start, move, transform.Rotation, transform.Scale, self,
-                                            UnitMovement.WorldLayers, minWalkableNormalY, ref hits, out _);
-        float reach = math.max(0f, distance * fraction - (fraction < 1f ? UnitMovement.Skin : 0f));
-
         float bottom = UnitMovement.BottomOffset(collider, transform.Rotation, transform.Scale);
-        for (float back = reach; back > 0f; back -= BackOffStep)
+        var lift = new float3(0f, stepHeight, 0f);
+
+        var position = transform.Position;
+        var end = position;
+        float travelled = 0f;
+        while (travelled < distance - 1e-4f)
         {
-            var end = start + flat * back;
-            // Generous height range: the far side of a gap can be a little higher or lower than the start
-            if (UnitMovement.TryFindFloor(world, end, bottom, stepHeight + 1f, stepHeight + 2f, floorLayers, out float floorY))
-                return new float3(end.x, floorY + bottom + UnitMovement.Skin, end.z);
+            float length = math.min(PathStep, distance - travelled);
+            float fraction = UnitMovement.Sweep(world, collider, position + lift, flat * length, transform.Rotation, transform.Scale, self,
+                                                UnitMovement.WorldLayers, minWalkableNormalY, ref hits, out _);
+            float advance = math.max(0f, length * fraction - (fraction < 1f ? UnitMovement.Skin : 0f));
+            position += flat * advance;
+            travelled += advance;
+
+            // Onto the floor (up to a step, or well down: downhill, off a ledge); over water or a gap it keeps its height
+            if (UnitMovement.TryFindFloor(world, position, bottom, stepHeight + 0.1f, stepHeight + 2f, floorLayers, out float floorY))
+            {
+                position.y = floorY + bottom + UnitMovement.Skin;
+                end = position;
+            }
+            if (fraction < 1f) break;
         }
-        return start;
+        return end;
     }
 }
