@@ -110,7 +110,7 @@ public static class PortalPrefabCreator
     }
 
     // Replaces an existing asset's contents rather than the asset, so references to it stay valid
-    static T SaveOrReplace<T>(T asset, string path) where T : Object
+    internal static T SaveOrReplace<T>(T asset, string path) where T : Object
     {
         var existing = AssetDatabase.LoadAssetAtPath<T>(path);
         if (existing == null)
@@ -184,7 +184,7 @@ public static class PortalPrefabCreator
     }
 
     // Flat ring on the ground, facing up
-    static Mesh Annulus(float inner, float outer, int segments)
+    internal static Mesh Annulus(float inner, float outer, int segments)
     {
         var vertices = new List<Vector3>();
         var normals = new List<Vector3>();

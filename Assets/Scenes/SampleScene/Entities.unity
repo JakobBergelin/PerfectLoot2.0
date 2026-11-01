@@ -148,6 +148,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 324e38edb9c3452baaa7fa90baa2a651, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.LevelLayoutAuthoring
+  Kind: 0
+  Dungeon: {fileID: 0}
   Width: 40
   Height: 40
   TileSize: 5

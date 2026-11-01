@@ -15,7 +15,7 @@
             <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
             <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
 
-            <ui:Label text="Click a slot to change it · Press K to close" class="sp-hint" />
+            <ui:Label name="hint" text="Click a slot to change it · Press K to close" class="sp-hint" />
         </ui:VisualElement>
         <ui:VisualElement name="tooltip" class="sp-tooltip" picking-mode="Ignore">
             <ui:Label name="tooltipTitle" class="sp-tooltip__title" picking-mode="Ignore" />

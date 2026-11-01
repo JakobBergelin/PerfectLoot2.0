@@ -16,6 +16,8 @@ public class SkillsPanelHUD : MonoBehaviour
     const string HiddenClass = "skills-panel-root--hidden";
     const string PickerHiddenClass = "sp-picker--hidden";
     const string TooltipVisibleClass = "sp-tooltip--visible";
+    const string TownHint = "Click a slot to change it · Press K to close";
+    const string LookOnlyHint = "Change skills in town · Press K to close";
 
     /// <summary>One slot in the panel; active and passive slots only differ in these delegates and their look.</summary>
     class SlotView
@@ -40,6 +42,7 @@ public class SkillsPanelHUD : MonoBehaviour
     bool _open;
 
     VisualElement _root;
+    Label _hint;
     VisualElement _tooltip;
     Label _tooltipTitle;
     VisualElement _tooltipBody;
@@ -110,7 +113,9 @@ public class SkillsPanelHUD : MonoBehaviour
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
-        if (_root == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null)
+        _hint = root.Q<Label>("hint");
+        if (_root == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
+            _hint == null)
         {
             Debug.LogError("SkillsPanelHUD: SkillsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -136,6 +141,10 @@ public class SkillsPanelHUD : MonoBehaviour
             else SetOpen(false);
             return;
         }
+        // Skills are only changed in town; elsewhere the panel is look-only
+        bool town = GameArea.IsTown;
+        _hint.text = town ? TownHint : LookOnlyHint;
+        if (!town && _selected != null) Select(null);
 
         foreach (var view in _activeSlots) RefreshSlot(view);
         foreach (var view in _passiveSlots) RefreshSlot(view);
@@ -233,7 +242,7 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void RegisterSlotCallbacks(SlotView view)
     {
-        view.Element.RegisterCallback<ClickEvent>(_ => Select(_selected == view ? null : view));
+        view.Element.RegisterCallback<ClickEvent>(_ => Select(_selected == view || !GameArea.IsTown ? null : view));
         view.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(view.GetEquipped(), view.Element));
         view.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
     }

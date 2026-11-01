@@ -148,10 +148,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 324e38edb9c3452baaa7fa90baa2a651, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.LevelLayoutAuthoring
+  Kind: 1
+  Dungeon: {fileID: 11400000, guid: 707c446b50164fdd8dd390f2b028f8dc, type: 2}
   Width: 24
   Height: 24
   TileSize: 5
-  TileSet: {fileID: 11400000, guid: 5750e8abe0b3b6a4f8593b7642081ae9, type: 2}
+  TileSet: {fileID: 11400000, guid: 34c0833752aa3234bb1a3174860e26c0, type: 2}
   Placements: {fileID: 0}
   Border: 2
   Mode: 0

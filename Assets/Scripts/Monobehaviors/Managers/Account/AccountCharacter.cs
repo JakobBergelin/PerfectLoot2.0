@@ -15,10 +15,18 @@ public class AccountCharacter
         public Rarity Rarity;
     }
 
+    /// <summary>How often the character has finished a dungeon.</summary>
+    public class CompletedDungeon
+    {
+        public string DungeonId;    // DungeonDefinition.Id
+        public int Count;
+    }
+
     public string Guid;
     public string Name;
     public ClassType Class;
     public ResourceType Resource;
     public int Level = 1;
     public List<EquippedItem> Equipped = new List<EquippedItem>();
+    public List<CompletedDungeon> CompletedDungeons = new List<CompletedDungeon>();
 }

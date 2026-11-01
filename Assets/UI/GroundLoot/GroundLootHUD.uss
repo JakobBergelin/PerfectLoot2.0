@@ -1,0 +1,38 @@
+/* Variables and font on the HUD's own root so everything inherits them */
+.ground-loot-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --label-bg: rgba(10, 11, 14, 0.85);
+    --label-hover-bg: rgba(40, 44, 54, 0.95);
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* left/top are set from code; translate centers the label on the item and lifts it above */
+.gl-label {
+    position: absolute;
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: nowrap;
+    padding: 2px 6px;
+    margin: 0;
+    background-color: var(--label-bg);
+    border-width: 1px;
+    border-radius: 3px;
+}
+
+.gl-label:hover {
+    background-color: var(--label-hover-bg);
+}
+
+/* Too far to pick up */
+.gl-label--far {
+    opacity: 0.5;
+}
+
+.gl-label--hidden {
+    display: none;
+}

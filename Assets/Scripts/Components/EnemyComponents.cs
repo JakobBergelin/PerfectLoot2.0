@@ -25,6 +25,11 @@ public struct EnemyTarget : IComponentData
     public float SinceSensed;   // Seconds since it last saw, was hit by or was alerted to the player (EnemyDetection forgets after ForgetTime)
 }
 
+/// <summary>Always knows where the (living) player is, from anywhere (HuntPlayerSystem). For enemies sent after the player, like a Survive step's waves.</summary>
+public struct HuntsPlayer : IComponentData
+{
+}
+
 /// <summary>
 /// How a Physics enemy finds the player: seen within SightRadius (shrinking toward ProximityRadius for a player behind it,
 /// line of sight on the FlowField), or within ProximityRadius through walls; hit by the player; or alerted (a player attack

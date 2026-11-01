@@ -232,7 +232,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 50204cd956da4c2e90db4ac625ed1d0e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::MainMenuHUD
-  GameScene: SampleScene
   AllClasses:
   - {fileID: 11400000, guid: 60b1e2e3ee27c79a4ebf79818420de43, type: 2}
   - {fileID: 11400000, guid: a99056135d2cbf85d8c7469314362133, type: 2}

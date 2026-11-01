@@ -18,6 +18,9 @@ public class CharacterManager : MonoBehaviour
     /// <summary>Raised after every (re)spawn. Other managers re-push their state to the new player entity.</summary>
     public static event Action<Entity> PlayerSpawned;
 
+    /// <summary>Raised when the player has died (its entity is gone); it respawns after RespawnDelay.</summary>
+    public static event Action PlayerDied;
+
     [Header("Spawning")]
     [Tooltip("Base stats before class, gear, passives and buffs")]
     public PlayerBaseStats BaseStats;
@@ -179,6 +182,7 @@ public class CharacterManager : MonoBehaviour
         {
             _player = Entity.Null;
             _respawnTimer = RespawnDelay;
+            PlayerDied?.Invoke();
         }
 
         if (_player == Entity.Null)

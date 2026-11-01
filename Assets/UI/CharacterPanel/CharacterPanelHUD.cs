@@ -27,6 +27,8 @@ public class CharacterPanelHUD : MonoBehaviour
     const string DeltaWorseClass = "cp-row__delta--worse";
     const string NoValue = "–";
     const string PreviewIdleText = "Hover an item to see how your stats change";
+    const string TownHint = "Click a slot to swap · Press I to close";
+    const string LookOnlyHint = "Change equipment in town · Press I to close";
     const float Gap = 8f;
     const float ScreenMargin = 16f;
     const int MaxOptionChanges = 3;
@@ -81,6 +83,7 @@ public class CharacterPanelHUD : MonoBehaviour
     VisualElement _root;
     VisualElement _panel;
     Label _header;
+    Label _hint;
     VisualElement _tooltip;
     Label _tooltipTitle, _tooltipSubtitle;
     VisualElement _tooltipBody;
@@ -165,6 +168,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _root = root.Q<VisualElement>("characterPanelRoot");
         _panel = root.Q<VisualElement>("panel");
         _header = root.Q<Label>("header");
+        _hint = root.Q<Label>("hint");
         var slotGrid = root.Q<VisualElement>("slotGrid");
         var statList = root.Q<ScrollView>("statList");
         _tooltip = root.Q<VisualElement>("tooltip");
@@ -177,7 +181,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _pickerList = root.Q<ScrollView>("pickerList");
         _previewHeader = root.Q<VisualElement>("previewHeader");
         _previewTitle = root.Q<Label>("previewTitle");
-        if (_root == null || _panel == null || _header == null || slotGrid == null || statList == null || _tooltip == null ||
+        if (_root == null || _panel == null || _header == null || _hint == null || slotGrid == null || statList == null || _tooltip == null ||
             _picker == null || _pickerTitle == null || _pickerFilters == null || _pickerList == null ||
             _previewHeader == null || _previewTitle == null)
         {
@@ -214,6 +218,10 @@ public class CharacterPanelHUD : MonoBehaviour
         // A click anywhere but the picker or a slot closes the picker (slots open their own or close it themselves)
         if (_pickerSlot != null && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !PointerOnPickerOrSlot())
             ClosePicker();
+        // Equipment is only changed in town; elsewhere the panel is look-only
+        bool town = GameArea.IsTown;
+        _hint.text = town ? TownHint : LookOnlyHint;
+        if (!town && _pickerSlot != null) ClosePicker();
 
         Subscribe();
         if (_slotsDirty) RefreshSlots();
@@ -304,7 +312,7 @@ public class CharacterPanelHUD : MonoBehaviour
         view.Element.RegisterCallback<ClickEvent>(_ =>
         {
             if (_pickerSlot == view) ClosePicker();
-            else OpenPicker(view);
+            else if (GameArea.IsTown) OpenPicker(view);
         });
 
         grid.Add(view.Element);

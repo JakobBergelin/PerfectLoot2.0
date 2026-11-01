@@ -7,7 +7,7 @@
                 <ui:Label name="header" class="cp-header" />
                 <!-- Slots are created by CharacterPanelHUD -->
                 <ui:VisualElement name="slotGrid" class="cp-slot-grid" />
-                <ui:Label text="Click a slot to swap · Press I to close" class="cp-hint" />
+                <ui:Label name="hint" text="Click a slot to swap · Press I to close" class="cp-hint" />
             </ui:VisualElement>
             <ui:VisualElement class="cp-stats-column">
                 <!-- Shown while the swap picker is open -->

@@ -19,6 +19,8 @@ public class GameBootstrap : ScriptableObject
     public GameObject Rig;
     [Tooltip("Scenes without the rig")]
     public List<string> MenuScenes = new List<string> { "MainMenu" };
+    [Tooltip("Where the main menu starts the game, and where a dungeon's return portal leads when the dungeon wasn't entered from another scene")]
+    public string Town = "SampleScene";
     [Tooltip("Editor: pressing Play in a game scene plays the Dev account's last played character (else its first), as if " +
              "picked in Character Select. Off: the rig's own Class, Resource and slots, not saved")]
     public bool SelectDevCharacter = true;
@@ -26,6 +28,12 @@ public class GameBootstrap : ScriptableObject
     static GameBootstrap _settings;
     static GameObject _rig;
     static bool _sceneLoaded;
+
+    /// <summary>The town scene (Town in Resources/GameBootstrap).</summary>
+    public static string TownScene => _settings != null && !string.IsNullOrEmpty(_settings.Town) ? _settings.Town : "SampleScene";
+
+    /// <summary>True for scenes without the rig (the main menu).</summary>
+    public static bool IsMenuScene(string sceneName) => _settings != null && _settings.MenuScenes.Contains(sceneName);
 
     // Statics survive Play mode when domain reload is off
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

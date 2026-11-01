@@ -161,6 +161,16 @@ public class AccountManager : MonoBehaviour
         SaveCharacters();
     }
 
+    /// <summary>Counts a finished dungeon on the character and saves (DungeonManager).</summary>
+    public void RecordDungeonCompleted(AccountCharacter character, string dungeonId)
+    {
+        if (character == null || !_characters.Contains(character) || string.IsNullOrEmpty(dungeonId)) return;
+        var completed = character.CompletedDungeons.Find(entry => entry.DungeonId == dungeonId);
+        if (completed == null) character.CompletedDungeons.Add(completed = new AccountCharacter.CompletedDungeon { DungeonId = dungeonId });
+        completed.Count++;
+        SaveCharacters();
+    }
+
     // Equips a Normal item of each kind: the account's own if it has found one, otherwise a new one rolled into the
     // database. Each goes into the first free slot of its type.
     void GiveStartingItems(AccountCharacter character, IReadOnlyList<RollableItem> startingItems)

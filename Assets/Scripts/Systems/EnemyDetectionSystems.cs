@@ -274,3 +274,50 @@ public partial struct EnemyNearMissSystem : ISystem
         }
     }
 }
+
+/// <summary>
+/// Enemies with HuntsPlayer target the living player wherever it is, after the detection systems (which would drop a
+/// player they can't sense) and before EnemyMovementSystem reads the target.
+/// </summary>
+[UpdateInGroup(typeof(MovementSystemGroup))]
+[UpdateAfter(typeof(EnemyDetectionSystem))]
+[UpdateBefore(typeof(EnemyMovementSystem))]
+[BurstCompile]
+public partial struct HuntPlayerSystem : ISystem
+{
+    EntityQuery _playerQuery;
+
+    public void OnCreate(ref SystemState state)
+    {
+        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player>().Build();
+        state.RequireForUpdate<HuntsPlayer>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // A dead (or dying) player is no target, like in EnemyDetectionSystem
+        var player = Entity.Null;
+        if (_playerQuery.CalculateEntityCount() == 1)
+        {
+            var entity = _playerQuery.GetSingletonEntity();
+            bool dead = (SystemAPI.HasComponent<Health>(entity) && SystemAPI.GetComponent<Health>(entity).CurrentValue <= 0f)
+                     || SystemAPI.HasComponent<RigidDeath>(entity);
+            if (!dead) player = entity;
+        }
+        state.Dependency = new HuntJob { Player = player }.ScheduleParallel(state.Dependency);
+    }
+
+    [BurstCompile]
+    [WithAll(typeof(HuntsPlayer))]
+    partial struct HuntJob : IJobEntity
+    {
+        public Entity Player;
+
+        void Execute(ref EnemyTarget target)
+        {
+            target.Player = Player;
+            target.SinceSensed = 0f;
+        }
+    }
+}

@@ -96,6 +96,13 @@ public class DropPopupHUD : MonoBehaviour
     {
         Subscribe();
         if (!_bound) return;
+        // Found items are reviewed in town only; in a dungeon they wait in the queue
+        bool town = GameArea.IsTown;
+        if (town != _town)
+        {
+            _town = town;
+            _dirty = true;
+        }
         if (_dirty) Refresh();
 
         // An open menu panel handles Esc first (it closes); the next Esc resolves the popup. Last frame's state too,
@@ -106,6 +113,7 @@ public class DropPopupHUD : MonoBehaviour
     }
 
     bool _panelOpenLastFrame;
+    bool _town;
 
     void LateUpdate() => _panelOpenLastFrame = MenuPanels.IsPanelOpen;
 
@@ -138,7 +146,7 @@ public class DropPopupHUD : MonoBehaviour
     {
         _dirty = false;
         var drops = _subscribedAccount != null ? _subscribedAccount.PendingDrops : null;
-        if (drops == null || drops.Count == 0)
+        if (drops == null || drops.Count == 0 || !_town)
         {
             SetVisible(false);
             return;

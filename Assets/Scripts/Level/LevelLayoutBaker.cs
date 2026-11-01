@@ -11,6 +11,8 @@ namespace LevelGeneration
     {
         public override void Bake(LevelLayoutAuthoring authoring)
         {
+            BakeArea(authoring);
+
             var tileSet = authoring.TileSet;
             DependsOn(tileSet);
             if (tileSet == null)
@@ -236,6 +238,26 @@ namespace LevelGeneration
                 if (marker != null)
                     foreach (var entry in marker.Group)
                         if (entry?.Definition != null && entry.Count > 0) used.Add(entry.Definition);
+            // The dungeon's bosses and Survive waves, spawned by DungeonManager
+            if (authoring.Kind == AreaKind.Dungeon && authoring.Dungeon != null)
+                foreach (var step in authoring.Dungeon.Steps)
+                {
+                    if (step == null) continue;
+                    if (step.Kind == DungeonStepKind.KillBoss && step.Boss != null)
+                    {
+                        DependsOn(step.Boss);
+                        used.Add(step.Boss);
+                    }
+                    if (step.Kind != DungeonStepKind.Survive) continue;
+                    foreach (var wave in step.Waves)
+                        if (wave != null)
+                            foreach (var entry in wave.Enemies)
+                                if (entry?.Definition != null && entry.Count > 0)
+                                {
+                                    DependsOn(entry.Definition);
+                                    used.Add(entry.Definition);
+                                }
+                }
             foreach (var definition in used)
             {
                 if (!seen.Add(definition.name)) continue;
@@ -250,6 +272,31 @@ namespace LevelGeneration
                     Prefab = GetEntity(definition.Prefab, TransformUsageFlags.Dynamic),
                 });
             }
+        }
+
+        // Town or dungeon (GameArea); a dungeon also gets its return portal prefab
+        void BakeArea(LevelLayoutAuthoring authoring)
+        {
+            var dungeon = authoring.Kind == AreaKind.Dungeon ? authoring.Dungeon : null;
+            DependsOn(dungeon);
+            if (authoring.Kind == AreaKind.Dungeon && dungeon == null)
+                Debug.LogWarning("Level layout is a Dungeon without a Dungeon, so it has no steps and can't be finished.", authoring);
+
+            var area = new LevelArea { Kind = authoring.Kind, Dungeon = dungeon };
+            if (dungeon != null)
+            {
+                foreach (var step in dungeon.Steps)
+                {
+                    if (step != null && step.Kind == DungeonStepKind.KillBoss && step.Boss == null)
+                        Debug.LogWarning($"Dungeon {dungeon.name} has a Kill Boss step without a Boss; it's skipped.", dungeon);
+                    if (step != null && step.Kind == DungeonStepKind.Survive && !step.Waves.Exists(wave => wave != null && wave.Weight > 0f && wave.Enemies.Count > 0))
+                        Debug.LogWarning($"Dungeon {dungeon.name} has a Survive step without waves; nothing comes.", dungeon);
+                }
+                DependsOn(dungeon.ReturnPortal);
+                if (dungeon.ReturnPortal != null) area.ReturnPortal = GetEntity(dungeon.ReturnPortal, TransformUsageFlags.Dynamic);
+                else Debug.LogWarning($"Dungeon {dungeon.name} has no Return Portal, so finishing it opens no way back.", dungeon);
+            }
+            AddComponent(GetEntity(TransformUsageFlags.None), area);
         }
 
         LevelGeometryExtractor.Part Extract(GameObject prefab, List<Material> materials, List<string> warnings)

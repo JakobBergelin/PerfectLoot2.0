@@ -1,0 +1,171 @@
+/* Variables and font on the HUD's own root so everything inherits them */
+.dungeon-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    --panel-bg: rgba(20, 22, 28, 0.85);
+    --panel-border: #3A3F4B;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    --complete: #4CC94C;
+    --failed: #E05050;
+    --bar-bg: rgba(10, 11, 14, 0.9);
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.dh-card {
+    margin-top: 16px;
+    min-width: 280px;
+    max-width: 420px;
+    align-items: center;
+    padding: 10px 16px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.dh-card--hidden {
+    display: none;
+}
+
+.dh-card--complete {
+    border-color: var(--complete);
+}
+
+.dh-name {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+}
+
+.dh-step-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+.dh-objective {
+    font-size: 15px;
+    color: var(--text-color);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 6px 0 0 0;
+}
+
+.dh-card--complete .dh-objective {
+    color: var(--complete);
+    -unity-font-style: bold;
+}
+
+.dh-card--failed {
+    border-color: var(--failed);
+}
+
+.dh-card--failed .dh-objective {
+    color: var(--failed);
+    -unity-font-style: bold;
+}
+
+.dh-note {
+    font-size: 12px;
+    color: var(--failed);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+.dh-found {
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 4px 0 0 0;
+}
+
+.dh-bar {
+    width: 240px;
+    height: 8px;
+    margin: 6px 0 0 0;
+    background-color: var(--bar-bg);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.dh-bar__fill {
+    height: 100%;
+    width: 0;
+    background-color: var(--accent);
+}
+
+.dh-actions {
+    align-items: center;
+    margin: 8px 0 0 0;
+}
+
+.dh-actions--hidden {
+    display: none;
+}
+
+.dh-confirm {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.dh-confirm-buttons {
+    flex-direction: row;
+}
+
+.dh-button {
+    min-width: 90px;
+    height: 26px;
+    margin: 0 4px;
+    padding: 0 12px;
+    font-size: 13px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-width: 1px;
+    border-color: #F0C050;
+    border-radius: 5px;
+}
+
+.dh-button:hover {
+    background-color: #F0B030;
+}
+
+.dh-button:active {
+    background-color: #B88010;
+}
+
+.dh-button--quiet {
+    color: var(--text-color);
+    background-color: rgba(42, 46, 56, 0.9);
+    border-color: #4A5060;
+    -unity-font-style: normal;
+}
+
+.dh-button--quiet:hover {
+    background-color: #383D4A;
+}
+
+.dh-button--quiet:active {
+    background-color: #2A2E38;
+}

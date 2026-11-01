@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="DungeonHUD.uss" />
+    <ui:VisualElement name="dungeonRoot" class="dungeon-root" picking-mode="Ignore">
+        <!-- Top center while in a dungeon; filled by DungeonHUD from DungeonManager -->
+        <ui:VisualElement name="card" class="dh-card dh-card--hidden">
+            <ui:Label name="dungeonName" class="dh-name" />
+            <ui:Label name="stepCount" class="dh-step-count" />
+            <ui:Label name="objective" class="dh-objective" />
+            <ui:Label name="note" class="dh-note" />
+            <ui:VisualElement name="progressBar" class="dh-bar">
+                <ui:VisualElement name="progressFill" class="dh-bar__fill" />
+            </ui:VisualElement>
+            <ui:Label name="found" class="dh-found" />
+            <ui:VisualElement name="leaveRow" class="dh-actions">
+                <ui:Button name="leaveButton" text="Leave dungeon" class="dh-button dh-button--quiet" />
+            </ui:VisualElement>
+            <ui:VisualElement name="confirmRow" class="dh-actions dh-actions--hidden">
+                <ui:Label name="confirmText" class="dh-confirm" />
+                <ui:VisualElement class="dh-confirm-buttons">
+                    <ui:Button name="confirmLeaveButton" text="Leave" class="dh-button" />
+                    <ui:Button name="stayButton" text="Stay" class="dh-button dh-button--quiet" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

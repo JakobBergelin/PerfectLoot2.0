@@ -36,6 +36,12 @@ namespace LevelGeneration
             public int Rotation;
         }
 
+        [Header("Area")]
+        [Tooltip("Town: items and skills can be changed. Dungeon: Dungeon's steps are run, and a return portal opens when they're done.")]
+        public AreaKind Kind = AreaKind.Town;
+        [Tooltip("Dungeon: its steps, loot and return portal")]
+        public DungeonDefinition Dungeon;
+
         [Header("Grid")]
         [Min(1)] public int Width = 20;
         [Min(1)] public int Height = 20;

@@ -17,9 +17,6 @@ public class MainMenuHUD : MonoBehaviour
 
     enum Screen { Name, Main, Characters }
 
-    [Tooltip("Scene Adventure loads with the selected character. Must be in Build Settings.")]
-    public string GameScene = "SampleScene";
-
     [Header("For Character Select's names and descriptions")]
     public List<CharacterClass> AllClasses = new List<CharacterClass>();
     public List<ResourceDefinition> AllResources = new List<ResourceDefinition>();
@@ -159,16 +156,17 @@ public class MainMenuHUD : MonoBehaviour
         ShowScreen(Screen.Main);
     }
 
-    // Plays the character in the game scene
+    // Plays the character in the town (GameBootstrap)
     void Adventure(AccountCharacter character)
     {
-        if (!Application.CanStreamedLevelBeLoaded(GameScene))
+        string town = GameBootstrap.TownScene;
+        if (!Application.CanStreamedLevelBeLoaded(town))
         {
-            Debug.LogError($"MainMenuHUD: scene '{GameScene}' isn't in Build Settings.", this);
+            Debug.LogError($"MainMenuHUD: scene '{town}' isn't in Build Settings.", this);
             return;
         }
         if (AccountManager.Instance == null || !AccountManager.Instance.SelectCharacter(character.Guid)) return;
-        GameSceneLoader.Load(GameScene);
+        GameSceneLoader.Load(town);
     }
 
     static void Exit()

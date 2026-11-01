@@ -44,6 +44,10 @@ Transform:
   - {fileID: 6470949767470393592}
   - {fileID: 4079688342084575080}
   - {fileID: 8792480700833051326}
+  - {fileID: 7730000000000000902}
+  - {fileID: 7740000000000000902}
+  - {fileID: 7750000000000000902}
+  - {fileID: 7760000000000000902}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6538329316228928201
@@ -994,4 +998,92 @@ PrefabInstance:
 Transform:
   m_CorrespondingSourceObject: {fileID: 3519619665841499772, guid: d17580454d047a14097c96f953aa37c1, type: 3}
   m_PrefabInstance: {fileID: 9048131483260972917}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7730000000000000901
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2072095192949420212}
+    m_Modifications:
+    - target: {fileID: 7730000000000000001, guid: 00dcc141e6264eb9a7ccfcbfad16bb91, type: 3}
+      propertyPath: m_Name
+      value: DungeonHUD
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 00dcc141e6264eb9a7ccfcbfad16bb91, type: 3}
+--- !u!4 &7730000000000000902 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7730000000000000002, guid: 00dcc141e6264eb9a7ccfcbfad16bb91, type: 3}
+  m_PrefabInstance: {fileID: 7730000000000000901}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7740000000000000901
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2072095192949420212}
+    m_Modifications:
+    - target: {fileID: 7740000000000000101, guid: a2bb94e1ff8b4ad0b22ab84d094b5b92, type: 3}
+      propertyPath: m_Name
+      value: DungeonManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: a2bb94e1ff8b4ad0b22ab84d094b5b92, type: 3}
+--- !u!4 &7740000000000000902 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7740000000000000102, guid: a2bb94e1ff8b4ad0b22ab84d094b5b92, type: 3}
+  m_PrefabInstance: {fileID: 7740000000000000901}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7750000000000000901
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2072095192949420212}
+    m_Modifications:
+    - target: {fileID: 7750000000000000001, guid: c824bee8d7804c01b3bc3e00310591f4, type: 3}
+      propertyPath: m_Name
+      value: GroundLootHUD
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: c824bee8d7804c01b3bc3e00310591f4, type: 3}
+--- !u!4 &7750000000000000902 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7750000000000000002, guid: c824bee8d7804c01b3bc3e00310591f4, type: 3}
+  m_PrefabInstance: {fileID: 7750000000000000901}
+  m_PrefabAsset: {fileID: 0}
+--- !u!1001 &7760000000000000901
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 2072095192949420212}
+    m_Modifications:
+    - target: {fileID: 7760000000000000101, guid: 7b83142352e14e2aad99b7fafdf3cc87, type: 3}
+      propertyPath: m_Name
+      value: GroundLootManager
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 7b83142352e14e2aad99b7fafdf3cc87, type: 3}
+--- !u!4 &7760000000000000902 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 7760000000000000102, guid: 7b83142352e14e2aad99b7fafdf3cc87, type: 3}
+  m_PrefabInstance: {fileID: 7760000000000000901}
   m_PrefabAsset: {fileID: 0}

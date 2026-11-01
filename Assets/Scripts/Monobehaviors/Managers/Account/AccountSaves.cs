@@ -37,6 +37,7 @@ public static class AccountSaves
         public string Resource;
         public int Level;
         public List<EquippedData> Equipped = new List<EquippedData>();
+        public List<CompletedDungeonData> CompletedDungeons = new List<CompletedDungeonData>();
     }
 
     [Serializable]
@@ -45,6 +46,13 @@ public static class AccountSaves
         public string Slot;
         public string BaseItemId;
         public string Rarity;
+    }
+
+    [Serializable]
+    class CompletedDungeonData
+    {
+        public string DungeonId;
+        public int Count;
     }
 
     [Serializable]
@@ -170,6 +178,8 @@ public static class AccountSaves
             };
             foreach (var equipped in character.Equipped)
                 saved.Equipped.Add(new EquippedData { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = equipped.Rarity.ToString() });
+            foreach (var completed in character.CompletedDungeons)
+                saved.CompletedDungeons.Add(new CompletedDungeonData { DungeonId = completed.DungeonId, Count = completed.Count });
             data.Characters.Add(saved);
         }
         Write(CharactersPath(accountId), JsonUtility.ToJson(data, true));
@@ -231,6 +241,12 @@ public static class AccountSaves
                     continue;
                 }
                 character.Equipped.Add(new AccountCharacter.EquippedItem { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = rarity });
+            }
+            // Saves from before dungeons have none
+            foreach (var completed in saved.CompletedDungeons ?? new List<CompletedDungeonData>())
+            {
+                if (completed == null || string.IsNullOrEmpty(completed.DungeonId) || completed.Count <= 0) continue;
+                character.CompletedDungeons.Add(new AccountCharacter.CompletedDungeon { DungeonId = completed.DungeonId, Count = completed.Count });
             }
             characters.Add(character);
         }

@@ -51,14 +51,14 @@ public class EnemyManager : MonoBehaviour
         using var positions = new NativeArray<Vector3>(1, Allocator.Temp);
         var spawned = positions;
         spawned[0] = position;
-        return SpawnAt(definition, positions, riseIn);
+        return SpawnAt(definition, positions, riseIn, huntPlayer: false);
     }
 
     /// <summary>
     /// Spawns count enemies at random points within radius of center (on the same height). riseIn: they rise out of
-    /// the ground over RiseDuration instead of appearing at once.
+    /// the ground over RiseDuration instead of appearing at once. huntPlayer: they come for the player from anywhere (HuntsPlayer).
     /// </summary>
-    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius, bool riseIn = false)
+    public void SpawnGroup(EnemyDefinition definition, Vector3 center, int count, float radius, bool riseIn = false, bool huntPlayer = false)
     {
         if (count <= 0) return;
         using var positions = new NativeArray<Vector3>(count, Allocator.Temp);
@@ -76,7 +76,7 @@ public class EnemyManager : MonoBehaviour
                 if (!hasPhysics || GroundPlacement.TryFindGround(collisionWorld, spawned[i], out _)) break;
             }
         }
-        SpawnAt(definition, positions, riseIn);
+        SpawnAt(definition, positions, riseIn, huntPlayer);
     }
 
     /// <summary>
@@ -84,7 +84,7 @@ public class EnemyManager : MonoBehaviour
     /// removes the template. Adding the gameplay components once instead of per enemy keeps big groups cheap.
     /// Returns the first spawned enemy, or Entity.Null.
     /// </summary>
-    Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions, bool riseIn)
+    Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions, bool riseIn, bool huntPlayer)
     {
         if (definition == null) { Debug.LogWarning("EnemyManager.Spawn: no definition.", this); return Entity.Null; }
         if (!TryGetPrefabs(out var entityManager))
@@ -106,6 +106,7 @@ public class EnemyManager : MonoBehaviour
         // Rising out of the ground: start a body height under the spawn point; it doesn't move or act until risen (SpawnRiseSystem)
         float riseDepth = 2f * Mathf.Max(0.01f, definition.Scale);
         if (riseIn) entityManager.AddComponentData(template, new SpawnRise { Depth = riseDepth, Duration = RiseDuration });
+        if (huntPlayer) entityManager.AddComponent<HuntsPlayer>(template);
         if (entityManager.HasBuffer<LinkedEntityGroup>(template))
         {
             using var group = entityManager.GetBuffer<LinkedEntityGroup>(template).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);
