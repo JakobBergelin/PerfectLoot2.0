@@ -35,10 +35,22 @@ public static class EnemyEntitySetup
             {
                 TurnSpeed = definition.TurnSpeed,
                 TurnAcceleration = definition.TurnAcceleration,
-                DetectionRadius = definition.DetectionRadius,
                 AttackRadius = definition.AttackRadius,
                 DesiredDirection = quaternion.identity,
             });
+            // Who it chases, and how it finds them (the cheap version for swarms)
+            AddOrSet(entityManager, entity, new EnemyTarget());
+            if (definition.BodyType == BodyType.Swarm)
+                AddOrSet(entityManager, entity, new SwarmDetection { Radius = definition.DetectionRadius, NearMissMargin = definition.NearMissMargin });
+            else
+                AddOrSet(entityManager, entity, new EnemyDetection
+                {
+                    SightRadius = definition.DetectionRadius,
+                    ProximityRadius = definition.ProximityRadius,
+                    AlertRadius = definition.AlertRadius,
+                    NearMissMargin = definition.NearMissMargin,
+                    ForgetTime = definition.ForgetTime,
+                });
             AddOrSet(entityManager, entity, new EnemyMeleeAttack
             {
                 Damage = definition.MeleeDamage,

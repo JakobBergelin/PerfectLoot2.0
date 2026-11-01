@@ -10,7 +10,7 @@ using UnityEngine;
 /// <summary>
 /// Singleton: a walkability grid in a square window around the player, with every cell's path cost to the player
 /// (a flow field). Rebuilt by FlowFieldSystem, read by EnemyMovementSystem so enemies walk around walls, props, water and
-/// cliffs without a navmesh. Direction gives the way to walk.
+/// cliffs without a navmesh. Direction gives the way to walk; CanSee is line of sight (EnemyDetectionSystem).
 /// </summary>
 public struct FlowField : IComponentData
 {
@@ -20,6 +20,7 @@ public struct FlowField : IComponentData
     const int LookAhead = 4;
 
     public NativeArray<byte> Walkable;
+    public NativeArray<byte> Opaque;    // A wall or prop at eye height blocks sight through the cell (water and low props don't)
     public NativeArray<float> Height;   // Floor height of each cell (the player's height where there's no floor)
     public NativeArray<int> Distance;   // Path cost to the player's cell (StraightCost per cell), Unreachable when cut off
     public int2 Origin;                 // World cell of the window's first cell
@@ -97,7 +98,15 @@ public struct FlowField : IComponentData
     /// Whether a unit can walk the straight line from a to b: every cell the line crosses walkable (bar the first and last,
     /// which a unit hugging a wall may stand in) and no step up or down between them too big. Grid only, no physics.
     /// </summary>
-    public bool Clear(float3 a, float3 b)
+    public bool Clear(float3 a, float3 b) => Trace(a, b, false);
+
+    /// <summary>
+    /// Line of sight from a to b: no cell the line crosses is opaque (bar the first and last). False outside the window.
+    /// Grid only, no physics.
+    /// </summary>
+    public bool CanSee(float3 a, float3 b) => Size > 0 && Contains(Cell(a)) && Trace(a, b, true);
+
+    bool Trace(float3 a, float3 b, bool sight)
     {
         var start = a.xz / CellSize;
         var end = b.xz / CellSize;
@@ -117,6 +126,11 @@ public struct FlowField : IComponentData
             else { cell.y += step.y; tMax.y += tDelta.y; }
             if (!Contains(cell)) return false;
             int index = Index(cell);
+            if (sight)
+            {
+                if (Opaque[index] != 0 && !math.all(cell == last)) return false;
+                continue;
+            }
             if (Walkable[index] == 0) return math.all(cell == last);
             if (previous >= 0 && math.abs(Height[index] - Height[previous]) > MaxStep) return false;
             previous = index;
@@ -127,6 +141,7 @@ public struct FlowField : IComponentData
     public void Dispose()
     {
         if (Walkable.IsCreated) Walkable.Dispose();
+        if (Opaque.IsCreated) Opaque.Dispose();
         if (Height.IsCreated) Height.Dispose();
         if (Distance.IsCreated) Distance.Dispose();
     }
@@ -161,6 +176,7 @@ public partial struct FlowFieldSystem : ISystem
         state.EntityManager.CreateSingleton(new FlowField
         {
             Walkable = new NativeArray<byte>(1, Allocator.Persistent),
+            Opaque = new NativeArray<byte>(1, Allocator.Persistent),
             Height = new NativeArray<float>(1, Allocator.Persistent),
             Distance = new NativeArray<int>(1, Allocator.Persistent),
         });
@@ -191,6 +207,7 @@ public partial struct FlowFieldSystem : ISystem
         {
             field.Dispose();
             field.Walkable = new NativeArray<byte>(cellCount, Allocator.Persistent);
+            field.Opaque = new NativeArray<byte>(cellCount, Allocator.Persistent);
             field.Height = new NativeArray<float>(cellCount, Allocator.Persistent);
             field.Distance = new NativeArray<int>(cellCount, Allocator.Persistent);
             field.Size = size;
@@ -230,6 +247,7 @@ public partial struct FlowFieldSystem : ISystem
         {
             World = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld,
             Walkable = field.Walkable,
+            Opaque = field.Opaque,
             Height = field.Height,
             Changed = _changed,
             Origin = field.Origin,
@@ -251,14 +269,16 @@ public partial struct FlowFieldSystem : ISystem
     }
 
     // One cell: walkable when a ray down finds walkable ground (not water, not too steep) and no wall, prop or water is
-    // within Clearance of the spot just above it
+    // within Clearance of the spot just above it; opaque when a wall or prop reaches into it at eye height
     [BurstCompile]
     struct SampleJob : IJobParallelFor
     {
         const float RayUp = 10f, RayDown = 20f;
+        const float EyeHeight = 1.2f;
 
         [ReadOnly] public CollisionWorld World;
         [NativeDisableParallelForRestriction] public NativeArray<byte> Walkable;
+        [NativeDisableParallelForRestriction] public NativeArray<byte> Opaque;
         [NativeDisableParallelForRestriction] public NativeArray<float> Height;
         [NativeDisableParallelForRestriction] public NativeArray<byte> Changed;
         public int2 Origin;
@@ -286,10 +306,13 @@ public partial struct FlowFieldSystem : ISystem
                 walkable = (layer & UnitMovement.GroundLayer) != 0 && hit.SurfaceNormal.y >= MinWalkableNormalY
                            && !World.CheckSphere(new float3(xz.x, height + Clearance + 0.1f, xz.y), Clearance, blockers);
             }
+            var sightBlockers = new CollisionFilter { BelongsTo = ~0u, CollidesWith = UnitMovement.WorldLayers };
+            bool opaque = World.CheckSphere(new float3(xz.x, height + EyeHeight, xz.y), CellSize * 0.5f, sightBlockers);
 
             byte value = (byte)(walkable ? 1 : 0);
             if (Walkable[index] != value) Changed[0] = 1;
             Walkable[index] = value;
+            Opaque[index] = (byte)(opaque ? 1 : 0);
             Height[index] = height;
         }
     }

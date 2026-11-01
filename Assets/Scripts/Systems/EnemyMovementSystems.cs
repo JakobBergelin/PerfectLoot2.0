@@ -6,8 +6,8 @@ using Unity.Physics;
 using Unity.Transforms;
 
 /// <summary>
-/// Enemy AI movement, in parallel: notices the player within DetectionRadius, chases it (around walls, props, water and
-/// cliffs along the FlowField), stops within AttackRadius, and steers away from nearby units (UnitSpatialGrid) so crowds
+/// Enemy AI movement, in parallel: chases its target (EnemyTarget, set by EnemyDetectionSystem) around walls, props,
+/// water and cliffs along the FlowField, stops within AttackRadius, and steers away from nearby units (UnitSpatialGrid) so crowds
 /// spread out around the player instead of piling up. Only writes the wanted horizontal velocity (UnitMotion);
 /// UnitMoverSystem moves them.
 /// </summary>
@@ -76,7 +76,7 @@ public partial struct EnemyMovementSystem : ISystem
         public float DeltaTime;
 
         void Execute(Entity entity, ref NpcBehavior npc, ref LocalTransform transform, ref UnitMotion motion,
-            in MovementSpeed movementSpeed, in Steering steering, in MovementModifiers modifiers)
+            in MovementSpeed movementSpeed, in Steering steering, in MovementModifiers modifiers, in EnemyTarget target)
         {
             // Frozen and similar: stand still (knockback still pushes) and don't turn or attack
             if (modifiers.PreventsActions)
@@ -90,12 +90,7 @@ public partial struct EnemyMovementSystem : ISystem
             toPlayer.y = 0f;
             float distance = math.length(toPlayer);
 
-            // Notice the player once it is close enough; forget a player that no longer exists (respawned)
-            if (npc.TargetPlayer != Player) npc.TargetPlayer = Entity.Null;
-            if (Player != Entity.Null && npc.TargetPlayer == Entity.Null && distance <= npc.DetectionRadius)
-                npc.TargetPlayer = Player;
-
-            bool chasing = npc.TargetPlayer != Entity.Null;
+            bool chasing = target.Player != Entity.Null && target.Player == Player;
             npc.IsAttacking = chasing && distance <= npc.AttackRadius;
 
             float speed = movementSpeed.Value * modifiers.SpeedMultiplier;

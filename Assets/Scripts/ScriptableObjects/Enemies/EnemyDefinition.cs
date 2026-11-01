@@ -40,8 +40,17 @@ namespace Enemies
         [Header("Behavior")]
         [Tooltip("Chases and attacks the player. Off for training dummies (the behavior and melee values below are then unused).")]
         public bool HasAI = true;
-        [Tooltip("Distance at which it notices the player")]
+        [Tooltip("Distance at which it sees the player, with line of sight; shrinks toward Proximity Radius for a player " +
+                 "behind it. Swarm: notices the player within this distance, no line of sight.")]
         public float DetectionRadius = 15f;
+        [Tooltip("Physics only: notices the player this close even through walls")]
+        public float ProximityRadius = 4f;
+        [Tooltip("Physics only: when it finds the player itself, enemies within this many meters join in")]
+        public float AlertRadius = 10f;
+        [Tooltip("A player attack missing it by up to this many meters (beyond the attack's radius) makes it notice the player")]
+        public float NearMissMargin = 2f;
+        [Tooltip("Physics only: gives up after this many seconds without seeing, being hit by or being alerted to the player")]
+        public float ForgetTime = 5f;
         [Tooltip("Distance at which it stops and attacks; the hit itself has half this radius")]
         public float AttackRadius = 3f;
         [Tooltip("How fast it turns toward the player")]
