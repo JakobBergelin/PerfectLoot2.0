@@ -12,8 +12,8 @@ using UnityEngine;
 public static class ItemText
 {
     public const string RangeColor = "#8A8F99";
-    const string BetterColor = "#4CC94C";
-    const string WorseColor = "#E05050";
+    public const string BetterColor = "#4CC94C";
+    public const string WorseColor = "#E05050";
 
     public static Color TitleColor(Item item) => RarityColors.Get(item.Rarity) ?? Color.white;
 

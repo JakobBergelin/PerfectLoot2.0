@@ -15,6 +15,11 @@
     --text-color: #F2F2F2;
     --text-muted: #A8ADB8;
     --accent: #E0A020;
+    --chip-bg: #2A2E38;
+    --chip-hover: #383D4A;
+    --chip-border: #4A5060;
+    --better: #4CC94C;
+    --worse: #E05050;
     -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
 }
 
@@ -68,6 +73,11 @@
     justify-content: center;
 }
 
+/* The slot the swap picker is open for */
+.cp-slot--picking {
+    background-color: rgba(224, 160, 32, 0.22);
+}
+
 .cp-slot__icon {
     position: absolute;
     left: 6px;
@@ -93,10 +103,43 @@
 }
 
 /* Stats column */
-.cp-stats {
-    width: 300px;
-    max-height: 600px;
+.cp-stats-column {
     margin-left: 20px;
+}
+
+.cp-stats {
+    width: 360px;
+    max-height: 600px;
+}
+
+/* Above the stats while the swap picker is open: what the preview shows */
+.cp-preview {
+    width: 360px;
+    padding: 0 0 6px 0;
+    margin: 0 0 6px 0;
+    border-bottom-width: 1px;
+    border-color: var(--divider);
+}
+
+.cp-preview--hidden {
+    display: none;
+}
+
+.cp-preview__title {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.cp-preview__note {
+    font-size: 11px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 0;
+    margin: 2px 0 0 0;
 }
 
 .cp-section {
@@ -148,6 +191,151 @@
     -unity-text-align: middle-right;
     padding: 0;
     margin: 0 8px 0 0;
+}
+
+/* Changed by the previewed swap */
+.cp-row--changed {
+    background-color: rgba(224, 160, 32, 0.12);
+}
+
+.cp-row__delta {
+    width: 52px;
+    flex-shrink: 0;
+    font-size: 13px;
+    color: var(--text-muted);
+    -unity-text-align: middle-right;
+    padding: 0;
+    margin: 0 4px 0 0;
+}
+
+.cp-row__delta--better {
+    color: var(--better);
+}
+
+.cp-row__delta--worse {
+    color: var(--worse);
+}
+
+/* Swap picker, left of the panel next to the clicked slot */
+.cp-picker {
+    position: absolute;
+    width: 300px;
+    padding: 10px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.cp-picker--hidden {
+    display: none;
+}
+
+.cp-picker__title {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 6px 2px;
+}
+
+.cp-picker__filters {
+    flex-direction: row;
+    flex-wrap: wrap;
+    margin: 0 0 6px 0;
+}
+
+.cp-picker__list {
+    flex-shrink: 1;
+}
+
+.cp-picker__empty {
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 4px;
+    margin: 0;
+}
+
+.cp-chip {
+    font-size: 12px;
+    color: var(--text-color);
+    background-color: var(--chip-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin: 2px 4px 2px 0;
+    -unity-text-align: middle-center;
+}
+
+.cp-chip:hover {
+    background-color: var(--chip-hover);
+}
+
+.cp-chip--selected {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #14161C;
+    -unity-font-style: bold;
+}
+
+.cp-chip--selected:hover {
+    background-color: #F0B030;
+}
+
+.cp-option {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px;
+    margin: 1px 0;
+    border-width: 1px;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 4px;
+}
+
+.cp-option:hover {
+    background-color: rgba(255, 255, 255, 0.07);
+}
+
+.cp-option--current {
+    border-color: var(--accent);
+}
+
+.cp-option--disabled {
+    opacity: 0.4;
+}
+
+.cp-option__icon {
+    width: 36px;
+    height: 36px;
+    flex-shrink: 0;
+    margin: 0 8px 0 0;
+    background-color: var(--slot-bg);
+    border-radius: 4px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.cp-option__text {
+    flex-grow: 1;
+    flex-shrink: 1;
+}
+
+.cp-option__name {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.cp-option__detail {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 0;
+    margin: 1px 0 0 0;
 }
 
 /* Item tooltip */

@@ -130,6 +130,56 @@ public struct StatBlock
         BlockChance += other.BlockChance;
         DodgeChance += other.DodgeChance;
     }
+
+    /// <summary>Undoes Add (the character panel's swap preview takes one set of equipment stats out). Keep in step with Add.</summary>
+    public void Subtract(in StatBlock other)
+    {
+        Strength -= other.Strength;
+        Agility -= other.Agility;
+        Intelligence -= other.Intelligence;
+
+        WeaponDamage -= other.WeaponDamage;
+        WeaponDamageRange -= other.WeaponDamageRange;
+        WeaponReach -= other.WeaponReach;
+        WeaponCooldown -= other.WeaponCooldown;
+        AttackSpeed -= other.AttackSpeed;
+        Damage -= other.Damage;
+        ElementalDamage -= other.ElementalDamage;
+        FireDamage -= other.FireDamage;
+        ColdDamage -= other.ColdDamage;
+        LightningDamage -= other.LightningDamage;
+        PoisonDamage -= other.PoisonDamage;
+
+        Health -= other.Health;
+        HealthRegeneration -= other.HealthRegeneration;
+        Resource -= other.Resource;
+        ResourceRegeneration -= other.ResourceRegeneration;
+        ResourceCostReduction -= other.ResourceCostReduction;
+        ResourceSteal -= other.ResourceSteal;
+        Lifesteal -= other.Lifesteal;
+
+        Pierce -= other.Pierce;
+        Bounces -= other.Bounces;
+        ProjectileSpeed -= other.ProjectileSpeed;
+        Armor -= other.Armor;
+        ArmorPierce -= other.ArmorPierce;
+
+        MovementSpeed -= other.MovementSpeed;
+        AreaOfEffect -= other.AreaOfEffect;
+        CooldownReduction -= other.CooldownReduction;
+        BuffDuration -= other.BuffDuration;
+
+        ColdResistance -= other.ColdResistance;
+        FireResistance -= other.FireResistance;
+        PoisonResistance -= other.PoisonResistance;
+        LightningResistance -= other.LightningResistance;
+        AllResistance -= other.AllResistance;
+
+        CriticalChance -= other.CriticalChance;
+        CriticalDamage -= other.CriticalDamage;
+        BlockChance -= other.BlockChance;
+        DodgeChance -= other.DodgeChance;
+    }
 }
 
 public struct BaseStats : IComponentData

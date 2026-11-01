@@ -7,10 +7,23 @@
                 <ui:Label name="header" class="cp-header" />
                 <!-- Slots are created by CharacterPanelHUD -->
                 <ui:VisualElement name="slotGrid" class="cp-slot-grid" />
-                <ui:Label text="Press I to close" class="cp-hint" />
+                <ui:Label text="Click a slot to swap · Press I to close" class="cp-hint" />
             </ui:VisualElement>
-            <!-- Stat sections and rows are created by CharacterPanelHUD -->
-            <ui:ScrollView name="statList" class="cp-stats" />
+            <ui:VisualElement class="cp-stats-column">
+                <!-- Shown while the swap picker is open -->
+                <ui:VisualElement name="previewHeader" class="cp-preview cp-preview--hidden">
+                    <ui:Label name="previewTitle" class="cp-preview__title" />
+                    <ui:Label text="Legendary powers and passives aren't counted in the numbers" class="cp-preview__note" />
+                </ui:VisualElement>
+                <!-- Stat sections and rows are created by CharacterPanelHUD -->
+                <ui:ScrollView name="statList" class="cp-stats" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        <!-- Swap picker, placed left of the panel by CharacterPanelHUD; chips and options are created there -->
+        <ui:VisualElement name="picker" class="cp-picker cp-picker--hidden">
+            <ui:Label name="pickerTitle" class="cp-picker__title" />
+            <ui:VisualElement name="pickerFilters" class="cp-picker__filters" />
+            <ui:ScrollView name="pickerList" class="cp-picker__list" />
         </ui:VisualElement>
         <ui:VisualElement name="tooltip" class="cp-tooltip" picking-mode="Ignore">
             <ui:Label name="tooltipTitle" class="cp-tooltip__title" picking-mode="Ignore" />
