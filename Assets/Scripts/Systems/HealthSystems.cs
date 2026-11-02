@@ -34,13 +34,14 @@ public partial class HealthUISystem : SystemBase
     }
 }
 
+// Cold Blooded wearers don't regenerate: ColdBloodedSystem deals their regeneration as damage instead
 [UpdateInGroup(typeof(HealthAndResourceSystemGroup))]
 partial struct HealthRegenerationSystem : ISystem
 {
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (health, healthRegeneration) in SystemAPI.Query<RefRW<Health>, RefRO<HealthRegeneration>>().WithAbsent<Golem>())
+        foreach (var (health, healthRegeneration) in SystemAPI.Query<RefRW<Health>, RefRO<HealthRegeneration>>().WithAbsent<Golem>().WithNone<ColdBlooded>())
         {
             health.ValueRW.CurrentValue += healthRegeneration.ValueRO.Value * SystemAPI.Time.DeltaTime;
             health.ValueRW.CurrentValue = Mathf.Min(health.ValueRO.CurrentValue, health.ValueRO.MaxValue);
