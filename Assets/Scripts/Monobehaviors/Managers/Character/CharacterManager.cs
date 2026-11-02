@@ -75,6 +75,10 @@ public class CharacterManager : MonoBehaviour
                 if (remove) entityManager.SetComponentEnabled<BrokenPromisesBuff>(_player, false);
                 else SetEffect(entityManager, new BrokenPromisesBuff { TimeRemaining = TestDuration, Duration = TestDuration, CriticalChanceBonus = 1f });
                 break;
+            case EffectType.DeathsDoor:
+                if (remove) entityManager.SetComponentEnabled<DeathsDoorBuff>(_player, false);
+                else SetEffect(entityManager, new DeathsDoorBuff { CriticalChanceBonus = 1f });
+                break;
             case EffectType.Refraction:
                 if (remove) entityManager.SetComponentEnabled<Refraction>(_player, false);
                 else SetEffect(entityManager, new Refraction { Stacks = stacks });

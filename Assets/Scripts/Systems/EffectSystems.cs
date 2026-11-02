@@ -216,6 +216,8 @@ public partial struct EffectDisplaySystem : ISystem
                 var buff = SystemAPI.GetComponent<BrokenPromisesBuff>(entity);
                 display.Add(new EffectDisplay { Type = EffectType.BrokenPromises, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.CriticalChanceBonus });
             }
+            if (IsActive<DeathsDoorBuff>(ref state, entity))
+                display.Add(new EffectDisplay { Type = EffectType.DeathsDoor, Stacks = 1, Magnitude = SystemAPI.GetComponent<DeathsDoorBuff>(entity).CriticalChanceBonus });
             if (IsActive<Refraction>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
             if (IsActive<Invulnerable>(ref state, entity))

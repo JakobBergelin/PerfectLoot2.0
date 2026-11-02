@@ -17,6 +17,7 @@ public enum EffectType
     Poisoned,
     Chilled,
     Frozen,
+    DeathsDoor,
 }
 
 public enum EffectKind
@@ -42,6 +43,12 @@ public struct BrokenPromisesBuff : IComponentData, IEnableableComponent, ITimedE
     public float CriticalChanceBonus;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Death's Door legendary power's buff: extra critical chance while the wearer is at low health. Untimed: DeathsDoorSystem turns it on and off.</summary>
+public struct DeathsDoorBuff : IComponentData, IEnableableComponent
+{
+    public float CriticalChanceBonus;
 }
 
 /// <summary>Each stack absorbs one hit. Untimed: lasts until the stacks are used up.</summary>
