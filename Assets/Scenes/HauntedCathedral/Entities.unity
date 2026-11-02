@@ -171,10 +171,7 @@ MonoBehaviour:
   HillScale: 0.15
   PlayerStart: {x: 11, y: 3}
   ForcedTiles: []
-  Pieces:
-  - Cell: {x: 11, y: 3}
-    Piece: 0
-    Rotation: 0
+  Pieces: []
   EnemySpawners:
   - Cell: {x: 6, y: 8}
     TriggerRadius: 35

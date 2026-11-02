@@ -4,29 +4,25 @@ using UnityEngine;
 
 public class CameraFollowAuthoring : MonoBehaviour
 {
-    public Vector3 Offset = new Vector3(0, 3, -10);
-    public Quaternion Rotation;
-    [Tooltip("Roughly the seconds the camera takes to catch up with the player")]
-    public float SmoothTime = 0.15f;
-    [Tooltip("Meters per second the camera can move at most; keep it above the player's fastest walk")]
-    public float MaxSpeed = 30f;
-    [Tooltip("When the player is further than this (meters) from where the camera is heading, it jumps there instead")]
-    public float SnapDistance = 20f;
+    [Tooltip("Framing and smoothing; edit this asset (also live in Play mode) to tune the camera")]
+    public CameraSettings Settings;
 
     class Baker : Baker<CameraFollowAuthoring>
     {
         public override void Bake(CameraFollowAuthoring authoring)
         {
+            DependsOn(authoring.Settings);
+            if (authoring.Settings == null)
+            {
+                Debug.LogError("CameraFollowAuthoring has no CameraSettings assigned; the camera won't follow the player.", authoring);
+                return;
+            }
+
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
-            AddComponent(entity, new CameraFollow
-            {
-                Offset = authoring.Offset,
-                Rotation = authoring.Rotation,
-                SmoothTime = authoring.SmoothTime,
-                MaxSpeed = authoring.MaxSpeed,
-                SnapDistance = authoring.SnapDistance,
-            });
+            var follow = new CameraFollow();
+            authoring.Settings.ApplyTo(ref follow);
+            AddComponent(entity, follow);
         }
     }
 }
