@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FistsOfThunder
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.FistsOfThunderSkill
   Name: Fists Of Thunder
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 408eaaf22e114d29bdbc1ab7b920b8d5, type: 3}
   Description: 
   Tags: 2
   ResourceGeneration: 1

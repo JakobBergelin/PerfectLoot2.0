@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Barrage
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.BarrageSkill
   Name: Barrage
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 8cf7070c631c4fb685ef6e4ccf5de3b4, type: 3}
   Description: 
   Tags: 1
   AttackSpeed: 0.3

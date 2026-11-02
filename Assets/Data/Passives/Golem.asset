@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Golem
   m_EditorClassIdentifier: Assembly-CSharp::Passives.GolemPassive
   Name: Golem
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: a82f4507003f4fdfb820004ea1b78e1f, type: 3}
   Description: 
   MaxHealthMultiplier: 1
   PhysicalResistanceMultiplier: 1

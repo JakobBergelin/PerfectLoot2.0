@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Shadowstep
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.ShadowstepSkill
   Name: Shadowstep
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 740368fef1e948ddb206d15b774b605b, type: 3}
   Description: For 20 seconds, gain attack speed and your melee skills jump you in front of the enemy you aim at.
   Tags: 0
   cooldown: 60

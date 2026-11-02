@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: CaptainsShield
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.CaptainsShieldSkill
   Name: Captain's Shield
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b9055a42a23548eebb85b227f8d985ad, type: 3}
   Description:
   Tags: 1
   resourceCost: 5

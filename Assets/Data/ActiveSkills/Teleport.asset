@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Teleport
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TeleportSkill
   Name: Teleport
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 73beb9ace14644a98512bc67b5c787af, type: 3}
   Description:
   Tags: 4
   cooldown: 5

@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Balance
   m_EditorClassIdentifier: Assembly-CSharp::Passives.BalancePassive
   Name: Balance
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 23645534bf4d448cba7f711261c8d94e, type: 3}
   Description: 
   DamagePerLowestAttribute: 0.004

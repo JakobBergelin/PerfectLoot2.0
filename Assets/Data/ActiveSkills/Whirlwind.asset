@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Whirlwind
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.WhirlwindSkill
   Name: Whirlwind
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 48301d444e6d47c0b2837e68dfb10081, type: 3}
   Description: 
   Tags: 10
   resourceCostPerSecond: 12

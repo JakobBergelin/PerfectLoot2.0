@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Fireball
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.FireballSkill
   Name: Fireball
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: f9f65470b6cd45a099490a580c258a46, type: 3}
   Description: 
   Tags: 1
   AttackSpeed: 0.5

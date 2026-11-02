@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Quickening
   m_EditorClassIdentifier: Assembly-CSharp::Passives.QuickeningPassive
   Name: Quickening
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3532b026cdc348e6928b4fc04007cdaa, type: 3}
   Description: Gain cooldown reduction from Agility, with diminishing returns (+20% at 50 Agility, +33% at 100).
   CooldownPerAgility: 0.005

@@ -1,10 +1,10 @@
 fileFormatVersion: 2
-guid: 4e87c69f43d012f4c8323afc57f52730
+guid: 56e9020584af4ea0b933b09340ca2869
 TextureImporter:
   internalIDToNameTable:
   - first:
-      213: -7848039375673857549
-    second: Dash_0
+      213: -8312582693884609800
+    second: BallLightning_0
   externalObjects: {}
   serializedVersion: 13
   mipmaps:
@@ -42,11 +42,11 @@ TextureImporter:
     mipBias: 0
     wrapU: 1
     wrapV: 1
-    wrapW: 0
+    wrapW: 1
   nPOTScale: 0
   lightmap: 0
   compressionQuality: 50
-  spriteMode: 2
+  spriteMode: 1
   spriteExtrude: 1
   spriteMeshType: 1
   alignment: 0
@@ -77,7 +77,7 @@ TextureImporter:
     maxTextureSize: 2048
     resizeAlgorithm: 0
     textureFormat: -1
-    textureCompression: 1
+    textureCompression: 0
     compressionQuality: 50
     crunchedCompression: 0
     allowsAlphaSplitting: 0
@@ -115,13 +115,13 @@ TextureImporter:
     serializedVersion: 2
     sprites:
     - serializedVersion: 2
-      name: Dash_0
+      name: BallLightning_0
       rect:
         serializedVersion: 2
         x: 0
         y: 0
-        width: 94
-        height: 94
+        width: 100
+        height: 100
       alignment: 0
       pivot: {x: 0, y: 0}
       border: {x: 0, y: 0, z: 0, w: 0}
@@ -130,8 +130,8 @@ TextureImporter:
       physicsShape: []
       tessellationDetail: -1
       bones: []
-      spriteID: 3f96eadb4c9261390800000000000000
-      internalID: -7848039375673857549
+      spriteID: 8fab2f4f416c3ac80800000000000000
+      internalID: -8312582693884609800
       vertices: []
       indices: 
       edges: []
@@ -140,7 +140,7 @@ TextureImporter:
     customData: 
     physicsShape: []
     bones: []
-    spriteID: 
+    spriteID: 5e97eb03825dee720800000000000000
     internalID: 0
     vertices: []
     indices: 
@@ -149,8 +149,7 @@ TextureImporter:
     secondaryTextures: []
     spriteCustomMetadata:
       entries: []
-    nameFileIdTable:
-      Dash_0: -7848039375673857549
+    nameFileIdTable: {}
   mipmapLimitGroupName: 
   pSDRemoveMatte: 0
   userData: 

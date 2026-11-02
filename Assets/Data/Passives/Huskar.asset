@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Huskar
   m_EditorClassIdentifier: Assembly-CSharp::Passives.HuskarPassive
   Name: Huskar
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: c186127ad788422684904f03c3e8a1ac, type: 3}
   Description: 

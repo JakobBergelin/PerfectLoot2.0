@@ -1,12 +1,16 @@
 using UnityEditor;
 
 /// <summary>
-/// Imports every image in the icon folders (affixes, damage types, stats) as a single UI sprite: transparent, no
-/// mipmaps, no compression. Applies to icons added or redrawn there later too.
+/// Imports every image in the icon folders (affixes, damage types, stats, skills) as a single UI sprite: transparent,
+/// no mipmaps, no compression. Applies to icons added or redrawn there later too.
 /// </summary>
 public class AffixIconImporter : AssetPostprocessor
 {
-    static readonly string[] Folders = { "Assets/Resources/AffixIcons/", "Assets/Resources/DamageTypeIcons/", "Assets/Resources/StatIcons/" };
+    static readonly string[] Folders =
+    {
+        "Assets/Resources/AffixIcons/", "Assets/Resources/DamageTypeIcons/", "Assets/Resources/StatIcons/",
+        "Assets/Data/Images/SkillIcons/",
+    };
 
     void OnPreprocessTexture()
     {
