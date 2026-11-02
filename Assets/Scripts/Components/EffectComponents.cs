@@ -19,6 +19,7 @@ public enum EffectType
     Frozen,
     DeathsDoor,
     Shadowstep,
+    CounterStrike,
 }
 
 public enum EffectKind
@@ -50,6 +51,15 @@ public struct BrokenPromisesBuff : IComponentData, IEnableableComponent, ITimedE
 public struct DeathsDoorBuff : IComponentData, IEnableableComponent
 {
     public float CriticalChanceBonus;
+}
+
+/// <summary>
+/// Counter Strike legendary power's hits taken so far, one stack each, for the HUD. Untimed: CounterStrikeSystem sets
+/// the stacks and turns it off when they reset.
+/// </summary>
+public struct CounterStrikeCharge : IComponentData, IEnableableComponent
+{
+    public int Stacks;
 }
 
 /// <summary>Each stack absorbs one hit. Untimed: lasts until the stacks are used up.</summary>

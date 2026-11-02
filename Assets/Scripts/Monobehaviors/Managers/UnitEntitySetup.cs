@@ -34,6 +34,7 @@ public static class UnitEntitySetup
         // Buffs and debuffs: every effect component is present but disabled until applied
         AddDisabled(entityManager, entity, new BrokenPromisesBuff());
         AddDisabled(entityManager, entity, new DeathsDoorBuff());
+        AddDisabled(entityManager, entity, new CounterStrikeCharge());
         AddDisabled(entityManager, entity, new Refraction());
         AddDisabled(entityManager, entity, new Invulnerable());
         AddDisabled(entityManager, entity, new ShadowstepBuff());

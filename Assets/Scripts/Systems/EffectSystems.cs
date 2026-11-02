@@ -224,6 +224,8 @@ public partial struct EffectDisplaySystem : ISystem
             }
             if (IsActive<DeathsDoorBuff>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.DeathsDoor, Stacks = 1, Magnitude = SystemAPI.GetComponent<DeathsDoorBuff>(entity).CriticalChanceBonus });
+            if (IsActive<CounterStrikeCharge>(ref state, entity))
+                display.Add(new EffectDisplay { Type = EffectType.CounterStrike, Stacks = SystemAPI.GetComponent<CounterStrikeCharge>(entity).Stacks });
             if (IsActive<Refraction>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
             if (IsActive<Invulnerable>(ref state, entity))
