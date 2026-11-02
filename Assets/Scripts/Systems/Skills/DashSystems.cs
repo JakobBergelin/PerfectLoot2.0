@@ -19,6 +19,13 @@ public partial struct DashSystem : ISystem
     const float MoveRate = 25f;         // Fraction of the remaining way per second (eased)
     const float PathStep = 0.25f;       // Meters per step when checking the path (DashEnd)
 
+    /// <summary>
+    /// Dash's cooldown for a caster with these stats: after CooldownReduction, divided by 1 + Agility × perAgility, so more
+    /// Agility shortens it with diminishing returns (never to 0). Also used by Dash's tooltip.
+    /// </summary>
+    public static float CooldownFor(float cooldown, float perAgility, in StatBlock stats) =>
+        SkillUtil.Cooldown(cooldown, stats) / (1f + math.max(0f, stats.Agility * perAgility));
+
     [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
@@ -38,7 +45,7 @@ public partial struct DashSystem : ISystem
                      .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             dash.ValueRW.Elapsed += deltaTime;
-            dash.ValueRW.Elapsed = Mathf.Min(dash.ValueRW.Elapsed, SkillUtil.Cooldown(dash.ValueRO.Cooldown, SystemAPI.GetComponent<CalculatedStats>(entity).Value));
+            dash.ValueRW.Elapsed = Mathf.Min(dash.ValueRW.Elapsed, CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, SystemAPI.GetComponent<CalculatedStats>(entity).Value));
 
             if(dash.ValueRO.Dashing)
             {
@@ -62,7 +69,7 @@ public partial struct DashSystem : ISystem
         foreach (var (dash, localTransform, desiredDirection, collider, skillBuffer, entity) in
                  SystemAPI.Query<RefRW<Dash>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<PhysicsCollider>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
-            if(dash.ValueRO.Elapsed >= SkillUtil.Cooldown(dash.ValueRO.Cooldown, SystemAPI.GetComponent<CalculatedStats>(entity).Value))
+            if(dash.ValueRO.Elapsed >= CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, SystemAPI.GetComponent<CalculatedStats>(entity).Value))
             {
                 localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
                 dash.ValueRW.Elapsed = 0.0f;
@@ -83,7 +90,7 @@ public partial struct DashSystem : ISystem
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Dash, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
-                float cooldown = SkillUtil.Cooldown(dash.ValueRO.Cooldown, stats.ValueRO.Value);
+                float cooldown = CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - dash.ValueRO.Elapsed);
                 skill.State.IsActive = dash.ValueRO.Dashing;

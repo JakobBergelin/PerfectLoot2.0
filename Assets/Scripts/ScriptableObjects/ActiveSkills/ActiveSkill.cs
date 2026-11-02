@@ -20,6 +20,9 @@ namespace ActiveSkills
         public virtual float ResourceCost => 0f;
         public virtual float ResourceCostPerSecond => 0f;
 
+        /// <summary>The cooldown for a caster with these stats (CooldownReduction); skills with more scaling override it, in step with their system.</summary>
+        public virtual float CooldownFor(in StatBlock stats) => SkillUtil.Cooldown(Cooldown, stats);
+
         /// <summary>Adds the skill's component (disabled until its key is pressed), or refreshes its configured values.</summary>
         public abstract void Apply(EntityManager entityManager, Entity entity);
 

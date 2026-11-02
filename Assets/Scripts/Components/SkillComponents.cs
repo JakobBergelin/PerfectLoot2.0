@@ -191,6 +191,7 @@ public struct FireBall : IComponentData, IEnableableComponent
 public struct Dash : IComponentData, IEnableableComponent
 {
     public float Cooldown;
+    public float CooldownPerAgility;    // The cooldown is divided by 1 + Agility × this (DashSystem.CooldownFor)
     public float Elapsed;
 
     public bool Dashing;

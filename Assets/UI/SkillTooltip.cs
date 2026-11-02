@@ -49,7 +49,7 @@ public static class SkillTooltip
                                        stats is StatBlock s ? SkillUtil.Cost(skill.ResourceCostPerSecond, s) : (float?)null, " per second")));
         if (skill.Cooldown > 0f)
             container.Add(Line(Reduced(new SkillLine().Icon(GameIcons.Stat(StatIcon.Cooldown)).Text("Cooldown: "), skill.Cooldown,
-                                       stats is StatBlock s ? SkillUtil.Cooldown(skill.Cooldown, s) : (float?)null, " s")));
+                                       stats is StatBlock s ? skill.CooldownFor(s) : (float?)null, " s")));
 
         var description = new SkillDescription();
         skill.Describe(description, stats);
