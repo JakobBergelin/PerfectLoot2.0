@@ -46,6 +46,12 @@ public struct CombatConfig : IComponentData
     public static float Mitigation(float value, float constant) => value <= 0f ? 0f : value / (value + constant);
 
     /// <summary>
+    /// Fraction of elemental damage mitigated by a resistance. Positive: value / (value + constant). Negative mirrors
+    /// it as extra damage taken: value / (constant - value), e.g. -constant takes 50% more, and never twice as much.
+    /// </summary>
+    public static float ElementalMitigation(float value, float constant) => value >= 0f ? value / (value + constant) : value / (constant - value);
+
+    /// <summary>
     /// Physical damage mitigated by armor: the attacker's pierce ignores that much armor (not below 0), then the multiplier
     /// (Golem) scales what's left, then Mitigation with ArmorConstant.
     /// </summary>

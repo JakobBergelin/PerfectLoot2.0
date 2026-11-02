@@ -842,7 +842,7 @@ public class CharacterPanelHUD : MonoBehaviour
     {
         float total = resistance + snapshot.Stats.AllResistance;
         float? mitigation = snapshot.HasCombatConfig
-            ? CombatConfig.Mitigation(total, snapshot.Combat.ElementalResistanceConstant)
+            ? CombatConfig.ElementalMitigation(total, snapshot.Combat.ElementalResistanceConstant)
             : null;
         return WithMitigation(total, mitigation);
     }

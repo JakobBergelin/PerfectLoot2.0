@@ -144,18 +144,18 @@ public partial class CalculateDamageSystem : SystemBase
                         break;
                     }
 
-                    // Elemental: AllResistance adds to each resistance, then Resistance / (Resistance + ElementalResistanceConstant) is mitigated
+                    // Elemental: AllResistance adds to each resistance, then ElementalMitigation (negative resistance takes extra damage)
                     case DamageType.Cold:
-                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.ColdResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
+                        calculatedDamage *= 1.0f - CombatConfig.ElementalMitigation(stats.ColdResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Fire:
-                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.FireResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
+                        calculatedDamage *= 1.0f - CombatConfig.ElementalMitigation(stats.FireResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Lightning:
-                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.LightningResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
+                        calculatedDamage *= 1.0f - CombatConfig.ElementalMitigation(stats.LightningResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                     case DamageType.Poison:
-                        calculatedDamage *= 1.0f - CombatConfig.Mitigation(stats.PoisonResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
+                        calculatedDamage *= 1.0f - CombatConfig.ElementalMitigation(stats.PoisonResistance + stats.AllResistance, combatConfig.ElementalResistanceConstant);
                     break;
                 }
 

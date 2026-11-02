@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 51f8090ae84441f9901b044f3474a3fa, type: 3}
+  m_Name: StaticField
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.StaticFieldPower
+  Name: Static Field
+  Description: 'Every {Interval} seconds, zap the nearest enemy within {Range} meters for {Damage} lightning damage. Each zap lowers its lightning resistance by {ResistancePerStack}, up to {MaxStacks} times, for {StackDuration} seconds.'
+  Interval: 0.5
+  Range: 5
+  Damage: 1
+  ResistancePerStack: 5
+  MaxStacks: 30
+  StackDuration: 3

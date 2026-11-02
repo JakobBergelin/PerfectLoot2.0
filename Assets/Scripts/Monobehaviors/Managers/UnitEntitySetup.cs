@@ -45,6 +45,7 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Poisoned());
         AddDisabled(entityManager, entity, new Chilled());
         AddDisabled(entityManager, entity, new Frozen());
+        AddDisabled(entityManager, entity, new Conductive());
         // One-frame event for mobility skills (Dash, ...), read by Refractionist and similar
         AddDisabled(entityManager, entity, new MobilitySkillUsed());
         AddDisabled(entityManager, entity, new MeleeAttackUsed());

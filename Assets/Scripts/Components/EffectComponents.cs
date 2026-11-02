@@ -143,6 +143,20 @@ public struct Frozen : IComponentData, IEnableableComponent, ITimedEffect
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }
 
+/// <summary>
+/// Static Field legendary power's debuff: lower lightning resistance per stack (ConductiveStatsSystem). All stacks
+/// fall off together when it runs out. Enemies only, so not shown on the HUD.
+/// </summary>
+public struct Conductive : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public int Stacks;
+    public float ResistancePerStack;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
 // ---------- Shared ----------
 
 /// <summary>On every unit: how its effects limit movement this frame. Written by EffectMovementSystem.</summary>
