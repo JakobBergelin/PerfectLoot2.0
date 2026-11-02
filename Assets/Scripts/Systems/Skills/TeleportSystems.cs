@@ -56,10 +56,11 @@ public partial struct TeleportSystem : ISystem
                  SystemAPI.Query<RefRW<Teleport>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<InputsData>, RefRO<PhysicsCollider>, RefRO<Resource>>()
                           .WithEntityAccess())
         {
-            var stats = SystemAPI.GetComponent<CalculatedStats>(entity).Value;
+            var calculatedStats = SystemAPI.GetComponent<CalculatedStats>(entity);
+            var stats = calculatedStats.Value;
             if (teleport.ValueRO.Casting || teleport.ValueRO.Elapsed < SkillUtil.Cooldown(teleport.ValueRO.Cooldown, stats)) continue;
             float cost = SkillUtil.Cost(teleport.ValueRO.ResourceCost, stats);
-            if (resource.ValueRO.CurrentValue < cost) continue;
+            if (!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, calculatedStats)) continue;
             if (!TryFindLanding(world, collider.ValueRO, localTransform.ValueRO, entity, inputs.ValueRO.MousePosition, teleport.ValueRO.Range,
                                 minWalkableNormalY, config.StepHeight, FloorLayers(ref state, entity), out var target))
                 continue;

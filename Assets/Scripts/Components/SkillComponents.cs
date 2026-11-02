@@ -91,6 +91,12 @@ public class SkillUtil
     public static float Cost(float cost, in StatBlock stats) => cost * math.max(0f, 1f - stats.ResourceCostReduction);
 
     /// <summary>
+    /// Whether a one-off cost (from Cost) can be paid: enough resource, or a cost up to the caster's AlwaysAffordableCost
+    /// (Bottomless), which empties what it has. Not for costs per second.
+    /// </summary>
+    public static bool CanAfford(float resource, float cost, in CalculatedStats stats) => resource >= cost || cost <= stats.AlwaysAffordableCost;
+
+    /// <summary>
     /// A skill's cooldown for a caster with these stats: shorter by its CooldownReduction (0.25 = 25% shorter, negative:
     /// longer), never below 0. For skills with a real cooldown (Dash, Teleport, Invulnerability, Ball Lightning); skills
     /// that repeat an attack (Fireball, Tornado, Barrage, Fists of Thunder, Whirlwind) are timed by AttackSpeed instead.

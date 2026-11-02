@@ -45,8 +45,11 @@ public partial class FlamethrowerSystem : SystemBase
 
             // Starting costs the start cost on top of the first frame's drain; continuing only the drain
             float drain = SkillUtil.Cost(f.ResourceCostPerSecond, statBlock) * deltaTime;
-            float needed = drain + (f.Spraying ? 0f : SkillUtil.Cost(f.ResourceCost, statBlock));
-            bool spraying = held && resource.ValueRO.CurrentValue >= needed;
+            float startCost = f.Spraying ? 0f : SkillUtil.Cost(f.ResourceCost, statBlock);
+            float needed = drain + startCost;
+            // The drain needs real resource; the start cost may be one Bottomless covers
+            float available = resource.ValueRO.CurrentValue;
+            bool spraying = held && available >= drain && SkillUtil.CanAfford(available - drain, startCost, stats.ValueRO);
 
             if (spraying != f.Spraying)
             {

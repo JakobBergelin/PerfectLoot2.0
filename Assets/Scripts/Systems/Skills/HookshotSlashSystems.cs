@@ -53,7 +53,7 @@ public partial struct HookshotSlashSystem : ISystem
             if (h.State == HookshotState.Idle)
             {
                 float cost = SkillUtil.Cost(h.ResourceCost, stats.ValueRO.Value);
-                if (!SystemAPI.IsComponentEnabled<HookshotSlash>(entity) || resource.ValueRO.CurrentValue < cost) continue;
+                if (!SystemAPI.IsComponentEnabled<HookshotSlash>(entity) || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO)) continue;
 
                 // Flat toward the cursor; the way the unit faces when the cursor is on it
                 var toCursor = inputs.ValueRO.MousePosition - position;

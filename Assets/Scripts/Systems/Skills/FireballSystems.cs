@@ -29,11 +29,12 @@ public partial class FireballSystem : SystemBase
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             float available = resource.ValueRO.CurrentValue;
-            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, SystemAPI.GetComponent<CalculatedStats>(entity).Value);
+            var stats = SystemAPI.GetComponent<CalculatedStats>(entity);
+            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, stats.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Fireball, out var request))
             {
-                if (available < cost) continue;
-                available -= cost;
+                if (!SkillUtil.CanAfford(available, cost, stats)) continue;
+                available = Mathf.Max(0f, available - cost);
                 Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
                 resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
@@ -53,8 +54,9 @@ public partial class FireballSystem : SystemBase
         foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, entity) in SystemAPI.Query<RefRW<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
-            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, SystemAPI.GetComponent<CalculatedStats>(entity).Value);
-            if(resource.ValueRO.CurrentValue < cost)
+            var stats = SystemAPI.GetComponent<CalculatedStats>(entity);
+            float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, stats.Value);
+            if(!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats))
             {
                 fireball.ValueRW.Elapsed = 0;
                 continue;

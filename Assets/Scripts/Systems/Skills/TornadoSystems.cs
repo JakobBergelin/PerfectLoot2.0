@@ -37,8 +37,8 @@ public partial class TornadoSystem : SystemBase
             float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Tornado, out var request))
             {
-                if (available < cost) continue;
-                available -= cost;
+                if (!SkillUtil.CanAfford(available, cost, stats.ValueRO)) continue;
+                available = Mathf.Max(0f, available - cost);
                 Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, request.Direction, ref _random);
                 resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Tornado, request.AutoCast);
@@ -61,7 +61,7 @@ public partial class TornadoSystem : SystemBase
             }
 
             float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
-            if(resource.ValueRO.CurrentValue < cost)
+            if(!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO))
             {
                 tornado.ValueRW.Elapsed = 0.0f;
                 continue;

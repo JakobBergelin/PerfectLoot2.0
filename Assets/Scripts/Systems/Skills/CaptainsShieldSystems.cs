@@ -44,7 +44,7 @@ public partial struct CaptainsShieldSystem : ISystem
             float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.CaptainsShield, out var request))
             {
-                if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < cost) continue;
+                if (shieldOut.Contains(entity) || !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, stats.ValueRO)) continue;
                 var position = localTransform.ValueRO.Position;
                 var aim = SystemAPI.HasComponent<InputsData>(entity)
                     ? SystemAPI.GetComponent<InputsData>(entity).MousePosition
@@ -61,9 +61,10 @@ public partial struct CaptainsShieldSystem : ISystem
                           .WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
-            var stats = SystemAPI.GetComponent<CalculatedStats>(entity).Value;
+            var calculatedStats = SystemAPI.GetComponent<CalculatedStats>(entity);
+            var stats = calculatedStats.Value;
             float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats);
-            if (shieldOut.Contains(entity) || SystemAPI.GetComponent<Resource>(entity).CurrentValue < cost) continue;
+            if (shieldOut.Contains(entity) || !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, calculatedStats)) continue;
             if (Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2)) continue;
 
             Throw(commandBuffer, entity, shield.ValueRO, stats, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction,

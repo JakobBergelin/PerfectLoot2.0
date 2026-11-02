@@ -14,6 +14,7 @@ partial struct ResetStatsSystem : ISystem
         {
             calculatedStats.ValueRW.Value = baseStats.ValueRO.Value;
             calculatedStats.ValueRW.PierceOnCrit = false;
+            calculatedStats.ValueRW.AlwaysAffordableCost = 0.0f;
         }
         foreach (var armor in SystemAPI.Query<RefRW<Armor>>())
         {

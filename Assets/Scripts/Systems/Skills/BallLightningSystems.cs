@@ -110,9 +110,10 @@ public partial struct BallLightningSystem : ISystem
                           .WithEntityAccess())
         {
             ref var b = ref ball.ValueRW;
-            var stats = SystemAPI.GetComponent<CalculatedStats>(entity).Value;
+            var calculatedStats = SystemAPI.GetComponent<CalculatedStats>(entity);
+            var stats = calculatedStats.Value;
             float cost = SkillUtil.Cost(b.ResourceCost, stats);
-            if (b.Flying || b.Elapsed < SkillUtil.Cooldown(b.Cooldown, stats) || resource.ValueRO.CurrentValue < cost) continue;
+            if (b.Flying || b.Elapsed < SkillUtil.Cooldown(b.Cooldown, stats) || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, calculatedStats)) continue;
             if (!TeleportSystem.TryFindLanding(world, collider.ValueRO, localTransform.ValueRO, entity, inputs.ValueRO.MousePosition, float.MaxValue,
                                                minWalkableNormalY, config.StepHeight, FloorLayers(ref state, entity), out var destination))
                 continue;

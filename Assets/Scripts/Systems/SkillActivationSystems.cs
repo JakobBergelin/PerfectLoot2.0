@@ -39,7 +39,8 @@ public partial class SkillActivationSystem : SystemBase
             }
 
             float resource = SystemAPI.HasComponent<Resource>(entity) ? SystemAPI.GetComponent<Resource>(entity).CurrentValue : float.MaxValue;
-            var stats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity).Value : default;
+            var calculatedStats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity) : default;
+            var stats = calculatedStats.Value;
 
             for (int i = 0; i < skills.Length; i++)
             {
@@ -54,7 +55,7 @@ public partial class SkillActivationSystem : SystemBase
                 skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
                 skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Teleport, Whirlwind) override this
-                skill.State.HasEnoughResource = resource >= SkillUtil.Cost(skill.State.ResourceCost, stats)
+                skill.State.HasEnoughResource = SkillUtil.CanAfford(resource, SkillUtil.Cost(skill.State.ResourceCost, stats), calculatedStats)
                                              && resource >= SkillUtil.Cost(skill.State.ResourceCostPerSecond, stats) * deltaTime;
             }
         }

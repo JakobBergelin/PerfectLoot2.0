@@ -198,6 +198,7 @@ public struct CalculatedStats : IComponentData
 {
     public StatBlock Value;
     public bool PierceOnCrit;
+    public float AlwaysAffordableCost;  // One-off skill costs up to this can be paid without enough resource (Bottomless)
 }
 
 public struct MovementSpeed : IComponentData
