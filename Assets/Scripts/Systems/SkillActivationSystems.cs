@@ -106,6 +106,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.HookshotSlash:
                 if (SystemAPI.HasComponent<HookshotSlash>(entity)) SystemAPI.SetComponentEnabled<HookshotSlash>(entity, enabled);
                 break;
+            case SkillType.Shadowstep:
+                if (SystemAPI.HasComponent<Shadowstep>(entity)) SystemAPI.SetComponentEnabled<Shadowstep>(entity, enabled);
+                break;
         }
     }
 }

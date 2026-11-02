@@ -87,6 +87,10 @@ public class CharacterManager : MonoBehaviour
                 if (remove) entityManager.SetComponentEnabled<Invulnerable>(_player, false);
                 else SetEffect(entityManager, new Invulnerable { TimeRemaining = TestDuration, Duration = TestDuration });
                 break;
+            case EffectType.Shadowstep:
+                if (remove) entityManager.SetComponentEnabled<ShadowstepBuff>(_player, false);
+                else SetEffect(entityManager, new ShadowstepBuff { TimeRemaining = TestDuration, Duration = TestDuration, AttackSpeedBonus = 0.15f, Range = 30f });
+                break;
             case EffectType.Bleeding:
                 if (remove) { entityManager.GetBuffer<BleedInstance>(_player).Clear(); entityManager.SetComponentEnabled<Bleeding>(_player, false); }
                 else

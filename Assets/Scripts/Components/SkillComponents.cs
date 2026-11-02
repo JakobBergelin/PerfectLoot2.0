@@ -51,6 +51,7 @@ public enum SkillType
     Flamethrower,
     SonicBall,
     HookshotSlash,
+    Shadowstep,
 
 }
 
@@ -219,6 +220,16 @@ public struct Invulnerability : IComponentData, IEnableableComponent
     public float Duration;
     public float ResourceCost;
     public float Elapsed;       // Since the last cast, up to Cooldown
+}
+
+/// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>
+public struct Shadowstep : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Duration;
+    public float AttackSpeedBonus;  // Added to AttackSpeed while the buff lasts, 0.15 = +15%
+    public float Range;             // Meters; the furthest enemy a melee skill jumps to
+    public float Elapsed;           // Since the last cast, up to Cooldown
 }
 
 /// <summary>

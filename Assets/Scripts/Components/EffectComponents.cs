@@ -18,6 +18,7 @@ public enum EffectType
     Chilled,
     Frozen,
     DeathsDoor,
+    Shadowstep,
 }
 
 public enum EffectKind
@@ -62,6 +63,20 @@ public struct Invulnerable : IComponentData, IEnableableComponent, ITimedEffect
 {
     public float TimeRemaining;
     public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>
+/// Shadowstep skill's buff: extra attack speed, and using a melee skill first jumps in front of the enemy nearest the
+/// cursor when it is out of reach (ShadowstepJumpSystem).
+/// </summary>
+public struct ShadowstepBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float TimeRemaining;
+    public float Duration;
+    public float AttackSpeedBonus;
+    public float Range;     // Meters from the unit to the enemy it jumps to
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }
