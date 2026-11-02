@@ -56,6 +56,7 @@ public enum PassiveType
     Luminosity,
     Ghost,
     PixieDust,
+    Quickening,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -129,4 +130,10 @@ public struct PixieDust : IComponentData
 {
     // Added to the health and resource regeneration multipliers while Invulnerable, 2 = +200%
     public float RegenerationMultiplier;
+}
+
+public struct Quickening : IComponentData
+{
+    // Cooldown reduction from Agility: Agility × this / (1 + Agility × this), so it never reaches 100% on its own
+    public float CooldownPerAgility;
 }
