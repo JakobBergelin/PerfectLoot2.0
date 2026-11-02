@@ -1,0 +1,50 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 701da91607d54b47be28db5ef662df87, type: 3}
+  m_Name: SurvivorsCinch
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryBeltItem
+  Name: Survivor's Cinch
+  Id: c773eddc0605456b8c449d2aee77b414
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 8
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 17
+    RollRange:
+      Min: -20
+      Max: -10
+  RollableAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 2
+      Max: 4
+  - Affix: 4
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 10
+  HealthRegeneration:
+    Min: 1
+    Max: 1.5
+  ResourceRegeneration:
+    Min: 0.25
+    Max: 0.5
+  LegendaryPower: {fileID: 11400000, guid: b513f682dd9d4b349214379deec81571, type: 2}

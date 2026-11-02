@@ -20,19 +20,27 @@ public partial class AttackSystem : SystemBase
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
     }
 
-    public static void CalculateCrit(Entity source, EntityManager entityManager, ref Unity.Mathematics.Random random, ref float damage, ref bool isCrit)
+    public static void CalculateCrit(Entity source, Entity target, EntityManager entityManager, ref Unity.Mathematics.Random random, ref float damage, ref bool isCrit)
     {
         if(source != Entity.Null && entityManager.HasComponent<CalculatedStats>(source))
         {
             var sourceStats = entityManager.GetComponentData<CalculatedStats>(source);
             var randomValue = random.NextFloat();
 
-            if(randomValue < sourceStats.Value.CriticalChance)
+            if(randomValue < sourceStats.Value.CriticalChance || IsAmbush(source, target, entityManager))
             {
                 isCrit = true;
-                damage *= 1.0f + sourceStats.Value.CriticalDamage;                        
+                damage *= 1.0f + sourceStats.Value.CriticalDamage;
             }
         }
+    }
+
+    // Ambush legendary power: the target is still at (or above) the power's share of its max health
+    static bool IsAmbush(Entity source, Entity target, EntityManager entityManager)
+    {
+        if(!entityManager.HasComponent<Ambush>(source) || !entityManager.HasComponent<Health>(target)) return false;
+        var health = entityManager.GetComponentData<Health>(target);
+        return health.MaxValue > 0.0f && health.CurrentValue >= health.MaxValue * entityManager.GetComponentData<Ambush>(source).HealthThreshold;
     }
 
     /// <summary>The direction a hit pushes in: horizontally away from the attack. Random if the target is on its center.</summary>
@@ -111,7 +119,7 @@ public partial class AttackSystem : SystemBase
 
                             // Sub damage is sized from the hit that caused it, so it doesn't crit again
                             if(attack.ValueRO.DamageHierarchy == DamageHierarchy.Main)
-                                CalculateCrit(source.ValueRO.Entity, EntityManager, ref _random, ref damage, ref isCrit);
+                                CalculateCrit(source.ValueRO.Entity, hit.Entity, EntityManager, ref _random, ref damage, ref isCrit);
 
                             attack.ValueRW.Events.OnHit = true;
                             attack.ValueRW.Events.OnHitNormal = hit.SurfaceNormal;
@@ -349,7 +357,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
                     bool isCrit = false;
                     var damage = instance.AccumilatedDamage;
 
-                    AttackSystem.CalculateCrit(instance.Source, EntityManager, ref _random, ref damage, ref isCrit);
+                    AttackSystem.CalculateCrit(instance.Source, entity, EntityManager, ref _random, ref damage, ref isCrit);
 
                     DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
                     periodicDamageInstance.RemoveAt(i);

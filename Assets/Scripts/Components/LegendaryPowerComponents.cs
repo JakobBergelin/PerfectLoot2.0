@@ -8,6 +8,12 @@ public struct Vanguard : IComponentData
     public float DamageReduction;
 }
 
+/// <summary>Ambush (Ambusher): hits on targets at or above HealthThreshold of their max health always crit (AttackSystem.CalculateCrit).</summary>
+public struct Ambush : IComponentData
+{
+    public float HealthThreshold;   // 1 = full health
+}
+
 /// <summary>Refractionist: using a mobility skill grants Refraction stacks (RefractionistSystem).</summary>
 public struct Refractionist : IComponentData
 {
