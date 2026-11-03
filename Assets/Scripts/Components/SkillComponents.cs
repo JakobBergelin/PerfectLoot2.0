@@ -105,6 +105,17 @@ public class SkillUtil
     /// </summary>
     public static float Cooldown(float cooldown, in StatBlock stats) => cooldown * math.max(0f, 1f - stats.CooldownReduction);
 
+    /// <summary>
+    /// Turns the caster toward the cursor at the player turn speed and says whether it now faces within AttackFacingAngle:
+    /// a skill with a clear direction goes off only then, so attacking behind you takes a turn first. Teleport and
+    /// Flamethrower (its own tighter aim) don't use it.
+    /// </summary>
+    public static bool TurnToward(ref Unity.Transforms.LocalTransform transform, in DesiredDirection desired, in MovementConfig config, float deltaTime)
+    {
+        transform.Rotation = UnityEngine.Quaternion.RotateTowards(transform.Rotation, desired.Quaternion, config.RotationSpeed * deltaTime);
+        return UnityEngine.Quaternion.Angle(transform.Rotation, desired.Quaternion) <= config.AttackFacingAngle;
+    }
+
     /// <summary>Removes and returns the first request for this skill, if there is one.</summary>
     public static bool TryTakeRequest(DynamicBuffer<SkillCastRequest> requests, SkillType type, out SkillCastRequest request)
     {

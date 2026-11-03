@@ -40,8 +40,8 @@ public partial struct HookshotSlashSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         var wallFilter = new CollisionFilter { BelongsTo = ~0u, CollidesWith = UnitMovement.WorldLayers };
 
-        foreach (var (hookshot, localTransform, inputs, collider, resource, stats, entity) in
-                 SystemAPI.Query<RefRW<HookshotSlash>, RefRW<LocalTransform>, RefRO<InputsData>, RefRO<PhysicsCollider>, RefRO<Resource>, RefRO<CalculatedStats>>()
+        foreach (var (hookshot, localTransform, inputs, desiredDirection, collider, resource, stats, entity) in
+                 SystemAPI.Query<RefRW<HookshotSlash>, RefRW<LocalTransform>, RefRO<InputsData>, RefRO<DesiredDirection>, RefRO<PhysicsCollider>, RefRO<Resource>, RefRO<CalculatedStats>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             ref var h = ref hookshot.ValueRW;
@@ -53,7 +53,10 @@ public partial struct HookshotSlashSystem : ISystem
             if (h.State == HookshotState.Idle)
             {
                 float cost = SkillUtil.Cost(h.ResourceCost, stats.ValueRO.Value);
-                if (!SystemAPI.IsComponentEnabled<HookshotSlash>(entity) || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO)) continue;
+                if (!SystemAPI.IsComponentEnabled<HookshotSlash>(entity)) continue;
+                // Turns toward the cursor first and fires once facing it
+                bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, config, deltaTime);
+                if (!facing || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO)) continue;
 
                 // Flat toward the cursor; the way the unit faces when the cursor is on it
                 var toCursor = inputs.ValueRO.MousePosition - position;

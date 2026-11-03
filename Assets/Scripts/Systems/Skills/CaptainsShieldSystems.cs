@@ -60,13 +60,13 @@ public partial struct CaptainsShieldSystem : ISystem
                  SystemAPI.Query<RefRO<CaptainsShield>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<InputsData>>()
                           .WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, movementConfig, SystemAPI.Time.DeltaTime);
             var calculatedStats = SystemAPI.GetComponent<CalculatedStats>(entity);
             var stats = calculatedStats.Value;
             float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats);
             if (shieldOut.Contains(entity) || !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, calculatedStats)) continue;
 
-            if (Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle) continue;
+            if (!facing) continue;
 
             Throw(commandBuffer, entity, shield.ValueRO, stats, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction,
                   inputs.ValueRO.MousePosition, physics, targets, targetRange);

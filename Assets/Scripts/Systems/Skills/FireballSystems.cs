@@ -43,7 +43,7 @@ public partial class FireballSystem : SystemBase
 
         foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, recovery, entity) in SystemAPI.Query<RefRO<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, movementConfig, SystemAPI.Time.DeltaTime);
             if(recovery.ValueRO.Remaining > 0f)
             {
                 continue;
@@ -56,7 +56,7 @@ public partial class FireballSystem : SystemBase
                 continue;
             }
 
-            if(Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle)
+            if(!facing)
             {
                 continue;
             }

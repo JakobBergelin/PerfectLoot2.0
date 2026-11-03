@@ -35,7 +35,7 @@ public partial class FistsOfThunderSystem : SystemBase
 
         foreach (var (fistOfThunder, localTransform, desiredDirection, stats, recovery, entity) in SystemAPI.Query<RefRW<FistsOfThunder>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<CalculatedStats>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, movementConfig, SystemAPI.Time.DeltaTime);
 
             var hits = fistOfThunder.ValueRO.Hits;
             if(hits.Length == 0 || recovery.ValueRO.Remaining > 0f)
@@ -43,7 +43,7 @@ public partial class FistsOfThunderSystem : SystemBase
                 continue;
             }
 
-            if(Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle)
+            if(!facing)
             {
                 continue;
             }

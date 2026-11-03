@@ -105,15 +105,18 @@ public partial struct BallLightningSystem : ISystem
         }
 
         // Starting a flight
-        foreach (var (ball, localTransform, inputs, collider, resource, entity) in
-                 SystemAPI.Query<RefRW<BallLightning>, RefRW<LocalTransform>, RefRO<InputsData>, RefRO<PhysicsCollider>, RefRO<Resource>>()
+        foreach (var (ball, localTransform, inputs, desiredDirection, collider, resource, entity) in
+                 SystemAPI.Query<RefRW<BallLightning>, RefRW<LocalTransform>, RefRO<InputsData>, RefRO<DesiredDirection>, RefRO<PhysicsCollider>, RefRO<Resource>>()
                           .WithEntityAccess())
         {
             ref var b = ref ball.ValueRW;
             var calculatedStats = SystemAPI.GetComponent<CalculatedStats>(entity);
             var stats = calculatedStats.Value;
             float cost = SkillUtil.Cost(b.ResourceCost, stats);
-            if (b.Flying || b.Elapsed < SkillUtil.Cooldown(b.Cooldown, stats) || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, calculatedStats)) continue;
+            if (b.Flying || b.Elapsed < SkillUtil.Cooldown(b.Cooldown, stats)) continue;
+            // Turns toward the cursor first and takes off once facing it
+            bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, config, deltaTime);
+            if (!facing || !SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, calculatedStats)) continue;
             if (!TeleportSystem.TryFindLanding(world, collider.ValueRO, localTransform.ValueRO, entity, inputs.ValueRO.MousePosition, float.MaxValue,
                                                minWalkableNormalY, config.StepHeight, FloorLayers(ref state, entity), out var destination))
                 continue;

@@ -47,7 +47,7 @@ public partial class TornadoSystem : SystemBase
 
         foreach (var (tornado, localTransform, desiredDirection, resource, stats, recovery, entity) in SystemAPI.Query<RefRO<Tornado>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, movementConfig, SystemAPI.Time.DeltaTime);
             if(recovery.ValueRO.Remaining > 0f)
             {
                 continue;
@@ -59,7 +59,7 @@ public partial class TornadoSystem : SystemBase
                 continue;
             }
 
-            if(Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle)
+            if(!facing)
             {
                 continue;
             }

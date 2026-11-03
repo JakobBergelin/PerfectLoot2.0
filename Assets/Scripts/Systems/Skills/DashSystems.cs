@@ -69,7 +69,9 @@ public partial struct DashSystem : ISystem
         foreach (var (dash, localTransform, desiredDirection, collider, skillBuffer, entity) in
                  SystemAPI.Query<RefRW<Dash>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<PhysicsCollider>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
-            if(dash.ValueRO.Elapsed >= CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, SystemAPI.GetComponent<CalculatedStats>(entity).Value))
+            // When ready, turns toward the cursor first and dashes once facing it
+            if(dash.ValueRO.Elapsed >= CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, SystemAPI.GetComponent<CalculatedStats>(entity).Value)
+               && SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, config, deltaTime))
             {
                 localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
                 dash.ValueRW.Elapsed = 0.0f;
