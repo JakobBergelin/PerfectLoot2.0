@@ -14,7 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::MovementSettings
   Values:
     MovementSpeed: 4
-    RotationSpeed: 360
+    RotationSpeed: 720
+    AttackFacingAngle: 60
     SeparationSpacing: 1.2
     PhysicsSeparationStrength: 2
     SwarmSeparationStrength: 5

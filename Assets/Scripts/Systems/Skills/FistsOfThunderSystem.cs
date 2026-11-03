@@ -43,8 +43,12 @@ public partial class FistsOfThunderSystem : SystemBase
                 continue;
             }
 
-            // Punches at once, facing the target; the punch's Cooldown comes after (shared with the other repeated attacks)
-            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            if(Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle)
+            {
+                continue;
+            }
+
+            // Punches as soon as it faces the cursor; the punch's Cooldown comes after (shared with the other repeated attacks)
             var hit = hits[fistOfThunder.ValueRO.PunchCount];
             var newEntity = commandBuffer.CreateEntity();
 

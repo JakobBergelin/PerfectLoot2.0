@@ -13,14 +13,12 @@ public partial class EnemyMeleeAttackSystem : SystemBase
     protected override void OnCreate()
     {
         _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
-        RequireForUpdate<MovementConfig>();
     }
 
     [BurstCompile]
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
-        var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
         foreach (var (enemyMeleeAttack, npcBehavior, stats, entity) in SystemAPI.Query<RefRW<EnemyMeleeAttack>, RefRO<NpcBehavior>, RefRO<CalculatedStats>>().WithEntityAccess().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             if (!npcBehavior.ValueRO.IsAttacking)
@@ -40,9 +38,9 @@ public partial class EnemyMeleeAttackSystem : SystemBase
                 continue;
             }
 
-            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, npcBehavior.ValueRO.DesiredDirection, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, npcBehavior.ValueRO.DesiredDirection, enemyMeleeAttack.ValueRO.TurnSpeed * SystemAPI.Time.DeltaTime);
 
-            if (Quaternion.Angle(localTransform.ValueRW.Rotation, npcBehavior.ValueRO.DesiredDirection) > (math.PI / 2))
+            if (Quaternion.Angle(localTransform.ValueRO.Rotation, npcBehavior.ValueRO.DesiredDirection) > enemyMeleeAttack.ValueRO.FacingAngle)
             {
                 continue;
             }

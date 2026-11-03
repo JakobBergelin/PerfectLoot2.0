@@ -66,8 +66,8 @@ public partial struct CaptainsShieldSystem : ISystem
             float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats);
             if (shieldOut.Contains(entity) || !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, calculatedStats)) continue;
 
-            // Throws at once, facing the throw
-            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            if (Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle) continue;
+
             Throw(commandBuffer, entity, shield.ValueRO, stats, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction,
                   inputs.ValueRO.MousePosition, physics, targets, targetRange);
             shieldOut.Add(entity);

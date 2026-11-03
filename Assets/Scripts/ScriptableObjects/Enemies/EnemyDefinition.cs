@@ -62,6 +62,10 @@ namespace Enemies
         public float MeleeDamage = 0.5f;
         [Tooltip("Seconds between attacks, scaled by the attack speed stat")]
         public float SecondsBetweenAttacks = 1f;
+        [Tooltip("Degrees per second it turns toward the player while attacking")]
+        public float AttackTurnSpeed = 360f;
+        [Tooltip("Attacks only once it faces within this many degrees of the player")]
+        public float AttackFacingAngle = 60f;
 
         public string DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
 

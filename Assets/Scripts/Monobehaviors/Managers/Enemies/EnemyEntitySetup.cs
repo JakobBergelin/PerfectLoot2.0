@@ -55,6 +55,8 @@ public static class EnemyEntitySetup
             {
                 Damage = definition.MeleeDamage,
                 AttackSpeed = definition.SecondsBetweenAttacks,
+                TurnSpeed = definition.AttackTurnSpeed,
+                FacingAngle = definition.AttackFacingAngle,
             });
         }
 

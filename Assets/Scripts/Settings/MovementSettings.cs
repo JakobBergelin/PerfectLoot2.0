@@ -8,7 +8,8 @@ public class MovementSettings : ScriptableObject
     public MovementConfig Values = new MovementConfig
     {
         MovementSpeed = 4.0f,
-        RotationSpeed = 360f,
+        RotationSpeed = 720f,
+        AttackFacingAngle = 60f,
         SeparationSpacing = 1.2f,
         PhysicsSeparationStrength = 2f,
         SwarmSeparationStrength = 5f,
@@ -28,8 +29,10 @@ public struct MovementConfig : IComponentData
 {
     [Tooltip("Base movement speed in units per second, before the MovementSpeed stat")]
     public float MovementSpeed;
-    [Tooltip("Turn speed in degrees per second")]
+    [Tooltip("Player turn speed in degrees per second (enemies: EnemyDefinition)")]
     public float RotationSpeed;
+    [Tooltip("The player's attacks (Fireball, Fists of Thunder...) go off only once it faces within this many degrees of the cursor")]
+    public float AttackFacingAngle;
 
     [Header("Enemy crowds")]
     [Tooltip("Enemies try to keep (radius + other radius) * this apart")]

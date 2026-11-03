@@ -56,8 +56,12 @@ public partial class FireballSystem : SystemBase
                 continue;
             }
 
-            // Fires at once, facing the shot; the wait comes after (shared with the other repeated attacks)
-            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            if(Quaternion.Angle(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion) > movementConfig.AttackFacingAngle)
+            {
+                continue;
+            }
+
+            // Fires as soon as it faces the cursor; the wait comes after (shared with the other repeated attacks)
             Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
             recovery.ValueRW.Remaining += fireball.ValueRO.AttackSpeed;
 

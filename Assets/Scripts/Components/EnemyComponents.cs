@@ -59,7 +59,9 @@ public struct EnemyMeleeAttack : IComponentData
 {
     public float Damage;
     public float AttackSpeed;
-    public float Elapsed;  
+    public float TurnSpeed;     // Degrees per second it turns toward the player while attacking
+    public float FacingAngle;   // Attacks only once it faces within this many degrees of the player
+    public float Elapsed;
 }
 
 /// <summary>
