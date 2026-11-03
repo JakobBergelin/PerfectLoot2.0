@@ -14,6 +14,8 @@ public struct Skill : IBufferElementData
 
     public SkillState State;
 
+    public float CooldownReduction; // Seconds to take off the remaining cooldown, used up by the skill's system (SkillUtil.ApplyCooldownReduction)
+
     public struct Triggers
     {
         public bool OnUsed;
@@ -70,6 +72,7 @@ public enum SkillTags
     Mobility = 1 << 2,
     Channeled = 1 << 3,
     Invulnerable = 1 << 4,
+    Cooldown = 1 << 5,
 }
 
 /// <summary>
@@ -104,6 +107,13 @@ public class SkillUtil
     /// that repeat an attack (Fireball, Tornado, Barrage, Fists of Thunder, Whirlwind) are timed by AttackSpeed instead.
     /// </summary>
     public static float Cooldown(float cooldown, in StatBlock stats) => cooldown * math.max(0f, 1f - stats.CooldownReduction);
+
+    /// <summary>Takes the seconds put on the skill (e.g. by Recharge) off its remaining cooldown: elapsed is its time since the last use.</summary>
+    public static void ApplyCooldownReduction(ref Skill skill, ref float elapsed)
+    {
+        elapsed += skill.CooldownReduction;
+        skill.CooldownReduction = 0f;
+    }
 
     /// <summary>
     /// Turns the caster toward the cursor at the player turn speed and says whether it now faces within AttackFacingAngle:

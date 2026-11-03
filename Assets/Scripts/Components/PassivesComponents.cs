@@ -57,6 +57,7 @@ public enum PassiveType
     Ghost,
     PixieDust,
     Quickening,
+    Recharge,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -136,4 +137,12 @@ public struct Quickening : IComponentData
 {
     // Cooldown reduction from Agility: Agility × this / (1 + Agility × this), so it never reaches 100% on its own
     public float CooldownPerAgility;
+}
+
+public struct Recharge : IComponentData
+{
+    public float ResourcePerTrigger;    // Resource spent on skills for each cooldown cut
+    public float CooldownReduction;     // Seconds taken off one random skill's remaining cooldown
+    public float Spent;                 // Toward the next cut
+    public Unity.Mathematics.Random Random;
 }

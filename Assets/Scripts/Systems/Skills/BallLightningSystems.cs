@@ -135,12 +135,13 @@ public partial struct BallLightningSystem : ISystem
         }
 
         // Report cooldown and flying state (after SkillActivationSystem's defaults)
-        foreach (var (ball, skillBuffer, stats) in SystemAPI.Query<RefRO<BallLightning>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (ball, skillBuffer, stats) in SystemAPI.Query<RefRW<BallLightning>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.BallLightning, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
+                SkillUtil.ApplyCooldownReduction(ref skill, ref ball.ValueRW.Elapsed);
                 float cooldown = SkillUtil.Cooldown(ball.ValueRO.Cooldown, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - ball.ValueRO.Elapsed);

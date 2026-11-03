@@ -108,12 +108,13 @@ public partial struct SonicBallSystem : ISystem
         }
 
         // Report cooldown and rolling state (after SkillActivationSystem's defaults)
-        foreach (var (ball, skillBuffer, stats) in SystemAPI.Query<RefRO<SonicBall>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (ball, skillBuffer, stats) in SystemAPI.Query<RefRW<SonicBall>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.SonicBall, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
+                SkillUtil.ApplyCooldownReduction(ref skill, ref ball.ValueRW.Elapsed);
                 float cooldown = SkillUtil.Cooldown(ball.ValueRO.Cooldown, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = ball.ValueRO.Rolling ? 0f : math.max(0f, cooldown - ball.ValueRO.Elapsed);

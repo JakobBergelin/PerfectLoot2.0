@@ -41,13 +41,14 @@ public partial struct ShadowstepSystem : ISystem
         }
 
         // Report cooldown, and active while the buff lasts (after SkillActivationSystem's defaults)
-        foreach (var (shadowstep, skillBuffer, stats, entity) in SystemAPI.Query<RefRO<Shadowstep>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>()
+        foreach (var (shadowstep, skillBuffer, stats, entity) in SystemAPI.Query<RefRW<Shadowstep>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>()
                      .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Shadowstep, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
+                SkillUtil.ApplyCooldownReduction(ref skill, ref shadowstep.ValueRW.Elapsed);
                 float cooldown = SkillUtil.Cooldown(shadowstep.ValueRO.Cooldown, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - shadowstep.ValueRO.Elapsed);

@@ -74,12 +74,13 @@ public partial struct TeleportSystem : ISystem
         }
 
         // Report cooldown and casting state (after SkillActivationSystem's defaults)
-        foreach (var (teleport, skillBuffer, stats) in SystemAPI.Query<RefRO<Teleport>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (teleport, skillBuffer, stats) in SystemAPI.Query<RefRW<Teleport>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Teleport, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
+                SkillUtil.ApplyCooldownReduction(ref skill, ref teleport.ValueRW.Elapsed);
                 float cooldown = SkillUtil.Cooldown(teleport.ValueRO.Cooldown, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - teleport.ValueRO.Elapsed);

@@ -15,5 +15,5 @@ MonoBehaviour:
   Name: Dash
   Icon: {fileID: 21300000, guid: 1ff07bc96e2843b082f00b2147e65eef, type: 3}
   Description: 
-  Tags: 4
+  Tags: 36
   cooldown: 2

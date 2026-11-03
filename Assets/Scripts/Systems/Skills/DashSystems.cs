@@ -86,12 +86,13 @@ public partial struct DashSystem : ISystem
         }
 
         // Report cooldown and dashing state (after SkillActivationSystem's defaults)
-        foreach (var (dash, skillBuffer, stats) in SystemAPI.Query<RefRO<Dash>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        foreach (var (dash, skillBuffer, stats) in SystemAPI.Query<RefRW<Dash>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
         {
             int index = -1;
             if (SkillUtil.FindSkill(skillBuffer, SkillType.Dash, ref index))
             {
                 ref var skill = ref skillBuffer.ElementAt(index);
+                SkillUtil.ApplyCooldownReduction(ref skill, ref dash.ValueRW.Elapsed);
                 float cooldown = CooldownFor(dash.ValueRO.Cooldown, dash.ValueRO.CooldownPerAgility, stats.ValueRO.Value);
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - dash.ValueRO.Elapsed);
