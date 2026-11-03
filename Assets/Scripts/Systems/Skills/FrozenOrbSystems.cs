@@ -19,11 +19,11 @@ public partial class FrozenOrbSystem : SystemBase
     [BurstCompile]
     protected override void OnUpdate()
     {
-        // SkillState: no cooldown to report (Elapsed is a wind-up that restarts when released); IsActive/resource set by SkillActivationSystem
+        // SkillState: no cooldown to report (the time between attacks is the shared AttackRecovery); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
 
-        // Casts requested by effects (e.g. Echoing Blade): no wind-up, the normal cost (skipped if it can't be paid)
+        // Casts requested by effects (e.g. Echoing Blade): no attack recovery, the normal cost (skipped if it can't be paid)
         foreach (var (orb, requests, skills, resourceChanges, resource, localTransform, stats, entity) in
                  SystemAPI.Query<RefRO<FrozenOrb>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRO<Resource>, RefRO<LocalTransform>, RefRO<CalculatedStats>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
@@ -40,39 +40,27 @@ public partial class FrozenOrbSystem : SystemBase
             }
         }
 
-        foreach (var (orb, stats, entity) in SystemAPI.Query<RefRW<FrozenOrb>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-        {
-            if(!SystemAPI.IsComponentEnabled<FrozenOrb>(entity))
-            {
-                orb.ValueRW.Elapsed = 0;
-            }
-            orb.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            orb.ValueRW.Elapsed = Mathf.Min(orb.ValueRW.Elapsed, orb.ValueRW.AttackSpeed);
-        }
-
-        foreach (var (orb, skillBuffer, localTransform, desiredDirection, resource, stats, entity) in SystemAPI.Query<RefRW<FrozenOrb>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
+        foreach (var (orb, skillBuffer, localTransform, desiredDirection, resource, stats, recovery, entity) in SystemAPI.Query<RefRO<FrozenOrb>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            if(recovery.ValueRO.Remaining > 0f)
+            {
+                continue;
+            }
+
             float cost = SkillUtil.Cost(orb.ValueRO.ResourceCost, stats.ValueRO.Value);
             if(!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO))
             {
-                orb.ValueRW.Elapsed = 0;
                 continue;
             }
 
-            if(Quaternion.Angle(localTransform.ValueRW.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2))
-            {
-                continue;
-            }
+            // Fires at once, facing the shot; the wait comes after (shared with the other repeated attacks)
+            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            Spawn(commandBuffer, entity, orb.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
+            recovery.ValueRW.Remaining += orb.ValueRO.AttackSpeed;
 
-            if(orb.ValueRO.Elapsed >= orb.ValueRO.AttackSpeed)
-            {
-                Spawn(commandBuffer, entity, orb.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
-                orb.ValueRW.Elapsed = 0.0f;
-
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
-                SkillUtil.MarkUsed(skillBuffer, SkillType.FrozenOrb);
-            }
+            SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
+            SkillUtil.MarkUsed(skillBuffer, SkillType.FrozenOrb);
         }
         // Spawned orbs fly as projectiles (ProjectileSystem) and spin and fire shards (FrozenOrbSpinSystem)
     }

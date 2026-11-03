@@ -23,7 +23,7 @@ public partial class BarrageSystem : SystemBase
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         // SkillState: no cooldown or cost to report; IsActive set by SkillActivationSystem
 
-        // Casts requested by effects (e.g. Echoing Blade): no wind-up; Barrage has no cost and homes on its own
+        // Casts requested by effects (e.g. Echoing Blade): no attack recovery; Barrage has no cost and homes on its own
         foreach (var (barrage, requests, skills, localTransform, entity) in
                  SystemAPI.Query<RefRO<Barrage>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, RefRO<LocalTransform>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
@@ -35,20 +35,17 @@ public partial class BarrageSystem : SystemBase
             }
         }
 
-        foreach (var (barrage, stats) in SystemAPI.Query<RefRW<Barrage>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        // Fires at once when the caster has recovered; the wait comes after (shared with the other repeated attacks)
+        foreach (var (barrage, localTransform, recovery, entity) in SystemAPI.Query<RefRO<Barrage>, RefRO<LocalTransform>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
-            barrage.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            barrage.ValueRW.Elapsed = Mathf.Min(barrage.ValueRW.Elapsed, barrage.ValueRW.AttackSpeed);
-        }
-
-        foreach (var (barrage, localTransform, entity) in SystemAPI.Query<RefRW<Barrage>, RefRO<LocalTransform>>().WithEntityAccess())
-        {
-            if(barrage.ValueRO.Elapsed >= barrage.ValueRO.AttackSpeed)
+            if(recovery.ValueRO.Remaining > 0f)
             {
-                Spawn(commandBuffer, entity, barrage.ValueRO, localTransform.ValueRO.Position);
-                barrage.ValueRW.Elapsed = 0.0f;
-                if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Barrage);
+                continue;
             }
+
+            Spawn(commandBuffer, entity, barrage.ValueRO, localTransform.ValueRO.Position);
+            recovery.ValueRW.Remaining += barrage.ValueRO.AttackSpeed;
+            if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Barrage);
         }
     }
 

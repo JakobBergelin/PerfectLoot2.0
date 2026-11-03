@@ -5,7 +5,7 @@ namespace ActiveSkills
     [CreateAssetMenu(fileName = "Fireball", menuName = "Active Skills/Fireball")]
     public class FireballSkill : ActiveSkill<FireBall>
     {
-        [Tooltip("Seconds of wind-up per fireball, scaled by the attack speed stat")]
+        [Tooltip("Seconds before the next attack after each fireball (shared by all repeated attacks), scaled by the attack speed stat")]
         public float AttackSpeed = 0.5f;
         [SerializeField] float resourceCost = 2f;
         public float Damage = 2f;
@@ -22,7 +22,7 @@ namespace ActiveSkills
         {
             description.Damage.Add(DamageLine(DamageType.Fire, "Damage", stats).Text(Num(Damage)));
             description.Effects.Add(AreaLine("Radius", Radius, stats));
-            description.Effects.Add(WindUpLine("Time per fireball", AttackSpeed, stats));
+            description.Effects.Add(AttackTimeLine("Time between fireballs", AttackSpeed, stats));
         }
 
         protected override FireBall Configure(FireBall component, bool isNew)

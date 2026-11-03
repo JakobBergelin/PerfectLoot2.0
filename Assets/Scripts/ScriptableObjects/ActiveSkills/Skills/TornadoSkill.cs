@@ -6,7 +6,7 @@ namespace ActiveSkills
     [CreateAssetMenu(fileName = "Tornado", menuName = "Active Skills/Tornado")]
     public class TornadoSkill : ActiveSkill<Tornado>
     {
-        [Tooltip("Seconds of wind-up per tornado, scaled by the attack speed stat")]
+        [Tooltip("Seconds before the next attack after each tornado (shared by all repeated attacks), scaled by the attack speed stat")]
         public float AttackSpeed = 0.9f;
         [SerializeField] float resourceCost = 15f;
 
@@ -34,7 +34,7 @@ namespace ActiveSkills
             description.Damage.Add(WeaponDamageLine(DamageType.Poison, "Damage per second", DamagePerSecond, DamagePerSecond, WeaponDamagePerSecond, stats));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Lasts", Lifetime, null, " s"));
             description.Effects.Add(AreaLine("Radius", Radius, stats));
-            description.Effects.Add(WindUpLine("Time per tornado", AttackSpeed, stats));
+            description.Effects.Add(AttackTimeLine("Time between tornadoes", AttackSpeed, stats));
         }
 
         protected override Tornado Configure(Tornado component, bool isNew)

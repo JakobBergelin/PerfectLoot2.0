@@ -5,7 +5,7 @@ namespace ActiveSkills
     [CreateAssetMenu(fileName = "FrozenOrb", menuName = "Active Skills/Frozen Orb")]
     public class FrozenOrbSkill : ActiveSkill<FrozenOrb>
     {
-        [Tooltip("Seconds of wind-up per orb, scaled by the attack speed stat")]
+        [Tooltip("Seconds before the next attack after each orb (shared by all repeated attacks), scaled by the attack speed stat")]
         public float AttackSpeed = 1f;
         [SerializeField] float resourceCost = 25f;
 
@@ -44,7 +44,7 @@ namespace ActiveSkills
             description.Effects.Add(AreaLine("Radius", Radius, stats));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Time between ice shards", ShardInterval, null, " s"));
             description.Effects.Add(new SkillLine().Text($"Ice shard range: {Num(ShardRange)} m"));
-            description.Effects.Add(WindUpLine("Time per orb", AttackSpeed, stats));
+            description.Effects.Add(AttackTimeLine("Time between orbs", AttackSpeed, stats));
         }
 
         protected override FrozenOrb Configure(FrozenOrb component, bool isNew)

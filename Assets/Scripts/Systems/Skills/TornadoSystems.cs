@@ -24,11 +24,11 @@ public partial class TornadoSystem : SystemBase
     [BurstCompile]
     protected override void OnUpdate()
     {
-        // SkillState: no cooldown to report (Elapsed is a wind-up); IsActive/resource set by SkillActivationSystem
+        // SkillState: no cooldown to report (the time between attacks is the shared AttackRecovery); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
 
-        // Casts requested by effects (e.g. Echoing Blade): no wind-up, the normal cost (skipped if it can't be paid)
+        // Casts requested by effects (e.g. Echoing Blade): no attack recovery, the normal cost (skipped if it can't be paid)
         foreach (var (tornado, requests, skills, resourceChanges, resource, localTransform, stats, entity) in
                  SystemAPI.Query<RefRO<Tornado>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRO<Resource>, RefRO<LocalTransform>, RefRO<CalculatedStats>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
@@ -45,17 +45,10 @@ public partial class TornadoSystem : SystemBase
             }
         }
 
-        foreach (var (tornado,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-        {
-            tornado.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            tornado.ValueRW.Elapsed = Mathf.Min(tornado.ValueRW.Elapsed, tornado.ValueRO.AttackSpeed);
-        }
-
-        foreach (var (tornado, localTransform, desiredDirection, resource,stats, entity) in SystemAPI.Query<RefRW<Tornado>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>>().WithEntityAccess())
+        foreach (var (tornado, localTransform, desiredDirection, resource, stats, recovery, entity) in SystemAPI.Query<RefRO<Tornado>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRO<CalculatedStats>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
-
-            if(Quaternion.Angle(localTransform.ValueRW.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2))
+            if(recovery.ValueRO.Remaining > 0f)
             {
                 continue;
             }
@@ -63,18 +56,16 @@ public partial class TornadoSystem : SystemBase
             float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
             if(!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO))
             {
-                tornado.ValueRW.Elapsed = 0.0f;
                 continue;
             }
 
-            if(tornado.ValueRO.Elapsed >= tornado.ValueRO.AttackSpeed)
-            {
-                Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction, ref _random);
-                tornado.ValueRW.Elapsed = 0.0f;
+            // Fires at once, facing the shot; the wait comes after (shared with the other repeated attacks)
+            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction, ref _random);
+            recovery.ValueRW.Remaining += tornado.ValueRO.AttackSpeed;
 
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
-                if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Tornado);
-            }
+            SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
+            if(SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.Tornado);
         }
         // Spawned tornadoes move as wandering projectiles (WanderingProjectileSystem, ProjectileSystem)
     }

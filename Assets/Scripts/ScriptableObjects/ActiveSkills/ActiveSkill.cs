@@ -79,8 +79,8 @@ namespace ActiveSkills
         protected static SkillLine AreaLine(string label, float radius, StatBlock? stats) =>
             ValueLine(GameIcons.Affix(Affix.AreaOfEffect), label, radius, stats is StatBlock s ? radius * s.AreaMultiplier : (float?)null, " m");
 
-        /// <summary>A wind-up timed by attack speed: seconds / the AttackSpeed stat.</summary>
-        protected static SkillLine WindUpLine(string label, float seconds, StatBlock? stats) =>
+        /// <summary>Time between repeated attacks (AttackRecovery), timed by attack speed: seconds / the AttackSpeed stat.</summary>
+        protected static SkillLine AttackTimeLine(string label, float seconds, StatBlock? stats) =>
             ValueLine(GameIcons.Affix(Affix.AttackSpeed), label, seconds,
                       stats is StatBlock s && s.AttackSpeed > 0f ? seconds / s.AttackSpeed : (float?)null, " s");
     }

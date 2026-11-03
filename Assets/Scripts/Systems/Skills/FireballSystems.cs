@@ -19,11 +19,11 @@ public partial class FireballSystem : SystemBase
     [BurstCompile]
     protected override void OnUpdate()
     {
-        // SkillState: no cooldown to report (Elapsed is a wind-up that restarts when released); IsActive/resource set by SkillActivationSystem
+        // SkillState: no cooldown to report (the time between attacks is the shared AttackRecovery); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
 
-        // Casts requested by effects (e.g. Echoing Blade): no wind-up, the normal cost (skipped if it can't be paid)
+        // Casts requested by effects (e.g. Echoing Blade): no attack recovery, the normal cost (skipped if it can't be paid)
         foreach (var (fireball, requests, skills, resourceChanges, resource, localTransform, entity) in
                  SystemAPI.Query<RefRO<FireBall>, DynamicBuffer<SkillCastRequest>, DynamicBuffer<Skill>, DynamicBuffer<ResourceChanger>, RefRO<Resource>, RefRO<LocalTransform>>()
                           .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
@@ -41,40 +41,28 @@ public partial class FireballSystem : SystemBase
             }
         }
 
-        foreach (var (fireball, stats, entity) in SystemAPI.Query<RefRW<FireBall>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-        {
-            if(!SystemAPI.IsComponentEnabled<FireBall>(entity))
-            {
-                fireball.ValueRW.Elapsed = 0;
-            }
-            fireball.ValueRW.Elapsed += SystemAPI.Time.DeltaTime * stats.ValueRO.Value.AttackSpeed;
-            fireball.ValueRW.Elapsed = Mathf.Min(fireball.ValueRW.Elapsed, fireball.ValueRW.AttackSpeed);
-        }
-
-        foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, entity) in SystemAPI.Query<RefRW<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>>().WithEntityAccess())
+        foreach (var (fireball, skillBuffer, localTransform, desiredDirection, resource, recovery, entity) in SystemAPI.Query<RefRO<FireBall>, DynamicBuffer<Skill>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<Resource>, RefRW<AttackRecovery>>().WithEntityAccess())
         {
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * SystemAPI.Time.DeltaTime);
+            if(recovery.ValueRO.Remaining > 0f)
+            {
+                continue;
+            }
+
             var stats = SystemAPI.GetComponent<CalculatedStats>(entity);
             float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, stats.Value);
             if(!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats))
             {
-                fireball.ValueRW.Elapsed = 0;
                 continue;
             }
 
-            if(Quaternion.Angle(localTransform.ValueRW.Rotation, desiredDirection.ValueRO.Quaternion) > (math.PI / 2))
-            {
-                continue;
-            }
+            // Fires at once, facing the shot; the wait comes after (shared with the other repeated attacks)
+            localTransform.ValueRW.Rotation = desiredDirection.ValueRO.Quaternion;
+            Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
+            recovery.ValueRW.Remaining += fireball.ValueRO.AttackSpeed;
 
-            if(fireball.ValueRO.Elapsed >= fireball.ValueRO.AttackSpeed)
-            {
-                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
-                fireball.ValueRW.Elapsed = 0.0f;
-
-                SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
-                SkillUtil.MarkUsed(skillBuffer, SkillType.Fireball);
-            }
+            SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
+            SkillUtil.MarkUsed(skillBuffer, SkillType.Fireball);
         }
     }
 

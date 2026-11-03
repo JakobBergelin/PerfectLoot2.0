@@ -6,7 +6,7 @@ using Unity.Mathematics;
 /// <summary>
 /// Echoing Blade: a wearer that made a melee attack this frame (MeleeAttackUsed) with its resource at least
 /// ResourceThreshold full asks for a cast of one of its equipped skills tagged Projectile, at random, toward the cursor.
-/// The skill's own system casts it next frame (SkillCastRequest): its normal cost, no wind-up, counted as an AutoCast use.
+/// The skill's own system casts it next frame (SkillCastRequest): its normal cost, no attack recovery, counted as an AutoCast use.
 /// </summary>
 [UpdateInGroup(typeof(SkillReactionSystemGroup))]
 [BurstCompile]

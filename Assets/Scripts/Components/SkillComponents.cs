@@ -74,7 +74,7 @@ public enum SkillTags
 
 /// <summary>
 /// A request on the caster to cast a skill now, made by an effect (e.g. Echoing Blade). The skill's own system handles
-/// it at the start of the next frame's skills: no wind-up, the normal resource cost (skipped when it can't be paid),
+/// it at the start of the next frame's skills: no attack recovery, the normal resource cost (skipped when it can't be paid),
 /// counted as a use with AutoCast. Requests nobody handled are cleared (SkillCastRequestCleanupSystem).
 /// </summary>
 public struct SkillCastRequest : IBufferElementData
@@ -150,9 +150,19 @@ public class SkillUtil
     }
 }
 
+/// <summary>
+/// A caster's recovery from its last attack, shared by the skills that repeat an attack (Fireball, Tornado, Frozen Orb,
+/// Barrage, Fists of Thunder): one fires as soon as this is down to 0 and adds its own time between attacks, so
+/// switching skills never skips a wait. Counted down by attack speed (AttackRecoverySystem).
+/// </summary>
+public struct AttackRecovery : IComponentData
+{
+    public float Remaining;
+}
+
 public struct FistsOfThunderHit
 {
-    public float Cooldown;  // Time before this punch can land, scaled by attack speed
+    public float Cooldown;  // Recovery after this punch, scaled by attack speed
     public float Damage;    // Flat damage, plus WeaponDamage * WeaponDamageMultiplier
 }
 
@@ -164,7 +174,6 @@ public struct FistsOfThunder : IComponentData, IEnableableComponent
     public float Radius;
     public float HitForce;
 
-    public float TimeSinceLastPunch;
     public int PunchCount;
 }
 
@@ -176,7 +185,6 @@ public struct Barrage : IComponentData, IEnableableComponent
     public float Radius;
     public float HomingTurnSpeed;
     public float HomingTurnAcceleration;
-    public float Elapsed;
 }
 
 public struct FireBall : IComponentData, IEnableableComponent
@@ -187,7 +195,6 @@ public struct FireBall : IComponentData, IEnableableComponent
     public float ProjectileSpeed;
     public float Radius;
     public float HitForce;
-    public float Elapsed;
 }
 
 public struct Dash : IComponentData, IEnableableComponent
@@ -234,7 +241,7 @@ public struct Shadowstep : IComponentData, IEnableableComponent
 }
 
 /// <summary>
-/// Throws a homing shield (ShieldProjectile) while held, as long as none of the caster's shields is out: no wind-up or
+/// Throws a homing shield (ShieldProjectile) while held, as long as none of the caster's shields is out: no attack recovery or
 /// cooldown, so a faster shield means more throws. Damage is scaled by the caster's BlockChance when thrown.
 /// </summary>
 public struct CaptainsShield : IComponentData, IEnableableComponent
@@ -300,7 +307,6 @@ public struct Tornado : IComponentData, IEnableableComponent
     public float Lifetime;
     public float TickRate;
     public float HitForce;
-    public float Elapsed;
 }
 
 /// <summary>Frozen Orb: casts a slow orb that damages around it and spins, firing ice shards out of its front and back.</summary>
@@ -319,7 +325,6 @@ public struct FrozenOrb : IComponentData, IEnableableComponent
     public float ShardSpeed;
     public float ShardRadius;
     public float ShardRange;        // Meters each shard flies at most
-    public float Elapsed;
 }
 
 /// <summary>On a Frozen Orb in flight: its spin and shard timer (FrozenOrbSpinSystem).</summary>

@@ -22,7 +22,7 @@ namespace ActiveSkills
         {
             description.Damage.Add(DamageLine(DamageType.Physical, "Damage per missile", stats).Text(Num(Damage)));
             description.Effects.Add(AreaLine("Hit radius", Radius, stats));
-            description.Effects.Add(WindUpLine("Time per missile", AttackSpeed, stats));
+            description.Effects.Add(AttackTimeLine("Time between missiles", AttackSpeed, stats));
         }
 
         protected override Barrage Configure(Barrage component, bool isNew)
