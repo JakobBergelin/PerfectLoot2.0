@@ -29,6 +29,7 @@ public static class UnitEntitySetup
         AddBuffer<PeriodicDamageInstance>(entityManager, entity);
         AddBuffer<CalculatedDamageInstance>(entityManager, entity);
         AddOrSet(entityManager, entity, new Knockback());
+        AddOrSet(entityManager, entity, new LastHit());
         AddBuffer<ChargedInstance>(entityManager, entity);
 
         // Buffs and debuffs: every effect component is present but disabled until applied

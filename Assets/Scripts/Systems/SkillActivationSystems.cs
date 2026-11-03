@@ -109,6 +109,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Shadowstep:
                 if (SystemAPI.HasComponent<Shadowstep>(entity)) SystemAPI.SetComponentEnabled<Shadowstep>(entity, enabled);
                 break;
+            case SkillType.FrozenOrb:
+                if (SystemAPI.HasComponent<FrozenOrb>(entity)) SystemAPI.SetComponentEnabled<FrozenOrb>(entity, enabled);
+                break;
         }
     }
 }

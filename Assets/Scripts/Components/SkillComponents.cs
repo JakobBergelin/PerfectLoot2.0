@@ -52,6 +52,7 @@ public enum SkillType
     SonicBall,
     HookshotSlash,
     Shadowstep,
+    FrozenOrb,
 
 }
 
@@ -300,6 +301,38 @@ public struct Tornado : IComponentData, IEnableableComponent
     public float TickRate;
     public float HitForce;
     public float Elapsed;
+}
+
+/// <summary>Frozen Orb: casts a slow orb that damages around it and spins, firing ice shards out of its front and back.</summary>
+public struct FrozenOrb : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;
+    public float ResourceCost;
+    public float DamagePerSecond;
+    public float TickRate;
+    public float Radius;            // Damage radius around the orb
+    public float Speed;
+    public float Lifetime;
+    public float SpinSpeed;         // Degrees per second
+    public float ShardInterval;     // Seconds between shard bursts (one shard out of the front, one out of the back)
+    public float ShardDamage;
+    public float ShardSpeed;
+    public float ShardRadius;
+    public float ShardRange;        // Meters each shard flies at most
+    public float Elapsed;
+}
+
+/// <summary>On a Frozen Orb in flight: its spin and shard timer (FrozenOrbSpinSystem).</summary>
+public struct FrozenOrbProjectile : IComponentData
+{
+    public float SpinSpeed;         // Degrees per second
+    public float SpinAngle;         // Degrees; the front faces this way
+    public float ShardInterval;
+    public float ShardElapsed;
+    public float ShardDamage;
+    public float ShardSpeed;
+    public float ShardRadius;
+    public float ShardRange;
 }
 
 /// <summary>

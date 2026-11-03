@@ -20,6 +20,17 @@ public struct Projectile : IComponentData
     public bool GroundHeightSet;
 }
 
+/// <summary>
+/// Destroys the projectile once it has flown MaxDistance meters (ProjectileRangeSystem). Counts the path actually flown,
+/// so bounces, homing and orbiting use it up too. Set LastPosition to the spawn position.
+/// </summary>
+public struct ProjectileRange : IComponentData
+{
+    public float MaxDistance;
+    public float Traveled;
+    public float3 LastPosition;
+}
+
 public enum HomingType
 {
     Closest,

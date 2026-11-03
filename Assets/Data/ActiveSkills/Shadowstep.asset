@@ -19,4 +19,4 @@ MonoBehaviour:
   cooldown: 60
   Duration: 20
   AttackSpeedBonus: 0.15
-  Range: 30
+  Range: 10

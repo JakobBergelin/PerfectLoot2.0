@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fbdf1e8afa0e4b01aa5a7f88e3c27ca2, type: 3}
   m_Name: CameraSettings
   m_EditorClassIdentifier: Assembly-CSharp::CameraSettings
-  Pitch: 30
+  Pitch: 38
   Yaw: 0
-  Distance: 17.3205
-  LookHeight: 1.3397
-  FieldOfView: 60
+  Distance: 17
+  LookHeight: 0
+  FieldOfView: 59.6
   SmoothTime: 0.15
   MaxSpeed: 30
   SnapDistance: 20

@@ -32,6 +32,14 @@ public struct DamageInstance : IBufferElementData
     public bool IsCenterTarget;     // The hit target closest to the attack's center (one per attack; lightning charges only it)
 }
 
+/// <summary>On every unit: its latest main hit that dealt damage, written by DamagingSystem (e.g. which way a killing blow went).</summary>
+public struct LastHit : IComponentData
+{
+    public float3 Direction;        // The hit's HitDirection: horizontally away from the attack
+    public Entity Source;
+    public double Time;             // SystemAPI.Time.ElapsedTime of the frame it landed; 0 = never hit
+}
+
 public struct HealingInstance : IBufferElementData
 {    
     public float Value;

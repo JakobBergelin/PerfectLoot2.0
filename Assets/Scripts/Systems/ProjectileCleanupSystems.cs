@@ -52,3 +52,31 @@ public partial struct ProjectileCleanupSystem : ISystem
         }
     }
 }
+
+/// <summary>Adds up how far each ProjectileRange projectile moved this frame and removes it once it has flown its MaxDistance.</summary>
+[UpdateInGroup(typeof(MovementSystemGroup))]
+[UpdateAfter(typeof(ProjectileSystem))]
+[BurstCompile]
+public partial struct ProjectileRangeSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.RequireForUpdate<EndSimulationEntityCommandBufferSystem.Singleton>();
+        state.RequireForUpdate<ProjectileRange>();
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        var commandBuffer = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
+        foreach (var (range, transform, entity) in SystemAPI.Query<RefRW<ProjectileRange>, RefRO<LocalTransform>>()
+                     .WithAll<Projectile>().WithNone<DestroyWithChildren>().WithEntityAccess())
+        {
+            var position = transform.ValueRO.Position;
+            range.ValueRW.Traveled += math.distance(range.ValueRO.LastPosition, position);
+            range.ValueRW.LastPosition = position;
+            if (range.ValueRO.Traveled >= range.ValueRO.MaxDistance)
+                commandBuffer.AddComponent<DestroyWithChildren>(entity);
+        }
+    }
+}

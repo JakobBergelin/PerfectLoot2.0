@@ -1,0 +1,52 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b403ebb9b40a43e78b1be1f9a93cccf5, type: 3}
+  m_Name: RimeshardGrips
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryHandsItem
+  Name: Rimeshard Grips
+  Id: 8fdc25f3c08144f69218f19d684592df
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 1
+      Max: 3
+  - Affix: 32
+    RollRange:
+      Min: 0.1
+      Max: 0.2
+  - Affix: 17
+    RollRange:
+      Min: 20
+      Max: 40
+  - Affix: 18
+    RollRange:
+      Min: -20
+      Max: -10
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 20
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  LegendaryPower: {fileID: 11400000, guid: 0c6e7358f0fc406d999dc3937bbd937c, type: 2}

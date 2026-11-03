@@ -227,6 +227,7 @@ public partial class DamagingSystem : SystemBase
         var burning = SystemAPI.GetComponentLookup<Burning>();
         var poisoned = SystemAPI.GetComponentLookup<Poisoned>();
         var chilled = SystemAPI.GetComponentLookup<Chilled>();
+        double elapsedTime = SystemAPI.Time.ElapsedTime;
         // Optional: without it units just don't flash
         SystemAPI.TryGetSingleton<HitFlashConfig>(out var hitFlashConfig);
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
@@ -244,6 +245,11 @@ public partial class DamagingSystem : SystemBase
                     }
                     OnDamageTaken?.Invoke(damage, position, instance.IsCrit);
                     health.ValueRW.CurrentValue -= damage;
+                    if(SystemAPI.HasComponent<LastHit>(entity))
+                    {
+                        var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime};
+                        SystemAPI.SetComponent(entity, lastHit);
+                    }
 
                     // Push the target; KnockbackSystem moves it and lets the push die out
                     if(instance.HitForce > 0.0f && SystemAPI.HasComponent<Knockback>(entity))
