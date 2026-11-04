@@ -55,6 +55,7 @@ public enum SkillType
     HookshotSlash,
     Shadowstep,
     FrozenOrb,
+    ColdSnap,
 
 }
 
@@ -254,6 +255,16 @@ public struct Invulnerability : IComponentData, IEnableableComponent
     public float Cooldown;
     public float Duration;
     public float ResourceCost;
+    public float Elapsed;       // Since the last cast, up to Cooldown
+}
+
+/// <summary>Cold Snap: a burst around the caster that deals cold damage and chills enemies heavily.</summary>
+public struct ColdSnap : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Damage;
+    public float Radius;
+    public int ChillStacks;     // Left on an enemy by one cast, the hit's own chill included
     public float Elapsed;       // Since the last cast, up to Cooldown
 }
 

@@ -112,6 +112,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.FrozenOrb:
                 if (SystemAPI.HasComponent<FrozenOrb>(entity)) SystemAPI.SetComponentEnabled<FrozenOrb>(entity, enabled);
                 break;
+            case SkillType.ColdSnap:
+                if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
+                break;
         }
     }
 }
