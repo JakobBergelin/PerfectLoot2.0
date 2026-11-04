@@ -58,3 +58,5 @@ MonoBehaviour:
   TurnAcceleration: 1
   MeleeDamage: 1.6
   SecondsBetweenAttacks: 1.6
+  Skills:
+  - {fileID: 11400000, guid: 18a396f57839a3b8f7ef7857101a6700, type: 2}

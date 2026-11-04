@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using EnemySkills;
 using UnityEngine;
 
 namespace Enemies
@@ -38,7 +40,7 @@ namespace Enemies
         };
 
         [Header("Behavior")]
-        [Tooltip("Chases and attacks the player. Off for training dummies (the behavior and melee values below are then unused).")]
+        [Tooltip("Chases and attacks the player. Off for training dummies (the behavior, skill and melee values below are then unused).")]
         public bool HasAI = true;
         [Tooltip("Distance at which it sees the player, with line of sight; shrinks toward Proximity Radius for a player " +
                  "behind it. Swarm: notices the player within this distance, no line of sight.")]
@@ -51,14 +53,26 @@ namespace Enemies
         public float NearMissMargin = 2f;
         [Tooltip("Physics only: gives up after this many seconds without seeing, being hit by or being alerted to the player")]
         public float ForgetTime = 5f;
-        [Tooltip("Distance at which it stops and attacks; the hit itself has half this radius")]
+        [Tooltip("Distance from the target at which it stops walking. Swarm: also where it attacks, with a hit of half this radius.")]
         public float AttackRadius = 3f;
         [Tooltip("How fast it turns toward the player")]
         public float TurnSpeed = 2f;
         [Tooltip("How much the turn speed grows per second while chasing")]
         public float TurnAcceleration = 1f;
 
-        [Header("Melee attack")]
+        [Header("Ranged")]
+        [Tooltip("Distance it tries to keep from its target: it backs away from a closer one, and walks closer to a farther one or " +
+                 "one it can't see. 0: not ranged, it walks up to Attack Radius. Physics only.")]
+        public float DesiredDistance;
+        [Tooltip("How many meters off Desired Distance it may be before it moves")]
+        public float DistanceTolerance = 1.5f;
+
+        [Header("Skills")]
+        [Tooltip("In priority order: it uses the first one that's ready, so big skills go first and basic attacks last. Empty: it " +
+                 "never attacks. One skill of each kind per enemy. Physics only: Swarm enemies use the melee attack below.")]
+        public List<EnemySkill> Skills = new List<EnemySkill>();
+
+        [Header("Melee attack (Swarm only)")]
         public float MeleeDamage = 0.5f;
         [Tooltip("Seconds between attacks, scaled by the attack speed stat")]
         public float SecondsBetweenAttacks = 1f;
@@ -75,6 +89,13 @@ namespace Enemies
 #if UNITY_EDITOR
         void OnValidate()
         {
+            if (BodyType == BodyType.Swarm && (Skills.Count > 0 || DesiredDistance > 0f))
+                Debug.LogWarning($"{name}: Swarm enemies only use the melee attack, so their skills and Desired Distance do nothing.", this);
+            var kinds = new HashSet<EnemySkillType>();
+            foreach (var skill in Skills)
+                if (skill != null && !kinds.Add(skill.Type))
+                    Debug.LogWarning($"{name}: more than one {skill.Type} skill; an enemy can only have one of each kind.", this);
+
             if (Prefab == null) return;
             string expectedLayer = BodyType == BodyType.Swarm ? "EnemySwarm" : "Enemy";
             if (LayerMask.LayerToName(Prefab.layer) != expectedLayer)

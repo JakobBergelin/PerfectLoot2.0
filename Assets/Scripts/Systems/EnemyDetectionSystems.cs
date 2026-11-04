@@ -4,17 +4,91 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-/// <summary>Something that makes enemies near it notice the player: a player attack (near miss) or an enemy that found the player.</summary>
+/// <summary>A living unit enemies can go after this frame.</summary>
+public struct EnemyTargetUnit
+{
+    public Entity Entity;
+    public float3 Position;
+    public int FieldSlot;
+}
+
+/// <summary>Singleton: every living EnemyTargetable unit, rebuilt each frame by EnemyTargetsSystem.</summary>
+public struct EnemyTargets : IComponentData
+{
+    public NativeList<EnemyTargetUnit> Units;
+
+    /// <summary>The index of entity in units, -1 when it isn't a living target.</summary>
+    public static int Find(in NativeArray<EnemyTargetUnit> units, Entity entity)
+    {
+        for (int i = 0; i < units.Length; i++)
+            if (units[i].Entity == entity) return i;
+        return -1;
+    }
+
+    /// <summary>The index of the unit nearest to position (horizontally), -1 when there are none.</summary>
+    public static int Nearest(in NativeArray<EnemyTargetUnit> units, float3 position)
+    {
+        int nearest = -1;
+        float nearestDistanceSq = float.MaxValue;
+        for (int i = 0; i < units.Length; i++)
+        {
+            float distanceSq = math.distancesq(units[i].Position.xz, position.xz);
+            if (distanceSq >= nearestDistanceSq) continue;
+            nearestDistanceSq = distanceSq;
+            nearest = i;
+        }
+        return nearest;
+    }
+}
+
+/// <summary>Lists the units enemies can go after. A dead (or dying) unit is no target.</summary>
+[UpdateInGroup(typeof(MovementSystemGroup))]
+[UpdateBefore(typeof(FlowFieldSystem))]
+[BurstCompile]
+public partial struct EnemyTargetsSystem : ISystem
+{
+    public void OnCreate(ref SystemState state)
+    {
+        state.EntityManager.CreateSingleton(new EnemyTargets { Units = new NativeList<EnemyTargetUnit>(8, Allocator.Persistent) });
+    }
+
+    public void OnDestroy(ref SystemState state)
+    {
+        if (SystemAPI.TryGetSingletonRW<EnemyTargets>(out var targets))
+        {
+            state.CompleteDependency();
+            if (targets.ValueRO.Units.IsCreated) targets.ValueRW.Units.Dispose();
+        }
+    }
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        // Last frame's readers must be done before it's rebuilt
+        var targets = SystemAPI.GetSingletonRW<EnemyTargets>();
+        state.CompleteDependency();
+        var units = targets.ValueRW.Units;
+        units.Clear();
+
+        foreach (var (targetable, transform, health, entity) in SystemAPI.Query<RefRO<EnemyTargetable>, RefRO<LocalTransform>, RefRO<Health>>().WithNone<RigidDeath>().WithEntityAccess())
+        {
+            if (health.ValueRO.CurrentValue <= 0f) continue;
+            units.Add(new EnemyTargetUnit { Entity = entity, Position = transform.ValueRO.Position, FieldSlot = targetable.ValueRO.FieldSlot });
+        }
+    }
+}
+
+/// <summary>Something that makes enemies near it notice a unit: its attack (near miss) or an enemy that found it.</summary>
 public struct EnemyAlert
 {
     public float3 Position;
     public float Radius;
-    public Entity Player;
-    public bool NearMiss;   // A player attack: each enemy adds its NearMissMargin to Radius
+    public Entity Unit;
+    public bool NearMiss;   // An attack: each enemy adds its NearMissMargin to Radius
 }
 
 /// <summary>
-/// Singleton: alerts posted this frame (Pending: player attacks, enemies that found the player) and the ones enemies react
+/// Singleton: alerts posted this frame (Pending: attacks, enemies that found a target) and the ones enemies react
 /// to (Current: last frame's). Swapped by EnemyDetectionSystem.
 /// </summary>
 public struct EnemyAlerts : IComponentData
@@ -22,25 +96,27 @@ public struct EnemyAlerts : IComponentData
     public NativeQueue<EnemyAlert> Pending;
     public NativeList<EnemyAlert> Current;
 
-    /// <summary>Whether any alert about player reaches an enemy at position (horizontally).</summary>
-    public static bool Reaches(in NativeArray<EnemyAlert> alerts, float3 position, float nearMissMargin, Entity player)
+    /// <summary>The first living target an alert about it reaches an enemy at position with (horizontally).</summary>
+    public static bool TryReach(in NativeArray<EnemyAlert> alerts, in NativeArray<EnemyTargetUnit> targets, float3 position, float nearMissMargin, out Entity unit)
     {
         for (int i = 0; i < alerts.Length; i++)
         {
             var alert = alerts[i];
-            if (alert.Player != player) continue;
             float radius = alert.Radius + (alert.NearMiss ? nearMissMargin : 0f);
-            if (math.distancesq(alert.Position.xz, position.xz) <= radius * radius) return true;
+            if (math.distancesq(alert.Position.xz, position.xz) > radius * radius || EnemyTargets.Find(targets, alert.Unit) < 0) continue;
+            unit = alert.Unit;
+            return true;
         }
+        unit = Entity.Null;
         return false;
     }
 }
 
 /// <summary>
-/// Sets each enemy's EnemyTarget. Physics enemies (EnemyDetection): see the player within their sight radius (shrinking
-/// toward ProximityRadius for a player behind them) with line of sight on the FlowField, or notice it within
-/// ProximityRadius through walls; finding it themselves alerts enemies within AlertRadius (next frame). Swarms
-/// (SwarmDetection): the player within Radius. Both react to alerts and drop a dead or gone player; Physics enemies also
+/// Sets each enemy's EnemyTarget to the nearest target it senses. Physics enemies (EnemyDetection): see it within their
+/// sight radius (shrinking toward ProximityRadius for a target behind them) with line of sight on the FlowField, or notice
+/// it within ProximityRadius through walls; finding one themselves alerts enemies within AlertRadius (next frame). Swarms
+/// (SwarmDetection): a target within Radius. Both react to alerts and drop a dead or gone target; Physics enemies also
 /// forget it after ForgetTime without sensing it. Being hit is EnemyHitDetectionSystem, near misses EnemyNearMissSystem.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -49,17 +125,15 @@ public struct EnemyAlerts : IComponentData
 [BurstCompile]
 public partial struct EnemyDetectionSystem : ISystem
 {
-    EntityQuery _playerQuery;
-
     public void OnCreate(ref SystemState state)
     {
-        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player, LocalTransform>().Build();
         state.EntityManager.CreateSingleton(new EnemyAlerts
         {
             Pending = new NativeQueue<EnemyAlert>(Allocator.Persistent),
             Current = new NativeList<EnemyAlert>(64, Allocator.Persistent),
         });
-        state.RequireForUpdate<FlowField>();
+        state.RequireForUpdate<FlowFields>();
+        state.RequireForUpdate<EnemyTargets>();
     }
 
     public void OnDestroy(ref SystemState state)
@@ -82,36 +156,20 @@ public partial struct EnemyDetectionSystem : ISystem
         alerts.Current.Clear();
         while (alerts.Pending.TryDequeue(out var alert)) alerts.Current.Add(alert);
 
-        // A dead (or dying) player is no target
-        var player = Entity.Null;
-        var playerPosition = float3.zero;
-        if (_playerQuery.CalculateEntityCount() == 1)
-        {
-            var entity = _playerQuery.GetSingletonEntity();
-            bool dead = (SystemAPI.HasComponent<Health>(entity) && SystemAPI.GetComponent<Health>(entity).CurrentValue <= 0f)
-                     || SystemAPI.HasComponent<RigidDeath>(entity);
-            if (!dead)
-            {
-                player = entity;
-                playerPosition = SystemAPI.GetComponent<LocalTransform>(entity).Position;
-            }
-        }
-
+        var targets = SystemAPI.GetSingleton<EnemyTargets>().Units.AsArray();
         var current = alerts.Current.AsArray();
         state.Dependency = new DetectionJob
         {
-            Player = player,
-            PlayerPosition = playerPosition,
+            Targets = targets,
             DeltaTime = SystemAPI.Time.DeltaTime,
-            Field = SystemAPI.GetSingleton<FlowField>(),
+            Fields = SystemAPI.GetSingleton<FlowFields>(),
             Alerts = current,
             NewAlerts = alerts.Pending.AsParallelWriter(),
         }.ScheduleParallel(state.Dependency);
 
         state.Dependency = new SwarmDetectionJob
         {
-            Player = player,
-            PlayerPosition = playerPosition,
+            Targets = targets,
             Alerts = current,
         }.ScheduleParallel(state.Dependency);
     }
@@ -119,80 +177,97 @@ public partial struct EnemyDetectionSystem : ISystem
     [BurstCompile]
     partial struct DetectionJob : IJobEntity
     {
-        public Entity Player;
-        public float3 PlayerPosition;
+        [ReadOnly] public NativeArray<EnemyTargetUnit> Targets;
         public float DeltaTime;
-        [ReadOnly] public FlowField Field;
+        [ReadOnly] public FlowFields Fields;
         [ReadOnly] public NativeArray<EnemyAlert> Alerts;
         public NativeQueue<EnemyAlert>.ParallelWriter NewAlerts;
 
         void Execute(ref EnemyTarget target, in EnemyDetection detection, in LocalTransform transform)
         {
-            if (target.Player != Player) target.Player = Entity.Null;
-            if (Player == Entity.Null) return;
+            if (EnemyTargets.Find(Targets, target.Unit) < 0) target.Unit = Entity.Null;
+            if (Targets.Length == 0) return;
             target.SinceSensed += DeltaTime;
 
-            var position = transform.Position;
-            var toPlayer = PlayerPosition - position;
-            toPlayer.y = 0f;
-            float distance = math.length(toPlayer);
-
-            // Close enough to notice through walls; otherwise seen, the sight radius shrinking toward the proximity
-            // radius as the player gets behind it (from its side to straight behind)
-            bool found = distance <= detection.ProximityRadius;
-            if (!found)
-            {
-                var forward = math.mul(transform.Rotation, new float3(0f, 0f, 1f));
-                forward = math.normalizesafe(new float3(forward.x, 0f, forward.z));
-                float behind = math.saturate(-math.dot(forward, toPlayer / math.max(distance, 1e-4f)));
-                float sight = math.lerp(detection.SightRadius, detection.ProximityRadius, behind);
-                found = distance <= sight && Field.CanSee(position, PlayerPosition);
-            }
-            if (found)
+            var found = NearestSensed(detection, transform);
+            if (found != Entity.Null)
             {
                 // Found it itself (not alerted): the enemies around it join in
-                if (target.Player == Entity.Null && detection.AlertRadius > 0f)
-                    NewAlerts.Enqueue(new EnemyAlert { Position = position, Radius = detection.AlertRadius, Player = Player });
-                target.Player = Player;
+                if (target.Unit == Entity.Null && detection.AlertRadius > 0f)
+                    NewAlerts.Enqueue(new EnemyAlert { Position = transform.Position, Radius = detection.AlertRadius, Unit = found });
+                target.Unit = found;
                 target.SinceSensed = 0f;
                 return;
             }
 
-            if (EnemyAlerts.Reaches(Alerts, position, detection.NearMissMargin, Player))
+            if (EnemyAlerts.TryReach(Alerts, Targets, transform.Position, detection.NearMissMargin, out var alerted))
             {
-                target.Player = Player;
+                target.Unit = alerted;
                 target.SinceSensed = 0f;
                 return;
             }
 
-            if (target.Player != Entity.Null && target.SinceSensed > detection.ForgetTime)
-                target.Player = Entity.Null;
+            if (target.Unit != Entity.Null && target.SinceSensed > detection.ForgetTime)
+                target.Unit = Entity.Null;
+        }
+
+        // Close enough to notice through walls; otherwise seen, the sight radius shrinking toward the proximity radius as
+        // the target gets behind it (from its side to straight behind)
+        Entity NearestSensed(in EnemyDetection detection, in LocalTransform transform)
+        {
+            var position = transform.Position;
+            var forward = math.mul(transform.Rotation, new float3(0f, 0f, 1f));
+            forward = math.normalizesafe(new float3(forward.x, 0f, forward.z));
+
+            var nearest = Entity.Null;
+            float nearestDistance = float.MaxValue;
+            for (int i = 0; i < Targets.Length; i++)
+            {
+                var unit = Targets[i];
+                var toUnit = unit.Position - position;
+                toUnit.y = 0f;
+                float distance = math.length(toUnit);
+                if (distance >= nearestDistance) continue;
+
+                bool found = distance <= detection.ProximityRadius;
+                if (!found)
+                {
+                    float behind = math.saturate(-math.dot(forward, toUnit / math.max(distance, 1e-4f)));
+                    float sight = math.lerp(detection.SightRadius, detection.ProximityRadius, behind);
+                    found = distance <= sight && Fields[unit.FieldSlot].CanSee(position, unit.Position);
+                }
+                if (!found) continue;
+                nearest = unit.Entity;
+                nearestDistance = distance;
+            }
+            return nearest;
         }
     }
 
     [BurstCompile]
     partial struct SwarmDetectionJob : IJobEntity
     {
-        public Entity Player;
-        public float3 PlayerPosition;
+        [ReadOnly] public NativeArray<EnemyTargetUnit> Targets;
         [ReadOnly] public NativeArray<EnemyAlert> Alerts;
 
         void Execute(ref EnemyTarget target, in SwarmDetection detection, in LocalTransform transform)
         {
-            if (target.Player != Player) target.Player = Entity.Null;
-            if (Player == Entity.Null || target.Player != Entity.Null) return;
+            if (EnemyTargets.Find(Targets, target.Unit) < 0) target.Unit = Entity.Null;
+            if (Targets.Length == 0 || target.Unit != Entity.Null) return;
 
             var position = transform.Position;
-            if (math.distancesq(position.xz, PlayerPosition.xz) <= detection.Radius * detection.Radius
-                || EnemyAlerts.Reaches(Alerts, position, detection.NearMissMargin, Player))
-                target.Player = Player;
+            int nearest = EnemyTargets.Nearest(Targets, position);
+            if (math.distancesq(position.xz, Targets[nearest].Position.xz) <= detection.Radius * detection.Radius)
+                target.Unit = Targets[nearest].Entity;
+            else if (EnemyAlerts.TryReach(Alerts, Targets, position, detection.NearMissMargin, out var alerted))
+                target.Unit = alerted;
         }
     }
 }
 
 /// <summary>
-/// Enemies hit by the player (damage this frame whose Source is a player) target it. A Physics enemy that wasn't after the
-/// player yet alerts the enemies within its AlertRadius (next frame). Before CalculateDamageSystem clears the damage.
+/// Enemies hit by a target (damage this frame whose Source is EnemyTargetable) go after it. A Physics enemy that wasn't after
+/// anything yet alerts the enemies within its AlertRadius (next frame). Before CalculateDamageSystem clears the damage.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateBefore(typeof(CalculateDamageSystem))]
@@ -209,7 +284,7 @@ public partial struct EnemyHitDetectionSystem : ISystem
     {
         state.Dependency = new HitJob
         {
-            Players = SystemAPI.GetComponentLookup<Player>(true),
+            Targetables = SystemAPI.GetComponentLookup<EnemyTargetable>(true),
             Detections = SystemAPI.GetComponentLookup<EnemyDetection>(true),
             NewAlerts = SystemAPI.GetSingletonRW<EnemyAlerts>().ValueRW.Pending.AsParallelWriter(),
         }.ScheduleParallel(state.Dependency);
@@ -218,7 +293,7 @@ public partial struct EnemyHitDetectionSystem : ISystem
     [BurstCompile]
     partial struct HitJob : IJobEntity
     {
-        [ReadOnly] public ComponentLookup<Player> Players;
+        [ReadOnly] public ComponentLookup<EnemyTargetable> Targetables;
         [ReadOnly] public ComponentLookup<EnemyDetection> Detections;
         public NativeQueue<EnemyAlert>.ParallelWriter NewAlerts;
 
@@ -227,11 +302,11 @@ public partial struct EnemyHitDetectionSystem : ISystem
             for (int i = 0; i < damage.Length; i++)
             {
                 var source = damage[i].Source;
-                if (!Players.HasComponent(source)) continue;
+                if (!Targetables.HasComponent(source)) continue;
 
-                if (target.Player == Entity.Null && Detections.HasComponent(entity) && Detections[entity].AlertRadius > 0f)
-                    NewAlerts.Enqueue(new EnemyAlert { Position = transform.Position, Radius = Detections[entity].AlertRadius, Player = source });
-                target.Player = source;
+                if (target.Unit == Entity.Null && Detections.HasComponent(entity) && Detections[entity].AlertRadius > 0f)
+                    NewAlerts.Enqueue(new EnemyAlert { Position = transform.Position, Radius = Detections[entity].AlertRadius, Unit = source });
+                target.Unit = source;
                 target.SinceSensed = 0f;
                 return;
             }
@@ -240,7 +315,7 @@ public partial struct EnemyHitDetectionSystem : ISystem
 }
 
 /// <summary>
-/// Near misses: every player attack (and damage zone) alerts the enemies within its radius plus their NearMissMargin
+/// Near misses: every attack (and damage zone) by a target alerts the enemies within its radius plus their NearMissMargin
 /// (next frame, EnemyDetectionSystem).
 /// </summary>
 [UpdateInGroup(typeof(AttackSystemGroup))]
@@ -259,25 +334,25 @@ public partial struct EnemyNearMissSystem : ISystem
         var alertsRW = SystemAPI.GetSingletonRW<EnemyAlerts>();
         state.CompleteDependency();
         var pending = alertsRW.ValueRW.Pending;
-        var players = SystemAPI.GetComponentLookup<Player>(true);
+        var targetables = SystemAPI.GetComponentLookup<EnemyTargetable>(true);
 
         foreach (var (attack, transform, source, entity) in SystemAPI.Query<RefRO<Attack>, RefRO<LocalTransform>, RefRO<Source>>().WithEntityAccess())
         {
-            if (!players.HasComponent(source.ValueRO.Entity)) continue;
+            if (!targetables.HasComponent(source.ValueRO.Entity)) continue;
             if (SystemAPI.HasComponent<AttackTarget>(entity) && SystemAPI.GetComponent<AttackTarget>(entity).TargetType == TargetType.Player) continue;
-            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Player = source.ValueRO.Entity, NearMiss = true });
+            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Unit = source.ValueRO.Entity, NearMiss = true });
         }
         foreach (var (attack, transform, source) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>, RefRO<Source>>())
         {
-            if (!players.HasComponent(source.ValueRO.Entity)) continue;
-            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Player = source.ValueRO.Entity, NearMiss = true });
+            if (!targetables.HasComponent(source.ValueRO.Entity)) continue;
+            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Unit = source.ValueRO.Entity, NearMiss = true });
         }
     }
 }
 
 /// <summary>
-/// Enemies with HuntsPlayer target the living player wherever it is, after the detection systems (which would drop a
-/// player they can't sense) and before EnemyMovementSystem reads the target.
+/// Enemies with HuntsPlayer target the nearest living target wherever it is, after the detection systems (which would drop
+/// one they can't sense) and before EnemyMovementSystem reads the target.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(EnemyDetectionSystem))]
@@ -285,38 +360,28 @@ public partial struct EnemyNearMissSystem : ISystem
 [BurstCompile]
 public partial struct HuntPlayerSystem : ISystem
 {
-    EntityQuery _playerQuery;
-
     public void OnCreate(ref SystemState state)
     {
-        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player>().Build();
         state.RequireForUpdate<HuntsPlayer>();
+        state.RequireForUpdate<EnemyTargets>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        // A dead (or dying) player is no target, like in EnemyDetectionSystem
-        var player = Entity.Null;
-        if (_playerQuery.CalculateEntityCount() == 1)
-        {
-            var entity = _playerQuery.GetSingletonEntity();
-            bool dead = (SystemAPI.HasComponent<Health>(entity) && SystemAPI.GetComponent<Health>(entity).CurrentValue <= 0f)
-                     || SystemAPI.HasComponent<RigidDeath>(entity);
-            if (!dead) player = entity;
-        }
-        state.Dependency = new HuntJob { Player = player }.ScheduleParallel(state.Dependency);
+        state.Dependency = new HuntJob { Targets = SystemAPI.GetSingleton<EnemyTargets>().Units.AsArray() }.ScheduleParallel(state.Dependency);
     }
 
     [BurstCompile]
     [WithAll(typeof(HuntsPlayer))]
     partial struct HuntJob : IJobEntity
     {
-        public Entity Player;
+        [ReadOnly] public NativeArray<EnemyTargetUnit> Targets;
 
-        void Execute(ref EnemyTarget target)
+        void Execute(ref EnemyTarget target, in LocalTransform transform)
         {
-            target.Player = Player;
+            int nearest = EnemyTargets.Nearest(Targets, transform.Position);
+            target.Unit = nearest >= 0 ? Targets[nearest].Entity : Entity.Null;
             target.SinceSensed = 0f;
         }
     }

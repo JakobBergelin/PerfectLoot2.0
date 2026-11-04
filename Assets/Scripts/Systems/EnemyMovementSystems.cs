@@ -7,8 +7,9 @@ using Unity.Transforms;
 
 /// <summary>
 /// Enemy AI movement, in parallel: chases its target (EnemyTarget, set by EnemyDetectionSystem) around walls, props,
-/// water and cliffs along the FlowField, stops within AttackRadius, and steers away from nearby units (UnitSpatialGrid) so crowds
-/// spread out around the player instead of piling up. Only writes the wanted horizontal velocity (UnitMotion);
+/// water and cliffs along its FlowField, stops within AttackRadius, and steers away from nearby units (UnitSpatialGrid) so crowds
+/// spread out around the player instead of piling up. Ranged enemies (DesiredDistance) walk until they see the target within
+/// reach, and back away from one that gets too close; casting enemies stand still. Only writes the wanted horizontal velocity (UnitMotion);
 /// UnitMoverSystem moves them.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -17,33 +18,22 @@ using Unity.Transforms;
 [BurstCompile]
 public partial struct EnemyMovementSystem : ISystem
 {
-    EntityQuery _playerQuery;
-
     public void OnCreate(ref SystemState state)
     {
-        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player, LocalTransform>().Build();
         state.RequireForUpdate<UnitSpatialGrid>();
-        state.RequireForUpdate<FlowField>();
+        state.RequireForUpdate<FlowFields>();
+        state.RequireForUpdate<EnemyTargets>();
         state.RequireForUpdate<MovementConfig>();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var player = Entity.Null;
-        var playerPosition = float3.zero;
-        if (_playerQuery.CalculateEntityCount() == 1)
-        {
-            player = _playerQuery.GetSingletonEntity();
-            playerPosition = SystemAPI.GetComponent<LocalTransform>(player).Position;
-        }
-
         state.Dependency = new EnemyMovementJob
         {
-            Player = player,
-            PlayerPosition = playerPosition,
+            Targets = SystemAPI.GetSingleton<EnemyTargets>().Units.AsArray(),
             Grid = SystemAPI.GetSingleton<UnitSpatialGrid>().Units,
-            Field = SystemAPI.GetSingleton<FlowField>(),
+            Fields = SystemAPI.GetSingleton<FlowFields>(),
             Config = SystemAPI.GetSingleton<MovementConfig>(),
             DeltaTime = SystemAPI.Time.DeltaTime,
         }.ScheduleParallel(state.Dependency);
@@ -68,10 +58,9 @@ public partial struct EnemyMovementSystem : ISystem
     [WithNone(typeof(SpawnRise))]
     partial struct EnemyMovementJob : IJobEntity
     {
-        public Entity Player;
-        public float3 PlayerPosition;
+        [ReadOnly] public NativeArray<EnemyTargetUnit> Targets;
         [ReadOnly] public NativeParallelMultiHashMap<int, GridUnit> Grid;
-        [ReadOnly] public FlowField Field;
+        [ReadOnly] public FlowFields Fields;
         public MovementConfig Config;
         public float DeltaTime;
 
@@ -86,29 +75,36 @@ public partial struct EnemyMovementSystem : ISystem
                 return;
             }
 
-            var toPlayer = PlayerPosition - transform.Position;
-            toPlayer.y = 0f;
-            float distance = math.length(toPlayer);
+            int targetIndex = EnemyTargets.Find(Targets, target.Unit);
+            bool chasing = targetIndex >= 0;
+            var unit = chasing ? Targets[targetIndex] : default;
+            var toTarget = unit.Position - transform.Position;
+            toTarget.y = 0f;
+            float distance = math.length(toTarget);
 
-            bool chasing = target.Player != Entity.Null && target.Player == Player;
             npc.IsAttacking = chasing && distance <= npc.AttackRadius;
+            var field = Fields[unit.FieldSlot];
+            bool ranged = npc.DesiredDistance > 0f;
+            if (ranged && npc.IsAttacking && !field.CanSee(transform.Position, unit.Position)) npc.IsAttacking = false;
 
             float speed = movementSpeed.Value * modifiers.SpeedMultiplier;
             var desired = float3.zero;
-            if (chasing && distance > 1e-4f)
+            if (chasing && distance > 1e-4f && !npc.IsCasting)
             {
-                // Straight at the player when nothing is in the way, else along the flow field
-                var direction = Field.Direction(transform.Position, PlayerPosition);
+                // Straight at the target when nothing is in the way, else along the flow field
+                var direction = field.Direction(transform.Position, unit.Position);
                 var lookRotation = quaternion.LookRotationSafe(direction, math.up());
                 npc.Direction = direction;
                 npc.DesiredDirection = lookRotation;
                 npc.TurnSpeed += npc.TurnAcceleration * DeltaTime;
                 transform.Rotation = math.slerp(transform.Rotation, lookRotation, math.saturate(npc.TurnSpeed * DeltaTime));
 
-                // Slower while still turning toward the player, stopped while attacking
+                // Slower while still turning toward the target, stopped while attacking
                 float angle = math.degrees(Angle(transform.Rotation, lookRotation));
                 if (!npc.IsAttacking)
                     desired = direction * math.remap(0f, 180f, speed, 0f, math.min(angle, 180f));
+                else if (ranged && distance < npc.DesiredDistance - npc.DistanceTolerance)
+                    desired = BackAway(field, transform.Position, toTarget / distance) * speed;
             }
 
             // Push away from overlapping neighbours (other enemies and the player)
@@ -121,6 +117,12 @@ public partial struct EnemyMovementSystem : ISystem
 
             // Horizontal only: UnitMoverSystem moves it, colliding and following the floor
             motion.Velocity = new float3(desired.x, 0f, desired.z);
+        }
+
+        // Straight away from the target, or nowhere with something in the way
+        static float3 BackAway(in FlowField field, float3 position, float3 toTarget)
+        {
+            return field.Clear(position, position - toTarget * field.CellSize * 2f) ? -toTarget : float3.zero;
         }
 
         float3 Separation(Entity self, float3 position, float radius)

@@ -1,10 +1,11 @@
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
 /// <summary>
-/// Removes projectiles that got farther than CombatConfig.ProjectileMaxDistance from the player (missed shots would
+/// Removes projectiles that got farther than CombatConfig.ProjectileMaxDistance from every player (missed shots would
 /// otherwise fly forever). Paused while there is no player; leftovers are cleared once it respawns.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -24,12 +25,12 @@ public partial struct ProjectileCleanupSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        if (_playerQuery.CalculateEntityCount() != 1) return;
+        if (_playerQuery.IsEmpty) return;
 
         float maxDistance = SystemAPI.GetSingleton<CombatConfig>().ProjectileMaxDistance;
         state.Dependency = new CleanupJob
         {
-            PlayerPosition = SystemAPI.GetComponent<LocalTransform>(_playerQuery.GetSingletonEntity()).Position,
+            Players = _playerQuery.ToComponentDataArray<LocalTransform>(state.WorldUpdateAllocator),
             MaxDistanceSq = maxDistance * maxDistance,
             CommandBuffer = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>()
                 .CreateCommandBuffer(state.WorldUnmanaged).AsParallelWriter(),
@@ -41,14 +42,15 @@ public partial struct ProjectileCleanupSystem : ISystem
     [WithNone(typeof(DestroyWithChildren))]
     partial struct CleanupJob : IJobEntity
     {
-        public float3 PlayerPosition;
+        [ReadOnly] public NativeArray<LocalTransform> Players;
         public float MaxDistanceSq;
         public EntityCommandBuffer.ParallelWriter CommandBuffer;
 
         void Execute([ChunkIndexInQuery] int chunkIndex, Entity entity, in LocalTransform transform)
         {
-            if (math.distancesq(transform.Position, PlayerPosition) > MaxDistanceSq)
-                CommandBuffer.AddComponent<DestroyWithChildren>(chunkIndex, entity);
+            for (int i = 0; i < Players.Length; i++)
+                if (math.distancesq(transform.Position, Players[i].Position) <= MaxDistanceSq) return;
+            CommandBuffer.AddComponent<DestroyWithChildren>(chunkIndex, entity);
         }
     }
 }

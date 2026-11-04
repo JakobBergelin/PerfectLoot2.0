@@ -318,6 +318,7 @@ public static class CathedralLevelSetup
     static List<EnemyDefinition> BuildDefinitions(Dictionary<string, GameObject> visuals)
     {
         var list = new List<EnemyDefinition>();
+        EnemySkills.EnemySkill Melee(string enemy) => AssetDatabase.LoadAssetAtPath<EnemySkills.EnemySkill>($"Assets/Data/EnemySkills/Melee/{enemy}Melee.asset");
         // Stats only when the definition is first made, so tuning in the inspector survives a rebuild
         EnemyDefinition Define(string asset, string displayName, string visual, System.Action<EnemyDefinition> stats)
         {
@@ -341,22 +342,22 @@ public static class CathedralLevelSetup
         Define("Revenant", "Armored Revenant", "CT_Revenant", d =>
         {
             d.Mass = 3f; d.Stats.Health = 40f; d.Stats.MovementSpeed = 1.6f; d.Stats.Armor = 5;
-            d.MeleeDamage = 1.6f; d.SecondsBetweenAttacks = 1.6f; d.TurnSpeed = 1.6f;
+            d.Skills.Add(Melee("Revenant")); d.TurnSpeed = 1.6f;
         });
         Define("RevenantElite", "Armored Revenant (Elite)", "CT_Revenant_Elite", d =>
         {
             d.Scale = 1.25f; d.Mass = 5f; d.Stats.Health = 80f; d.Stats.MovementSpeed = 1.6f; d.Stats.Armor = 10;
-            d.MeleeDamage = 2.4f; d.SecondsBetweenAttacks = 1.6f; d.TurnSpeed = 1.6f; d.AttackRadius = 3.5f;
+            d.Skills.Add(Melee("RevenantElite")); d.TurnSpeed = 1.6f; d.AttackRadius = 3.5f;
         });
         Define("Wraith", "Wraith", "CT_Wraith", d =>
         {
             d.Mass = 0.8f; d.Stats.Health = 15f; d.Stats.MovementSpeed = 3.5f;
-            d.MeleeDamage = 0.8f; d.SecondsBetweenAttacks = 1f; d.TurnSpeed = 4f; d.TurnAcceleration = 2f; d.DetectionRadius = 18f;
+            d.Skills.Add(Melee("Wraith")); d.TurnSpeed = 4f; d.TurnAcceleration = 2f; d.DetectionRadius = 18f;
         });
         Define("BellRinger", "Bell-Ringer", "CT_BellRinger", d =>
         {
             d.Mass = 1.5f; d.Stats.Health = 25f; d.Stats.MovementSpeed = 2.2f;
-            d.MeleeDamage = 1f; d.SecondsBetweenAttacks = 1.5f;
+            d.Skills.Add(Melee("BellRinger"));
         });
         return list;
     }

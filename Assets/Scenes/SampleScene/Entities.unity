@@ -158,7 +158,7 @@ MonoBehaviour:
   Border: 3
   Mode: 0
   RandomSeedEachPlay: 1
-  Seed: 2
+  Seed: 3
   MaxAttempts: 20
   ConnectWalkableAreas: 1
   FillPocketsSmallerThan: 6
@@ -172,11 +172,7 @@ MonoBehaviour:
   PlayerStart: {x: 20, y: 12}
   ForcedTiles: []
   Pieces: []
-  EnemySpawners:
-  - Cell: {x: 22, y: 25}
-    TriggerRadius: 35
-    SpawnRadius: 4
-    Group: []
+  EnemySpawners: []
   Prefabs:
   - Cell: {x: 20, y: 19}
     Prefab: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}

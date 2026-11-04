@@ -27,7 +27,6 @@ public partial struct RigidAnimationSystem : ISystem
         if (deltaTime <= 0f) return;
 
         var transforms = SystemAPI.GetComponentLookup<LocalTransform>();
-        var attacks = SystemAPI.GetComponentLookup<EnemyMeleeAttack>(true);
         var behaviors = SystemAPI.GetComponentLookup<NpcBehavior>(true);
         var flashes = SystemAPI.GetComponentLookup<HitFlash>(true);
         var deaths = SystemAPI.GetComponentLookup<RigidDeath>(true);
@@ -40,13 +39,13 @@ public partial struct RigidAnimationSystem : ISystem
             ref var animation = ref animator.Animation.Value;
 
             var position = transforms[entity].Position;
-            float attackElapsed = attacks.HasComponent(entity) ? attacks[entity].Elapsed : 0f;
+            int attackCount = behaviors.HasComponent(entity) ? behaviors[entity].AttackCount : 0;
             float flashTimer = flashes.HasComponent(entity) ? flashes[entity].Timer : 0f;
             if (!animator.Started)
             {
                 animator.Started = true;
                 animator.LastPosition = position;
-                animator.LastAttackElapsed = attackElapsed;
+                animator.LastAttackCount = attackCount;
                 animator.LastFlashTimer = flashTimer;
             }
 
@@ -54,12 +53,10 @@ public partial struct RigidAnimationSystem : ISystem
             float speed = motions.HasComponent(entity)
                 ? math.length(motions[entity].Actual.xz)
                 : math.length((position - animator.LastPosition).xz) / deltaTime;
-            // The melee timer drops from full to 0 when the attack fires (and resets every frame while not attacking)
-            bool attacked = attacks.HasComponent(entity) && behaviors.HasComponent(entity) && behaviors[entity].IsAttacking &&
-                            attackElapsed < animator.LastAttackElapsed && animator.LastAttackElapsed >= attacks[entity].AttackSpeed - 0.001f;
+            bool attacked = attackCount != animator.LastAttackCount;
             bool hit = flashTimer > animator.LastFlashTimer + 0.001f;
             animator.LastPosition = position;
-            animator.LastAttackElapsed = attackElapsed;
+            animator.LastAttackCount = attackCount;
             animator.LastFlashTimer = flashTimer;
 
             var wanted = animator.Clip;
@@ -175,6 +172,8 @@ public static class RigidDeathUtility
             ComponentType.ReadWrite<Enemy>(),
             ComponentType.ReadWrite<NpcBehavior>(),
             ComponentType.ReadWrite<EnemyMeleeAttack>(),
+            ComponentType.ReadWrite<EnemySkillCast>(),
+            ComponentType.ReadWrite<EnemySkillFire>(),
             ComponentType.ReadWrite<Steering>(),
         }));
         // Out of the physics world: nothing hits it, pushes it or stands on it

@@ -42,7 +42,7 @@ public struct RigidAnimator : IComponentData
     public bool Started;
     // Last frame's values, to notice movement, attacks and hits
     public float3 LastPosition;
-    public float LastAttackElapsed;
+    public int LastAttackCount;
     public float LastFlashTimer;
 }
 

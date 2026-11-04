@@ -13,19 +13,32 @@ public struct NpcBehavior : IComponentData
     public quaternion DesiredDirection;
     public float AttackRadius;
     public bool IsAttacking;
+    public bool IsCasting;          // Telegraphing a skill: it stands still (EnemySkillCastSystem)
+    public int AttackCount;         // Goes up with every attack or skill going off, for its animation
+    public float DesiredDistance;   // Ranged: the distance it keeps from its target. 0: walks up to AttackRadius
+    public float DistanceTolerance;
 }
 
 /// <summary>
-/// On every enemy with AI: the player it's after (Entity.Null: none, it stands still). Set by the detection systems
+/// On every enemy with AI: the unit it's after (Entity.Null: none, it stands still). Set by the detection systems
 /// (EnemyDetection or SwarmDetection, being hit, alerts), read by EnemyMovementSystem.
 /// </summary>
 public struct EnemyTarget : IComponentData
 {
-    public Entity Player;
+    public Entity Unit;
     public float SinceSensed;   // Seconds since it last saw, was hit by or was alerted to the player (EnemyDetection forgets after ForgetTime)
 }
 
-/// <summary>Always knows where the (living) player is, from anywhere (HuntPlayerSystem). For enemies sent after the player, like a Survive step's waves.</summary>
+/// <summary>
+/// A unit enemies can go after: every player (later companions too). FieldSlot picks the FlowField enemies walk along to
+/// reach it: the one of its player.
+/// </summary>
+public struct EnemyTargetable : IComponentData
+{
+    public int FieldSlot;
+}
+
+/// <summary>Always knows where the nearest living target is, from anywhere (HuntPlayerSystem). For enemies sent after the player, like a Survive step's waves.</summary>
 public struct HuntsPlayer : IComponentData
 {
 }
@@ -55,6 +68,7 @@ public struct SwarmDetection : IComponentData
     public float NearMissMargin;
 }
 
+/// <summary>Swarm enemies' fixed melee attack (Physics enemies have skills instead, EnemySkillSlot).</summary>
 public struct EnemyMeleeAttack : IComponentData
 {
     public float Damage;

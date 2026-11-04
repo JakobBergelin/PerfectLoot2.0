@@ -25,7 +25,7 @@ public partial struct WyrmfireSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        var meleeLookup = SystemAPI.GetComponentLookup<EnemyMeleeAttack>(true);
+        var meleeLookup = SystemAPI.GetComponentLookup<EnemyMeleeHit>(true);
         var burns = SystemAPI.GetBufferLookup<BurnInstance>();
         var burning = SystemAPI.GetComponentLookup<Burning>();
         state.CompleteDependency();  // The lookups are used here on the main thread
@@ -39,7 +39,7 @@ public partial struct WyrmfireSystem : ISystem
 
             foreach (var instance in taken)
             {
-                if (instance.Hierarchy != DamageHierarchy.Main || instance.Damage <= 0f || !meleeLookup.HasComponent(instance.Source)) continue;
+                if (instance.Hierarchy != DamageHierarchy.Main || instance.Damage <= 0f || !meleeLookup.HasComponent(instance.Attack)) continue;
                 EffectApply.AddBurn(burns, burning, instance.Source, damagePerSecond, duration, entity);
             }
         }

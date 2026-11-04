@@ -18,7 +18,7 @@ public partial struct CameraFollowSystem : ISystem
         float3 playerPosition = float3.zero;
         bool hasPlayer = false;
 
-        foreach (var (player, transform) in SystemAPI.Query<RefRO<Player>, RefRO<LocalToWorld>>())
+        foreach (var (player, transform) in SystemAPI.Query<RefRO<Player>, RefRO<LocalToWorld>>().WithNone<TestPlayer>())
         {
             playerPosition = transform.ValueRO.Position;
             hasPlayer = true;

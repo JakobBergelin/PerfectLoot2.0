@@ -328,7 +328,8 @@ public partial class ProjectileDestroySystem : SystemBase
                     projectile.ValueRW.Direction = Vector3.Reflect(projectile.ValueRW.Direction, attack.ValueRO.Events.OnHitNormal);
                     continue;
                 }
-                if(SystemAPI.GetComponent<CalculatedStats>(source.ValueRO.Entity).PierceOnCrit && attack.ValueRO.Events.IsCrit)
+                // The shooter can be dead by now (enemy projectiles)
+                if(SystemAPI.HasComponent<CalculatedStats>(source.ValueRO.Entity) && SystemAPI.GetComponent<CalculatedStats>(source.ValueRO.Entity).PierceOnCrit && attack.ValueRO.Events.IsCrit)
                 {
                     Debug.Log("pierce on crit");
                     continue;

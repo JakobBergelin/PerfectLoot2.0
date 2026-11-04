@@ -8,9 +8,9 @@ using Unity.Transforms;
 using UnityEngine;
 
 /// <summary>
-/// Singleton: a walkability grid in a square window around the player, with every cell's path cost to the player
-/// (a flow field). Rebuilt by FlowFieldSystem, read by EnemyMovementSystem so enemies walk around walls, props, water and
-/// cliffs without a navmesh. Direction gives the way to walk; CanSee is line of sight (EnemyDetectionSystem).
+/// A walkability grid in a square window around one player, with every cell's path cost to that player (a flow field).
+/// Rebuilt by FlowFieldSystem, read by EnemyMovementSystem so enemies walk around walls, props, water and cliffs without
+/// a navmesh. Direction gives the way to walk; CanSee is line of sight (EnemyDetectionSystem).
 /// </summary>
 public struct FlowField : IComponentData
 {
@@ -148,7 +148,33 @@ public struct FlowField : IComponentData
 }
 
 /// <summary>
-/// Keeps the FlowField around the player: samples each cell's floor and clearance from physics (re-centring the window,
+/// Singleton: one FlowField per player, by EnemyTargetable.FieldSlot, so players can be far apart. Plain fields rather than
+/// a list so jobs can read them.
+/// </summary>
+public struct FlowFields : IComponentData
+{
+    public const int MaxFields = 4;
+
+    public FlowField Field0, Field1, Field2, Field3;
+
+    public FlowField this[int slot]
+    {
+        get => slot switch { 1 => Field1, 2 => Field2, 3 => Field3, _ => Field0 };
+        set
+        {
+            switch (slot)
+            {
+                case 1: Field1 = value; break;
+                case 2: Field2 = value; break;
+                case 3: Field3 = value; break;
+                default: Field0 = value; break;
+            }
+        }
+    }
+}
+
+/// <summary>
+/// Keeps each player's FlowField around it: samples each cell's floor and clearance from physics (re-centring the window,
 /// and sampling all of it, once the player is FlowRecenterDistance from the middle; otherwise a slice of the window each
 /// frame, which picks up streamed chunks and new props), then searches the path cost from the player's cell when the
 /// player changed cell or a cell changed. Before EnemyMovementSystem, which reads it.
@@ -162,24 +188,34 @@ public partial struct FlowFieldSystem : ISystem
     // The whole window is sampled again over this many frames
     const int RefreshFrames = 16;
 
-    EntityQuery _playerQuery;
-    NativeArray<byte> _changed;     // Set by the sampling job when a cell's walkability changed
-    int _cursor;                    // First cell of the next slice to sample
-    int2 _target;                   // The player's cell at the last search
-    bool _centered;
+    /// <summary>How far one field's sampling and search have come.</summary>
+    struct FieldProgress
+    {
+        public int Cursor;      // First cell of the next slice to sample
+        public int2 Target;     // The player's cell at the last search
+        public bool Centered;
+    }
+
+    NativeArray<byte> _changed;             // Per field: set by the sampling job when a cell's walkability changed
+    NativeArray<FieldProgress> _progress;   // Per field
 
     public void OnCreate(ref SystemState state)
     {
-        _playerQuery = SystemAPI.QueryBuilder().WithAll<Player, LocalTransform>().Build();
-        _changed = new NativeArray<byte>(1, Allocator.Persistent);
-        // Placeholders until the first update sizes them from MovementConfig (jobs need valid arrays)
-        state.EntityManager.CreateSingleton(new FlowField
+        _changed = new NativeArray<byte>(FlowFields.MaxFields, Allocator.Persistent);
+        _progress = new NativeArray<FieldProgress>(FlowFields.MaxFields, Allocator.Persistent);
+        // Placeholders until a field's first update sizes it from MovementConfig (jobs need valid arrays)
+        var fields = new FlowFields();
+        for (int slot = 0; slot < FlowFields.MaxFields; slot++)
         {
-            Walkable = new NativeArray<byte>(1, Allocator.Persistent),
-            Opaque = new NativeArray<byte>(1, Allocator.Persistent),
-            Height = new NativeArray<float>(1, Allocator.Persistent),
-            Distance = new NativeArray<int>(1, Allocator.Persistent),
-        });
+            fields[slot] = new FlowField
+            {
+                Walkable = new NativeArray<byte>(1, Allocator.Persistent),
+                Opaque = new NativeArray<byte>(1, Allocator.Persistent),
+                Height = new NativeArray<float>(1, Allocator.Persistent),
+                Distance = new NativeArray<int>(1, Allocator.Persistent),
+            };
+        }
+        state.EntityManager.CreateSingleton(fields);
         state.RequireForUpdate<PhysicsWorldSingleton>();
         state.RequireForUpdate<MovementConfig>();
     }
@@ -187,19 +223,46 @@ public partial struct FlowFieldSystem : ISystem
     public void OnDestroy(ref SystemState state)
     {
         state.CompleteDependency();
-        if (SystemAPI.TryGetSingletonRW<FlowField>(out var field)) field.ValueRW.Dispose();
+        if (SystemAPI.TryGetSingleton<FlowFields>(out var fields))
+            for (int slot = 0; slot < FlowFields.MaxFields; slot++) fields[slot].Dispose();
         if (_changed.IsCreated) _changed.Dispose();
+        if (_progress.IsCreated) _progress.Dispose();
     }
 
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
         var config = SystemAPI.GetSingleton<MovementConfig>();
-        var fieldRW = SystemAPI.GetSingletonRW<FlowField>();
-        // Readers from last frame (enemy movement) must be done before it's written
+        var fieldsRW = SystemAPI.GetSingletonRW<FlowFields>();
+        // Readers from last frame (enemy movement) must be done before they're written
         state.CompleteDependency();
-        ref var field = ref fieldRW.ValueRW;
+        ref var fields = ref fieldsRW.ValueRW;
+        var world = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld;
 
+        int used = 0;
+        foreach (var (targetable, transform) in SystemAPI.Query<RefRO<EnemyTargetable>, RefRO<LocalTransform>>().WithAll<Player>())
+        {
+            int slot = targetable.ValueRO.FieldSlot;
+            if (slot < 0 || slot >= FlowFields.MaxFields) continue;
+            var field = fields[slot];
+            UpdateField(ref state, ref field, slot, transform.ValueRO.Position, config, world);
+            fields[slot] = field;
+            used |= 1 << slot;
+        }
+
+        // A field without a player leads nowhere
+        for (int slot = 0; slot < FlowFields.MaxFields; slot++)
+        {
+            if ((used & (1 << slot)) != 0) continue;
+            var field = fields[slot];
+            field.HasTarget = false;
+            fields[slot] = field;
+        }
+    }
+
+    void UpdateField(ref SystemState state, ref FlowField field, int slot, float3 playerPosition, in MovementConfig config, in CollisionWorld world)
+    {
+        var progress = _progress[slot];
         float cellSize = math.max(config.FlowCellSize, 0.25f);
         int size = math.max(8, (int)math.ceil(config.FlowWindowSize / cellSize));
         int cellCount = size * size;
@@ -213,43 +276,40 @@ public partial struct FlowFieldSystem : ISystem
             field.Size = size;
             field.CellSize = cellSize;
             field.HasTarget = false;
-            _centered = false;
-            _cursor = 0;
+            progress.Centered = false;
+            progress.Cursor = 0;
         }
         // A diagonal step's worth of the steepest walkable slope, plus a step up
         field.MaxStep = config.StepHeight + cellSize * math.SQRT2 * math.tan(math.radians(math.clamp(config.MaxSlope, 0f, 85f)));
 
-        if (_playerQuery.CalculateEntityCount() != 1)
-        {
-            field.HasTarget = false;
-            return;
-        }
-        var playerPosition = SystemAPI.GetComponent<LocalTransform>(_playerQuery.GetSingletonEntity()).Position;
         var playerCell = field.Cell(playerPosition);
 
-        bool search = !field.HasTarget || math.any(playerCell != _target);
-        int start = _cursor;
+        bool search = !field.HasTarget || math.any(playerCell != progress.Target);
+        int start = progress.Cursor;
         int count = (cellCount + RefreshFrames - 1) / RefreshFrames;
         int recenterCells = math.max(1, (int)(config.FlowRecenterDistance / cellSize));
-        if (!_centered || math.any(math.abs(playerCell - (field.Origin + size / 2)) > recenterCells))
+        if (!progress.Centered || math.any(math.abs(playerCell - (field.Origin + size / 2)) > recenterCells))
         {
             field.Origin = playerCell - size / 2;
             start = 0;
             count = cellCount;
             search = true;
-            _centered = true;
+            progress.Centered = true;
         }
-        else _cursor = (_cursor + count) % cellCount;
+        else progress.Cursor = (progress.Cursor + count) % cellCount;
         field.HasTarget = true;
-        _target = playerCell;
+        progress.Target = playerCell;
+        _progress[slot] = progress;
+
+        var changed = _changed.GetSubArray(slot, 1);
 
         var sampling = new SampleJob
         {
-            World = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld,
+            World = world,
             Walkable = field.Walkable,
             Opaque = field.Opaque,
             Height = field.Height,
-            Changed = _changed,
+            Changed = changed,
             Origin = field.Origin,
             Size = size,
             Start = start,
@@ -262,7 +322,7 @@ public partial struct FlowFieldSystem : ISystem
         state.Dependency = new SearchJob
         {
             Field = field,
-            Changed = _changed,
+            Changed = changed,
             Force = search,
             Target = playerCell,
         }.Schedule(sampling);
@@ -408,17 +468,21 @@ partial struct FlowFieldDebugSystem : ISystem
     public void OnCreate(ref SystemState state)
     {
         state.RequireForUpdate<MovementConfig>();
-        state.RequireForUpdate<FlowField>();
+        state.RequireForUpdate<FlowFields>();
     }
 
     public void OnUpdate(ref SystemState state)
     {
         if (!SystemAPI.GetSingleton<MovementConfig>().DrawFlowField) return;
-        // RW so enemy movement jobs still reading it finish first
-        var field = SystemAPI.GetSingletonRW<FlowField>().ValueRO;
+        // RW so enemy movement jobs still reading them finish first
+        var fields = SystemAPI.GetSingletonRW<FlowFields>().ValueRO;
         state.CompleteDependency();
-        if (!field.HasTarget) return;
+        for (int slot = 0; slot < FlowFields.MaxFields; slot++)
+            if (fields[slot].HasTarget) Draw(fields[slot]);
+    }
 
+    static void Draw(in FlowField field)
+    {
         float mark = field.CellSize * 0.3f;
         for (int index = 0; index < field.Size * field.Size; index++)
         {

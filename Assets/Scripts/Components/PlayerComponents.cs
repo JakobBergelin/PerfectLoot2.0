@@ -6,6 +6,11 @@ public struct Player : IComponentData
 
 }
 
+/// <summary>A second player that only stands there, for testing several players (CharacterManager's context menu). The camera ignores it.</summary>
+public struct TestPlayer : IComponentData
+{
+}
+
 public struct InputsData : IComponentData
 {
     public float2 Move;

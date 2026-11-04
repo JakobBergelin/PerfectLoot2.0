@@ -8,7 +8,7 @@ using static UnitEntitySetup;
 
 /// <summary>
 /// Adds every gameplay component an enemy needs to a spawned visual-only entity:
-/// the shared unit combat components plus its AI and melee attack, all from its EnemyDefinition.
+/// the shared unit combat components plus its AI and its skills (Swarm: a fixed melee attack), all from its EnemyDefinition.
 /// </summary>
 public static class EnemyEntitySetup
 {
@@ -31,11 +31,15 @@ public static class EnemyEntitySetup
         // Without AI (training dummies) it just stands there
         if (definition.HasAI)
         {
+            bool ranged = definition.BodyType == BodyType.Physics && definition.DesiredDistance > 0f;
             AddOrSet(entityManager, entity, new NpcBehavior
             {
                 TurnSpeed = definition.TurnSpeed,
                 TurnAcceleration = definition.TurnAcceleration,
-                AttackRadius = definition.AttackRadius,
+                // Ranged: holds its ground anywhere up to the far end of its distance
+                AttackRadius = ranged ? definition.DesiredDistance + definition.DistanceTolerance : definition.AttackRadius,
+                DesiredDistance = ranged ? definition.DesiredDistance : 0f,
+                DistanceTolerance = definition.DistanceTolerance,
                 DesiredDirection = quaternion.identity,
             });
             // Who it chases, and how it finds them (the cheap version for swarms)
@@ -51,16 +55,40 @@ public static class EnemyEntitySetup
                     NearMissMargin = definition.NearMissMargin,
                     ForgetTime = definition.ForgetTime,
                 });
-            AddOrSet(entityManager, entity, new EnemyMeleeAttack
-            {
-                Damage = definition.MeleeDamage,
-                AttackSpeed = definition.SecondsBetweenAttacks,
-                TurnSpeed = definition.AttackTurnSpeed,
-                FacingAngle = definition.AttackFacingAngle,
-            });
+            if (definition.BodyType == BodyType.Swarm)
+                AddOrSet(entityManager, entity, new EnemyMeleeAttack
+                {
+                    Damage = definition.MeleeDamage,
+                    AttackSpeed = definition.SecondsBetweenAttacks,
+                    TurnSpeed = definition.AttackTurnSpeed,
+                    FacingAngle = definition.AttackFacingAngle,
+                });
+            else
+                AddSkills(entityManager, entity, definition);
         }
 
         if (definition.OverrideColor) ApplyTint(entityManager, entity, definition.Tint);
+    }
+
+    static void AddSkills(EntityManager entityManager, Entity entity, EnemyDefinition definition)
+    {
+        AddOrSet(entityManager, entity, new EnemySkillCast());
+        AddBuffer<EnemySkillFire>(entityManager, entity);
+        AddBuffer<EnemySkillSlot>(entityManager, entity);
+        // Its amount and regeneration come from the stats
+        if (definition.Stats.Resource > 0f)
+        {
+            AddOrSet(entityManager, entity, new Resource());
+            AddBuffer<ResourceChanger>(entityManager, entity);
+        }
+
+        foreach (var skill in definition.Skills)
+            if (skill != null) skill.Apply(entityManager, entity);
+        // After the structural changes above
+        var slots = entityManager.GetBuffer<EnemySkillSlot>(entity);
+        slots.Clear();
+        foreach (var skill in definition.Skills)
+            if (skill != null) slots.Add(skill.ToSlot());
     }
 
     // Writes the tint as the base color, and as the color the hit flash returns to

@@ -44,9 +44,26 @@ public class CharacterManager : MonoBehaviour
     public int TestStacks = 1;
     [Tooltip("Seconds for test buffs (Broken Promises, Invulnerable); status effects use StatusEffectSettings")]
     public float TestDuration = 3f;
+    [Tooltip("How far from the player 'Spawn test second player' puts it, in meters")]
+    public float TestPlayerOffset = 15f;
 
     /// <summary>The current player entity, or Entity.Null while dead / not spawned yet.</summary>
     public Entity Player => _player;
+
+    [ContextMenu("Spawn test second player")]
+    void SpawnTestPlayer()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (!Application.isPlaying || world == null || !world.EntityManager.Exists(_player)) return;
+        var entityManager = world.EntityManager;
+
+        using var prefabQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerPrefab>());
+        var testPlayer = entityManager.Instantiate(prefabQuery.GetSingleton<PlayerPrefab>().Value);
+        var testTransform = entityManager.GetComponentData<LocalTransform>(testPlayer);
+        testTransform.Position = entityManager.GetComponentData<LocalTransform>(_player).Position + new Unity.Mathematics.float3(TestPlayerOffset, 0f, 0f);
+        entityManager.SetComponentData(testPlayer, testTransform);
+        PlayerEntitySetup.AddTestPlayerComponents(entityManager, testPlayer, BaseStats != null ? BaseStats.Stats : DefaultBaseStats.Stats, fieldSlot: 1);
+    }
 
     [ContextMenu("Apply test effect to player")]
     void ApplyTestEffect() => RequestTestEffect(remove: false);
