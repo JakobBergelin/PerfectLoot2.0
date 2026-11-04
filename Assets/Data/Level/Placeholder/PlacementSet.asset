@@ -16,8 +16,8 @@ MonoBehaviour:
   - Name: SkeletonSet
     Kind: 1
     Spacing: 15
-    ClearRadius: 1
-    MinDistanceFromStart: 50
+    ClearRadius: 0.2
+    MinDistanceFromStart: 40
     Prefab: {fileID: 0}
     MaxSlope: 30.9
     TriggerRadius: 35

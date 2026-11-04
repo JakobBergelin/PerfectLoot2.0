@@ -127,7 +127,10 @@ public struct TelegraphMarker : IComponentData
     public int CastId;
 }
 
-/// <summary>What the marker's shader draws. x: how full, 0 to 1. y: TelegraphShape. z: Line half width (1 = Size) or Cone half angle in radians.</summary>
+/// <summary>
+/// What the marker's shader draws. x: how full, 0 to 1. y: TelegraphShape. z: Line half width (1 = Size) or Cone half angle in
+/// radians. w: how far above and below its center it reaches (1 = Size).
+/// </summary>
 [MaterialProperty("_Telegraph")]
 public struct TelegraphParams : IComponentData
 {

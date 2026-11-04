@@ -9,24 +9,27 @@ using UnityEngine.Rendering;
 
 public static class TelegraphUtil
 {
-    const float ProbeUp = 2f, ProbeDown = 10f, HeightAboveGround = 0.05f;
+    const float ProbeUp = 2f, ProbeDown = 10f;
+    // How far above and below position the marker reaches: a slope of up to 50 degrees all the way out to Size
+    const float MinReach = 1.5f, ReachPerSize = 1.2f;
 
     /// <summary>
-    /// A marker for telegraph at position (flat on the ground), pointing along direction. The quad reaches Size to every
-    /// side of position; the shader cuts the shape out of it.
+    /// A marker for telegraph at position, pointing along direction. The box reaches Size to every side of position; the
+    /// shader cuts the shape out of the ground inside it.
     /// </summary>
     public static void Spawn(EntityCommandBuffer commandBuffer, Entity prefab, in EnemyTelegraph telegraph, Entity caster, int castId, float3 position, float3 direction)
     {
         var marker = commandBuffer.Instantiate(prefab);
         float size = math.max(telegraph.Size, 0.01f);
         float width = telegraph.Shape == TelegraphShape.Line ? telegraph.Width * 0.5f / size : math.radians(telegraph.Width * 0.5f);
+        float reach = math.max(MinReach, size * ReachPerSize) / size;
 
         commandBuffer.SetComponent(marker, new LocalTransform { Position = position, Rotation = quaternion.LookRotationSafe(direction, math.up()), Scale = size * 2f });
-        commandBuffer.SetComponent(marker, new TelegraphParams { Value = new float4(0f, (float)telegraph.Shape, width, 0f) });
+        commandBuffer.SetComponent(marker, new TelegraphParams { Value = new float4(0f, (float)telegraph.Shape, width, reach) });
         commandBuffer.SetComponent(marker, new TelegraphMarker { Caster = caster, CastId = castId });
     }
 
-    /// <summary>The spot just above the ground under position, or position itself without ground there.</summary>
+    /// <summary>The spot on the ground under position, or position itself without ground there.</summary>
     public static float3 OnGround(in PhysicsWorldSingleton physics, float3 position)
     {
         var ray = new RaycastInput
@@ -35,7 +38,7 @@ public static class TelegraphUtil
             End = position - new float3(0f, ProbeDown, 0f),
             Filter = ProjectileUtil.GroundFilter,
         };
-        return physics.CastRay(ray, out var hit) ? hit.Position + new float3(0f, HeightAboveGround, 0f) : position;
+        return physics.CastRay(ray, out var hit) ? hit.Position : position;
     }
 }
 
@@ -73,8 +76,8 @@ public partial struct TelegraphMarkerSystem : ISystem
 }
 
 /// <summary>
-/// Makes the marker prefab at runtime: a flat quad with the TelegraphMarker material from Resources, so no scene has to
-/// set it up. Runs again if the singleton is ever gone.
+/// Makes the marker prefab at runtime: a box with the TelegraphMarker material from Resources, so no scene has to set it
+/// up. Runs again if the singleton is ever gone.
 /// </summary>
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 public partial class TelegraphPrefabSystem : SystemBase
@@ -95,7 +98,7 @@ public partial class TelegraphPrefabSystem : SystemBase
 
         var prefab = EntityManager.CreateEntity();
         RenderMeshUtility.AddComponents(prefab, EntityManager, new RenderMeshDescription(ShadowCastingMode.Off),
-            new RenderMeshArray(new[] { material }, new[] { CreateQuad() }), MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
+            new RenderMeshArray(new[] { material }, new[] { CreateBox() }), MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
         EntityManager.AddComponentData(prefab, LocalTransform.Identity);
         EntityManager.AddComponentData(prefab, new LocalToWorld { Value = float4x4.identity });
         EntityManager.AddComponentData(prefab, new TelegraphParams());
@@ -105,14 +108,24 @@ public partial class TelegraphPrefabSystem : SystemBase
         EntityManager.CreateSingleton(new TelegraphPrefab { Value = prefab });
     }
 
-    // Flat on the ground, 1 meter across; its UVs run -1 to 1 for the shader (+y: forward)
-    static Mesh CreateQuad()
+    // 1 meter across and 2 high, around its center: tall enough for the marker's reach on the steepest slopes
+    static Mesh CreateBox()
     {
-        var mesh = new Mesh { name = "TelegraphQuad" };
-        mesh.vertices = new[] { new Vector3(-0.5f, 0f, -0.5f), new Vector3(-0.5f, 0f, 0.5f), new Vector3(0.5f, 0f, 0.5f), new Vector3(0.5f, 0f, -0.5f) };
-        mesh.uv = new[] { new Vector2(-1f, -1f), new Vector2(-1f, 1f), new Vector2(1f, 1f), new Vector2(1f, -1f) };
-        mesh.triangles = new[] { 0, 1, 2, 0, 2, 3 };
-        mesh.RecalculateNormals();
+        var mesh = new Mesh { name = "TelegraphBox" };
+        mesh.vertices = new[]
+        {
+            new Vector3(-0.5f, -1f, -0.5f), new Vector3(-0.5f, 1f, -0.5f), new Vector3(0.5f, 1f, -0.5f), new Vector3(0.5f, -1f, -0.5f),
+            new Vector3(-0.5f, -1f, 0.5f), new Vector3(-0.5f, 1f, 0.5f), new Vector3(0.5f, 1f, 0.5f), new Vector3(0.5f, -1f, 0.5f),
+        };
+        mesh.triangles = new[]
+        {
+            0, 1, 2, 0, 2, 3,   // Back
+            7, 6, 5, 7, 5, 4,   // Front
+            4, 5, 1, 4, 1, 0,   // Left
+            3, 2, 6, 3, 6, 7,   // Right
+            1, 5, 6, 1, 6, 2,   // Top
+            3, 7, 4, 3, 4, 0,   // Bottom
+        };
         mesh.RecalculateBounds();
         return mesh;
     }

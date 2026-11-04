@@ -17,7 +17,7 @@ MonoBehaviour:
   CooldownUsesAttackSpeed: 1
   CooldownOnlyInRange: 0
   ResourceCost: 0
-  MinRange: 0
+  MinRange: 3
   MaxRange: 14
   NeedsLineOfSight: 1
   Conditions:
@@ -29,12 +29,12 @@ MonoBehaviour:
   FacingAngle: 15
   Telegraph:
     Shape: 2
-    Duration: 2
-    Size: 10
-    Width: 2
-  Damage: 1
-  DamageType: 2
-  ProjectileSpeed: 12
+    Duration: 1.2
+    Size: 20
+    Width: 1
+  Damage: 5
+  DamageType: 0
+  ProjectileSpeed: 15
   Radius: 0.3
   HitForce: 1
   MaxDistance: 20
