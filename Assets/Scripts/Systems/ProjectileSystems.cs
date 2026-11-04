@@ -233,7 +233,7 @@ partial struct ProjectileSystem : ISystem
                 var flat = new float3(direction.x, 0f, direction.z);
                 direction = math.normalizesafe(flat) * math.length(direction);
             }
-            var end = start + direction * projectile.ValueRO.Speed * deltaTime;
+            var end = start + direction * projectile.ValueRO.CurrentSpeed * deltaTime;
 
             // The center crossing the ground or a wall counts as a hit (the attack sphere reaches nearby enemies first)
             bool checkCollision = !(followGround && projectile.ValueRO.PassThroughWalls);

@@ -198,7 +198,7 @@ public partial struct ShieldProjectileSystem : ISystem
                 }
                 else if (s.Target == Entity.Null)
                 {
-                    s.Distance += projectile.ValueRO.Speed * deltaTime;
+                    s.Distance += projectile.ValueRO.CurrentSpeed * deltaTime;
                     if (s.Distance >= s.NoTargetDistance) Return(ref s);
                 }
             }
@@ -221,7 +221,7 @@ public partial struct ShieldProjectileSystem : ISystem
                 s.TurnSpeed += s.TurnAcceleration * deltaTime;
             }
 
-            var end = position + direction * projectile.ValueRO.Speed * deltaTime;
+            var end = position + direction * projectile.ValueRO.CurrentSpeed * deltaTime;
             // A wall ends the way out; the way back goes through walls
             if (!s.Returning && physics.CastRay(new RaycastInput{Start = position, End = end, Filter = wallFilter}, out var hit))
             {

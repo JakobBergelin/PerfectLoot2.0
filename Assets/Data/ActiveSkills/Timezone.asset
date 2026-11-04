@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ceb6465ec2a1087b1aab4f97a3bc3320, type: 3}
+  m_Name: Timezone
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TimezoneSkill
+  Name: Timezone
+  Icon: {fileID: 0}
+  Description: A field of slowed time where you stand. Enemies in it are chilled until they freeze, and every projectile in it crawls.
+  Tags: 4384
+  cooldown: 20
+  Duration: 10
+  Radius: 8
+  ChillPerSecond: 20
+  ProjectileSlow: 0.8

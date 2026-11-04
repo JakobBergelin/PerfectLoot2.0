@@ -56,6 +56,7 @@ public enum SkillType
     Shadowstep,
     FrozenOrb,
     ColdSnap,
+    Timezone,
 
 }
 
@@ -277,6 +278,26 @@ public struct ColdSnap : IComponentData, IEnableableComponent
     public float Radius;
     public int ChillStacks;     // Left on an enemy by one cast, the hit's own chill included
     public float Elapsed;       // Since the last cast, up to Cooldown
+}
+
+/// <summary>Timezone: leaves a TimezoneField where the caster stands.</summary>
+public struct Timezone : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Duration;
+    public float Radius;
+    public int ChillPerTick;    // Per TimezoneFieldSystem.TickInterval
+    public float ProjectileSlow;
+    public float Elapsed;       // Since the last cast, up to Cooldown
+}
+
+/// <summary>A Timezone field on the ground: chills enemies and slows all projectiles inside it (TimezoneFieldSystem).</summary>
+public struct TimezoneField : IComponentData
+{
+    public float Radius;            // The caster's area of effect already applied
+    public float TimeRemaining;
+    public int ChillPerTick;
+    public float ProjectileSlow;    // 0.8 = 80% slower
 }
 
 /// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>

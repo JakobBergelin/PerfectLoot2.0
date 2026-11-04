@@ -115,6 +115,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;
+            case SkillType.Timezone:
+                if (SystemAPI.HasComponent<Timezone>(entity)) SystemAPI.SetComponentEnabled<Timezone>(entity, enabled);
+                break;
         }
     }
 }
