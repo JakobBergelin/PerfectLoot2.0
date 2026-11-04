@@ -57,6 +57,7 @@ public enum SkillType
     FrozenOrb,
     ColdSnap,
     Timezone,
+    TeslaCoil,
 
 }
 
@@ -299,6 +300,26 @@ public struct TimezoneField : IComponentData
     public int ChillPerTick;
     public float ProjectileSlow;    // 0.8 = 80% slower
 }
+
+/// <summary>
+/// Tesla Coil: channeled while held, with the unit locked in place. A TeslaCoilField stands around it, and the drain
+/// rises for every second of the channel. The cooldown starts when the channel ends.
+/// </summary>
+public struct TeslaCoil : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float ResourceCostPerSecond;     // At the start of the channel
+    public float ResourceCostIncrease;      // Added to it for every second of the channel
+    public float Radius;
+    public float DamagePerSecond;
+    public float TickRate;
+    public float Elapsed;       // Since the channel ended, up to Cooldown
+    public float ChannelTime;
+    public bool Channeling;
+}
+
+/// <summary>Marks the PeriodicAttack around a channeling Tesla Coil (its Source): it also blocks enemy projectiles (TeslaCoilFieldSystem).</summary>
+public struct TeslaCoilField : IComponentData {}
 
 /// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>
 public struct Shadowstep : IComponentData, IEnableableComponent

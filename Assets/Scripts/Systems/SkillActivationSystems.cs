@@ -118,6 +118,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Timezone:
                 if (SystemAPI.HasComponent<Timezone>(entity)) SystemAPI.SetComponentEnabled<Timezone>(entity, enabled);
                 break;
+            case SkillType.TeslaCoil:
+                if (SystemAPI.HasComponent<TeslaCoil>(entity)) SystemAPI.SetComponentEnabled<TeslaCoil>(entity, enabled);
+                break;
         }
     }
 }

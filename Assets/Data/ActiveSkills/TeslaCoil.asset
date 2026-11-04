@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 242329b2d90bf25b0efa7018bae353c7, type: 3}
+  m_Name: TeslaCoil
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TeslaCoilSkill
+  Name: Tesla Coil
+  Icon: {fileID: 0}
+  Description: Root yourself and charge the air around you. Enemies inside take lightning damage and enemy projectiles can't get in, but the cost climbs for every second you hold it.
+  Tags: 70760
+  cooldown: 10
+  resourceCostPerSecond: 8
+  resourceCostIncrease: 6
+  Radius: 6
+  DamagePerSecond: 2
+  TickRate: 0.5
