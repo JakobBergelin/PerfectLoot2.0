@@ -130,6 +130,14 @@ public partial class AttackSystem : SystemBase
                             var hitDirection = HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
                             var damageBuffer = SystemAPI.GetBuffer<DamageInstance>(hit.Entity);
                             damageBuffer.Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce});
+                            // Marked before the damage lands, so a dart's killing blow sets off the explosion too
+                            if(SystemAPI.HasComponent<PoisonDartHit>(entity) && SystemAPI.HasComponent<PoisonMark>(hit.Entity))
+                            {
+                                var dart = SystemAPI.GetComponent<PoisonDartHit>(entity);
+                                SystemAPI.SetComponent(hit.Entity, new PoisonMark{TimeRemaining = dart.MarkDuration, Duration = dart.MarkDuration, ExplosionDamage = dart.ExplosionDamage, ExplosionRadius = dart.ExplosionRadius, Source = source.ValueRO.Entity});
+                                SystemAPI.SetComponentEnabled<PoisonMark>(hit.Entity, true);
+                            }
+
                             float gracePeriod = attack.ValueRO.GracePeriod > 0f ? attack.ValueRO.GracePeriod : Attack.DefaultGracePeriod;
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = gracePeriod});
 

@@ -58,6 +58,7 @@ public enum SkillType
     ColdSnap,
     Timezone,
     TeslaCoil,
+    PoisonDart,
 
 }
 
@@ -320,6 +321,26 @@ public struct TeslaCoil : IComponentData, IEnableableComponent
 
 /// <summary>Marks the PeriodicAttack around a channeling Tesla Coil (its Source): it also blocks enemy projectiles (TeslaCoilFieldSystem).</summary>
 public struct TeslaCoilField : IComponentData {}
+
+public struct PoisonDart : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;
+    public float WeaponDamageMultiplier;
+    public float ProjectileSpeed;
+    public float Radius;
+    public float HitForce;
+    public float MarkDuration;
+    public float ExplosionDamage;       // Poison, before the caster's damage %
+    public float ExplosionRadius;       // Scaled by the caster's area of effect
+}
+
+/// <summary>On a Poison Dart's Attack: AttackSystem puts a PoisonMark on everything it hits.</summary>
+public struct PoisonDartHit : IComponentData
+{
+    public float MarkDuration;
+    public float ExplosionDamage;
+    public float ExplosionRadius;
+}
 
 /// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>
 public struct Shadowstep : IComponentData, IEnableableComponent

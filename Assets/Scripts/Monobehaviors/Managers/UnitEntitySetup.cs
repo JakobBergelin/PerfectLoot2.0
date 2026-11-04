@@ -48,6 +48,7 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Burning());
         AddBuffer<BurnInstance>(entityManager, entity);
         AddDisabled(entityManager, entity, new Poisoned());
+        AddDisabled(entityManager, entity, new PoisonMark());
         AddDisabled(entityManager, entity, new Chilled());
         AddDisabled(entityManager, entity, new Frozen());
         AddDisabled(entityManager, entity, new Conductive());

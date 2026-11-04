@@ -121,6 +121,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.TeslaCoil:
                 if (SystemAPI.HasComponent<TeslaCoil>(entity)) SystemAPI.SetComponentEnabled<TeslaCoil>(entity, enabled);
                 break;
+            case SkillType.PoisonDart:
+                if (SystemAPI.HasComponent<PoisonDart>(entity)) SystemAPI.SetComponentEnabled<PoisonDart>(entity, enabled);
+                break;
         }
     }
 }

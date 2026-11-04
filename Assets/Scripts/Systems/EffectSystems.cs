@@ -14,6 +14,7 @@ using Unity.Mathematics;
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Sundered>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<BloodrushBuff>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<PrismBuff>))]
+[assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<PoisonMark>))]
 
 /// <summary>Counts a timed effect down on every unit that has it enabled, and disables it when it runs out.</summary>
 [BurstCompile]
@@ -41,7 +42,7 @@ public struct TickTimedEffectJob<T> : IJobChunk where T : unmanaged, IComponentD
 [BurstCompile]
 public partial struct TimedEffectSystem : ISystem
 {
-    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism;
+    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism, _poisonMark;
     ComponentTypeHandle<BrokenPromisesBuff> _brokenPromisesHandle;
     ComponentTypeHandle<Invulnerable> _invulnerableHandle;
     ComponentTypeHandle<ShadowstepBuff> _shadowstepHandle;
@@ -52,6 +53,7 @@ public partial struct TimedEffectSystem : ISystem
     ComponentTypeHandle<Sundered> _sunderedHandle;
     ComponentTypeHandle<BloodrushBuff> _bloodrushHandle;
     ComponentTypeHandle<PrismBuff> _prismHandle;
+    ComponentTypeHandle<PoisonMark> _poisonMarkHandle;
 
     public void OnCreate(ref SystemState state)
     {
@@ -65,6 +67,7 @@ public partial struct TimedEffectSystem : ISystem
         _sundered = SystemAPI.QueryBuilder().WithAllRW<Sundered>().Build();
         _bloodrush = SystemAPI.QueryBuilder().WithAllRW<BloodrushBuff>().Build();
         _prism = SystemAPI.QueryBuilder().WithAllRW<PrismBuff>().Build();
+        _poisonMark = SystemAPI.QueryBuilder().WithAllRW<PoisonMark>().Build();
         _brokenPromisesHandle = state.GetComponentTypeHandle<BrokenPromisesBuff>();
         _invulnerableHandle = state.GetComponentTypeHandle<Invulnerable>();
         _shadowstepHandle = state.GetComponentTypeHandle<ShadowstepBuff>();
@@ -75,6 +78,7 @@ public partial struct TimedEffectSystem : ISystem
         _sunderedHandle = state.GetComponentTypeHandle<Sundered>();
         _bloodrushHandle = state.GetComponentTypeHandle<BloodrushBuff>();
         _prismHandle = state.GetComponentTypeHandle<PrismBuff>();
+        _poisonMarkHandle = state.GetComponentTypeHandle<PoisonMark>();
     }
 
     [BurstCompile]
@@ -91,6 +95,7 @@ public partial struct TimedEffectSystem : ISystem
         _sunderedHandle.Update(ref state);
         _bloodrushHandle.Update(ref state);
         _prismHandle.Update(ref state);
+        _poisonMarkHandle.Update(ref state);
 
         // One line per timed effect
         var dependency = state.Dependency;
@@ -104,7 +109,8 @@ public partial struct TimedEffectSystem : ISystem
         var h = new TickTimedEffectJob<Sundered> { Handle = _sunderedHandle, DeltaTime = deltaTime }.ScheduleParallel(_sundered, dependency);
         var i = new TickTimedEffectJob<BloodrushBuff> { Handle = _bloodrushHandle, DeltaTime = deltaTime }.ScheduleParallel(_bloodrush, dependency);
         var j = new TickTimedEffectJob<PrismBuff> { Handle = _prismHandle, DeltaTime = deltaTime }.ScheduleParallel(_prism, dependency);
-        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h), JobHandle.CombineDependencies(i, j)));
+        var k = new TickTimedEffectJob<PoisonMark> { Handle = _poisonMarkHandle, DeltaTime = deltaTime }.ScheduleParallel(_poisonMark, dependency);
+        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h, k), JobHandle.CombineDependencies(i, j)));
     }
 }
 

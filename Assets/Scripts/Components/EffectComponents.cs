@@ -155,6 +155,18 @@ public struct Poisoned : IComponentData, IEnableableComponent, ITimedEffect
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }
 
+/// <summary>Poison Dart's mark: if the unit dies with it, it explodes (PoisonMarkExplosionSystem). Another hit starts it over; it doesn't stack.</summary>
+public struct PoisonMark : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float TimeRemaining;
+    public float Duration;
+    public float ExplosionDamage;
+    public float ExplosionRadius;
+    public Entity Source;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
 /// <summary>Builds up from cold damage and slows; at the max stacks the unit freezes (ChillSystem).</summary>
 public struct Chilled : IComponentData, IEnableableComponent, ITimedEffect
 {

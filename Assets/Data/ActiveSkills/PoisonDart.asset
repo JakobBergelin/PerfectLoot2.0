@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 530ec3df5552bafbc1548df6dd7f919c, type: 3}
+  m_Name: PoisonDart
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.PoisonDartSkill
+  Name: Poison Dart
+  Icon: {fileID: 0}
+  Description: Throw a dart that marks the enemy it hits. A marked enemy explodes in poison when it dies.
+  Tags: 577
+  AttackSpeed: 0.5
+  WeaponDamageMultiplier: 0.25
+  ProjectileSpeed: 15
+  Radius: 0.25
+  HitForce: 2
+  MarkDuration: 5
+  ExplosionDamage: 15
+  ExplosionRadius: 4
