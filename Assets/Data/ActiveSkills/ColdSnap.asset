@@ -15,7 +15,7 @@ MonoBehaviour:
   Name: Cold Snap
   Icon: {fileID: 0}
   Description: A burst of cold around you that damages enemies and chills them to the edge of freezing.
-  Tags: 32
+  Tags: 352
   cooldown: 12
   Damage: 5
   Radius: 5

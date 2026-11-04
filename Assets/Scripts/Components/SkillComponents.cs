@@ -61,8 +61,8 @@ public enum SkillType
 
 /// <summary>
 /// What kind of skill it is. Effects pick skills by tag (e.g. Echoing Blade casts a random Projectile skill) and
-/// SkillTagEventSystem turns uses of Melee / Mobility skills into MeleeAttackUsed / MobilitySkillUsed. Stored in assets:
-/// add new values at the end.
+/// SkillTagEventSystem turns uses of Melee / Mobility skills into MeleeAttackUsed / MobilitySkillUsed. Element tags are the
+/// asset's own element: an elemental conversion doesn't change them. Stored in assets: add new values at the end.
 /// </summary>
 [System.Flags]
 public enum SkillTags
@@ -74,6 +74,17 @@ public enum SkillTags
     Channeled = 1 << 3,
     Invulnerable = 1 << 4,
     Cooldown = 1 << 5,
+    Elemental = 1 << 6,     // Deals non-Physical damage; goes with Fire, Cold, Poison or Lightning
+    Fire = 1 << 7,
+    Cold = 1 << 8,
+    Poison = 1 << 9,
+    Lightning = 1 << 10,
+    Buff = 1 << 11,
+    Defensive = 1 << 12,
+    Generator = 1 << 13,    // Gives resource or another bonus when used
+    Companion = 1 << 14,
+    Barrier = 1 << 15,
+    Periodic = 1 << 16,     // Damages over time through a PeriodicAttack
 }
 
 /// <summary>

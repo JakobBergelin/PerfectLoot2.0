@@ -15,7 +15,7 @@ MonoBehaviour:
   Name: Fists Of Thunder
   Icon: {fileID: 21300000, guid: 408eaaf22e114d29bdbc1ab7b920b8d5, type: 3}
   Description: 
-  Tags: 2
+  Tags: 9282
   ResourceGeneration: 1
   WeaponDamageMultiplier: 0.1
   Radius: 0.5

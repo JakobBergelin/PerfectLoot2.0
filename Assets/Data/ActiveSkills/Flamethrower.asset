@@ -15,7 +15,7 @@ MonoBehaviour:
   Name: Flamethrower
   Icon: {fileID: 21300000, guid: 4d434a99e9044ce494c63ce09fb33896, type: 3}
   Description: 
-  Tags: 8
+  Tags: 65736
   resourceCost: 3
   resourceCostPerSecond: 12
   FlamesPerSecond: 15
