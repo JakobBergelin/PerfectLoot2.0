@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ce87e4128f524ec7ab496c59701c5925, type: 3}
+  m_Name: Tome
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableOffhandItem
+  Name: Tome
+  Id: dc788de28c36ca51ca74c1fccfacba8e
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 26
+    RollRange:
+      Min: 30
+      Max: 60
+  - Affix: 27
+    RollRange:
+      Min: 1
+      Max: 3
+  RollableAffixes:
+  - Affix: 33
+    RollRange:
+      Min: 0.04
+      Max: 0.2
+  - Affix: 7
+    RollRange:
+      Min: 0.03
+      Max: 0.1
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.1
+  - Affix: 31
+    RollRange:
+      Min: 0.05
+      Max: 0.25
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 8
