@@ -58,6 +58,9 @@ public enum PassiveType
     PixieDust,
     Quickening,
     Recharge,
+    Bloodrush,
+    Prism,
+    Anchor,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -145,4 +148,27 @@ public struct Recharge : IComponentData
     public float CooldownReduction;     // Seconds taken off one random skill's remaining cooldown
     public float Spent;                 // Toward the next cut
     public Unity.Mathematics.Random Random;
+}
+
+public struct Bloodrush : IComponentData
+{
+    public float AttackSpeedPerStack;   // 0.03 = +3%
+    public int MaxStacks;
+    public float Duration;              // Seconds BloodrushBuff lasts after the last death
+}
+
+public struct Prism : IComponentData
+{
+    public float DamageBonus;           // Of PrismBuff, 0.2 = +20%
+    public float Duration;              // Seconds PrismBuff lasts after the last change of element
+    public bool HasElement;             // False until the first hit
+    public DamageType LastElement;
+}
+
+public struct Anchor : IComponentData
+{
+    public int ArmorPerStack;
+    public int MaxStacks;
+    public float SecondsPerStack;       // Of standing still
+    public float Elapsed;               // Toward the next stack
 }

@@ -20,6 +20,9 @@ public enum EffectType
     DeathsDoor,
     Shadowstep,
     CounterStrike,
+    Bloodrush,
+    Prism,
+    Anchor,
 }
 
 public enum EffectKind
@@ -89,6 +92,34 @@ public struct ShadowstepBuff : IComponentData, IEnableableComponent, ITimedEffec
     public float Range;     // Meters from the unit to the enemy it jumps to
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Bloodrush passive's buff: attack speed per stack. All stacks fall off together when it runs out.</summary>
+public struct BloodrushBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public int Stacks;
+    public float AttackSpeedPerStack;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Prism passive's buff: extra damage.</summary>
+public struct PrismBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float DamageBonus;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Anchor passive's buff: armor per stack. Untimed: AnchorSystem adds stacks and turns it off when the unit moves.</summary>
+public struct AnchorBuff : IComponentData, IEnableableComponent
+{
+    public int Stacks;
+    public int ArmorPerStack;
 }
 
 // ---------- Debuffs ----------

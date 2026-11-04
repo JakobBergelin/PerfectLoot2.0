@@ -61,11 +61,13 @@ public partial class CharacterMovementSystem : SystemBase
                 velocity.ValueRW.Velocity = float3.zero;
             }
 
-            if(moving && !SystemAPI.HasComponent<StandingStill>(entity))
+            // Ball Lightning, Sonic Ball and Hookshot Slash move the unit themselves: that isn't standing still either
+            bool standingStill = !moving && !flying;
+            if(standingStill && !SystemAPI.HasComponent<StandingStill>(entity))
             {
                 commandBuffer.AddComponent<StandingStill>(entity);
             }
-            else if(!moving && SystemAPI.HasComponent<StandingStill>(entity))
+            else if(!standingStill && SystemAPI.HasComponent<StandingStill>(entity))
             {
                 commandBuffer.RemoveComponent<StandingStill>(entity);
             }

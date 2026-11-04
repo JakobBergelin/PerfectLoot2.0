@@ -40,6 +40,9 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Refraction());
         AddDisabled(entityManager, entity, new Invulnerable());
         AddDisabled(entityManager, entity, new ShadowstepBuff());
+        AddDisabled(entityManager, entity, new BloodrushBuff());
+        AddDisabled(entityManager, entity, new PrismBuff());
+        AddDisabled(entityManager, entity, new AnchorBuff());
         AddDisabled(entityManager, entity, new Bleeding());
         AddBuffer<BleedInstance>(entityManager, entity);
         AddDisabled(entityManager, entity, new Burning());

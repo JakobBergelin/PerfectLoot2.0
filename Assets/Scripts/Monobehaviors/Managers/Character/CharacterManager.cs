@@ -95,6 +95,18 @@ public class CharacterManager : MonoBehaviour
                 if (remove) entityManager.SetComponentEnabled<ShadowstepBuff>(_player, false);
                 else SetEffect(entityManager, new ShadowstepBuff { TimeRemaining = TestDuration, Duration = TestDuration, AttackSpeedBonus = 0.15f, Range = 30f });
                 break;
+            case EffectType.Bloodrush:
+                if (remove) entityManager.SetComponentEnabled<BloodrushBuff>(_player, false);
+                else SetEffect(entityManager, new BloodrushBuff { Stacks = stacks, AttackSpeedPerStack = 0.03f, TimeRemaining = TestDuration, Duration = TestDuration });
+                break;
+            case EffectType.Prism:
+                if (remove) entityManager.SetComponentEnabled<PrismBuff>(_player, false);
+                else SetEffect(entityManager, new PrismBuff { DamageBonus = 0.2f, TimeRemaining = TestDuration, Duration = TestDuration });
+                break;
+            case EffectType.Anchor:
+                if (remove) entityManager.SetComponentEnabled<AnchorBuff>(_player, false);
+                else SetEffect(entityManager, new AnchorBuff { Stacks = stacks, ArmorPerStack = 2 });
+                break;
             case EffectType.Bleeding:
                 if (remove) { entityManager.GetBuffer<BleedInstance>(_player).Clear(); entityManager.SetComponentEnabled<Bleeding>(_player, false); }
                 else
