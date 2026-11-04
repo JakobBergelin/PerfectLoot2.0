@@ -4,10 +4,71 @@ using UnityEngine;
 
 public static partial class VfxBuilder
 {
-    // Unit hit and death effects (enemy phase); none yet
+    // Unit hit and death effects. Ink and dust, no gore (style guide: menace from silhouettes)
     static IEnumerable<(VfxType, GameObject)> UnitEffects()
     {
-        yield break;
+        // A dark ink splat (reads on light and dark floors alike) with a pale flash and sparks on top
+        var hit = Root_("VFX_UnitHit", 0.6f, out _);
+        Ps(hit, "Splat", _alpha, ps => { Main(ps, 0.12f, 0f, 1.0f, Hex("#120C16", 0.75f), burst: 1); Grow(ps, 1.4f); });
+        Ps(hit, "Flash", _additive, ps => { Main(ps, 0.08f, 0f, 0.7f, Hex("#F2E6DA", 0.9f), burst: 1); });
+        Ps(hit, "Ink", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.3f, 0.5f), new ParticleSystem.MinMaxCurve(2.5f, 5f), new ParticleSystem.MinMaxCurve(0.18f, 0.32f), Hex("#120C16", 0.95f), burst: 8);
+            var m = ps.main; m.gravityModifier = 1.5f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.25f);
+            Shrink(ps);
+        });
+        Ps(hit, "Sparks", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.12f, 0.22f), new ParticleSystem.MinMaxCurve(4f, 7f), new ParticleSystem.MinMaxCurve(0.07f, 0.12f), Hex("#FFFFFF"), burst: 6);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f);
+            Stretch(ps, 3f);
+        });
+        yield return (VfxType.UnitHit, Save(hit));
+
+        var death = Root_("VFX_UnitDeath", 1.4f, out _);
+        Ps(death, "Dust", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.7f, 1.1f), new ParticleSystem.MinMaxCurve(0.6f, 1.8f), new ParticleSystem.MinMaxCurve(0.8f, 1.4f), Color.white, burst: 12);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.5f);
+            Fade(ps, Hex("#3E3A4C", 0.8f), Hex("#2E2C42", 0.55f), Hex("#2E2C42", 0f));
+            Grow(ps, 1.8f);
+        });
+        Ps(death, "Ink", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(2f, 5f), new ParticleSystem.MinMaxCurve(0.2f, 0.35f), Hex("#120C16", 0.95f), burst: 14);
+            var m = ps.main; m.gravityModifier = 1.2f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.3f);
+            Shrink(ps);
+        });
+        yield return (VfxType.UnitDeath, Save(death));
+
+        // Undead: the same burst, plus pale soul wisps drifting up out of the body
+        var undead = Root_("VFX_UndeadDeath", 2f, out _);
+        Ps(undead, "Dust", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.7f, 1.1f), new ParticleSystem.MinMaxCurve(0.6f, 1.6f), new ParticleSystem.MinMaxCurve(0.8f, 1.4f), Color.white, burst: 10);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.5f);
+            Fade(ps, Hex("#5A5266", 0.75f), Hex("#3E3A4C", 0.5f), Hex("#2E2C42", 0f));
+            Grow(ps, 1.8f);
+        });
+        Ps(undead, "Ink", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(2f, 4f), new ParticleSystem.MinMaxCurve(0.2f, 0.32f), Hex("#120C16", 0.95f), burst: 10);
+            var m = ps.main; m.gravityModifier = 1.2f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.3f);
+            Shrink(ps);
+        });
+        Ps(undead, "Wisps", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(1.2f, 1.8f), new ParticleSystem.MinMaxCurve(0.2f, 0.6f), new ParticleSystem.MinMaxCurve(0.45f, 0.75f), Color.white, burst: 7);
+            var m = ps.main; m.gravityModifier = -0.35f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.4f);
+            var noise = ps.noise; noise.enabled = true; noise.strength = 0.6f; noise.frequency = 0.8f;
+            Fade(ps, Hex("#E8F0F8", 0.8f), Hex("#C8E0FF", 0.5f), Hex("#7FA0D0", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.UndeadDeath, Save(undead));
     }
 
     static Mesh SaveMesh(string name, List<Vector3> vertices, List<int> triangles, bool flat = true)

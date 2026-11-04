@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Spider
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
   Name: Spider
-  Prefab: {fileID: 7900000000000000001, guid: 2245305c1c964f9a5ef63a01e955da64, type: 3}
-  OverrideColor: 1
+  Prefab: {fileID: 3813660731828653617, guid: 50cb38ee8ee7c164592b3b5582845f19, type: 3}
+  OverrideColor: 0
   Tint: {r: 0.25, g: 0.12, b: 0.3, a: 1}
   BodyType: 1
   Scale: 0.5
@@ -51,6 +51,7 @@ MonoBehaviour:
     CriticalDamage: 1
     BlockChance: 0.05
     DodgeChance: 0
+  HasAI: 1
   DetectionRadius: 15
   AttackRadius: 1.5
   TurnSpeed: 2

@@ -14,16 +14,24 @@ public struct VfxBinding : ICleanupComponentData
     public quaternion Rotation;
 }
 
+/// <summary>Last frame's hit flash timer and whether the death effect has played, for units' hit and death effects.</summary>
+public struct VfxHitWatch : IComponentData
+{
+    public float LastFlash;
+    public bool Died;
+}
+
 /// <summary>
 /// Gives skill entities their look through VfxManager without the skill systems knowing: fireballs, barrage bolts and
 /// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
-/// dashing. In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
+/// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects).
+/// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class VfxSystem : SystemBase
 {
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _bound, _gone;
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _bound, _gone, _unwatched;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
     readonly Dictionary<Entity, int> _dashes = new Dictionary<Entity, int>();
     readonly List<Entity> _stale = new List<Entity>();
@@ -35,6 +43,7 @@ public partial class VfxSystem : SystemBase
         _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxBinding, Projectile>().Build();
         _bound = SystemAPI.QueryBuilder().WithAll<VfxBinding, LocalTransform>().Build();
         _gone = SystemAPI.QueryBuilder().WithAll<VfxBinding>().WithNone<LocalTransform>().Build();
+        _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
     }
 
     protected override void OnUpdate()
@@ -96,7 +105,34 @@ public partial class VfxSystem : SystemBase
             EntityManager.RemoveComponent<VfxBinding>(gone);
         }
 
-        if (vfx != null) UpdatePlayerEffects(vfx);
+        if (vfx != null)
+        {
+            UpdatePlayerEffects(vfx);
+            UpdateUnitEffects(vfx);
+        }
+    }
+
+    // A burst when a unit's hit flash starts, and one when it starts dying (RigidDeath)
+    void UpdateUnitEffects(VfxManager vfx)
+    {
+        EntityManager.AddComponent<VfxHitWatch>(_unwatched);
+        var profiles = SystemAPI.GetComponentLookup<UnitVfx>(true);
+        var deaths = SystemAPI.GetComponentLookup<RigidDeath>(true);
+        foreach (var (flash, transform, watch, entity) in SystemAPI.Query<RefRO<HitFlash>, RefRO<LocalTransform>, RefRW<VfxHitWatch>>().WithEntityAccess())
+        {
+            var profile = profiles.HasComponent(entity) ? profiles[entity] : new UnitVfx { Hit = VfxType.UnitHit, Death = VfxType.UndeadDeath };
+            var position = (Vector3)transform.ValueRO.Position;
+            float scale = transform.ValueRO.Scale;
+            // Above the body's middle (the root is the capsule's centre, inside the model) so the burst isn't hidden
+            if (flash.ValueRO.Timer > watch.ValueRO.LastFlash + 0.001f && !watch.ValueRO.Died)
+                vfx.Burst(profile.Hit, position + Vector3.up * 0.8f * scale, Quaternion.identity);
+            watch.ValueRW.LastFlash = flash.ValueRO.Timer;
+            if (!watch.ValueRO.Died && deaths.HasComponent(entity))
+            {
+                watch.ValueRW.Died = true;
+                vfx.Burst(profile.Death, position + Vector3.up * 0.6f * scale, Quaternion.identity);
+            }
+        }
     }
 
     static VfxBinding Bind(VfxManager vfx, VfxType type, VfxType impact, LocalTransform t) => new VfxBinding

@@ -10,14 +10,14 @@ using UnityEngine.Rendering;
 /// <summary>
 /// Builds the skill effects as pooled prefabs for VfxManager: procedural meshes (fireball core, barrage bolt, tornado
 /// funnel, whirlwind arc) on PerfectLoot/Comic or additive materials, URP particle systems for embers, sparks, smoke and
-/// dust, a VfxLibrary with every prefab, and a VfxManager in the Haunted Cathedral scene. Colours follow the style
+/// dust, a VfxLibrary with every prefab, and a VfxManager in the game scenes. Colours follow the style
 /// guide: fire and poison use their trait colours, barrage bolts teal and lightning sapphire (free accent hues).
 /// Safe to run again; prefabs and assets keep their GUIDs.
 /// </summary>
 public static partial class VfxBuilder
 {
     const string Root = "Assets/Data/Vfx";
-    const string ScenePath = "Assets/Scenes/HauntedCathedral.unity";
+    static readonly string[] ScenePaths = { "Assets/Scenes/HauntedCathedral.unity", "Assets/Scenes/SampleScene.unity" };
     const string GlowSource = "Assets/ArtStyleTest/Materials/ComicCathedral/TR_Shield.mat";   // A glowing comic material to copy
 
     static Material _additive, _alpha, _arc;
@@ -61,13 +61,16 @@ public static partial class VfxBuilder
         EditorUtility.SetDirty(library);
         AssetDatabase.SaveAssets();
 
-        var scene = EditorSceneManager.OpenScene(ScenePath, OpenSceneMode.Single);
-        var manager = scene.GetRootGameObjects().Select(r => r.GetComponent<VfxManager>()).FirstOrDefault(m => m != null);
-        if (manager == null) manager = new GameObject("VfxManager").AddComponent<VfxManager>();
-        manager.Library = AssetDatabase.LoadAssetAtPath<VfxLibrary>(libraryPath);
-        EditorUtility.SetDirty(manager);
-        EditorSceneManager.MarkSceneDirty(scene);
-        EditorSceneManager.SaveScene(scene);
+        foreach (var scenePath in ScenePaths)
+        {
+            var scene = EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
+            var manager = scene.GetRootGameObjects().Select(r => r.GetComponent<VfxManager>()).FirstOrDefault(m => m != null);
+            if (manager == null) manager = new GameObject("VfxManager").AddComponent<VfxManager>();
+            manager.Library = AssetDatabase.LoadAssetAtPath<VfxLibrary>(libraryPath);
+            EditorUtility.SetDirty(manager);
+            EditorSceneManager.MarkSceneDirty(scene);
+            EditorSceneManager.SaveScene(scene);
+        }
         Debug.Log($"Skill effects built: {prefabs.Count} prefabs in {libraryPath}.");
     }
 

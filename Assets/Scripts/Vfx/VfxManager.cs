@@ -65,8 +65,15 @@ public class VfxManager : MonoBehaviour
         return handle;
     }
 
-    /// <summary>A one-shot: spawned and released right away (its particles play out).</summary>
-    public void Burst(VfxType type, Vector3 position, Quaternion rotation) => Release(Spawn(type, position, rotation));
+    /// <summary>
+    /// A one-shot: plays out and returns to the pool after its Linger. Not stopped like Release does: a burst only emits
+    /// on the particle system's first update, so stopping it in the frame it starts would cancel it.
+    /// </summary>
+    public void Burst(VfxType type, Vector3 position, Quaternion rotation)
+    {
+        int handle = Spawn(type, position, rotation);
+        if (_active.TryGetValue(handle, out var active)) active.ReturnAt = Time.time + active.Instance.Linger;
+    }
 
     public void Move(int handle, Vector3 position, Quaternion rotation)
     {

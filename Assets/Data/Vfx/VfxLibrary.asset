@@ -43,3 +43,12 @@ MonoBehaviour:
   - Type: 10
     Prefab: {fileID: 5062415607406806997, guid: 0fef3eaf367b72348a132eaa6af30795, type: 3}
     Prewarm: 4
+  - Type: 11
+    Prefab: {fileID: 995822879172044468, guid: 02f0678c5d1849349ae53dcc2e12571c, type: 3}
+    Prewarm: 12
+  - Type: 12
+    Prefab: {fileID: 7979723370443403738, guid: 92080fc4330d20042bed4348271d6ad3, type: 3}
+    Prewarm: 4
+  - Type: 13
+    Prefab: {fileID: 2388990392775196926, guid: 02c87078680b92b4f8f4d7257451d75e, type: 3}
+    Prewarm: 4
