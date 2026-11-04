@@ -37,6 +37,10 @@
     color: #7FA7FF;
 }
 
+.combat-text--dodged {
+    color: #7FE3D4;
+}
+
 .combat-text--bleed {
     color: #FF7AB6;
 }

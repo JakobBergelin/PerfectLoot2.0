@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(PanelRenderer))]
 public class CombatTextHUD : MonoBehaviour
 {
-    enum Kind { Damage, Crit, Blocked, Bleed, Burn, Poison, Heal }
+    enum Kind { Damage, Crit, Blocked, Bleed, Burn, Poison, Heal, Dodged }
 
     static readonly string[] KindClasses =
     {
@@ -22,9 +22,11 @@ public class CombatTextHUD : MonoBehaviour
         "combat-text--burn",
         "combat-text--poison",
         "combat-text--heal",
+        "combat-text--dodged",
     };
     const string LabelClass = "combat-text";
     const string HiddenClass = "combat-text--hidden";
+    const string DodgedText = "Dodge";
 
     [Tooltip("Seconds a number stays on screen")]
     public float Duration = 1f;
@@ -118,7 +120,11 @@ public class CombatTextHUD : MonoBehaviour
         _healingSystem = world.GetExistingSystemManaged<ApplyHealingSystem>();
 
         if (_damagingSystem != null) _damagingSystem.OnDamageTaken += OnDamageTaken;
-        if (_calculateDamageSystem != null) _calculateDamageSystem.OnDamageBlocked += OnBlocked;
+        if (_calculateDamageSystem != null)
+        {
+            _calculateDamageSystem.OnDamageBlocked += OnBlocked;
+            _calculateDamageSystem.OnDamageDodged += OnDodged;
+        }
         if (_effectDamageTextSystem != null)
         {
             _effectDamageTextSystem.OnBleeding += OnBleeding;
@@ -131,7 +137,11 @@ public class CombatTextHUD : MonoBehaviour
     void UnsubscribeFromSystems()
     {
         if (_damagingSystem != null) _damagingSystem.OnDamageTaken -= OnDamageTaken;
-        if (_calculateDamageSystem != null) _calculateDamageSystem.OnDamageBlocked -= OnBlocked;
+        if (_calculateDamageSystem != null)
+        {
+            _calculateDamageSystem.OnDamageBlocked -= OnBlocked;
+            _calculateDamageSystem.OnDamageDodged -= OnDodged;
+        }
         if (_effectDamageTextSystem != null)
         {
             _effectDamageTextSystem.OnBleeding -= OnBleeding;
@@ -143,6 +153,7 @@ public class CombatTextHUD : MonoBehaviour
 
     void OnDamageTaken(float amount, float3 position, bool isCrit) => Queue(amount, position, isCrit ? Kind.Crit : Kind.Damage);
     void OnBlocked(float amount, float3 position) => Queue(amount, position, Kind.Blocked);
+    void OnDodged(float3 position) => Queue(0f, position, Kind.Dodged);
     void OnBleeding(float amount, float3 position) => Queue(amount, position, Kind.Bleed);
     void OnBurning(float amount, float3 position) => Queue(amount, position, Kind.Burn);
     void OnPoisoned(float amount, float3 position) => Queue(amount, position, Kind.Poison);
@@ -216,7 +227,7 @@ public class CombatTextHUD : MonoBehaviour
         entry.Age = 0f;
 
         SetKind(entry, pending.Kind);
-        entry.Label.text = Format(pending.Amount);
+        entry.Label.text = pending.Kind == Kind.Dodged ? DodgedText : Format(pending.Amount);
         entry.Label.style.opacity = 1f;
         entry.Label.RemoveFromClassList(HiddenClass);
         // Newest on top

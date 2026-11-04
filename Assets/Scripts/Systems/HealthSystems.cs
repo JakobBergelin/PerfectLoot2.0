@@ -101,6 +101,7 @@ partial struct CheckDeathSystem : ISystem
 public partial class CalculateDamageSystem : SystemBase
 {
     public event System.Action<float, float3> OnDamageBlocked;
+    public event System.Action<float3> OnDamageDodged;
     private Unity.Mathematics.Random _random;
 
     protected override void OnCreate()
@@ -166,15 +167,15 @@ public partial class CalculateDamageSystem : SystemBase
                     calculatedDamage = math.max(0.0f, calculatedDamage - SystemAPI.GetComponent<Vanguard>(entity).DamageReduction);
                 }
 
-                // Invulnerable: no damage at all. Dodge: a main hit misses, before it can use up a Refraction stack (shown
-                // as blocked; Vigil heals). Refraction: absorbs one hit per stack (shown as blocked).
+                // Invulnerable: no damage at all. Dodge: a main hit misses, before it can use up a Refraction stack (Vigil
+                // heals). Refraction: absorbs one hit per stack (shown as blocked).
                 if(invulnerable)
                 {
                     calculatedDamage = 0.0f;
                 }
                 else if(instance.Hierarchy == DamageHierarchy.Main && calculatedDamage > 0.0f && stats.DodgeChance > 0.0f && _random.NextFloat() < stats.DodgeChance)
                 {
-                    OnDamageBlocked?.Invoke(calculatedDamage, SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
+                    OnDamageDodged?.Invoke(SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
                     calculatedDamage = 0.0f;
                     if(SystemAPI.HasComponent<Vigil>(entity))
                     {
