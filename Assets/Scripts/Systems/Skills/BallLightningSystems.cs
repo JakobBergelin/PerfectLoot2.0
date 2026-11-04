@@ -61,7 +61,7 @@ public partial struct BallLightningSystem : ISystem
                 from.Position = b.Start;
                 var landing = TeleportSystem.TryFindLanding(world, collider.ValueRO, from, entity, position, float.MaxValue, minWalkableNormalY,
                                                             config.StepHeight, FloorLayers(ref state, entity), out var spot) ? spot : b.Start;
-                Land(ref b, ref localTransform.ValueRW, landing, commandBuffer, entity);
+                Land(ref b, ref localTransform.ValueRW, landing, commandBuffer, entity, SystemAPI.GetComponent<CalculatedStats>(entity));
                 continue;
             }
             resourceChanges.Add(new ResourceChanger{Value = -drain});
@@ -73,7 +73,7 @@ public partial struct BallLightningSystem : ISystem
             float step = b.Speed * deltaTime;
             if (remaining <= step)
             {
-                Land(ref b, ref localTransform.ValueRW, b.Destination, commandBuffer, entity);
+                Land(ref b, ref localTransform.ValueRW, b.Destination, commandBuffer, entity, SystemAPI.GetComponent<CalculatedStats>(entity));
                 continue;
             }
 
@@ -151,13 +151,13 @@ public partial struct BallLightningSystem : ISystem
     }
 
     // Ends the flight at landing and releases the lightning attack there (one frame, like a punch)
-    static void Land(ref BallLightning ball, ref LocalTransform transform, float3 landing, EntityCommandBuffer commandBuffer, Entity caster)
+    static void Land(ref BallLightning ball, ref LocalTransform transform, float3 landing, EntityCommandBuffer commandBuffer, Entity caster, in CalculatedStats stats)
     {
         transform.Position = landing;
         ball.Flying = false;
         ball.Elapsed = 0f;
 
-        float damage = ball.Damage * (1f + ball.Spent / math.max(ball.SpentToDouble, 1e-3f));
+        float damage = SkillUtil.CooldownDamage(ball.Damage * (1f + ball.Spent / math.max(ball.SpentToDouble, 1e-3f)), ball.Cooldown, stats);
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = landing, Rotation = quaternion.identity, Scale = 1f});
         commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = ball.Radius, DamageHierarchy = DamageHierarchy.Main, HitForce = ball.HitForce});

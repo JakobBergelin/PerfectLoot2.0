@@ -52,4 +52,4 @@ MonoBehaviour:
   Armor:
     Min: 8
     Max: 12
-  LegendaryPower: {fileID: 0}
+  LegendaryPower: {fileID: 11400000, guid: 882902f4c747f8ec9352e178622c4fa7, type: 2}

@@ -108,6 +108,12 @@ public class SkillUtil
     /// </summary>
     public static float Cooldown(float cooldown, in StatBlock stats) => cooldown * math.max(0f, 1f - stats.CooldownReduction);
 
+    /// <summary>
+    /// The damage of a skill with a real cooldown, raised by the caster's CooldownDamage (Patience) for each second of
+    /// its base cooldown, the one before CooldownReduction. Not shown in tooltips, like the Damage % stat.
+    /// </summary>
+    public static float CooldownDamage(float damage, float cooldown, in CalculatedStats stats) => damage * (1f + cooldown * stats.CooldownDamage);
+
     /// <summary>Takes the seconds put on the skill (e.g. by Recharge) off its remaining cooldown: elapsed is its time since the last use.</summary>
     public static void ApplyCooldownReduction(ref Skill skill, ref float elapsed)
     {

@@ -49,4 +49,4 @@ MonoBehaviour:
     RollRange:
       Min: 0.05
       Max: 0.1
-  LegendaryPower: {fileID: 0}
+  LegendaryPower: {fileID: 11400000, guid: 72e6e06fb1ccecf4d041421103caf4d5, type: 2}

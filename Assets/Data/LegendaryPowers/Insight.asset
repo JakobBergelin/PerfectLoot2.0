@@ -1,0 +1,17 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6549d3df36d97af2fe53f937f4eec591, type: 3}
+  m_Name: Insight
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.InsightPower
+  Name: Insight
+  Description: 'Every {CastsNeeded}th skill cast that costs resource is free.'
+  CastsNeeded: 5

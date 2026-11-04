@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1ca6753cb663d3f35bb68dddd967b7e7, type: 3}
+  m_Name: Wyrmfire
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.WyrmfirePower
+  Name: Wyrmfire
+  Description: 'Enemies that hit you in melee burn for {Damage} fire damage over {Duration} seconds.'
+  Damage: 4
+  Duration: 3

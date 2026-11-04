@@ -157,6 +157,19 @@ public struct Conductive : IComponentData, IEnableableComponent, ITimedEffect
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }
 
+/// <summary>
+/// Sunder legendary power's debuff: each stack adds to the next hits of a Sunder wearer (SunderSystem). All stacks fall
+/// off together when it runs out. Enemies only, so not shown on the HUD.
+/// </summary>
+public struct Sundered : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public int Stacks;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
 // ---------- Shared ----------
 
 /// <summary>On every unit: how its effects limit movement this frame. Written by EffectMovementSystem.</summary>

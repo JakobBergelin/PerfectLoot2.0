@@ -51,4 +51,4 @@ MonoBehaviour:
   ResourceRegeneration:
     Min: 0.5
     Max: 1
-  LegendaryPower: {fileID: 0}
+  LegendaryPower: {fileID: 11400000, guid: eb031e71a56eebfbd6730da71854bb6b, type: 2}

@@ -8,6 +8,12 @@ public struct Vanguard : IComponentData
     public float DamageReduction;
 }
 
+/// <summary>Vigil (Mantle of the Watcher): each hit the wearer dodges heals it (CalculateDamageSystem).</summary>
+public struct Vigil : IComponentData
+{
+    public float HealAmount;
+}
+
 /// <summary>Ambush (Ambusher): hits on targets at or above HealthThreshold of their max health always crit (AttackSystem.CalculateCrit).</summary>
 public struct Ambush : IComponentData
 {

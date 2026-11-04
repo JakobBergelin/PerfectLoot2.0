@@ -53,7 +53,7 @@ public partial struct SonicBallSystem : ISystem
                 var forward = math.mul(localTransform.ValueRO.Rotation, new float3(0f, 0f, 1f));
                 b.Heading = math.normalizesafe(new float3(forward.x, 0f, forward.z), new float3(0f, 0f, 1f));
                 b.Rolling = true;
-                SpawnAttack(commandBuffer, entity, b, stats.ValueRO.Value, localTransform.ValueRO.Position);
+                SpawnAttack(commandBuffer, entity, b, stats.ValueRO, localTransform.ValueRO.Position);
 
                 // A use (tagged Mobility, so it also raises MobilitySkillUsed for e.g. Refractionist)
                 if (SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.SonicBall);
@@ -124,9 +124,9 @@ public partial struct SonicBallSystem : ISystem
     }
 
     /// <summary>The attack rolling with the ball: (Armor + ArmorBonus) * ArmorDamageMultiplier per hit, the bonus not being in this frame's stats yet.</summary>
-    static void SpawnAttack(EntityCommandBuffer commandBuffer, Entity caster, in SonicBall ball, in StatBlock stats, float3 position)
+    static void SpawnAttack(EntityCommandBuffer commandBuffer, Entity caster, in SonicBall ball, in CalculatedStats stats, float3 position)
     {
-        float damage = (stats.Armor + ball.ArmorBonus) * ball.ArmorDamageMultiplier;
+        float damage = SkillUtil.CooldownDamage((stats.Value.Armor + ball.ArmorBonus) * ball.ArmorDamageMultiplier, ball.Cooldown, stats);
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
         commandBuffer.AddComponent(newEntity, new Attack{Damage = math.max(0f, damage), Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = ball.Radius, HitForce = ball.HitForce});

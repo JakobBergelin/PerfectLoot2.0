@@ -11,6 +11,7 @@ using Unity.Mathematics;
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Chilled>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Frozen>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Conductive>))]
+[assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Sundered>))]
 
 /// <summary>Counts a timed effect down on every unit that has it enabled, and disables it when it runs out.</summary>
 [BurstCompile]
@@ -38,7 +39,7 @@ public struct TickTimedEffectJob<T> : IJobChunk where T : unmanaged, IComponentD
 [BurstCompile]
 public partial struct TimedEffectSystem : ISystem
 {
-    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive;
+    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered;
     ComponentTypeHandle<BrokenPromisesBuff> _brokenPromisesHandle;
     ComponentTypeHandle<Invulnerable> _invulnerableHandle;
     ComponentTypeHandle<ShadowstepBuff> _shadowstepHandle;
@@ -46,6 +47,7 @@ public partial struct TimedEffectSystem : ISystem
     ComponentTypeHandle<Chilled> _chilledHandle;
     ComponentTypeHandle<Frozen> _frozenHandle;
     ComponentTypeHandle<Conductive> _conductiveHandle;
+    ComponentTypeHandle<Sundered> _sunderedHandle;
 
     public void OnCreate(ref SystemState state)
     {
@@ -56,6 +58,7 @@ public partial struct TimedEffectSystem : ISystem
         _chilled = SystemAPI.QueryBuilder().WithAllRW<Chilled>().Build();
         _frozen = SystemAPI.QueryBuilder().WithAllRW<Frozen>().Build();
         _conductive = SystemAPI.QueryBuilder().WithAllRW<Conductive>().Build();
+        _sundered = SystemAPI.QueryBuilder().WithAllRW<Sundered>().Build();
         _brokenPromisesHandle = state.GetComponentTypeHandle<BrokenPromisesBuff>();
         _invulnerableHandle = state.GetComponentTypeHandle<Invulnerable>();
         _shadowstepHandle = state.GetComponentTypeHandle<ShadowstepBuff>();
@@ -63,6 +66,7 @@ public partial struct TimedEffectSystem : ISystem
         _chilledHandle = state.GetComponentTypeHandle<Chilled>();
         _frozenHandle = state.GetComponentTypeHandle<Frozen>();
         _conductiveHandle = state.GetComponentTypeHandle<Conductive>();
+        _sunderedHandle = state.GetComponentTypeHandle<Sundered>();
     }
 
     [BurstCompile]
@@ -76,6 +80,7 @@ public partial struct TimedEffectSystem : ISystem
         _chilledHandle.Update(ref state);
         _frozenHandle.Update(ref state);
         _conductiveHandle.Update(ref state);
+        _sunderedHandle.Update(ref state);
 
         // One line per timed effect
         var dependency = state.Dependency;
@@ -86,7 +91,8 @@ public partial struct TimedEffectSystem : ISystem
         var e = new TickTimedEffectJob<Frozen> { Handle = _frozenHandle, DeltaTime = deltaTime }.ScheduleParallel(_frozen, dependency);
         var f = new TickTimedEffectJob<ShadowstepBuff> { Handle = _shadowstepHandle, DeltaTime = deltaTime }.ScheduleParallel(_shadowstep, dependency);
         var g = new TickTimedEffectJob<Conductive> { Handle = _conductiveHandle, DeltaTime = deltaTime }.ScheduleParallel(_conductive, dependency);
-        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), g);
+        var h = new TickTimedEffectJob<Sundered> { Handle = _sunderedHandle, DeltaTime = deltaTime }.ScheduleParallel(_sundered, dependency);
+        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(g, h));
     }
 }
 
