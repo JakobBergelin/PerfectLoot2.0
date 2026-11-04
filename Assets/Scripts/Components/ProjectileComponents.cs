@@ -18,6 +18,8 @@ public struct Projectile : IComponentData
     /// <summary>Height above the ground, measured on the first move (FollowGround). Negative when there was no ground under it.</summary>
     public float GroundHeight;
     public bool GroundHeightSet;
+    /// <summary>Where it was fired from. Set by InitializeFromSourceSystem.</summary>
+    public float3 StartPosition;
     /// <summary>Fraction of its speed lost right now, 0 to 1. Set every frame by TimezoneFieldSystem.</summary>
     public float Slow;
     /// <summary>How fast it moves right now. Move projectiles with this; Speed is its speed outside any slow.</summary>

@@ -30,6 +30,7 @@ public struct DamageInstance : IBufferElementData
     public float3 HitDirection;     // Normalized, away from the attack; with HitForce, pushes the target (knockback, effects)
     public float HitForce;
     public bool IsCenterTarget;     // The hit target closest to the attack's center (one per attack; lightning charges only it)
+    public Entity Attack;           // The Attack that hit; Entity.Null for other damage (periodic attacks, damage over time)
 }
 
 /// <summary>On every unit: its latest main hit that dealt damage, written by DamagingSystem (e.g. which way a killing blow went).</summary>
@@ -38,6 +39,7 @@ public struct LastHit : IComponentData
     public float3 Direction;        // The hit's HitDirection: horizontally away from the attack
     public Entity Source;
     public double Time;             // SystemAPI.Time.ElapsedTime of the frame it landed; 0 = never hit
+    public DamageType Type;
 }
 
 public struct HealingInstance : IBufferElementData
@@ -69,4 +71,5 @@ public struct CalculatedDamageInstance : IBufferElementData
     public float3 HitDirection;
     public float HitForce;
     public bool IsCenterTarget;
+    public Entity Attack;
 }

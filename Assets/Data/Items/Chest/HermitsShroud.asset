@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 03c0539207e442719ade1fea0b910178, type: 3}
+  m_Name: HermitsShroud
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryChestItem
+  Name: Hermit's Shroud
+  Id: 3454a6db09bd40a33df34e3a6abb877f
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 27
+    RollRange:
+      Min: 1
+      Max: 2
+  - Affix: 26
+    RollRange:
+      Min: -30
+      Max: -20
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 4
+    RollRange:
+      Min: 3
+      Max: 6
+  Armor:
+    Min: 1
+    Max: 2
+  LegendaryPower: {fileID: 11400000, guid: 78de3e1b73b9ba822fa7abbfea4b3f53, type: 2}

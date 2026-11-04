@@ -61,6 +61,10 @@ public enum PassiveType
     Bloodrush,
     Prism,
     Anchor,
+    Brawler,
+    Brittle,
+    Meditation,
+    Afterglow,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -171,4 +175,27 @@ public struct Anchor : IComponentData
     public int MaxStacks;
     public float SecondsPerStack;       // Of standing still
     public float Elapsed;               // Toward the next stack
+}
+
+public struct Brawler : IComponentData
+{
+    public float DamageBonus;           // 0.2 = +20%
+    public float Radius;
+}
+
+public struct Brittle : IComponentData
+{
+    public float DamageBonus;           // 0.3 = +30%
+}
+
+public struct Meditation : IComponentData
+{
+    public float DamageReduction;       // 0.2 = -20%
+    public float HealthRegeneration;
+}
+
+public struct Afterglow : IComponentData
+{
+    public float DamageBonus;           // Of AfterglowBuff, 0.15 = +15%
+    public float Duration;              // Seconds AfterglowBuff lasts after the last skill tagged Cooldown
 }

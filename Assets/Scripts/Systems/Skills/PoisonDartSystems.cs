@@ -6,7 +6,7 @@ using UnityEngine;
 
 /// <summary>
 /// Poison Dart: a free repeated attack, fired like Fireball. A dart deals rolled weapon damage * WeaponDamageMultiplier as
-/// poison and carries a PoisonDartHit, so AttackSystem marks what it hits (PoisonMark).
+/// poison and carries a PoisonDartHit, so PoisonMarkSystem marks what it hits (PoisonMark).
 /// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(SkillSystemGroup))]
@@ -68,6 +68,39 @@ public partial struct PoisonDartSystem : ISystem
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
+    }
+}
+
+/// <summary>
+/// Puts a PoisonMark on everything a Poison Dart hits. Before the damage is dealt, so a dart's killing blow sets off the
+/// explosion too.
+/// </summary>
+[UpdateInGroup(typeof(DamageSystemGroup))]
+[UpdateAfter(typeof(CalculateDamageSystem))]
+[UpdateBefore(typeof(DamagingSystem))]
+[BurstCompile]
+public partial struct PoisonMarkSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<PoisonDartHit>();
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        state.CompleteDependency();
+        var darts = SystemAPI.GetComponentLookup<PoisonDartHit>(true);
+
+        foreach (var (taken, entity) in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>().WithPresent<PoisonMark>().WithEntityAccess())
+        {
+            foreach (var instance in taken)
+            {
+                if (!darts.HasComponent(instance.Attack)) continue;
+
+                var dart = darts[instance.Attack];
+                SystemAPI.SetComponent(entity, new PoisonMark{TimeRemaining = dart.MarkDuration, Duration = dart.MarkDuration, ExplosionDamage = dart.ExplosionDamage, ExplosionRadius = dart.ExplosionRadius, Source = instance.Source});
+                SystemAPI.SetComponentEnabled<PoisonMark>(entity, true);
+            }
+        }
     }
 }
 

@@ -209,7 +209,7 @@ public partial class CalculateDamageSystem : SystemBase
                         }
                     }
                 }
-                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
+                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget, Attack = instance.Attack});
             }
             damageBuffer.Clear();
         }
@@ -258,7 +258,7 @@ public partial class DamagingSystem : SystemBase
                     health.ValueRW.CurrentValue -= damage;
                     if(SystemAPI.HasComponent<LastHit>(entity))
                     {
-                        var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime};
+                        var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime, Type = instance.Type};
                         SystemAPI.SetComponent(entity, lastHit);
                     }
 

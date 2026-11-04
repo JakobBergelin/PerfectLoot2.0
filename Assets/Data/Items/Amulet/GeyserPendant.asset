@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c55a96dc5324353bdc09d584a7af52a, type: 3}
+  m_Name: GeyserPendant
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
+  Name: Geyser Pendant
+  Id: 4406ff02a4be827e697abee662740b59
+  Icon: {fileID: 0}
+  BaseAffixes:
+  - Affix: 34
+    RollRange:
+      Min: 0.1
+      Max: 0.2
+  - Affix: 35
+    RollRange:
+      Min: 0.1
+      Max: 0.2
+  - Affix: 18
+    RollRange:
+      Min: -40
+      Max: -20
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 9
+    RollRange:
+      Min: 0.05
+      Max: 0.1
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  LegendaryPower: {fileID: 11400000, guid: e22ba33e48d4def36e574501b29892d6, type: 2}

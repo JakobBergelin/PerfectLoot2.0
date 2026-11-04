@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e1319b09adfdbf274852285e66a7fbab, type: 3}
+  m_Name: Meditation
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.MeditationPassive
+  Name: Meditation
+  Icon: {fileID: 0}
+  Description: While channeling you take 20% less damage and gain +2 health regeneration.
+  DamageReduction: 0.2
+  HealthRegeneration: 2

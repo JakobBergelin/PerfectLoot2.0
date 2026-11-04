@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a3aee20da7d2b96954b82b2ed387841f, type: 3}
+  m_Name: LongShot
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.LongShotPower
+  Name: Long Shot
+  Description: 'Projectile hits deal {DamagePerMeter:P0} more damage per meter from where they were fired, up to {MaxBonus:P0}.'
+  DamagePerMeter: 0.02
+  MaxBonus: 0.3

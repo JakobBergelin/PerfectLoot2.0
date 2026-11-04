@@ -20,6 +20,13 @@ public struct Ambush : IComponentData
     public float HealthThreshold;   // 1 = full health
 }
 
+/// <summary>Long Shot (Farsight): the wearer's projectile hits deal more the further they are from where they were fired (LongShotSystem).</summary>
+public struct LongShot : IComponentData
+{
+    public float DamagePerMeter;    // 0.02 = +2%
+    public float MaxBonus;
+}
+
 /// <summary>Refractionist: using a mobility skill grants Refraction stacks (RefractionistSystem).</summary>
 public struct Refractionist : IComponentData
 {

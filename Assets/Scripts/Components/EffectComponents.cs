@@ -23,6 +23,9 @@ public enum EffectType
     Bloodrush,
     Prism,
     Anchor,
+    Momentum,
+    Ascetic,
+    Afterglow,
 }
 
 public enum EffectKind
@@ -120,6 +123,29 @@ public struct AnchorBuff : IComponentData, IEnableableComponent
 {
     public int Stacks;
     public int ArmorPerStack;
+}
+
+/// <summary>Momentum legendary power's buff: damage per stack. Untimed: MomentumSystem adds stacks and turns it off when the unit stops.</summary>
+public struct MomentumBuff : IComponentData, IEnableableComponent
+{
+    public int Stacks;
+    public float DamagePerStack;
+}
+
+/// <summary>Ascetic legendary power's buff: damage, negative after a skill with a cost. Untimed: AsceticSystem sets it from the last skill used.</summary>
+public struct AsceticBuff : IComponentData, IEnableableComponent
+{
+    public float DamageBonus;
+}
+
+/// <summary>Afterglow passive's buff: extra damage.</summary>
+public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float DamageBonus;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }
 
 // ---------- Debuffs ----------

@@ -49,13 +49,14 @@ public partial class InitializeFromSourceSystem : SystemBase
             heal.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
         }
 
-        foreach (var (source, projectile, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Projectile>>().WithPresent<InitializeFromSource>().WithEntityAccess())
+        foreach (var (source, projectile, transform, entity) in SystemAPI.Query<RefRO<Source>, RefRW<Projectile>, RefRO<LocalTransform>>().WithPresent<InitializeFromSource>().WithEntityAccess())
         {
             var sourceEntity = source.ValueRO.Entity;
             var stats = SystemAPI.GetComponentRO<CalculatedStats>(sourceEntity);
             projectile.ValueRW.BounceCount += stats.ValueRO.Value.Bounces;
             projectile.ValueRW.PierceCount += stats.ValueRO.Value.Pierce;
             projectile.ValueRW.Speed *= math.max(0f, 1.0f + stats.ValueRO.Value.ProjectileSpeed);
+            projectile.ValueRW.StartPosition = transform.ValueRO.Position;
         }
 
         var commandBuffer = _endSimulationEntityCommandBufferSystem.CreateCommandBuffer();

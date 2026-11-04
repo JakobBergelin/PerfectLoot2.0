@@ -15,6 +15,7 @@ using Unity.Mathematics;
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<BloodrushBuff>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<PrismBuff>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<PoisonMark>))]
+[assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<AfterglowBuff>))]
 
 /// <summary>Counts a timed effect down on every unit that has it enabled, and disables it when it runs out.</summary>
 [BurstCompile]
@@ -42,7 +43,7 @@ public struct TickTimedEffectJob<T> : IJobChunk where T : unmanaged, IComponentD
 [BurstCompile]
 public partial struct TimedEffectSystem : ISystem
 {
-    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism, _poisonMark;
+    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism, _poisonMark, _afterglow;
     ComponentTypeHandle<BrokenPromisesBuff> _brokenPromisesHandle;
     ComponentTypeHandle<Invulnerable> _invulnerableHandle;
     ComponentTypeHandle<ShadowstepBuff> _shadowstepHandle;
@@ -54,6 +55,7 @@ public partial struct TimedEffectSystem : ISystem
     ComponentTypeHandle<BloodrushBuff> _bloodrushHandle;
     ComponentTypeHandle<PrismBuff> _prismHandle;
     ComponentTypeHandle<PoisonMark> _poisonMarkHandle;
+    ComponentTypeHandle<AfterglowBuff> _afterglowHandle;
 
     public void OnCreate(ref SystemState state)
     {
@@ -68,6 +70,7 @@ public partial struct TimedEffectSystem : ISystem
         _bloodrush = SystemAPI.QueryBuilder().WithAllRW<BloodrushBuff>().Build();
         _prism = SystemAPI.QueryBuilder().WithAllRW<PrismBuff>().Build();
         _poisonMark = SystemAPI.QueryBuilder().WithAllRW<PoisonMark>().Build();
+        _afterglow = SystemAPI.QueryBuilder().WithAllRW<AfterglowBuff>().Build();
         _brokenPromisesHandle = state.GetComponentTypeHandle<BrokenPromisesBuff>();
         _invulnerableHandle = state.GetComponentTypeHandle<Invulnerable>();
         _shadowstepHandle = state.GetComponentTypeHandle<ShadowstepBuff>();
@@ -79,6 +82,7 @@ public partial struct TimedEffectSystem : ISystem
         _bloodrushHandle = state.GetComponentTypeHandle<BloodrushBuff>();
         _prismHandle = state.GetComponentTypeHandle<PrismBuff>();
         _poisonMarkHandle = state.GetComponentTypeHandle<PoisonMark>();
+        _afterglowHandle = state.GetComponentTypeHandle<AfterglowBuff>();
     }
 
     [BurstCompile]
@@ -96,6 +100,7 @@ public partial struct TimedEffectSystem : ISystem
         _bloodrushHandle.Update(ref state);
         _prismHandle.Update(ref state);
         _poisonMarkHandle.Update(ref state);
+        _afterglowHandle.Update(ref state);
 
         // One line per timed effect
         var dependency = state.Dependency;
@@ -110,7 +115,8 @@ public partial struct TimedEffectSystem : ISystem
         var i = new TickTimedEffectJob<BloodrushBuff> { Handle = _bloodrushHandle, DeltaTime = deltaTime }.ScheduleParallel(_bloodrush, dependency);
         var j = new TickTimedEffectJob<PrismBuff> { Handle = _prismHandle, DeltaTime = deltaTime }.ScheduleParallel(_prism, dependency);
         var k = new TickTimedEffectJob<PoisonMark> { Handle = _poisonMarkHandle, DeltaTime = deltaTime }.ScheduleParallel(_poisonMark, dependency);
-        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h, k), JobHandle.CombineDependencies(i, j)));
+        var l = new TickTimedEffectJob<AfterglowBuff> { Handle = _afterglowHandle, DeltaTime = deltaTime }.ScheduleParallel(_afterglow, dependency);
+        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h, k), JobHandle.CombineDependencies(i, j, l)));
     }
 }
 
@@ -270,6 +276,18 @@ public partial struct EffectDisplaySystem : ISystem
             {
                 var buff = SystemAPI.GetComponent<AnchorBuff>(entity);
                 display.Add(new EffectDisplay { Type = EffectType.Anchor, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.ArmorPerStack });
+            }
+            if (IsActive<MomentumBuff>(ref state, entity))
+            {
+                var buff = SystemAPI.GetComponent<MomentumBuff>(entity);
+                display.Add(new EffectDisplay { Type = EffectType.Momentum, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.DamagePerStack });
+            }
+            if (IsActive<AsceticBuff>(ref state, entity))
+                display.Add(new EffectDisplay { Type = EffectType.Ascetic, Stacks = 1, Magnitude = SystemAPI.GetComponent<AsceticBuff>(entity).DamageBonus });
+            if (IsActive<AfterglowBuff>(ref state, entity))
+            {
+                var buff = SystemAPI.GetComponent<AfterglowBuff>(entity);
+                display.Add(new EffectDisplay { Type = EffectType.Afterglow, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.DamageBonus });
             }
             if (IsActive<Refraction>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });

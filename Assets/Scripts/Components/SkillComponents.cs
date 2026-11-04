@@ -334,7 +334,7 @@ public struct PoisonDart : IComponentData, IEnableableComponent
     public float ExplosionRadius;       // Scaled by the caster's area of effect
 }
 
-/// <summary>On a Poison Dart's Attack: AttackSystem puts a PoisonMark on everything it hits.</summary>
+/// <summary>On a Poison Dart's Attack: PoisonMarkSystem puts a PoisonMark on everything it hits.</summary>
 public struct PoisonDartHit : IComponentData
 {
     public float MarkDuration;

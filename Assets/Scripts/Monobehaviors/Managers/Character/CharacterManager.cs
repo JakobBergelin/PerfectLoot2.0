@@ -107,6 +107,18 @@ public class CharacterManager : MonoBehaviour
                 if (remove) entityManager.SetComponentEnabled<AnchorBuff>(_player, false);
                 else SetEffect(entityManager, new AnchorBuff { Stacks = stacks, ArmorPerStack = 2 });
                 break;
+            case EffectType.Momentum:
+                if (remove) entityManager.SetComponentEnabled<MomentumBuff>(_player, false);
+                else SetEffect(entityManager, new MomentumBuff { Stacks = stacks, DamagePerStack = 0.03f });
+                break;
+            case EffectType.Ascetic:
+                if (remove) entityManager.SetComponentEnabled<AsceticBuff>(_player, false);
+                else SetEffect(entityManager, new AsceticBuff { DamageBonus = 0.25f });
+                break;
+            case EffectType.Afterglow:
+                if (remove) entityManager.SetComponentEnabled<AfterglowBuff>(_player, false);
+                else SetEffect(entityManager, new AfterglowBuff { DamageBonus = 0.15f, TimeRemaining = TestDuration, Duration = TestDuration });
+                break;
             case EffectType.Bleeding:
                 if (remove) { entityManager.GetBuffer<BleedInstance>(_player).Clear(); entityManager.SetComponentEnabled<Bleeding>(_player, false); }
                 else

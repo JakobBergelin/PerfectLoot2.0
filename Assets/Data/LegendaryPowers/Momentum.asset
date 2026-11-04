@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 29e7a943ca780054ac9890fa16d23679, type: 3}
+  m_Name: Momentum
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.MomentumPower
+  Name: Momentum
+  Description: 'Every second you keep moving gives +{DamagePerStack:P0} damage, up to {MaxStacks} times. Stopping removes it all.'
+  DamagePerStack: 0.03
+  MaxStacks: 10
+  SecondsPerStack: 1
