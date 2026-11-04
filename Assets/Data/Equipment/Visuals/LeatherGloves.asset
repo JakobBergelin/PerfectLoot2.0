@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: LeatherGloves
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: 25922c2cb59d4f42a6ed0be5bbf05a65, type: 2}
+  Parts:
+  - Socket: arm_L
+    Prefab: {fileID: 8781983080410017840, guid: a8a82a0b0cce6d54197357ff64a0101f, type: 3}
+  - Socket: arm_R
+    Prefab: {fileID: 3616996907579514202, guid: d1e0b06c7249511449784704108eda04, type: 3}

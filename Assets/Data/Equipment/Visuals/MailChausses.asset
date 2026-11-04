@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: MailChausses
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: 612e346d413043679e2033cf8d76c514, type: 2}
+  Parts:
+  - Socket: leg_L
+    Prefab: {fileID: 487854433148066831, guid: d127b4ad2bda3ee4db06da0d30c298db, type: 3}
+  - Socket: leg_R
+    Prefab: {fileID: 1421674017216458813, guid: c99487773730e8f48a0787002dd10749, type: 3}

@@ -267,8 +267,25 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisualsAuthoring
   Visuals:
+  - {fileID: 11400000, guid: 113a0bc1cd8eef6458e839a0c00d1bfe, type: 2}
+  - {fileID: 11400000, guid: ac09fbdafee517b4ca859e89e5479dcc, type: 2}
+  - {fileID: 11400000, guid: a122466934422854083f9faf885b9962, type: 2}
+  - {fileID: 11400000, guid: c192c7d1dc2f7084e8443d6d1476f04b, type: 2}
+  - {fileID: 11400000, guid: 1f1aa445270b25a48a1c10ba59e64224, type: 2}
+  - {fileID: 11400000, guid: 70a4aa5e1fa38d64da0be627c9488a1c, type: 2}
+  - {fileID: 11400000, guid: 9794578790e32134cabc284bfa579b47, type: 2}
+  - {fileID: 11400000, guid: fa4b9b32b9175a0449e9bafffda3f02a, type: 2}
   - {fileID: 11400000, guid: ff193c422d5c9ea40868e3948de2c066, type: 2}
+  - {fileID: 11400000, guid: a95fb039d771f0344a536ab2c7f6f913, type: 2}
+  - {fileID: 11400000, guid: 6d541de40a6dba24aa1108aff3078d27, type: 2}
+  - {fileID: 11400000, guid: 87d04aa8fd07551418fa9a34acfd914f, type: 2}
+  - {fileID: 11400000, guid: 2bd6358d3f810724c916df0e1227ded4, type: 2}
+  - {fileID: 11400000, guid: f76a9ecbfb804094683d11a5eb182d29, type: 2}
+  - {fileID: 11400000, guid: d983b6e0b440a5942b7668364afc43f2, type: 2}
+  - {fileID: 11400000, guid: ccf1f7b13b46cc74782491cb427dc1af, type: 2}
+  - {fileID: 11400000, guid: f6f4985b4bade914b839dce51ef0cc17, type: 2}
   - {fileID: 11400000, guid: abf3bf55e61209946a8a4295a824613c, type: 2}
+  - {fileID: 11400000, guid: 2dd828d03ccdd014ca1d1103488992eb, type: 2}
 --- !u!4 &459560756
 Transform:
   m_ObjectHideFlags: 0
