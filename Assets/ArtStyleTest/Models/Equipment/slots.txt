@@ -1,0 +1,3 @@
+# object|material slots in submesh order
+ShortSword__hand_R|PL_Player_Metal,PL_Player_Leather
+GreatHelm__head|PL_Player_Metal,CT_DarkStone

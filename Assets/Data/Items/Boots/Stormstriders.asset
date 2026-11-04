@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: Stormstriders
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryBootsItem
   Name: Stormstriders
+  Icon: {fileID: 0}
+  VisualBase: {fileID: 11400000, guid: 15fe6c59dd6f44f28425b4991082b045, type: 2}
   BaseAffixes:
   - Affix: 22
     RollRange:

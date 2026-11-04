@@ -13,6 +13,8 @@ MonoBehaviour:
   m_Name: LegsOfTheFallen
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryLegsItem
   Name: Legs of the Fallen
+  Icon: {fileID: 0}
+  VisualBase: {fileID: 11400000, guid: 612e346d413043679e2033cf8d76c514, type: 2}
   BaseAffixes: []
   RollableAffixes:
   - Affix: 0
@@ -42,3 +44,4 @@ MonoBehaviour:
   Armor:
     Min: 9
     Max: 14
+  LegendaryPower: {fileID: 0}
