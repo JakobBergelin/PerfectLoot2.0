@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Recharge
   m_EditorClassIdentifier: Assembly-CSharp::Passives.RechargePassive
   Name: Recharge
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: ca6ea3cee6aa48c48a6f3483b243c2e9, type: 3}
   Description: 
   ResourcePerTrigger: 10
   CooldownReduction: 1
