@@ -131,6 +131,7 @@ def build_base(coll, name="PL_Base"):
     bpy.data.objects.remove(src, do_unlink=True)
     mesh.name = mesh.data.name = name + "_Animated"
     clips(arm)
+    skill_clips(arm)
     return arm, mesh, counts
 
 
@@ -157,6 +158,57 @@ def clips(arm):
         "hips": [(0, (0, 0, 0), (0, 0, 0)), (3, (0, 0, 0), (0, 0.06, -0.03)), (12, (0, 0, 0), (0, 0, 0))],
         "arm_L": [(0, (0, 0, 0)), (3, (12, 0, -15)), (12, (0, 0, 0))],
         "arm_R": [(0, (0, 0, 0)), (3, (12, 0, 15)), (12, (0, 0, 0))],
+    })
+
+
+def skill_clips(arm):
+    """Skill clips (RigidClip names). Arm angles: pitch < 0 swings the arm forward (-90 level, -180 straight up),
+    roll > 0 swings it toward +X (out for arm_L, in for arm_R), yaw > 0 turns left."""
+    R.clip(arm, "PL_Base_Cast", 24, {                 # fireball wind-up: right hand raised, left hand aiming
+        "chest": [(0, (-5, 15, 0)), (12, (-6, 17, 0)), (24, (-5, 15, 0))],
+        "arm_R": [(0, (-125, 0, -20)), (12, (-130, 0, -24)), (24, (-125, 0, -20))],
+        "arm_L": [(0, (-70, 0, 6)), (12, (-72, 0, 6)), (24, (-70, 0, 6))],
+        "head": [(0, (-8, -10, 0)), (24, (-8, -10, 0))],
+    }, loop=True)
+    R.clip(arm, "PL_Base_Release", 12, {               # throw
+        "chest": [(0, (-5, 20, 0)), (3, (12, -22, 0)), (12, (0, 0, 0))],
+        "arm_R": [(0, (-140, 0, -20)), (3, (-75, 0, -4)), (12, (-15, 0, 0))],
+        "arm_L": [(0, (-70, 0, 6)), (3, (-15, 0, 18)), (12, (0, 0, 0))],
+        "hips": [(0, (0, 0, 0), (0, 0, 0)), (3, (0, 0, 0), (0, -0.05, -0.02)), (12, (0, 0, 0), (0, 0, 0))],
+    })
+    R.clip(arm, "PL_Base_Shoot", 10, {                 # barrage bolt flung upward
+        "chest": [(0, (0, 0, 0)), (3, (-10, 5, 0)), (10, (0, 0, 0))],
+        "arm_R": [(0, (-20, 0, 0)), (3, (-170, 0, -10)), (10, (-20, 0, 0))],
+        "arm_L": [(0, (0, 0, 0)), (3, (-30, 0, 10)), (10, (0, 0, 0))],
+    })
+    for side, arm_bone, other, s in (("L", "arm_L", "arm_R", 1), ("R", "arm_R", "arm_L", -1)):
+        R.clip(arm, "PL_Base_Punch" + side, 7, {     # Fists of Thunder: the torso turns into the punch
+            "chest": [(0, (0, 0, 0)), (2, (6, -25 * s, 0)), (7, (0, -6 * s, 0))],
+            "hips": [(0, (0, 0, 0)), (2, (0, -8 * s, 0)), (7, (0, 0, 0))],
+            arm_bone: [(0, (-25, 0, 0)), (2, (-95, 0, -6 * s)), (7, (-30, 0, 0))],
+            other: [(0, (-10, 0, 0)), (2, (20, 0, 0)), (7, (-10, 0, 0))],
+        })
+    R.clip(arm, "PL_Base_Spin", 12, {                  # whirlwind: arms out, weapon leading (the body itself spins)
+        "chest": [(0, (5, 0, 0)), (12, (5, 0, 0))],
+        "arm_L": [(0, (0, 0, 80)), (6, (-4, 0, 84)), (12, (0, 0, 80))],
+        "arm_R": [(0, (-10, 0, -80)), (6, (-14, 0, -84)), (12, (-10, 0, -80))],
+        "leg_L": [(0, (0, 0, 8)), (12, (0, 0, 8))],
+        "leg_R": [(0, (0, 0, -8)), (12, (0, 0, -8))],
+        "hips": [(0, (0, 0, 0), (0, 0, 0)), (6, (0, 0, 0), (0, 0, 0.03)), (12, (0, 0, 0), (0, 0, 0))],
+    }, loop=True)
+    R.clip(arm, "PL_Base_Dash", 12, {                  # low forward lunge, arms swept back
+        "chest": [(0, (35, 0, 0)), (12, (35, 0, 0))],
+        "head": [(0, (-25, 0, 0)), (12, (-25, 0, 0))],
+        "hips": [(0, (0, 0, 0), (0, 0, -0.06)), (12, (0, 0, 0), (0, 0, -0.06))],
+        "leg_L": [(0, (-45, 0, 0)), (12, (-45, 0, 0))],
+        "leg_R": [(0, (35, 0, 0)), (12, (35, 0, 0))],
+        "arm_L": [(0, (50, 0, 10)), (12, (50, 0, 10))],
+        "arm_R": [(0, (50, 0, -10)), (12, (50, 0, -10))],
+    }, loop=True)
+    R.clip(arm, "PL_Base_Sweep", 14, {                 # tornado: level arm swept across with the torso
+        "chest": [(0, (0, 45, 0)), (5, (4, -45, 0)), (14, (0, 0, 0))],
+        "arm_R": [(0, (-80, 0, 0)), (5, (-85, 0, 10)), (14, (-15, 0, 0))],
+        "arm_L": [(0, (-20, 0, 0)), (5, (-10, 0, 10)), (14, (0, 0, 0))],
     })
 
 

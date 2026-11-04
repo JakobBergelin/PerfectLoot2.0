@@ -23,7 +23,8 @@ public static class EquipmentSetup
     const string ItemsFolder = "Assets/Data/Items";
     const string SubscenePath = "Assets/Scenes/HauntedCathedral/Entities.unity";
     static readonly string[] MaterialFolders = { "Assets/ArtStyleTest/Materials/Comic", "Assets/ArtStyleTest/Materials/ComicCathedral" };
-    static readonly string[] Clips = { "Idle", "Move", "Hit" };
+    static readonly string[] Clips = { "Idle", "Move", "Hit", "Cast", "Release", "Shoot", "PunchL", "PunchR", "Spin", "Dash", "Sweep" };
+    static readonly string[] LoopingClips = { "Idle", "Move", "Cast", "Spin", "Dash" };
     static readonly string[] Sockets = { "hips", "leg_L", "leg_R", "chest", "head", "arm_L", "arm_R", "hand_L", "hand_R" };
 
     // Which base item each unique or legendary looks like on the character
@@ -82,7 +83,7 @@ public static class EquipmentSetup
             var take = importer.defaultClipAnimations.FirstOrDefault(t => t.takeName.EndsWith("_" + clip));
             if (take == null) throw new System.Exception($"{BaseFbx}: no take ending in _{clip}");
             take.name = clip;
-            take.loopTime = clip == "Idle" || clip == "Move";
+            take.loopTime = LoopingClips.Contains(clip);
             takes.Add(take);
         }
         importer.clipAnimations = takes.ToArray();
