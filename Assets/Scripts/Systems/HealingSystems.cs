@@ -43,11 +43,11 @@ public static class HealingUtil
         GroupIndex = 0,
     };
 
-    public static bool IsTarget(TargetType type, bool isPlayer, bool isEnemy) => type switch
+    public static bool IsTarget(TargetType type, bool onPlayersSide, bool isEnemy) => type switch
     {
-        TargetType.Player => isPlayer,
+        TargetType.Player => onPlayersSide,
         TargetType.Enemy => isEnemy,
-        _ => isPlayer || isEnemy,
+        _ => onPlayersSide || isEnemy,
     };
 }
 
@@ -70,7 +70,7 @@ public partial class HealingSystem : SystemBase
             foreach (var hit in outHits)
             {
                 if (hit.Entity == entity) continue;
-                if (!HealingUtil.IsTarget(heal.ValueRO.Type, SystemAPI.HasComponent<Player>(hit.Entity), SystemAPI.HasComponent<Enemy>(hit.Entity))) continue;
+                if (!HealingUtil.IsTarget(heal.ValueRO.Type, SystemAPI.HasComponent<EnemyTargetable>(hit.Entity), SystemAPI.HasComponent<Enemy>(hit.Entity))) continue;
                 if (!SystemAPI.HasBuffer<HealingInstance>(hit.Entity)) continue;
 
                 // Written directly (not via ECB) so ApplyHealingSystem handles it this frame
@@ -103,7 +103,7 @@ public partial class PeriodicHealSystem : SystemBase
             foreach (var hit in outHits)
             {
                 if (hit.Entity == entity) continue;
-                if (!HealingUtil.IsTarget(periodicHeal.ValueRO.Type, SystemAPI.HasComponent<Player>(hit.Entity), SystemAPI.HasComponent<Enemy>(hit.Entity))) continue;
+                if (!HealingUtil.IsTarget(periodicHeal.ValueRO.Type, SystemAPI.HasComponent<EnemyTargetable>(hit.Entity), SystemAPI.HasComponent<Enemy>(hit.Entity))) continue;
                 if (!SystemAPI.HasBuffer<PeriodicHealingInstance>(hit.Entity)) continue;
 
                 // One instance per area, so overlapping areas stack

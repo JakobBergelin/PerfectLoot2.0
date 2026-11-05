@@ -47,6 +47,7 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new AsceticBuff());
         AddDisabled(entityManager, entity, new AfterglowBuff());
         AddDisabled(entityManager, entity, new PackInstinctBuff());
+        AddDisabled(entityManager, entity, new LifeLinkBuff());
         AddDisabled(entityManager, entity, new Bleeding());
         AddBuffer<BleedInstance>(entityManager, entity);
         AddDisabled(entityManager, entity, new Burning());

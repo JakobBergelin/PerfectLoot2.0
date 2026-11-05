@@ -62,6 +62,7 @@ public enum SkillType
     FireHydra,
     StoneGuardian,
     Wolf,
+    Wisp,
 
 }
 

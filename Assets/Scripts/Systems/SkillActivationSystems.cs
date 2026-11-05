@@ -129,6 +129,7 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.StoneGuardian:
             case SkillType.Wolf:
+            case SkillType.Wisp:
                 SetSummonHeld(entity, type, enabled);
                 break;
         }

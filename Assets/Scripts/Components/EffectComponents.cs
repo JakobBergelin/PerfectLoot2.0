@@ -27,6 +27,7 @@ public enum EffectType
     Ascetic,
     Afterglow,
     PackInstinct,
+    LifeLink,
 }
 
 public enum EffectKind
@@ -153,6 +154,12 @@ public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
 public struct PackInstinctBuff : IComponentData, IEnableableComponent
 {
     public float CriticalChanceBonus;
+}
+
+/// <summary>Linked by a Life Link wearer. Untimed: LifeLinkSystem turns it on for the linked unit.</summary>
+public struct LifeLinkBuff : IComponentData, IEnableableComponent
+{
+    public float HealthRegeneration;    // Per second, from all wearers linked to it
 }
 
 // ---------- Debuffs ----------

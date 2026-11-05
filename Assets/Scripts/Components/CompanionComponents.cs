@@ -40,6 +40,8 @@ public struct BoidSettings
     public float Leash;
     [Tooltip("Meters from its target where it stops. Keep this within its skills' range.")]
     public float AttackDistance;
+    [Tooltip("An enemy this close sends it to the far edge of its area, in meters. 0: it doesn't flee.")]
+    public float FleeDistance;
     [Tooltip("Its top speed when far from where it wants to be, as a multiple of its movement speed")]
     public float CatchUpMultiplier;
     [Tooltip("Farther than this from the player, in meters, it teleports back")]

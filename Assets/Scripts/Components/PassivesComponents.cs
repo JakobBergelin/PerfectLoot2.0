@@ -66,6 +66,7 @@ public enum PassiveType
     Meditation,
     Afterglow,
     PackInstinct,
+    LifeLink,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -199,6 +200,13 @@ public struct Afterglow : IComponentData
 {
     public float DamageBonus;           // Of AfterglowBuff, 0.15 = +15%
     public float Duration;              // Seconds AfterglowBuff lasts after the last skill tagged Cooldown
+}
+
+public struct LifeLink : IComponentData
+{
+    public float Range;     // Meters from the wearer to a player it can link to
+    public float TickRate;  // Seconds between payouts of its regeneration
+    public Entity Target;   // The player it's linked to, Entity.Null: none (LifeLinkSystem)
 }
 
 public struct PackInstinct : IComponentData

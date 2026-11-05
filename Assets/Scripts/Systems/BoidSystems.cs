@@ -8,7 +8,8 @@ using Unity.Transforms;
 /// <summary>
 /// Companion movement, as a flock around each owner. Each companion keeps to its own area in front of, behind, beside or
 /// around its owner, seen from the way the owner last walked, or heads for its target while that target is within Leash
-/// of the owner. While the owner walks, the flock moves along with them and pulls together. Walks along the owner's
+/// of the owner. Its target coming within FleeDistance sends it to the far edge of its area instead. While the owner
+/// walks, the flock moves along with them and pulls together. Walks along the owner's
 /// FlowField, runs faster the further it has to go, steers away from nearby units and teleports back past
 /// TeleportDistance. Stands still while casting or when it can't act. Only writes the wanted horizontal velocity
 /// (UnitMotion); UnitMoverSystem moves it.
@@ -108,8 +109,10 @@ public partial struct BoidSystem : ISystem
             var unitPosition = SystemAPI.HasComponent<LocalTransform>(unit) ? SystemAPI.GetComponent<LocalTransform>(unit).Position : float3.zero;
             bool chasing = unit != Entity.Null && math.distancesq(unitPosition.xz, ownerPosition.xz) <= settings.Leash * settings.Leash;
             boid.Chasing = chasing;
-            var destination = chasing ? unitPosition : area;
-            float stopDistance = chasing ? settings.AttackDistance : spread;
+            bool fleeing = !chasing && unit != Entity.Null && math.distancesq(unitPosition.xz, transform.Position.xz) <= settings.FleeDistance * settings.FleeDistance;
+            var awayFromUnit = math.normalizesafe(new float3(area.x - unitPosition.x, 0f, area.z - unitPosition.z), -heading);
+            var destination = chasing ? unitPosition : fleeing ? area + awayFromUnit * spread : area;
+            float stopDistance = chasing ? settings.AttackDistance : fleeing ? MinSpread : spread;
 
             var position = transform.Position;
             float distance = math.distance(position.xz, destination.xz) - stopDistance;
@@ -125,7 +128,7 @@ public partial struct BoidSystem : ISystem
                 facing = fields[targetables[owner].FieldSlot].Direction(position, destination);
                 desired = facing * topSpeed * math.saturate(distance / SlowDistance);
             }
-            if (!chasing && ownerWalks && flocks.TryGetValue(owner, out var flock))
+            if (!chasing && !fleeing && ownerWalks && flocks.TryGetValue(owner, out var flock))
                 desired += FlockPull(flock, position, walking);
             transform.Rotation = math.slerp(transform.Rotation, quaternion.LookRotationSafe(facing, math.up()), math.saturate(TurnRate * deltaTime));
 

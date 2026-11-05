@@ -291,6 +291,8 @@ public partial struct EffectDisplaySystem : ISystem
             }
             if (IsActive<PackInstinctBuff>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.PackInstinct, Stacks = 1, Magnitude = SystemAPI.GetComponent<PackInstinctBuff>(entity).CriticalChanceBonus });
+            if (IsActive<LifeLinkBuff>(ref state, entity))
+                display.Add(new EffectDisplay { Type = EffectType.LifeLink, Stacks = 1, Magnitude = SystemAPI.GetComponent<LifeLinkBuff>(entity).HealthRegeneration });
             if (IsActive<Refraction>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
             if (IsActive<Invulnerable>(ref state, entity))
