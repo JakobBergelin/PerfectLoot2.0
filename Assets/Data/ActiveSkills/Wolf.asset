@@ -30,7 +30,7 @@ MonoBehaviour:
   SightRadius: 12
   Movement:
     Position: 4
-    Distance: 0
+    Distance: 3
     Spread: 3
     Leash: 10
     AttackDistance: 1.5

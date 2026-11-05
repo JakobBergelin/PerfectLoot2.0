@@ -23,14 +23,51 @@ MonoBehaviour:
   Mass: 1
   Tint: {r: 0.6, g: 1, b: 0.7, a: 1}
   Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 0
+    Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
     Health: 15
     HealthRegeneration: 5
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceSteal: 0
+    Lifesteal: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 0
+    ArmorPierce: 0
+    MovementSpeed: 0
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0
+    CriticalChance: 0
+    CriticalDamage: 0
+    BlockChance: 0
+    DodgeChance: 0
   Threat: 0
   SightRadius: 10
   Movement:
-    Position: 4
-    Distance: 0
-    Spread: 4
+    Position: 0
+    Distance: 3
+    Spread: 3
     Leash: 0
     AttackDistance: 0
     FleeDistance: 5

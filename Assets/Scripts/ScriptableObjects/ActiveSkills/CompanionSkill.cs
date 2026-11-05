@@ -33,7 +33,7 @@ namespace ActiveSkills
         public float SightRadius = 12f;
         public BoidSettings Movement = new BoidSettings
         {
-            Position = BoidPosition.Front, Distance = 3f, Spread = 1.5f, Leash = 8f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f,
+            Position = BoidPosition.Front, Distance = 4f, Spread = 2f, Leash = 8f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f,
         };
         [Tooltip("What it attacks with, first ready one first. Their damage is scaled by the caster's stats.")]
         public List<EnemySkill> Skills = new List<EnemySkill>();

@@ -52,6 +52,29 @@ public struct UnitSpatialGrid : IComponentData
         }
         return push;
     }
+
+    /// <summary>The way away from enemies within radius of position, stronger the closer they are. Zero with none.</summary>
+    public static float3 AwayFromEnemies(in NativeParallelMultiHashMap<int, GridUnit> units, in ComponentLookup<Enemy> enemies, float3 position, float radius)
+    {
+        var away = float3.zero;
+        var cell = Cell(position);
+        int reach = (int)math.ceil(radius / CellSize);
+        for (int x = -reach; x <= reach; x++)
+        for (int z = -reach; z <= reach; z++)
+        {
+            if (!units.TryGetFirstValue(Hash(cell + new int2(x, z)), out var other, out var iterator)) continue;
+            do
+            {
+                if (!enemies.HasComponent(other.Entity)) continue;
+                var fromEnemy = position - other.Position;
+                fromEnemy.y = 0f;
+                float distance = math.length(fromEnemy);
+                if (distance < radius) away += math.normalizesafe(fromEnemy) * (1f - distance / radius);
+            }
+            while (units.TryGetNextValue(out other, ref iterator));
+        }
+        return away;
+    }
 }
 
 [UpdateInGroup(typeof(MovementSystemGroup), OrderFirst = true)]
