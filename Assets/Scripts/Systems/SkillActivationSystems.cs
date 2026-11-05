@@ -127,6 +127,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.FireHydra:
                 if (SystemAPI.HasComponent<FireHydra>(entity)) SystemAPI.SetComponentEnabled<FireHydra>(entity, enabled);
                 break;
+            case SkillType.StoneGuardian:
+                if (SystemAPI.HasComponent<StoneGuardian>(entity)) SystemAPI.SetComponentEnabled<StoneGuardian>(entity, enabled);
+                break;
         }
     }
 }

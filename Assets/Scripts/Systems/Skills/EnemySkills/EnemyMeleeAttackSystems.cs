@@ -6,22 +6,23 @@ using UnityEngine;
 
 public static class EnemyMeleeUtil
 {
-    /// <summary>One melee hit: a single-frame Attack with half of reach as its radius, that far in front of the enemy.</summary>
-    public static void SpawnHit(EntityCommandBuffer commandBuffer, Entity caster, float3 position, float3 direction, float reach, float damage, DamageType type, float hitForce)
+    /// <summary>One melee hit: a single-frame Attack with half of reach as its radius, that far in front of the unit.</summary>
+    public static Entity SpawnHit(EntityCommandBuffer commandBuffer, Entity source, TargetType targetType, float3 position, float3 direction, float reach, float damage, DamageType type, float hitForce)
     {
         var newEntity = commandBuffer.CreateEntity();
 
         commandBuffer.AddComponent(newEntity, new LocalTransform { Position = position + direction * reach / 2, Rotation = quaternion.identity, Scale = 1f });
         commandBuffer.AddComponent(newEntity, new Attack { Damage = damage, Type = type, Radius = reach / 2, DamageHierarchy = DamageHierarchy.Main, HitForce = hitForce });
         commandBuffer.AddComponent(newEntity, new EnemyMeleeHit { });
-        commandBuffer.AddComponent(newEntity, new Source { Entity = caster });
-        commandBuffer.AddComponent(newEntity, new AttackTarget { TargetType = TargetType.Player });
+        commandBuffer.AddComponent(newEntity, new Source { Entity = source });
+        commandBuffer.AddComponent(newEntity, new AttackTarget { TargetType = targetType });
         // single frame damage
         commandBuffer.AddComponent(newEntity, new DestroyWithChildren { });
+        return newEntity;
     }
 }
 
-/// <summary>Physics enemies' melee skill: one hit in front of the enemy when it goes off.</summary>
+/// <summary>The melee skill: one hit in front of the unit when it goes off. An enemy's hits only players; a companion's is its owner's, scaled by their stats, and hits only enemies.</summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [UpdateAfter(typeof(EnemySkillCastSystem))]
 [BurstCompile]
@@ -41,10 +42,15 @@ public partial struct EnemyMeleeSystem : ISystem
 
         foreach (var (melee, fires, transform, entity) in SystemAPI.Query<RefRO<EnemyMelee>, DynamicBuffer<EnemySkillFire>, RefRO<LocalTransform>>().WithEntityAccess())
         {
+            bool isCompanion = SystemAPI.HasComponent<Companion>(entity);
+            var source = isCompanion ? SystemAPI.GetComponent<Companion>(entity).Owner : entity;
+            var targetType = isCompanion ? TargetType.Enemy : TargetType.Player;
+
             foreach (var fire in fires)
             {
-                if (fire.Type == EnemySkillType.Melee)
-                    EnemyMeleeUtil.SpawnHit(commandBuffer, entity, transform.ValueRO.Position, fire.Direction, melee.ValueRO.Reach, melee.ValueRO.Damage, melee.ValueRO.Type, melee.ValueRO.HitForce);
+                if (fire.Type != EnemySkillType.Melee) continue;
+                var hit = EnemyMeleeUtil.SpawnHit(commandBuffer, source, targetType, transform.ValueRO.Position, fire.Direction, melee.ValueRO.Reach, melee.ValueRO.Damage, melee.ValueRO.Type, melee.ValueRO.HitForce);
+                if (isCompanion) commandBuffer.AddComponent(hit, new InitializeFromSource { });
             }
         }
     }
@@ -94,7 +100,7 @@ public partial class EnemyMeleeAttackSystem : SystemBase
 
             if (enemyMeleeAttack.ValueRO.Elapsed >= enemyMeleeAttack.ValueRO.AttackSpeed && npcBehavior.ValueRO.IsAttacking)
             {
-                EnemyMeleeUtil.SpawnHit(commandBuffer, entity, localTransform.ValueRO.Position, npcBehavior.ValueRO.Direction, npcBehavior.ValueRO.AttackRadius, enemyMeleeAttack.ValueRO.Damage, DamageType.Physical, 0f);
+                EnemyMeleeUtil.SpawnHit(commandBuffer, entity, TargetType.Player, localTransform.ValueRO.Position, npcBehavior.ValueRO.Direction, npcBehavior.ValueRO.AttackRadius, enemyMeleeAttack.ValueRO.Damage, DamageType.Physical, 0f);
                 enemyMeleeAttack.ValueRW.Elapsed = 0.0f;
                 npcBehavior.ValueRW.AttackCount++;
             }

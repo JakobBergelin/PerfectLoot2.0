@@ -20,6 +20,13 @@ public static class CompanionEntitySetup
         EnemyEntitySetup.AddSkillList(entityManager, entity, skills);
     }
 
+    /// <summary>Enemies can go after and hit it, walking its owner's FlowField. For one with health, after its other components.</summary>
+    public static void AddTargetable(EntityManager entityManager, Entity entity, Entity owner, float threat)
+    {
+        int fieldSlot = entityManager.GetComponentData<EnemyTargetable>(owner).FieldSlot;
+        AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = fieldSlot, Threat = threat });
+    }
+
     /// <summary>For a companion with a collider that moves: the unit components and Boid. Swarm: only the world blocks it.</summary>
     public static void AddMovementComponents(EntityManager entityManager, Entity entity, StatBlock baseStats, BoidSettings settings)
     {

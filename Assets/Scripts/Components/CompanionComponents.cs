@@ -18,20 +18,24 @@ public struct CompanionDetection : IComponentData
     public float SightRadius;
 }
 
-/// <summary>Where a Boid wants to be, seen from the way its owner walks.</summary>
+/// <summary>Where a Boid's area is, seen from the way its owner walks. Around: centered on the owner.</summary>
 public enum BoidPosition
 {
     Behind,
     Left,
     Right,
+    Front,
+    Around,
 }
 
 [Serializable]
 public struct BoidSettings
 {
     public BoidPosition Position;
-    [Tooltip("Meters from the player it wants to keep")]
+    [Tooltip("Meters from the player to the middle of its area. Around doesn't use it.")]
     public float Distance;
+    [Tooltip("Radius of its area in meters: inside it, nothing pulls it back to the player")]
+    public float Spread;
     [Tooltip("It chases a target only while that target is this close to the player, in meters")]
     public float Leash;
     [Tooltip("Meters from its target where it stops. Keep this within its skills' range.")]
@@ -42,9 +46,10 @@ public struct BoidSettings
     public float TeleportDistance;
 }
 
-/// <summary>A companion that moves: follows its owner and chases targets close to them (BoidSystem).</summary>
+/// <summary>A companion that moves: flocks around its owner and chases targets close to them (BoidSystem).</summary>
 public struct Boid : IComponentData
 {
     public BoidSettings Settings;
     public float3 Heading;      // The way its owner last walked; zero until they do
+    public bool Chasing;        // Out of the flock, after its target
 }

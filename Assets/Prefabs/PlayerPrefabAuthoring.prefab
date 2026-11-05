@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4223146776238916187}
   - component: {fileID: 639969504211523825}
+  - component: {fileID: 5120486733190428761}
   m_Layer: 0
   m_Name: PlayerPrefabAuthoring
   m_TagString: Untagged
@@ -45,3 +46,16 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::PlayerPrefabAuthoring
   PlayerVisualPrefab: {fileID: 1760048247506015315, guid: 78abfc1dab970b546be1d2be2bfd5076, type: 3}
+--- !u!114 &5120486733190428761
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4957478499090252075}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 867bcdd71626d61b93dc9c36f00eb8fd, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CompanionPrefabsAuthoring
+  Guardian: {fileID: 7900000000000000001, guid: b6ff23f74b12d954c9302db8f7a51b68, type: 3}

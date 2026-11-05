@@ -88,7 +88,7 @@ public partial class AttackSystem : SystemBase
                         if (SystemAPI.HasComponent<AttackTarget>(entity))
                         {
                             var targetType = SystemAPI.GetComponentRO<AttackTarget>(entity).ValueRO.TargetType;
-                            if(targetType == TargetType.Player && !SystemAPI.HasComponent<Player>(hit.Entity))
+                            if(targetType == TargetType.Player && !SystemAPI.HasComponent<EnemyTargetable>(hit.Entity))
                             {
                                 continue;
                             }

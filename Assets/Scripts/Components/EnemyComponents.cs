@@ -30,12 +30,13 @@ public struct EnemyTarget : IComponentData
 }
 
 /// <summary>
-/// A unit enemies can go after: every player (later companions too). FieldSlot picks the FlowField enemies walk along to
-/// reach it: the one of its player.
+/// A unit enemies can go after and hit: every player, and companions that can be attacked. FieldSlot picks the FlowField
+/// enemies walk along to reach it: the one of its player.
 /// </summary>
 public struct EnemyTargetable : IComponentData
 {
     public int FieldSlot;
+    public float Threat;    // Enemies choosing a target treat it as this many meters closer
 }
 
 /// <summary>Always knows where the nearest living target is, from anywhere (HuntPlayerSystem). For enemies sent after the player, like a Survive step's waves.</summary>

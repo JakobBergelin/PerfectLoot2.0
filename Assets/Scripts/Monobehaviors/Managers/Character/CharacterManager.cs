@@ -47,13 +47,14 @@ public class CharacterManager : MonoBehaviour
     public float TestDuration = 3f;
     [Tooltip("How far from the player 'Spawn test second player' puts it, in meters")]
     public float TestPlayerOffset = 15f;
-    [Tooltip("One companion each for 'Spawn test companions'")]
+    [Tooltip("What 'Spawn test companions' spawns, TestCompanionCount of each")]
     public List<BoidSettings> TestCompanions = new List<BoidSettings>
     {
-        new BoidSettings { Position = BoidPosition.Behind, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
-        new BoidSettings { Position = BoidPosition.Left, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
-        new BoidSettings { Position = BoidPosition.Right, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+        new BoidSettings { Position = BoidPosition.Behind, Distance = 3f, Spread = 2f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+        new BoidSettings { Position = BoidPosition.Left, Distance = 3f, Spread = 2f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+        new BoidSettings { Position = BoidPosition.Right, Distance = 3f, Spread = 2f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
     };
+    public int TestCompanionCount = 3;
     [Tooltip("What test companions use. Empty: they only follow and chase.")]
     public List<EnemySkill> TestCompanionSkills = new List<EnemySkill>();
     [Tooltip("How far test companions see enemies, in meters")]
@@ -87,6 +88,7 @@ public class CharacterManager : MonoBehaviour
         using var prefabQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerPrefab>());
         var position = entityManager.GetComponentData<LocalTransform>(_player).Position;
         foreach (var settings in TestCompanions)
+        for (int i = 0; i < TestCompanionCount; i++)
         {
             var companion = entityManager.Instantiate(prefabQuery.GetSingleton<PlayerPrefab>().Value);
             var transform = entityManager.GetComponentData<LocalTransform>(companion);

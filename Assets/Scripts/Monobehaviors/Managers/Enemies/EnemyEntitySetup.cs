@@ -101,7 +101,7 @@ public static class EnemyEntitySetup
     }
 
     // Writes the tint as the base color, and as the color the hit flash returns to
-    static void ApplyTint(EntityManager entityManager, Entity entity, UnityEngine.Color tint)
+    public static void ApplyTint(EntityManager entityManager, Entity entity, UnityEngine.Color tint)
     {
         var linear = tint.linear;
         var color = new float4(linear.r, linear.g, linear.b, linear.a);

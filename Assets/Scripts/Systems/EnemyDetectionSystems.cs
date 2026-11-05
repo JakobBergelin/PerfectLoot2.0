@@ -10,6 +10,7 @@ public struct EnemyTargetUnit
     public Entity Entity;
     public float3 Position;
     public int FieldSlot;
+    public float Threat;
 }
 
 /// <summary>Singleton: every living EnemyTargetable unit, rebuilt each frame by EnemyTargetsSystem.</summary>
@@ -25,16 +26,17 @@ public struct EnemyTargets : IComponentData
         return -1;
     }
 
-    /// <summary>The index of the unit nearest to position (horizontally), -1 when there are none.</summary>
-    public static int Nearest(in NativeArray<EnemyTargetUnit> units, float3 position)
+    /// <summary>The index of the unit nearest to position (horizontally, counting its Threat) within maxDistance, -1 when there are none.</summary>
+    public static int Nearest(in NativeArray<EnemyTargetUnit> units, float3 position, float maxDistance = float.MaxValue)
     {
         int nearest = -1;
-        float nearestDistanceSq = float.MaxValue;
+        float nearestScore = float.MaxValue;
         for (int i = 0; i < units.Length; i++)
         {
-            float distanceSq = math.distancesq(units[i].Position.xz, position.xz);
-            if (distanceSq >= nearestDistanceSq) continue;
-            nearestDistanceSq = distanceSq;
+            float distance = math.distance(units[i].Position.xz, position.xz);
+            float score = distance - units[i].Threat;
+            if (distance > maxDistance || score >= nearestScore) continue;
+            nearestScore = score;
             nearest = i;
         }
         return nearest;
@@ -73,7 +75,7 @@ public partial struct EnemyTargetsSystem : ISystem
         foreach (var (targetable, transform, health, entity) in SystemAPI.Query<RefRO<EnemyTargetable>, RefRO<LocalTransform>, RefRO<Health>>().WithNone<RigidDeath>().WithEntityAccess())
         {
             if (health.ValueRO.CurrentValue <= 0f) continue;
-            units.Add(new EnemyTargetUnit { Entity = entity, Position = transform.ValueRO.Position, FieldSlot = targetable.ValueRO.FieldSlot });
+            units.Add(new EnemyTargetUnit { Entity = entity, Position = transform.ValueRO.Position, FieldSlot = targetable.ValueRO.FieldSlot, Threat = targetable.ValueRO.Threat });
         }
     }
 }
@@ -113,10 +115,10 @@ public struct EnemyAlerts : IComponentData
 }
 
 /// <summary>
-/// Sets each enemy's EnemyTarget to the nearest target it senses. Physics enemies (EnemyDetection): see it within their
+/// Sets each enemy's EnemyTarget to the nearest target it senses, counting Threat. Physics enemies (EnemyDetection): see it within their
 /// sight radius (shrinking toward ProximityRadius for a target behind them) with line of sight on the FlowField, or notice
 /// it within ProximityRadius through walls; finding one themselves alerts enemies within AlertRadius (next frame). Swarms
-/// (SwarmDetection): a target within Radius. Both react to alerts and drop a dead or gone target; Physics enemies also
+/// (SwarmDetection): a target within Radius, keeping it unless one with more Threat comes that close. Both react to alerts and drop a dead or gone target; Physics enemies also
 /// forget it after ForgetTime without sensing it. Being hit is EnemyHitDetectionSystem, near misses EnemyNearMissSystem.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -220,14 +222,15 @@ public partial struct EnemyDetectionSystem : ISystem
             forward = math.normalizesafe(new float3(forward.x, 0f, forward.z));
 
             var nearest = Entity.Null;
-            float nearestDistance = float.MaxValue;
+            float nearestScore = float.MaxValue;
             for (int i = 0; i < Targets.Length; i++)
             {
                 var unit = Targets[i];
                 var toUnit = unit.Position - position;
                 toUnit.y = 0f;
                 float distance = math.length(toUnit);
-                if (distance >= nearestDistance) continue;
+                float score = distance - unit.Threat;
+                if (score >= nearestScore) continue;
 
                 bool found = distance <= detection.ProximityRadius;
                 if (!found)
@@ -238,7 +241,7 @@ public partial struct EnemyDetectionSystem : ISystem
                 }
                 if (!found) continue;
                 nearest = unit.Entity;
-                nearestDistance = distance;
+                nearestScore = score;
             }
             return nearest;
         }
@@ -252,14 +255,15 @@ public partial struct EnemyDetectionSystem : ISystem
 
         void Execute(ref EnemyTarget target, in SwarmDetection detection, in LocalTransform transform)
         {
-            if (EnemyTargets.Find(Targets, target.Unit) < 0) target.Unit = Entity.Null;
-            if (Targets.Length == 0 || target.Unit != Entity.Null) return;
+            int current = EnemyTargets.Find(Targets, target.Unit);
+            if (current < 0) target.Unit = Entity.Null;
+            if (Targets.Length == 0) return;
 
             var position = transform.Position;
-            int nearest = EnemyTargets.Nearest(Targets, position);
-            if (math.distancesq(position.xz, Targets[nearest].Position.xz) <= detection.Radius * detection.Radius)
+            int nearest = EnemyTargets.Nearest(Targets, position, detection.Radius);
+            if (nearest >= 0 && (current < 0 || Targets[nearest].Threat > Targets[current].Threat))
                 target.Unit = Targets[nearest].Entity;
-            else if (EnemyAlerts.TryReach(Alerts, Targets, position, detection.NearMissMargin, out var alerted))
+            else if (current < 0 && EnemyAlerts.TryReach(Alerts, Targets, position, detection.NearMissMargin, out var alerted))
                 target.Unit = alerted;
         }
     }
