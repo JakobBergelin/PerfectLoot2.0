@@ -221,7 +221,7 @@ public class SkillsPanelHUD : MonoBehaviour
                 Group = _passiveSlots,
                 GetEquipped = () => PassiveSlot(index)?.EquippedPassive,
                 Equip = passive => PassiveSlot(index)?.EquipPassive((PassiveSkill)passive),
-                GetPool = () => PassiveSkillManager.Instance != null ? PassiveSkillManager.Instance.AllPassives : null,
+                GetPool = () => PassiveSkillManager.Instance != null ? PassiveSkillManager.Instance.SelectablePassives : null,
                 TypeOf = passive => (int)((PassiveSkill)passive).Type,
             };
 

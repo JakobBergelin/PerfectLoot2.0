@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e2b9dbf6a071a2305fc68e79d4a7b505, type: 3}
+  m_Name: Wolf
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.WolfSkill
+  Name: Wolf
+  Icon: {fileID: 0}
+  Description: Summons a fast Wolf that roams around you. Allies near it have +10% critical chance. The cooldown starts when it dies.
+  Tags: 18432
+  cooldown: 20
+  resourceCost: 20
+  Body: {fileID: 7900000000000000001, guid: 4fa12f947369b1165fa7995a1d95e332, type: 3}
+  Scale: 0.8
+  Mass: 1
+  Tint: {r: 0.45, g: 0.3, b: 0.18, a: 1}
+  Stats:
+    Health: 20
+    HealthRegeneration: 1
+    MovementSpeed: 0.5
+  Threat: 3
+  SightRadius: 12
+  Movement:
+    Position: 4
+    Distance: 0
+    Spread: 3
+    Leash: 10
+    AttackDistance: 1.5
+    CatchUpMultiplier: 1.5
+    TeleportDistance: 20
+  Skills:
+  - {fileID: 11400000, guid: 35f8ad6b759060737af236ccac49a13b, type: 2}
+  Passives:
+  - {fileID: 11400000, guid: 529ace274a6301ace88832df51f60d1c, type: 2}

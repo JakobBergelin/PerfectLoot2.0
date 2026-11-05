@@ -1,27 +1,36 @@
+using System.Collections.Generic;
 using UnityEngine;
+using Unity.Collections;
 using Unity.Entities;
 
-/// <summary>Put in a subscene: bakes the visual prefabs of companions with a body, for their skills to copy.</summary>
+/// <summary>Put in a subscene: bakes the visual prefabs of companions with a body, for their skills to copy. Looked up by prefab name.</summary>
 public class CompanionPrefabsAuthoring : MonoBehaviour
 {
-    [Tooltip("Visual-only prefab on the Player layer: mesh, collider, rigidbody and UnitBarsAuthoring")]
-    public GameObject Guardian;
+    [Tooltip("Visual-only prefabs on the Player layer: mesh, collider, rigidbody and UnitBarsAuthoring")]
+    public List<GameObject> Bodies = new List<GameObject>();
 
     public class Baker : Baker<CompanionPrefabsAuthoring>
     {
         public override void Bake(CompanionPrefabsAuthoring authoring)
         {
             Entity entity = GetEntity(TransformUsageFlags.None);
-            AddComponent(entity, new CompanionPrefabs
+            var buffer = AddBuffer<CompanionPrefabElement>(entity);
+            foreach (var body in authoring.Bodies)
             {
-                Guardian = GetEntity(authoring.Guardian, TransformUsageFlags.Dynamic)
-            });
+                if (body == null) continue;
+                buffer.Add(new CompanionPrefabElement
+                {
+                    Key = body.name,
+                    Prefab = GetEntity(body, TransformUsageFlags.Dynamic),
+                });
+            }
         }
     }
 }
 
-/// <summary>Singleton holding the baked companion prefabs.</summary>
-public struct CompanionPrefabs : IComponentData
+/// <summary>A baked companion body, keyed by its prefab's name.</summary>
+public struct CompanionPrefabElement : IBufferElementData
 {
-    public Entity Guardian;
+    public FixedString64Bytes Key;
+    public Entity Prefab;
 }

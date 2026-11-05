@@ -128,8 +128,17 @@ public partial class SkillActivationSystem : SystemBase
                 if (SystemAPI.HasComponent<FireHydra>(entity)) SystemAPI.SetComponentEnabled<FireHydra>(entity, enabled);
                 break;
             case SkillType.StoneGuardian:
-                if (SystemAPI.HasComponent<StoneGuardian>(entity)) SystemAPI.SetComponentEnabled<StoneGuardian>(entity, enabled);
+            case SkillType.Wolf:
+                SetSummonHeld(entity, type, enabled);
                 break;
         }
+    }
+
+    void SetSummonHeld(Entity entity, SkillType type, bool held)
+    {
+        if (!SystemAPI.HasBuffer<CompanionSummon>(entity)) return;
+        var summons = SystemAPI.GetBuffer<CompanionSummon>(entity);
+        int index = CompanionSummon.Find(summons, type);
+        if (index >= 0) summons.ElementAt(index).Held = held;
     }
 }

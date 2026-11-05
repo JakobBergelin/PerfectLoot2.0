@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using EnemySkills;
+using Passives;
 using Unity.Entities;
 using static UnitEntitySetup;
 
@@ -18,6 +19,8 @@ public static class CompanionEntitySetup
         AddOrSet(entityManager, entity, new EnemyTarget());
         AddOrSet(entityManager, entity, new NpcBehavior());
         EnemyEntitySetup.AddSkillList(entityManager, entity, skills);
+        // Stands still ones have no combat components, but Pack Instinct raises their hits too
+        AddDisabled(entityManager, entity, new PackInstinctBuff());
     }
 
     /// <summary>Enemies can go after and hit it, walking its owner's FlowField. For one with health, after its other components.</summary>
@@ -25,6 +28,13 @@ public static class CompanionEntitySetup
     {
         int fieldSlot = entityManager.GetComponentData<EnemyTargetable>(owner).FieldSlot;
         AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = fieldSlot, Threat = threat });
+    }
+
+    /// <summary>The same passives players use. After its other components.</summary>
+    public static void AddPassives(EntityManager entityManager, Entity entity, List<PassiveSkill> passives)
+    {
+        foreach (var passive in passives)
+            if (passive != null) passive.Apply(entityManager, entity);
     }
 
     /// <summary>For a companion with a collider that moves: the unit components and Boid. Swarm: only the world blocks it.</summary>

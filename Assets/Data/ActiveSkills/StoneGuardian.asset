@@ -18,6 +18,7 @@ MonoBehaviour:
   Tags: 20480
   cooldown: 20
   resourceCost: 20
+  Body: {fileID: 7900000000000000001, guid: b6ff23f74b12d954c9302db8f7a51b68, type: 3}
   Scale: 1.3
   Mass: 5
   Threat: 8

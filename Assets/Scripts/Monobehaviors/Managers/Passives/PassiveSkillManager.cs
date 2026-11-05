@@ -1,4 +1,5 @@
 using Passives;
+using System.Linq;
 using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
@@ -37,7 +38,10 @@ public class PassiveSkillManager : MonoBehaviour
         RebuildPassives();
     }
 
-    /// <summary>Fills empty slots with random passives from AllPassives, never repeating a PassiveType.</summary>
+    /// <summary>The passives players can equip.</summary>
+    public IEnumerable<PassiveSkill> SelectablePassives => AllPassives.Where(passive => passive != null && passive.PlayerSelectable);
+
+    /// <summary>Fills empty slots with random passives from SelectablePassives, never repeating a PassiveType.</summary>
     void RandomizeEmptySlots()
     {
         var taken = new HashSet<PassiveType>();
@@ -45,8 +49,8 @@ public class PassiveSkillManager : MonoBehaviour
             if (slot != null && !slot.IsEmpty) taken.Add(slot.EquippedPassive.Type);
 
         var pool = new List<PassiveSkill>();
-        foreach (var passive in AllPassives)
-            if (passive != null && taken.Add(passive.Type)) pool.Add(passive);
+        foreach (var passive in SelectablePassives)
+            if (taken.Add(passive.Type)) pool.Add(passive);
 
         foreach (var slot in Slots)
         {

@@ -3,6 +3,17 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
+public static class CompanionUtil
+{
+    /// <summary>The critical chance a companion's hit adds to its owner's: its Pack Instinct bonus, unless its owner has that already.</summary>
+    public static float CriticalChanceBonus(in ComponentLookup<PackInstinctBuff> buffs, Entity companion, Entity owner)
+    {
+        if (!buffs.HasComponent(companion) || !buffs.IsComponentEnabled(companion)) return 0f;
+        bool ownerHasIt = buffs.HasComponent(owner) && buffs.IsComponentEnabled(owner);
+        return ownerHasIt ? 0f : buffs[companion].CriticalChanceBonus;
+    }
+}
+
 /// <summary>Companions have their owner's stats, so EnemySkillCastSystem times their skills by the owner's attack speed.</summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [UpdateBefore(typeof(EnemySkillCastSystem))]

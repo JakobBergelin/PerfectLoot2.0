@@ -61,6 +61,7 @@ public enum SkillType
     PoisonDart,
     FireHydra,
     StoneGuardian,
+    Wolf,
 
 }
 
@@ -360,19 +361,36 @@ public struct FireHydraUnit : IComponentData
     public float TimeRemaining;
 }
 
-/// <summary>Summons a Guardian in front of the caster. One at a time: the cooldown only runs once it's gone (StoneGuardianSystem).</summary>
-public struct StoneGuardian : IComponentData, IEnableableComponent
+/// <summary>
+/// One equipped CompanionSkill on its caster: summons a companion in front of them. One at a time: the cooldown only runs
+/// once it's gone (CompanionSummonSystem).
+/// </summary>
+public struct CompanionSummon : IBufferElementData
 {
+    public SkillType Type;
     public float Cooldown;
     public float ResourceCost;
     public float SpawnDistance; // Meters in front of the caster
     public float Scale;
-    public float Elapsed;       // Since the last Guardian went, up to Cooldown
-    public Entity Prefab;       // The Guardian to copy, made by StoneGuardianSkill
+    public float Elapsed;       // Since the last companion went, up to Cooldown
+    public Entity Prefab;       // The companion to copy, made by CompanionSkill
+    public bool Held;           // Its key is down (SkillActivationSystem)
+    public bool HasUnit;        // Its companion is alive (CompanionSummonSystem)
+
+    /// <summary>The index of the skill in summons, -1 when it isn't there.</summary>
+    public static int Find(in DynamicBuffer<CompanionSummon> summons, SkillType type)
+    {
+        for (int i = 0; i < summons.Length; i++)
+            if (summons[i].Type == type) return i;
+        return -1;
+    }
 }
 
-/// <summary>On a summoned Guardian, which also has Companion.</summary>
-public struct StoneGuardianUnit : IComponentData {}
+/// <summary>On a summoned companion, with the skill that summoned it.</summary>
+public struct SummonedCompanion : IComponentData
+{
+    public SkillType Type;
+}
 
 /// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>
 public struct Shadowstep : IComponentData, IEnableableComponent

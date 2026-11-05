@@ -65,6 +65,7 @@ public enum PassiveType
     Brittle,
     Meditation,
     Afterglow,
+    PackInstinct,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -198,4 +199,10 @@ public struct Afterglow : IComponentData
 {
     public float DamageBonus;           // Of AfterglowBuff, 0.15 = +15%
     public float Duration;              // Seconds AfterglowBuff lasts after the last skill tagged Cooldown
+}
+
+public struct PackInstinct : IComponentData
+{
+    public float Radius;                // Meters from the wearer
+    public float CriticalChanceBonus;   // Of PackInstinctBuff, 0.1 = +10%
 }

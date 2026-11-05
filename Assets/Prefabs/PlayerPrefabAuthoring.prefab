@@ -58,4 +58,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 867bcdd71626d61b93dc9c36f00eb8fd, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CompanionPrefabsAuthoring
-  Guardian: {fileID: 7900000000000000001, guid: b6ff23f74b12d954c9302db8f7a51b68, type: 3}
+  Bodies:
+  - {fileID: 7900000000000000001, guid: b6ff23f74b12d954c9302db8f7a51b68, type: 3}
+  - {fileID: 7900000000000000001, guid: 4fa12f947369b1165fa7995a1d95e332, type: 3}

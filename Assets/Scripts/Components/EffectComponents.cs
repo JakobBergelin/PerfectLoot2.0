@@ -26,6 +26,7 @@ public enum EffectType
     Momentum,
     Ascetic,
     Afterglow,
+    PackInstinct,
 }
 
 public enum EffectKind
@@ -146,6 +147,12 @@ public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
     public float Duration;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Pack Instinct passive's buff: extra critical chance. Untimed: PackInstinctSystem turns it on near a wearer.</summary>
+public struct PackInstinctBuff : IComponentData, IEnableableComponent
+{
+    public float CriticalChanceBonus;
 }
 
 // ---------- Debuffs ----------

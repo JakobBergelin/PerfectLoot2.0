@@ -9,10 +9,12 @@ namespace Passives
         public string Name;
         public Sprite Icon;
         [TextArea] public string Description;
+        [Tooltip("Players can equip it. Off: only for companions and enemies that list it.")]
+        public bool PlayerSelectable = true;
 
         public abstract PassiveType Type { get; }
 
-        /// <summary>Adds this passive's component to the entity, or refreshes its values if already present.</summary>
+        /// <summary>Adds this passive's component to the entity (a player, companion or enemy), or refreshes its values if already present.</summary>
         public abstract void Apply(EntityManager entityManager, Entity entity);
 
         public abstract void Remove(EntityManager entityManager, Entity entity);
