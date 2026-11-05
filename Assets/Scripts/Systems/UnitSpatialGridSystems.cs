@@ -15,7 +15,7 @@ public struct GridUnit
 
 /// <summary>
 /// Singleton: every unit with Steering, bucketed by a horizontal grid cell. Rebuilt each frame by UnitSpatialGridSystem,
-/// read by systems that need nearby units (enemy separation). Use Cell / Hash to look up a cell.
+/// read by systems that need nearby units (Separation). Use Cell / Hash to look up a cell.
 /// </summary>
 public struct UnitSpatialGrid : IComponentData
 {
@@ -24,6 +24,34 @@ public struct UnitSpatialGrid : IComponentData
 
     public static int2 Cell(float3 position) => (int2)math.floor(position.xz / CellSize);
     public static int Hash(int2 cell) => (int)math.hash(cell);
+
+    /// <summary>The push away from overlapping neighbours, for a unit at position. Spacing: MovementConfig.SeparationSpacing.</summary>
+    public static float3 Separation(in NativeParallelMultiHashMap<int, GridUnit> units, Entity self, float3 position, float radius, float spacing)
+    {
+        var push = float3.zero;
+        var cell = Cell(position);
+        for (int x = -1; x <= 1; x++)
+        for (int z = -1; z <= 1; z++)
+        {
+            if (!units.TryGetFirstValue(Hash(cell + new int2(x, z)), out var other, out var iterator)) continue;
+            do
+            {
+                if (other.Entity == self) continue;
+                var away = position - other.Position;
+                away.y = 0f;
+                float minDistance = (radius + other.Radius) * spacing;
+                float distanceSq = math.lengthsq(away);
+                if (distanceSq >= minDistance * minDistance) continue;
+
+                float distance = math.sqrt(distanceSq);
+                // Exactly on top of each other: pick a direction from the entity index so they still split
+                var direction = distance > 1e-4f ? away / distance : new float3(math.sin(self.Index), 0f, math.cos(self.Index));
+                push += direction * (1f - distance / minDistance);
+            }
+            while (units.TryGetNextValue(out other, ref iterator));
+        }
+        return push;
+    }
 }
 
 [UpdateInGroup(typeof(MovementSystemGroup), OrderFirst = true)]

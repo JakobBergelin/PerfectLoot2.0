@@ -70,7 +70,7 @@ public struct EnemySkillSlot : IBufferElementData
     public EnemyTelegraph Telegraph;
 }
 
-/// <summary>The telegraphed skill an enemy is casting. It stands still until TimeRemaining runs out or a stun cancels it.</summary>
+/// <summary>The telegraphed skill an enemy is casting. It stands still until TimeRemaining runs out or being frozen cancels it.</summary>
 public struct EnemySkillCast : IComponentData
 {
     public bool Active;

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 65e154d790739e7e3250fefb601db706, type: 3}
+  m_Name: HydraFireball
+  m_EditorClassIdentifier: Assembly-CSharp::EnemySkills.EnemyProjectileSkill
+  Name: Hydra Fireball
+  Cooldown: 1.5
+  CooldownUsesAttackSpeed: 1
+  CooldownOnlyInRange: 0
+  ResourceCost: 0
+  MinRange: 0
+  MaxRange: 15
+  NeedsLineOfSight: 1
+  Conditions:
+    TargetUsingSkill: 0
+    SkillTags: 0
+    TargetMotion: 0
+    TargetHealthBelow: 0
+  TurnSpeed: 360
+  FacingAngle: 15
+  Telegraph:
+    Shape: 0
+    Duration: 0
+    Size: 0
+    Width: 0
+  Damage: 2
+  DamageType: 1
+  ProjectileSpeed: 15
+  Radius: 0.25
+  HitForce: 2
+  MaxDistance: 20

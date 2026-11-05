@@ -53,9 +53,9 @@ public partial struct EnemyMovementSystem : ISystem
         }
     }
 
-    // Enemies still rising out of the ground (SpawnRise) don't act yet
+    // Enemies still rising out of the ground (SpawnRise) don't act yet. Companions that move have BoidSystem.
     [BurstCompile]
-    [WithNone(typeof(SpawnRise))]
+    [WithNone(typeof(SpawnRise), typeof(Boid))]
     partial struct EnemyMovementJob : IJobEntity
     {
         [ReadOnly] public NativeArray<EnemyTargetUnit> Targets;
@@ -108,7 +108,7 @@ public partial struct EnemyMovementSystem : ISystem
             }
 
             // Push away from overlapping neighbours (other enemies and the player)
-            desired += Separation(entity, transform.Position, steering.Radius) * Config.SeparationStrength(steering.BodyType);
+            desired += UnitSpatialGrid.Separation(Grid, entity, transform.Position, steering.Radius, Config.SeparationSpacing) * Config.SeparationStrength(steering.BodyType);
 
             // The push may exceed the walk speed a little, so a packed crowd can still spread
             float maxSpeed = math.max(speed, 1f) * 1.5f;
@@ -123,33 +123,6 @@ public partial struct EnemyMovementSystem : ISystem
         static float3 BackAway(in FlowField field, float3 position, float3 toTarget)
         {
             return field.Clear(position, position - toTarget * field.CellSize * 2f) ? -toTarget : float3.zero;
-        }
-
-        float3 Separation(Entity self, float3 position, float radius)
-        {
-            var push = float3.zero;
-            var cell = UnitSpatialGrid.Cell(position);
-            for (int x = -1; x <= 1; x++)
-            for (int z = -1; z <= 1; z++)
-            {
-                if (!Grid.TryGetFirstValue(UnitSpatialGrid.Hash(cell + new int2(x, z)), out var other, out var iterator)) continue;
-                do
-                {
-                    if (other.Entity == self) continue;
-                    var away = position - other.Position;
-                    away.y = 0f;
-                    float minDistance = (radius + other.Radius) * Config.SeparationSpacing;
-                    float distanceSq = math.lengthsq(away);
-                    if (distanceSq >= minDistance * minDistance) continue;
-
-                    float distance = math.sqrt(distanceSq);
-                    // Exactly on top of each other: pick a direction from the entity index so they still split
-                    var direction = distance > 1e-4f ? away / distance : new float3(math.sin(self.Index), 0f, math.cos(self.Index));
-                    push += direction * (1f - distance / minDistance);
-                }
-                while (Grid.TryGetNextValue(out other, ref iterator));
-            }
-            return push;
         }
 
         static float Angle(quaternion a, quaternion b)

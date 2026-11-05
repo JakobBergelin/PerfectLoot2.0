@@ -59,6 +59,7 @@ public enum SkillType
     Timezone,
     TeslaCoil,
     PoisonDart,
+    FireHydra,
 
 }
 
@@ -340,6 +341,22 @@ public struct PoisonDartHit : IComponentData
     public float MarkDuration;
     public float ExplosionDamage;
     public float ExplosionRadius;
+}
+
+public struct FireHydra : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float ResourceCost;
+    public float Range;
+    public float Duration;      // Seconds a Hydra stays
+    public float Elapsed;       // Since the last cast, up to Cooldown
+    public Entity Prefab;       // The Hydra to copy, made by FireHydraSkill
+}
+
+/// <summary>On a placed Hydra, which also has Companion. Goes away when TimeRemaining runs out (FireHydraSystem).</summary>
+public struct FireHydraUnit : IComponentData
+{
+    public float TimeRemaining;
 }
 
 /// <summary>Grants the Shadowstep buff for Duration seconds: extra attack speed, and melee skills jump to the target.</summary>

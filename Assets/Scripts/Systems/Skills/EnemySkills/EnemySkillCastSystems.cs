@@ -6,9 +6,9 @@ using Unity.Physics;
 using Unity.Transforms;
 
 /// <summary>
-/// Decides when enemies use their skills: counts down the cooldowns, then takes the first skill in the list that's ready
+/// Decides when enemies and companions use their skills: counts down the cooldowns, then takes the first skill in the list that's ready
 /// (cooldown, range, line of sight, resource, conditions), turns toward the target and starts it. Without a telegraph it
-/// goes off at once; with one the enemy stands still until the marker is full. A stun cancels it and the cooldown still
+/// goes off at once; with one the enemy stands still until the marker is full. Being frozen cancels it and the cooldown still
 /// counts. Going off adds an EnemySkillFire, which the skill's own system reads.
 /// </summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
@@ -36,6 +36,7 @@ public partial struct EnemySkillCastSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
 
         var targetables = SystemAPI.GetComponentLookup<EnemyTargetable>(true);
+        var companions = SystemAPI.GetComponentLookup<Companion>(true);
         var healths = SystemAPI.GetComponentLookup<Health>(true);
         var motions = SystemAPI.GetComponentLookup<UnitMotion>(true);
         var skills = SystemAPI.GetBufferLookup<Skill>(true);
@@ -47,17 +48,17 @@ public partial struct EnemySkillCastSystem : ISystem
         {
             fires.Clear();
             ref var cast = ref castRef.ValueRW;
-            bool stunned = SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
+            bool preventsActions = SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
 
             var unit = target.ValueRO.Unit;
-            bool hasTarget = targetables.HasComponent(unit) && healths[unit].CurrentValue > 0f;
+            bool hasTarget = healths.HasComponent(unit) && healths[unit].CurrentValue > 0f;
             var unitPosition = hasTarget ? SystemAPI.GetComponent<LocalTransform>(unit).Position : float3.zero;
             float distance = math.distance(unitPosition.xz, transform.ValueRO.Position.xz);
 
             for (int i = 0; i < slots.Length; i++)
             {
                 ref var slot = ref slots.ElementAt(i);
-                bool inRange = hasTarget && !stunned && distance >= slot.MinRange && distance <= slot.MaxRange;
+                bool inRange = hasTarget && !preventsActions && distance >= slot.MinRange && distance <= slot.MaxRange;
                 if (slot.CooldownOnlyInRange && !inRange) slot.CooldownRemaining = slot.Cooldown;
                 else slot.CooldownRemaining -= deltaTime * (slot.CooldownUsesAttackSpeed ? stats.ValueRO.Value.AttackSpeed : 1f);
             }
@@ -65,18 +66,20 @@ public partial struct EnemySkillCastSystem : ISystem
             if (cast.Active)
             {
                 cast.TimeRemaining -= deltaTime;
-                if (stunned || cast.TimeRemaining <= 0f)
+                if (preventsActions || cast.TimeRemaining <= 0f)
                 {
                     cast.Active = false;
                     npc.ValueRW.IsCasting = false;
-                    if (!stunned) Fire(fires, ref npc.ValueRW, slots[cast.Slot].Type, cast.Position, cast.Direction);
+                    if (!preventsActions) Fire(fires, ref npc.ValueRW, slots[cast.Slot].Type, cast.Position, cast.Direction);
                 }
                 continue;
             }
-            if (stunned || !hasTarget) continue;
+            // Sight is on the FlowField of the target's player; a companion's target has none, so its owner's
+            var fieldUnit = companions.HasComponent(entity) ? companions[entity].Owner : unit;
+            if (preventsActions || !hasTarget || !targetables.HasComponent(fieldUnit)) continue;
 
             var position = transform.ValueRO.Position;
-            var field = fields[targetables[unit].FieldSlot];
+            var field = fields[targetables[fieldUnit].FieldSlot];
             for (int i = 0; i < slots.Length; i++)
             {
                 var slot = slots[i];

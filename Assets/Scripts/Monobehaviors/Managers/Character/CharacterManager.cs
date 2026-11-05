@@ -1,4 +1,5 @@
 using Characters;
+using EnemySkills;
 using System;
 using System.Collections.Generic;
 using Unity.Entities;
@@ -46,6 +47,17 @@ public class CharacterManager : MonoBehaviour
     public float TestDuration = 3f;
     [Tooltip("How far from the player 'Spawn test second player' puts it, in meters")]
     public float TestPlayerOffset = 15f;
+    [Tooltip("One companion each for 'Spawn test companions'")]
+    public List<BoidSettings> TestCompanions = new List<BoidSettings>
+    {
+        new BoidSettings { Position = BoidPosition.Behind, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+        new BoidSettings { Position = BoidPosition.Left, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+        new BoidSettings { Position = BoidPosition.Right, Distance = 3f, Leash = 10f, AttackDistance = 2f, CatchUpMultiplier = 1.5f, TeleportDistance = 20f },
+    };
+    [Tooltip("What test companions use. Empty: they only follow and chase.")]
+    public List<EnemySkill> TestCompanionSkills = new List<EnemySkill>();
+    [Tooltip("How far test companions see enemies, in meters")]
+    public float TestCompanionSight = 15f;
 
     /// <summary>The current player entity, or Entity.Null while dead / not spawned yet.</summary>
     public Entity Player => _player;
@@ -63,6 +75,26 @@ public class CharacterManager : MonoBehaviour
         testTransform.Position = entityManager.GetComponentData<LocalTransform>(_player).Position + new Unity.Mathematics.float3(TestPlayerOffset, 0f, 0f);
         entityManager.SetComponentData(testPlayer, testTransform);
         PlayerEntitySetup.AddTestPlayerComponents(entityManager, testPlayer, BaseStats != null ? BaseStats.Stats : DefaultBaseStats.Stats, fieldSlot: 1);
+    }
+
+    [ContextMenu("Spawn test companions")]
+    void SpawnTestCompanions()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (!Application.isPlaying || world == null || !world.EntityManager.Exists(_player)) return;
+        var entityManager = world.EntityManager;
+
+        using var prefabQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<PlayerPrefab>());
+        var position = entityManager.GetComponentData<LocalTransform>(_player).Position;
+        foreach (var settings in TestCompanions)
+        {
+            var companion = entityManager.Instantiate(prefabQuery.GetSingleton<PlayerPrefab>().Value);
+            var transform = entityManager.GetComponentData<LocalTransform>(companion);
+            transform.Position = position;
+            entityManager.SetComponentData(companion, transform);
+            CompanionEntitySetup.AddGameplayComponents(entityManager, companion, _player, TestCompanionSight, TestCompanionSkills);
+            CompanionEntitySetup.AddMovementComponents(entityManager, companion, BaseStats != null ? BaseStats.Stats : DefaultBaseStats.Stats, settings);
+        }
     }
 
     [ContextMenu("Apply test effect to player")]

@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Enemies;
+using EnemySkills;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -72,9 +74,6 @@ public static class EnemyEntitySetup
 
     static void AddSkills(EntityManager entityManager, Entity entity, EnemyDefinition definition)
     {
-        AddOrSet(entityManager, entity, new EnemySkillCast());
-        AddBuffer<EnemySkillFire>(entityManager, entity);
-        AddBuffer<EnemySkillSlot>(entityManager, entity);
         // Its amount and regeneration come from the stats
         if (definition.Stats.Resource > 0f)
         {
@@ -82,12 +81,22 @@ public static class EnemyEntitySetup
             AddBuffer<ResourceChanger>(entityManager, entity);
         }
 
-        foreach (var skill in definition.Skills)
+        AddSkillList(entityManager, entity, definition.Skills);
+    }
+
+    /// <summary>What EnemySkillCastSystem needs to use these skills on an enemy or a companion.</summary>
+    public static void AddSkillList(EntityManager entityManager, Entity entity, List<EnemySkill> skills)
+    {
+        AddOrSet(entityManager, entity, new EnemySkillCast());
+        AddBuffer<EnemySkillFire>(entityManager, entity);
+        AddBuffer<EnemySkillSlot>(entityManager, entity);
+
+        foreach (var skill in skills)
             if (skill != null) skill.Apply(entityManager, entity);
         // After the structural changes above
         var slots = entityManager.GetBuffer<EnemySkillSlot>(entity);
         slots.Clear();
-        foreach (var skill in definition.Skills)
+        foreach (var skill in skills)
             if (skill != null) slots.Add(skill.ToSlot());
     }
 
