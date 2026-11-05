@@ -10,7 +10,7 @@ using static UnitEntitySetup;
 
 /// <summary>
 /// Adds every gameplay component an enemy needs to a spawned visual-only entity:
-/// the shared unit combat components plus its AI and its skills (Swarm: a fixed melee attack), all from its EnemyDefinition.
+/// the shared unit combat components plus its AI, its skills (Swarm: a fixed melee attack) and its passives, all from its EnemyDefinition.
 /// </summary>
 public static class EnemyEntitySetup
 {
@@ -68,6 +68,8 @@ public static class EnemyEntitySetup
             else
                 AddSkills(entityManager, entity, definition);
         }
+
+        AddPassives(entityManager, entity, definition.Passives);
 
         if (definition.OverrideColor) ApplyTint(entityManager, entity, definition.Tint);
     }

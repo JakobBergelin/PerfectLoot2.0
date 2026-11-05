@@ -28,6 +28,8 @@ public enum EffectType
     Afterglow,
     PackInstinct,
     LifeLink,
+    BoneWard,
+    FesteringHorde,
 }
 
 public enum EffectKind
@@ -160,6 +162,15 @@ public struct PackInstinctBuff : IComponentData, IEnableableComponent
 public struct LifeLinkBuff : IComponentData, IEnableableComponent
 {
     public float HealthRegeneration;    // Per second, from all wearers linked to it
+}
+
+/// <summary>What Bone Ward and Festering Horde wearers nearby add up to. Untimed: ResistanceAuraSystem works it out every frame.</summary>
+public struct ResistanceAuraBuff : IComponentData
+{
+    public float ColdResistance;
+    public float PoisonResistance;
+    public int ColdStacks;      // Bone Ward wearers
+    public int PoisonStacks;    // Festering Horde wearers
 }
 
 // ---------- Debuffs ----------

@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using Passives;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
@@ -48,6 +50,7 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new AfterglowBuff());
         AddDisabled(entityManager, entity, new PackInstinctBuff());
         AddDisabled(entityManager, entity, new LifeLinkBuff());
+        AddOrSet(entityManager, entity, new ResistanceAuraBuff());
         AddDisabled(entityManager, entity, new Bleeding());
         AddBuffer<BleedInstance>(entityManager, entity);
         AddDisabled(entityManager, entity, new Burning());
@@ -89,6 +92,13 @@ public static class UnitEntitySetup
 
         // Fill health (and resource) once the stats have been calculated
         AddOrSet(entityManager, entity, new FillHealthAndResource());
+    }
+
+    /// <summary>The same passives on a player, companion or enemy. After its other components.</summary>
+    public static void AddPassives(EntityManager entityManager, Entity entity, List<PassiveSkill> passives)
+    {
+        foreach (var passive in passives)
+            if (passive != null) passive.Apply(entityManager, entity);
     }
 
     public static void AddOrSet<T>(EntityManager entityManager, Entity entity, T data) where T : unmanaged, IComponentData

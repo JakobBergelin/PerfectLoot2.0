@@ -67,6 +67,8 @@ public enum PassiveType
     Afterglow,
     PackInstinct,
     LifeLink,
+    BoneWard,
+    FesteringHorde,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -213,4 +215,16 @@ public struct PackInstinct : IComponentData
 {
     public float Radius;                // Meters from the wearer
     public float CriticalChanceBonus;   // Of PackInstinctBuff, 0.1 = +10%
+}
+
+public struct BoneWard : IComponentData
+{
+    public float Radius;            // Meters from the wearer
+    public float ColdResistance;    // Added to ResistanceAuraBuff by each wearer
+}
+
+public struct FesteringHorde : IComponentData
+{
+    public float Radius;            // Meters from the wearer
+    public float PoisonResistance;  // Added to ResistanceAuraBuff by each wearer
 }

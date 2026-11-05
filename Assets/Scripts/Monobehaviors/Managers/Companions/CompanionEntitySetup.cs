@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using EnemySkills;
-using Passives;
 using Unity.Entities;
 using static UnitEntitySetup;
 
@@ -28,13 +27,6 @@ public static class CompanionEntitySetup
     {
         int fieldSlot = entityManager.GetComponentData<EnemyTargetable>(owner).FieldSlot;
         AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = fieldSlot, Threat = threat });
-    }
-
-    /// <summary>The same passives players use. After its other components.</summary>
-    public static void AddPassives(EntityManager entityManager, Entity entity, List<PassiveSkill> passives)
-    {
-        foreach (var passive in passives)
-            if (passive != null) passive.Apply(entityManager, entity);
     }
 
     /// <summary>For a companion with a collider that moves: the unit components and Boid. Swarm: only the world blocks it.</summary>

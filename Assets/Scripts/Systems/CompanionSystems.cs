@@ -14,7 +14,10 @@ public static class CompanionUtil
     }
 }
 
-/// <summary>Companions have their owner's stats, so EnemySkillCastSystem times their skills by the owner's attack speed.</summary>
+/// <summary>
+/// Companions have their owner's stats, so EnemySkillCastSystem times their skills by the owner's attack speed. Only the
+/// resistance from Bone Ward and Festering Horde is their own, as it depends on where they stand.
+/// </summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [UpdateBefore(typeof(EnemySkillCastSystem))]
 [BurstCompile]
@@ -26,10 +29,18 @@ public partial struct CompanionStatsSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (companion, stats) in SystemAPI.Query<RefRO<Companion>, RefRW<CalculatedStats>>())
+        foreach (var (companion, stats, entity) in SystemAPI.Query<RefRO<Companion>, RefRW<CalculatedStats>>().WithEntityAccess())
         {
             var owner = companion.ValueRO.Owner;
-            if (SystemAPI.HasComponent<CalculatedStats>(owner)) stats.ValueRW = SystemAPI.GetComponent<CalculatedStats>(owner);
+            if (!SystemAPI.HasComponent<CalculatedStats>(owner)) continue;
+            stats.ValueRW = SystemAPI.GetComponent<CalculatedStats>(owner);
+
+            // Ones that stand still have no health, so no resistance to look after
+            if (!SystemAPI.HasComponent<ResistanceAuraBuff>(entity)) continue;
+            var own = SystemAPI.GetComponent<ResistanceAuraBuff>(entity);
+            var owners = SystemAPI.GetComponent<ResistanceAuraBuff>(owner);
+            stats.ValueRW.Value.ColdResistance += own.ColdResistance - owners.ColdResistance;
+            stats.ValueRW.Value.PoisonResistance += own.PoisonResistance - owners.PoisonResistance;
         }
     }
 }

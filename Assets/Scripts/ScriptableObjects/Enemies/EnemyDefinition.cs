@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using EnemySkills;
+using Passives;
 using UnityEngine;
 
 namespace Enemies
@@ -71,6 +72,10 @@ namespace Enemies
         [Tooltip("In priority order: it uses the first one that's ready, so big skills go first and basic attacks last. Empty: it " +
                  "never attacks. One skill of each kind per enemy. Physics only: Swarm enemies use the melee attack below.")]
         public List<EnemySkill> Skills = new List<EnemySkill>();
+
+        [Header("Passives")]
+        [Tooltip("The same assets players and companions use. Swarm enemies can have them too.")]
+        public List<PassiveSkill> Passives = new List<PassiveSkill>();
 
         [Header("Melee attack (Swarm only)")]
         public float MeleeDamage = 0.5f;

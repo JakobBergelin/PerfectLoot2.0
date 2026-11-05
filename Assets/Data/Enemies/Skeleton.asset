@@ -59,3 +59,5 @@ MonoBehaviour:
   SecondsBetweenAttacks: 1
   Skills:
   - {fileID: 11400000, guid: d4588f2d2fb91b2561a4f3ad703cc310, type: 2}
+  Passives:
+  - {fileID: 11400000, guid: 5750396bb14c10de4be027aec09644ed, type: 2}

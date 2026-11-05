@@ -293,6 +293,11 @@ public partial struct EffectDisplaySystem : ISystem
                 display.Add(new EffectDisplay { Type = EffectType.PackInstinct, Stacks = 1, Magnitude = SystemAPI.GetComponent<PackInstinctBuff>(entity).CriticalChanceBonus });
             if (IsActive<LifeLinkBuff>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.LifeLink, Stacks = 1, Magnitude = SystemAPI.GetComponent<LifeLinkBuff>(entity).HealthRegeneration });
+            var aura = SystemAPI.GetComponent<ResistanceAuraBuff>(entity);
+            if (aura.ColdStacks > 0)
+                display.Add(new EffectDisplay { Type = EffectType.BoneWard, Stacks = aura.ColdStacks, Magnitude = aura.ColdResistance });
+            if (aura.PoisonStacks > 0)
+                display.Add(new EffectDisplay { Type = EffectType.FesteringHorde, Stacks = aura.PoisonStacks, Magnitude = aura.PoisonResistance });
             if (IsActive<Refraction>(ref state, entity))
                 display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
             if (IsActive<Invulnerable>(ref state, entity))

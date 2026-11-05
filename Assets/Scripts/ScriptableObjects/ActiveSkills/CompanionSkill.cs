@@ -116,7 +116,7 @@ namespace ActiveSkills
             CompanionEntitySetup.AddGameplayComponents(entityManager, prefab, owner, SightRadius, Skills);
             CompanionEntitySetup.AddMovementComponents(entityManager, prefab, Stats, Movement);
             CompanionEntitySetup.AddTargetable(entityManager, prefab, owner, Threat);
-            CompanionEntitySetup.AddPassives(entityManager, prefab, Passives);
+            UnitEntitySetup.AddPassives(entityManager, prefab, Passives);
             UnitEntitySetup.AddOrSet(entityManager, prefab, new BodyMass { InverseMass = 1f / Mathf.Max(0.01f, Mass) });
             EnemyEntitySetup.ApplyTint(entityManager, prefab, Tint);
         }

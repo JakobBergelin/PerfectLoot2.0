@@ -61,3 +61,5 @@ MonoBehaviour:
   DistanceTolerance: 2
   Skills:
   - {fileID: 11400000, guid: 9da9492d92bccc28546f1e6ccc4be8ac, type: 2}
+  Passives:
+  - {fileID: 11400000, guid: 5750396bb14c10de4be027aec09644ed, type: 2}
