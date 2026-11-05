@@ -114,6 +114,12 @@ public class GroundLootManager : MonoBehaviour
         Version++;
     }
 
+    /// <summary>Puts the item on the ground near the player, if there is one.</summary>
+    public void DropNearPlayer(Item item)
+    {
+        if (TryGetPlayer(out var player)) Drop(item, player);
+    }
+
     /// <summary>True when the player stands within PickupRange of the item.</summary>
     public bool InReach(GroundItem item)
     {

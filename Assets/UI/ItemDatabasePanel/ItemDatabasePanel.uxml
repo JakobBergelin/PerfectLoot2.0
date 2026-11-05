@@ -21,6 +21,8 @@
                 <ui:VisualElement name="detail" class="idb-detail">
                     <ui:Label name="detailTitle" class="idb-detail__title" />
                     <ui:Label name="detailSubtitle" class="idb-detail__subtitle" />
+                    <!-- Dev account only: ItemDatabasePanelHUD shows it -->
+                    <ui:Label name="dropButton" text="Drop" class="idb-chip idb-detail__drop" />
                     <ui:Label name="detailBody" class="idb-detail__body" />
                 </ui:VisualElement>
             </ui:VisualElement>

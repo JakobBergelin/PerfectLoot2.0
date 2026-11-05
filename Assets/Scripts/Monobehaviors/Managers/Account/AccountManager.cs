@@ -43,6 +43,9 @@ public class AccountManager : MonoBehaviour
     /// <summary>The ID for saved data: the name in lowercase, so "Matt" and "matt" are the same account.</summary>
     public string AccountId => ToAccountId(_accountName);
 
+    /// <summary>Signed in as the Dev account, which has developer tools such as the Item Database's Drop button.</summary>
+    public bool IsDevAccount => AccountId == ToAccountId(DefaultAccountName);
+
     /// <summary>The name last signed in with (on this machine), or empty.</summary>
     public static string LastAccountName => CleanName(PlayerPrefs.GetString(LastNameKey, ""));
 

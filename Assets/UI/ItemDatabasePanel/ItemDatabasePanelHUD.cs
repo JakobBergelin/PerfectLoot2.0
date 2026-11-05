@@ -74,7 +74,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     Label _count;
     VisualElement _rowContainer;
     Label _prevPage, _nextPage, _pageLabel;
-    Label _detailTitle, _detailSubtitle, _detailBody;
+    Label _detailTitle, _detailSubtitle, _detailBody, _dropButton;
     VisualElement _affixPopup;
     VisualElement _tooltip;
     Label _tooltipTitle, _tooltipSubtitle;
@@ -157,13 +157,14 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _detailTitle = root.Q<Label>("detailTitle");
         _detailSubtitle = root.Q<Label>("detailSubtitle");
         _detailBody = root.Q<Label>("detailBody");
+        _dropButton = root.Q<Label>("dropButton");
         _affixPopup = root.Q<VisualElement>("affixPopup");
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipSubtitle = root.Q<Label>("tooltipSubtitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
         if (_root == null || _count == null || filters == null || _rowContainer == null || _prevPage == null ||
-            _nextPage == null || _pageLabel == null || _detailBody == null || _affixPopup == null || _tooltip == null)
+            _nextPage == null || _pageLabel == null || _detailBody == null || _dropButton == null || _affixPopup == null || _tooltip == null)
         {
             Debug.LogError("ItemDatabasePanelHUD: ItemDatabasePanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -173,6 +174,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         BuildAffixPopup();
         _prevPage.RegisterCallback<ClickEvent>(_ => SetPage(_page - 1));
         _nextPage.RegisterCallback<ClickEvent>(_ => SetPage(_page + 1));
+        _dropButton.RegisterCallback<ClickEvent>(_ => DropSelected());
         // The wheel flips pages
         _rowContainer.RegisterCallback<WheelEvent>(evt => SetPage(_page + (evt.delta.y > 0 ? 1 : -1)));
 
@@ -550,6 +552,8 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     void ShowDetail(TileView tile)
     {
         if (_detailTitle == null) return;
+        bool canDrop = tile != null && AccountManager.Instance != null && AccountManager.Instance.IsDevAccount;
+        _dropButton.style.display = canDrop ? DisplayStyle.Flex : DisplayStyle.None;
         if (tile == null)
         {
             _detailTitle.text = "";
@@ -581,6 +585,16 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         var sources = AccountManager.Instance != null ? AccountManager.Instance.SourcesOf(entry.Key.BaseItem) : null;
         sb.Append(sources != null && sources.Count > 0 ? string.Join("\n", sources) : "Unknown");
         _detailBody.text = sb.ToString();
+    }
+
+    // A new roll of the selected item next to the player, found or not
+    void DropSelected()
+    {
+        var loot = LootGenerationManager.Instance;
+        var groundLoot = GroundLootManager.Instance;
+        if (_selected == null || loot == null || groundLoot == null) return;
+        var key = _selected.Entry.Key;
+        groundLoot.DropNearPlayer(loot.RollItem(key.BaseItem, key.Rarity));
     }
 
     // Only one character for now: the current one
