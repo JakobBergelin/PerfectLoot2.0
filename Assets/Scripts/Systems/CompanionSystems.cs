@@ -15,8 +15,8 @@ public static class CompanionUtil
 }
 
 /// <summary>
-/// Companions have their owner's stats, so EnemySkillCastSystem times their skills by the owner's attack speed. Only the
-/// resistance from Bone Ward and Festering Horde is their own, as it depends on where they stand.
+/// Companions have their owner's stats, so EnemySkillCastSystem times their skills by the owner's attack speed. What
+/// protects them is their own: their resistances, block and dodge, as for their health and armor.
 /// </summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [UpdateBefore(typeof(EnemySkillCastSystem))]
@@ -29,18 +29,21 @@ public partial struct CompanionStatsSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (companion, stats, entity) in SystemAPI.Query<RefRO<Companion>, RefRW<CalculatedStats>>().WithEntityAccess())
+        foreach (var (companion, stats) in SystemAPI.Query<RefRO<Companion>, RefRW<CalculatedStats>>())
         {
             var owner = companion.ValueRO.Owner;
             if (!SystemAPI.HasComponent<CalculatedStats>(owner)) continue;
-            stats.ValueRW = SystemAPI.GetComponent<CalculatedStats>(owner);
 
-            // Ones that stand still have no health, so no resistance to look after
-            if (!SystemAPI.HasComponent<ResistanceAuraBuff>(entity)) continue;
-            var own = SystemAPI.GetComponent<ResistanceAuraBuff>(entity);
-            var owners = SystemAPI.GetComponent<ResistanceAuraBuff>(owner);
-            stats.ValueRW.Value.ColdResistance += own.ColdResistance - owners.ColdResistance;
-            stats.ValueRW.Value.PoisonResistance += own.PoisonResistance - owners.PoisonResistance;
+            var own = stats.ValueRO.Value;
+            stats.ValueRW = SystemAPI.GetComponent<CalculatedStats>(owner);
+            ref var value = ref stats.ValueRW.Value;
+            value.ColdResistance = own.ColdResistance;
+            value.FireResistance = own.FireResistance;
+            value.LightningResistance = own.LightningResistance;
+            value.PoisonResistance = own.PoisonResistance;
+            value.AllResistance = own.AllResistance;
+            value.BlockChance = own.BlockChance;
+            value.DodgeChance = own.DodgeChance;
         }
     }
 }

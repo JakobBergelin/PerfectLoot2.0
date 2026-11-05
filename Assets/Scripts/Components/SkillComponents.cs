@@ -63,6 +63,7 @@ public enum SkillType
     StoneGuardian,
     Wolf,
     Wisp,
+    RaiseThrall,
 
 }
 
@@ -268,6 +269,18 @@ public struct Teleport : IComponentData, IEnableableComponent
 }
 
 /// <summary>Grants the Invulnerable buff for Duration seconds.</summary>
+/// <summary>A toggle: RaiseThrallSystem reads its key, so the component stays disabled and Active says whether it's on.</summary>
+public struct RaiseThrall : IComponentData, IEnableableComponent
+{
+    public float CriticalChancePenalty;
+    public float MarkDuration;
+    public int MaxThralls;
+    public float Threat;
+    public float SightRadius;
+    public BoidSettings Movement;
+    public bool Active;
+}
+
 public struct Invulnerability : IComponentData, IEnableableComponent
 {
     public float Cooldown;

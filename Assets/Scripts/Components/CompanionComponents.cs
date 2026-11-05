@@ -12,6 +12,12 @@ public struct Companion : IComponentData
     public Entity Owner;
 }
 
+/// <summary>A companion that was an enemy, raised by Raise Thrall. Its UnitInfo is that enemy's definition.</summary>
+public struct Thrall : IComponentData
+{
+    public double RaisedAt;     // The oldest dies when there are too many
+}
+
 /// <summary>Sets its EnemyTarget to the nearest enemy in sight, in any direction (CompanionDetectionSystem).</summary>
 public struct CompanionDetection : IComponentData
 {

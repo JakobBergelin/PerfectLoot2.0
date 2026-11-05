@@ -30,6 +30,7 @@ public enum EffectType
     LifeLink,
     BoneWard,
     FesteringHorde,
+    ThrallMark,
 }
 
 public enum EffectKind
@@ -214,6 +215,16 @@ public struct PoisonMark : IComponentData, IEnableableComponent, ITimedEffect
     public float ExplosionDamage;
     public float ExplosionRadius;
     public Entity Source;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Raise Thrall's mark: if the unit dies with it, it rises as Owner's Thrall (ThrallRaiseSystem). Another hit starts it over.</summary>
+public struct ThrallMark : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float TimeRemaining;
+    public float Duration;
+    public Entity Owner;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }

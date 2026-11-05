@@ -171,6 +171,13 @@ public class EnemyManager : MonoBehaviour
     }
 
     // Ready when an enemy list is loaded (and the level, if there is one)
+    /// <summary>This enemy's baked visual prefab, for a copy that isn't an enemy (a Thrall).</summary>
+    public bool TryFindBody(EnemyDefinition definition, out Entity body)
+    {
+        body = Entity.Null;
+        return TryGetPrefabs(out var entityManager) && TryFindPrefab(entityManager, definition, out body);
+    }
+
     bool TryGetPrefabs(out EntityManager entityManager)
     {
         entityManager = default;

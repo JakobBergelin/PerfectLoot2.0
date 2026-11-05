@@ -70,7 +70,7 @@ public partial struct BoidSystem : ISystem
         state.CompleteDependency();  // The flow fields and the grid are used here on the main thread
 
         var flocks = new NativeHashMap<Entity, Flock>(8, Allocator.Temp);
-        foreach (var (boid, companion, transform, motion) in SystemAPI.Query<RefRO<Boid>, RefRO<Companion>, RefRO<LocalTransform>, RefRO<UnitMotion>>())
+        foreach (var (boid, companion, transform, motion) in SystemAPI.Query<RefRO<Boid>, RefRO<Companion>, RefRO<LocalTransform>, RefRO<UnitMotion>>().WithNone<SpawnRise, RigidDeath>())
         {
             if (boid.ValueRO.Chasing) continue;
             var owner = companion.ValueRO.Owner;
@@ -82,7 +82,7 @@ public partial struct BoidSystem : ISystem
         }
 
         foreach (var (boidRef, companion, transformRef, motion, target, steering, collider, entity) in
-                 SystemAPI.Query<RefRW<Boid>, RefRO<Companion>, RefRW<LocalTransform>, RefRW<UnitMotion>, RefRO<EnemyTarget>, RefRO<Steering>, RefRO<PhysicsCollider>>().WithEntityAccess())
+                 SystemAPI.Query<RefRW<Boid>, RefRO<Companion>, RefRW<LocalTransform>, RefRW<UnitMotion>, RefRO<EnemyTarget>, RefRO<Steering>, RefRO<PhysicsCollider>>().WithNone<SpawnRise>().WithEntityAccess())
         {
             ref var boid = ref boidRef.ValueRW;
             ref var transform = ref transformRef.ValueRW;
