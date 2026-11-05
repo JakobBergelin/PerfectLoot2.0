@@ -17,33 +17,16 @@ public class EffectBarHUD : MonoBehaviour
     [Tooltip("The same library the game bakes; used for names, icons and descriptions")]
     public EffectLibrary Library;
 
-    class TileView
-    {
-        public EffectType Type;
-        public EffectDefinition Definition;
-        public VisualElement Element;
-        public CooldownSweep Sweep;
-        public Label Stacks;
-        public int ShownStacks = -1;
-
-        // This frame's state
-        public bool Active;
-        public EffectDisplay Effect;
-        public int TotalStacks => Effect.Stacks;
-        public float TimeRemaining => Effect.TimeRemaining;
-        public float Duration => Effect.Duration;
-    }
-
     PanelRenderer _panelRenderer;
     bool _bound;
     int _boundVersion = -1;
 
     VisualElement _root, _buffs, _debuffs, _tooltip;
     Label _tooltipTitle, _tooltipBody, _tooltipFooter;
-    readonly Dictionary<EffectType, TileView> _tiles = new Dictionary<EffectType, TileView>();
+    readonly Dictionary<EffectType, EffectTile> _tiles = new Dictionary<EffectType, EffectTile>();
     readonly List<EffectType> _shownOrder = new List<EffectType>();
     readonly List<EffectType> _order = new List<EffectType>();
-    TileView _hovered;
+    EffectTile _hovered;
 
     void OnEnable()
     {
@@ -96,7 +79,7 @@ public class EffectBarHUD : MonoBehaviour
         // Buffs and debuffs in EffectType order, so tiles don't jump around when timers refresh
         _order.Clear();
         foreach (var tile in _tiles.Values)
-            if (tile.Active) _order.Add(tile.Type);
+            if (tile.Active) _order.Add(tile.Definition.Type);
         _order.Sort();
         if (!SameOrder()) Relayout();
 
@@ -133,33 +116,13 @@ public class EffectBarHUD : MonoBehaviour
         }
     }
 
-    TileView GetTile(EffectType type)
+    EffectTile GetTile(EffectType type)
     {
         if (_tiles.TryGetValue(type, out var tile)) return tile;
         var definition = Library.Get(type);
         if (definition == null) return null;
 
-        tile = new TileView { Type = type, Definition = definition };
-        tile.Element = new VisualElement();
-        tile.Element.AddToClassList("effect-tile");
-        tile.Element.AddToClassList(definition.Kind == EffectKind.Buff ? "effect-tile--buff" : "effect-tile--debuff");
-
-        var icon = new VisualElement { pickingMode = PickingMode.Ignore };
-        icon.AddToClassList("effect-tile__icon");
-        var fallback = new Label { pickingMode = PickingMode.Ignore };
-        fallback.AddToClassList("effect-tile__fallback");
-        if (definition.Icon != null) icon.style.backgroundImage = new StyleBackground(definition.Icon);
-        else fallback.text = ShortName(definition.DisplayName);
-
-        tile.Sweep = new CooldownSweep { pickingMode = PickingMode.Ignore };
-        tile.Sweep.AddToClassList("effect-tile__sweep");
-        tile.Stacks = new Label { pickingMode = PickingMode.Ignore };
-        tile.Stacks.AddToClassList("effect-tile__stacks");
-
-        tile.Element.Add(icon);
-        tile.Element.Add(fallback);
-        tile.Element.Add(tile.Sweep);
-        tile.Element.Add(tile.Stacks);
+        tile = new EffectTile(definition);
         tile.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(tile));
         tile.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
 
@@ -188,21 +151,13 @@ public class EffectBarHUD : MonoBehaviour
         _shownOrder.AddRange(_order);
     }
 
-    static void UpdateTile(TileView tile)
+    static void UpdateTile(EffectTile tile)
     {
         tile.Element.RemoveFromClassList(HiddenClass);
-
-        // Darkens as it runs out; untimed effects have no sweep
-        tile.Sweep.Fraction = tile.Duration > 0f ? 1f - tile.TimeRemaining / tile.Duration : 0f;
-
-        if (tile.TotalStacks != tile.ShownStacks)
-        {
-            tile.ShownStacks = tile.TotalStacks;
-            tile.Stacks.text = tile.TotalStacks > 1 ? tile.TotalStacks.ToString() : "";
-        }
+        tile.Refresh();
     }
 
-    void ShowTooltip(TileView tile)
+    void ShowTooltip(EffectTile tile)
     {
         _hovered = tile;
         bool buff = tile.Definition.Kind == EffectKind.Buff;
@@ -220,7 +175,7 @@ public class EffectBarHUD : MonoBehaviour
     }
 
     // Description and footer follow the live effect (stacks, time, magnitude)
-    void UpdateTooltipText(TileView tile)
+    void UpdateTooltipText(EffectTile tile)
     {
         _tooltipBody.text = tile.Definition.Describe(tile.Effect);
         string time = tile.Duration > 0f ? $"{tile.TimeRemaining:0.0}s left" : "Until removed";
@@ -232,6 +187,4 @@ public class EffectBarHUD : MonoBehaviour
         _hovered = null;
         _tooltip?.RemoveFromClassList(TooltipVisibleClass);
     }
-
-    static string ShortName(string name) => name.Length <= 3 ? name : name.Substring(0, 3);
 }

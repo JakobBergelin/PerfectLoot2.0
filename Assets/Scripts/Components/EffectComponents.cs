@@ -292,6 +292,12 @@ public struct EffectDisplay : IBufferElementData
     public float Magnitude;     // Effect-specific number shown in the description, e.g. damage per second or slow
 }
 
+/// <summary>On the player: the active effects of its InputsData.Hovered unit, for the unit panel. Units have no list of their own.</summary>
+public struct HoveredEffect : IBufferElementData
+{
+    public EffectDisplay Value;
+}
+
 /// <summary>Applying effects: writes the component and enables it. Works with ComponentLookups from any system.</summary>
 public static class EffectApply
 {

@@ -19,6 +19,7 @@ public struct InputsData : IComponentData
     public bool4 SkillPressedThisFrame;
 
     public float3 MousePosition;
+    public Entity Hovered;  // The enemy or companion under the mouse, Entity.Null: none
 }
 
 public struct DesiredDirection : IComponentData

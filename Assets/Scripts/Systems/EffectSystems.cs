@@ -236,7 +236,8 @@ public partial struct BrokenPromisesBuffStatsSystem : ISystem
 }
 
 /// <summary>
-/// Rebuilds the player's EffectDisplay list from its enabled effect components, for the HUD. One block per effect.
+/// Rebuilds the player's EffectDisplay list from its enabled effect components, for the HUD, and its HoveredEffect list
+/// from those of the unit it has the mouse over, for the unit panel. One block per effect.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 [BurstCompile]
@@ -250,100 +251,110 @@ public partial struct EffectDisplaySystem : ISystem
     {
         float slowPerStack = SystemAPI.GetSingleton<StatusEffectConfig>().ChillSlowPerStack;
         foreach (var (display, entity) in SystemAPI.Query<DynamicBuffer<EffectDisplay>>().WithEntityAccess())
-        {
-            display.Clear();
+            Fill(ref state, display, entity, slowPerStack);
 
-            if (IsActive<BrokenPromisesBuff>(ref state, entity))
+        foreach (var (hovered, inputs) in SystemAPI.Query<DynamicBuffer<HoveredEffect>, RefRO<InputsData>>())
+        {
+            var display = hovered.Reinterpret<EffectDisplay>();
+            display.Clear();
+            if (state.EntityManager.Exists(inputs.ValueRO.Hovered)) Fill(ref state, display, inputs.ValueRO.Hovered, slowPerStack);
+        }
+    }
+
+    void Fill(ref SystemState state, DynamicBuffer<EffectDisplay> display, Entity entity, float slowPerStack)
+    {
+        display.Clear();
+
+        if (IsActive<BrokenPromisesBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<BrokenPromisesBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.BrokenPromises, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.CriticalChanceBonus });
+        }
+        if (IsActive<DeathsDoorBuff>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.DeathsDoor, Stacks = 1, Magnitude = SystemAPI.GetComponent<DeathsDoorBuff>(entity).CriticalChanceBonus });
+        if (IsActive<CounterStrikeCharge>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.CounterStrike, Stacks = SystemAPI.GetComponent<CounterStrikeCharge>(entity).Stacks });
+        if (IsActive<BloodrushBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<BloodrushBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Bloodrush, Stacks = buff.Stacks, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.Stacks * buff.AttackSpeedPerStack });
+        }
+        if (IsActive<PrismBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<PrismBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Prism, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.DamageBonus });
+        }
+        if (IsActive<AnchorBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<AnchorBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Anchor, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.ArmorPerStack });
+        }
+        if (IsActive<MomentumBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<MomentumBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Momentum, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.DamagePerStack });
+        }
+        if (IsActive<AsceticBuff>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.Ascetic, Stacks = 1, Magnitude = SystemAPI.GetComponent<AsceticBuff>(entity).DamageBonus });
+        if (IsActive<AfterglowBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<AfterglowBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Afterglow, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.DamageBonus });
+        }
+        if (IsActive<PackInstinctBuff>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.PackInstinct, Stacks = 1, Magnitude = SystemAPI.GetComponent<PackInstinctBuff>(entity).CriticalChanceBonus });
+        if (IsActive<LifeLinkBuff>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.LifeLink, Stacks = 1, Magnitude = SystemAPI.GetComponent<LifeLinkBuff>(entity).HealthRegeneration });
+        var aura = SystemAPI.GetComponent<ResistanceAuraBuff>(entity);
+        if (aura.ColdStacks > 0)
+            display.Add(new EffectDisplay { Type = EffectType.BoneWard, Stacks = aura.ColdStacks, Magnitude = aura.ColdResistance });
+        if (aura.PoisonStacks > 0)
+            display.Add(new EffectDisplay { Type = EffectType.FesteringHorde, Stacks = aura.PoisonStacks, Magnitude = aura.PoisonResistance });
+        if (IsActive<Refraction>(ref state, entity))
+            display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
+        if (IsActive<Invulnerable>(ref state, entity))
+        {
+            var invulnerable = SystemAPI.GetComponent<Invulnerable>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Invulnerable, Stacks = 1, TimeRemaining = invulnerable.TimeRemaining, Duration = invulnerable.Duration });
+        }
+        if (IsActive<ShadowstepBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<ShadowstepBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Shadowstep, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.AttackSpeedBonus });
+        }
+        if (IsActive<Bleeding>(ref state, entity) && SystemAPI.HasBuffer<BleedInstance>(entity))
+        {
+            var bleeds = SystemAPI.GetBuffer<BleedInstance>(entity);
+            var entry = new EffectDisplay { Type = EffectType.Bleeding, Stacks = bleeds.Length };
+            foreach (var bleed in bleeds)
+                if (bleed.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = bleed.TimeRemaining; entry.Duration = bleed.Duration; }
+            display.Add(entry);
+        }
+        if (IsActive<Burning>(ref state, entity) && SystemAPI.HasBuffer<BurnInstance>(entity))
+        {
+            var burns = SystemAPI.GetBuffer<BurnInstance>(entity);
+            var entry = new EffectDisplay { Type = EffectType.Burning, Stacks = burns.Length };
+            foreach (var burn in burns)
             {
-                var buff = SystemAPI.GetComponent<BrokenPromisesBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.BrokenPromises, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.CriticalChanceBonus });
+                entry.Magnitude += burn.DamagePerSecond;
+                if (burn.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = burn.TimeRemaining; entry.Duration = burn.Duration; }
             }
-            if (IsActive<DeathsDoorBuff>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.DeathsDoor, Stacks = 1, Magnitude = SystemAPI.GetComponent<DeathsDoorBuff>(entity).CriticalChanceBonus });
-            if (IsActive<CounterStrikeCharge>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.CounterStrike, Stacks = SystemAPI.GetComponent<CounterStrikeCharge>(entity).Stacks });
-            if (IsActive<BloodrushBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<BloodrushBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Bloodrush, Stacks = buff.Stacks, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.Stacks * buff.AttackSpeedPerStack });
-            }
-            if (IsActive<PrismBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<PrismBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Prism, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.DamageBonus });
-            }
-            if (IsActive<AnchorBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<AnchorBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Anchor, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.ArmorPerStack });
-            }
-            if (IsActive<MomentumBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<MomentumBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Momentum, Stacks = buff.Stacks, Magnitude = buff.Stacks * buff.DamagePerStack });
-            }
-            if (IsActive<AsceticBuff>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.Ascetic, Stacks = 1, Magnitude = SystemAPI.GetComponent<AsceticBuff>(entity).DamageBonus });
-            if (IsActive<AfterglowBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<AfterglowBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Afterglow, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.DamageBonus });
-            }
-            if (IsActive<PackInstinctBuff>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.PackInstinct, Stacks = 1, Magnitude = SystemAPI.GetComponent<PackInstinctBuff>(entity).CriticalChanceBonus });
-            if (IsActive<LifeLinkBuff>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.LifeLink, Stacks = 1, Magnitude = SystemAPI.GetComponent<LifeLinkBuff>(entity).HealthRegeneration });
-            var aura = SystemAPI.GetComponent<ResistanceAuraBuff>(entity);
-            if (aura.ColdStacks > 0)
-                display.Add(new EffectDisplay { Type = EffectType.BoneWard, Stacks = aura.ColdStacks, Magnitude = aura.ColdResistance });
-            if (aura.PoisonStacks > 0)
-                display.Add(new EffectDisplay { Type = EffectType.FesteringHorde, Stacks = aura.PoisonStacks, Magnitude = aura.PoisonResistance });
-            if (IsActive<Refraction>(ref state, entity))
-                display.Add(new EffectDisplay { Type = EffectType.Refraction, Stacks = SystemAPI.GetComponent<Refraction>(entity).Stacks });
-            if (IsActive<Invulnerable>(ref state, entity))
-            {
-                var invulnerable = SystemAPI.GetComponent<Invulnerable>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Invulnerable, Stacks = 1, TimeRemaining = invulnerable.TimeRemaining, Duration = invulnerable.Duration });
-            }
-            if (IsActive<ShadowstepBuff>(ref state, entity))
-            {
-                var buff = SystemAPI.GetComponent<ShadowstepBuff>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Shadowstep, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.AttackSpeedBonus });
-            }
-            if (IsActive<Bleeding>(ref state, entity) && SystemAPI.HasBuffer<BleedInstance>(entity))
-            {
-                var bleeds = SystemAPI.GetBuffer<BleedInstance>(entity);
-                var entry = new EffectDisplay { Type = EffectType.Bleeding, Stacks = bleeds.Length };
-                foreach (var bleed in bleeds)
-                    if (bleed.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = bleed.TimeRemaining; entry.Duration = bleed.Duration; }
-                display.Add(entry);
-            }
-            if (IsActive<Burning>(ref state, entity) && SystemAPI.HasBuffer<BurnInstance>(entity))
-            {
-                var burns = SystemAPI.GetBuffer<BurnInstance>(entity);
-                var entry = new EffectDisplay { Type = EffectType.Burning, Stacks = burns.Length };
-                foreach (var burn in burns)
-                {
-                    entry.Magnitude += burn.DamagePerSecond;
-                    if (burn.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = burn.TimeRemaining; entry.Duration = burn.Duration; }
-                }
-                display.Add(entry);
-            }
-            if (IsActive<Poisoned>(ref state, entity))
-            {
-                var poisoned = SystemAPI.GetComponent<Poisoned>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Poisoned, Stacks = 1, TimeRemaining = poisoned.TimeRemaining, Duration = poisoned.Duration, Magnitude = poisoned.DamagePerSecond });
-            }
-            if (IsActive<Chilled>(ref state, entity))
-            {
-                var chilled = SystemAPI.GetComponent<Chilled>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Chilled, Stacks = chilled.Stacks, TimeRemaining = chilled.TimeRemaining, Duration = chilled.Duration, Magnitude = math.saturate(chilled.Stacks * slowPerStack) });
-            }
-            if (IsActive<Frozen>(ref state, entity))
-            {
-                var frozen = SystemAPI.GetComponent<Frozen>(entity);
-                display.Add(new EffectDisplay { Type = EffectType.Frozen, Stacks = 1, TimeRemaining = frozen.TimeRemaining, Duration = frozen.Duration });
-            }
+            display.Add(entry);
+        }
+        if (IsActive<Poisoned>(ref state, entity))
+        {
+            var poisoned = SystemAPI.GetComponent<Poisoned>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Poisoned, Stacks = 1, TimeRemaining = poisoned.TimeRemaining, Duration = poisoned.Duration, Magnitude = poisoned.DamagePerSecond });
+        }
+        if (IsActive<Chilled>(ref state, entity))
+        {
+            var chilled = SystemAPI.GetComponent<Chilled>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Chilled, Stacks = chilled.Stacks, TimeRemaining = chilled.TimeRemaining, Duration = chilled.Duration, Magnitude = math.saturate(chilled.Stacks * slowPerStack) });
+        }
+        if (IsActive<Frozen>(ref state, entity))
+        {
+            var frozen = SystemAPI.GetComponent<Frozen>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Frozen, Stacks = 1, TimeRemaining = frozen.TimeRemaining, Duration = frozen.Duration });
         }
     }
 

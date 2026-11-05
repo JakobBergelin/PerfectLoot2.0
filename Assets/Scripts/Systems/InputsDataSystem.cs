@@ -56,6 +56,7 @@ public partial class InputsDataSystem : SystemBase
                 continue;
             }
 
+            data.ValueRW.Hovered = Entity.Null;
             var screenPoint = inputs.Player.Look.ReadValue<Vector2>();
             var cameraRay = camera.ScreenPointToRay(screenPoint);
             var raycastInput = new RaycastInput
@@ -68,6 +69,8 @@ public partial class InputsDataSystem : SystemBase
             var allResults = new NativeList<Unity.Physics.RaycastHit>(Allocator.Temp);
             if (physicsWorldSingleton.CastRay(raycastInput, ref allResults))
             {
+                if (!menuOpen) data.ValueRW.Hovered = ClosestUnit(allResults);
+
                 foreach(var result in allResults)
                 {
                     if(SystemAPI.HasComponent<Enemy>(result.Entity))
@@ -94,5 +97,19 @@ public partial class InputsDataSystem : SystemBase
             desiredDirection.ValueRW.Direction = math.normalize(toMouse);
             desiredDirection.ValueRW.Quaternion = Quaternion.LookRotation(desiredDirection.ValueRO.Direction, Vector3.up);
         }
+    }
+
+    // The hits come in no particular order
+    Entity ClosestUnit(NativeList<Unity.Physics.RaycastHit> hits)
+    {
+        var closest = Entity.Null;
+        float closestFraction = float.MaxValue;
+        foreach (var hit in hits)
+        {
+            if (hit.Fraction >= closestFraction || !SystemAPI.HasComponent<UnitInfo>(hit.Entity)) continue;
+            closestFraction = hit.Fraction;
+            closest = hit.Entity;
+        }
+        return closest;
     }
 }

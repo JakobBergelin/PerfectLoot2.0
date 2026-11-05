@@ -1,0 +1,18 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="../EffectBar/EffectBar.uss" />
+    <ui:Style src="UnitPanel.uss" />
+    <ui:VisualElement class="effect-bar-root" picking-mode="Ignore">
+        <ui:VisualElement name="panel" class="unit-panel" picking-mode="Ignore">
+            <ui:Label name="unitName" class="unit-panel__name" picking-mode="Ignore" />
+            <ui:VisualElement class="unit-panel__health" picking-mode="Ignore">
+                <ui:VisualElement name="healthFill" class="unit-panel__health-fill" picking-mode="Ignore" />
+                <ui:Label name="healthText" class="unit-panel__health-text" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <!-- Rows are created by UnitPanelHUD -->
+            <ui:VisualElement name="stats" class="unit-panel__stats" picking-mode="Ignore" />
+            <ui:VisualElement name="effects" picking-mode="Ignore" />
+            <ui:VisualElement name="passives" picking-mode="Ignore" />
+            <ui:Label name="skills" class="unit-panel__text unit-panel__skills" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

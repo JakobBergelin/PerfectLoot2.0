@@ -1,0 +1,129 @@
+/* Effect tiles, the font and the color variables come from EffectBar.uss */
+.unit-panel {
+    position: absolute;
+    display: none;
+    top: 12px;
+    left: 50%;
+    width: 460px;
+    margin-left: -230px;
+    padding: 10px 14px;
+    background-color: rgba(8, 9, 12, 0.92);
+    border-width: 1px;
+    border-color: #3A3F4B;
+    border-radius: 4px;
+}
+
+.unit-panel--visible {
+    display: flex;
+}
+
+.unit-panel--hidden {
+    display: none;
+}
+
+.unit-panel__name {
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.unit-panel__health {
+    height: 18px;
+    margin-bottom: 8px;
+    background-color: #2A1214;
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.unit-panel__health-fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #B83232;
+}
+
+.unit-panel__health-text {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    font-size: 13px;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.unit-panel__stats {
+    flex-direction: row;
+    flex-wrap: wrap;
+}
+
+.unit-panel__stat {
+    flex-direction: row;
+    justify-content: space-between;
+    width: 50%;
+    padding-right: 14px;
+    margin-bottom: 2px;
+}
+
+.unit-panel__stat.unit-panel--hidden {
+    display: none;
+}
+
+.unit-panel__stat-name {
+    font-size: 13px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0;
+}
+
+.unit-panel__stat-value {
+    font-size: 13px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.unit-panel__effect {
+    flex-direction: row;
+    align-items: center;
+    margin-top: 6px;
+}
+
+.unit-panel__effect.unit-panel--hidden {
+    display: none;
+}
+
+.unit-panel__effect .effect-tile {
+    width: 30px;
+    height: 30px;
+    flex-shrink: 0;
+    margin: 0 8px 0 0;
+}
+
+.unit-panel__passive-name {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    padding: 0;
+    margin: 8px 0 0 0;
+}
+
+.unit-panel__text {
+    flex-shrink: 1;
+    font-size: 13px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+.unit-panel__skills {
+    margin-top: 8px;
+}

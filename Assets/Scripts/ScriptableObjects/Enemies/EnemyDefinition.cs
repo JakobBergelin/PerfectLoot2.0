@@ -10,7 +10,7 @@ namespace Enemies
     /// registered in EnemyPrefabsAuthoring (Entities subscene) so it gets baked.
     /// </summary>
     [CreateAssetMenu(fileName = "Enemy", menuName = "Enemies/Enemy Definition")]
-    public class EnemyDefinition : ScriptableObject
+    public class EnemyDefinition : ScriptableObject, IUnitDescription
     {
         public string Name;
         [Tooltip("Visual-only prefab: mesh, collider, rigidbody and UnitBarsAuthoring (like PlayerVisuals)")]
@@ -87,6 +87,8 @@ namespace Enemies
         public float AttackFacingAngle = 60f;
 
         public string DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
+        List<PassiveSkill> IUnitDescription.Passives => Passives;
+        List<EnemySkill> IUnitDescription.Skills => Skills;
 
         /// <summary>Capsule radius of the visual prefabs (0.5) at this definition's scale.</summary>
         public float BodyRadius => 0.5f * Scale;

@@ -14,7 +14,7 @@ namespace ActiveSkills
     /// attacks are set up like an enemy's skills and its passives work as on a player. One at a time: the cooldown starts
     /// when it dies. CompanionSummonSystem does the summoning; a skill only needs a class giving its SkillType.
     /// </summary>
-    public abstract class CompanionSkill : ActiveSkill
+    public abstract class CompanionSkill : ActiveSkill, IUnitDescription
     {
         [SerializeField] float cooldown = 20f;
         [SerializeField] float resourceCost = 20f;
@@ -42,6 +42,10 @@ namespace ActiveSkills
 
         public override float Cooldown => cooldown;
         public override float ResourceCost => resourceCost;
+
+        string IUnitDescription.DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
+        List<PassiveSkill> IUnitDescription.Passives => Passives;
+        List<EnemySkill> IUnitDescription.Skills => Skills;
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
@@ -113,6 +117,7 @@ namespace ActiveSkills
             entityManager.SetComponentData(prefab, transform);
 
             UnitEntitySetup.AddOrSet(entityManager, prefab, new SummonedCompanion { Type = Type });
+            UnitEntitySetup.AddOrSet(entityManager, prefab, new UnitInfo { Source = this });
             CompanionEntitySetup.AddGameplayComponents(entityManager, prefab, owner, SightRadius, Skills);
             CompanionEntitySetup.AddMovementComponents(entityManager, prefab, Stats, Movement);
             CompanionEntitySetup.AddTargetable(entityManager, prefab, owner, Threat);

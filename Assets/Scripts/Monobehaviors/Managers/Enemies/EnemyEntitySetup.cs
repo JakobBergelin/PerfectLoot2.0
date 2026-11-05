@@ -17,6 +17,7 @@ public static class EnemyEntitySetup
     public static void AddGameplayComponents(EntityManager entityManager, Entity entity, EnemyDefinition definition)
     {
         AddOrSet(entityManager, entity, new Enemy());
+        AddOrSet(entityManager, entity, new UnitInfo { Source = definition });
 
         // Stats, health, damage buffers, status effects, knockback, smoothing, rotation lock
         AddCombatComponents(entityManager, entity, definition.Stats);
