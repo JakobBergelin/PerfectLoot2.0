@@ -270,6 +270,7 @@ public class InventoryManager : MonoBehaviour
         {
             entityManager.SetComponentData(player, equipmentStats);
             SyncLegendaryPowers(entityManager, player);
+            SyncVisuals(entityManager, player);
         }
 
         _equipmentStatsDirty = false;
@@ -297,6 +298,17 @@ public class InventoryManager : MonoBehaviour
 
         _appliedPowers.Clear();
         _appliedPowers.AddRange(equipped);
+    }
+
+    /// <summary>Tells the player's visual which items it wears (EquipmentVisualSystem attaches their 3D parts).</summary>
+    void SyncVisuals(EntityManager entityManager, Entity player)
+    {
+        if (!entityManager.HasBuffer<EquippedVisual>(player)) return;
+        var visuals = entityManager.GetBuffer<EquippedVisual>(player);
+        visuals.Clear();
+        foreach (var (_, slot) in NamedSlots)
+            if (slot != null && !slot.IsEmpty) visuals.Add(new EquippedVisual { Key = slot.EquippedItem.BaseItem.VisualKey });
+        if (!entityManager.HasComponent<EquipmentVisualsChanged>(player)) entityManager.AddComponent<EquipmentVisualsChanged>(player);
     }
 
     [Header("Testing")]

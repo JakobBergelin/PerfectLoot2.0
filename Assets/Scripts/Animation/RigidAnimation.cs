@@ -9,6 +9,15 @@ public enum RigidClip : byte
     Attack = 2,
     Hit = 3,
     Death = 4,
+    // Player skills
+    Cast = 5,       // Fireball wind-up (held)
+    Release = 6,    // Fireball thrown
+    Shoot = 7,      // Barrage bolt
+    PunchL = 8,     // Fists of Thunder
+    PunchR = 9,
+    Spin = 10,      // Whirlwind (loops)
+    Dash = 11,
+    Sweep = 12,     // Tornado cast
 }
 
 public struct RigidAnimationBlob

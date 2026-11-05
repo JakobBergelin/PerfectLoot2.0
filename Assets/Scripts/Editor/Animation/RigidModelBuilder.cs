@@ -23,6 +23,7 @@ public static class RigidModelBuilder
         public GameObject Template;
         public string Folder;
         public string Name;
+        public string[] Sockets;            // Bone names equipment can attach to (adds EquipmentSocketsAuthoring)
     }
 
     public static GameObject Build(Settings settings)
@@ -227,6 +228,13 @@ public static class RigidModelBuilder
         var authoring = root.AddComponent<RigidAnimationAuthoring>();
         authoring.Animation = set;
         authoring.Bones = bones;
+        if (settings.Sockets != null && settings.Sockets.Length > 0)
+        {
+            var sockets = settings.Sockets.Select(n => bones.FirstOrDefault(b => b.name == n)).ToArray();
+            var missing = settings.Sockets.Where((n, i) => sockets[i] == null).ToArray();
+            if (missing.Length > 0) Debug.LogWarning($"{settings.Name}: no bones named {string.Join(", ", missing)} for equipment sockets.");
+            root.AddComponent<EquipmentSocketsAuthoring>().Sockets = sockets.Where(s => s != null).ToArray();
+        }
 
         string path = $"{settings.Folder}/{settings.Name}.prefab";
         var prefab = PrefabUtility.SaveAsPrefabAsset(root, path);

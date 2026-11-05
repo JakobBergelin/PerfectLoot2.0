@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Mantle of the Watcher
   Id: b7b74036ea8049289130a591472bbdcc
   Icon: {fileID: 0}
+  VisualBase: {fileID: 11400000, guid: ea992f3b04014c00a41ce39b276804f4, type: 2}
   BaseAffixes:
   - Affix: 22
     RollRange:

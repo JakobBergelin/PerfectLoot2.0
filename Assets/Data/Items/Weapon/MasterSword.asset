@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Master Sword
   Id: 9475d1ebf16247f41adf0c178dc02bde
   Icon: {fileID: 0}
+  VisualBase: {fileID: 11400000, guid: 67bb9dcccf9e4824bb0b8dfedf5e0bbf, type: 2}
   BaseAffixes:
   - Affix: 26
     RollRange:

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Dummy
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
   Name: Dummy
-  Prefab: {fileID: 7900000000000000001, guid: d7346aa012cce4e63960479f5596bc23, type: 3}
+  Prefab: {fileID: 2328684015461828664, guid: 2d089ee20f72c534399b45b7cd5554c5, type: 3}
   OverrideColor: 0
   Tint: {r: 1, g: 1, b: 1, a: 1}
   BodyType: 0

@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: QuiltedArmor
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: e893a748bbcc4bdfbb2b89e62cc3ef40, type: 2}
+  Parts:
+  - Socket: chest
+    Prefab: {fileID: 4510833862997984919, guid: 1054ebed952639341b1a1a48ad8d10fc, type: 3}
+  - Socket: hips
+    Prefab: {fileID: 3335265588828604437, guid: 8e35a4bad9ec78141999cdf93fa1cd7a, type: 3}

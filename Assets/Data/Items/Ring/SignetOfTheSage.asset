@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Signet of the Sage
   Id: ce2b8d96b52e49dd97d7d8d94ad81a4e
   Icon: {fileID: 0}
+  VisualBase: {fileID: 11400000, guid: 2d64619da4bf42f288851d66520d7298, type: 2}
   BaseAffixes:
   - Affix: 2
     RollRange:

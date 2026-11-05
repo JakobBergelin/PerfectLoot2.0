@@ -14,7 +14,12 @@ namespace Equipment
         [Tooltip("Stable ID for save files: the asset's GUID, set automatically in the editor (Tools → Assign Item IDs)")]
         public string Id;
         public Sprite Icon;                     // Shown in inventory/loot UI and editor tooling
+        [Tooltip("The base item whose 3D model this item uses on the character (empty: its own). Set it on uniques and legendaries.")]
+        public RollableItem VisualBase;
         public abstract ItemType ItemType { get; }
+
+        /// <summary>The asset name of the item whose 3D model this one shows (EquipmentVisual.Item).</summary>
+        public string VisualKey => VisualBase != null ? VisualBase.name : name;
 
         /// <summary>When set, drops of this base item always roll this rarity instead of a random one.</summary>
         public virtual Rarity? ForcedRarity => null;

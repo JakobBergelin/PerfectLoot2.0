@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: FullPlateMail
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: 502b36b4d92d4760904c95189795d469, type: 2}
+  Parts:
+  - Socket: chest
+    Prefab: {fileID: 1904123327815128376, guid: 064e0607c7d4ff642be168b69e7d7c8f, type: 3}
+  - Socket: hips
+    Prefab: {fileID: 2640673896438271900, guid: b102121553be1ee43a19a2096e26cacc, type: 3}

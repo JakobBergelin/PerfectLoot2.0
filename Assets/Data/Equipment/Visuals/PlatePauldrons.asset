@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: PlatePauldrons
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: c0d022c5fdae4084b7cfe655dc312173, type: 2}
+  Parts:
+  - Socket: arm_L
+    Prefab: {fileID: 8730625765061593381, guid: 25f7d19b40edf3d41afc89d325a307a5, type: 3}
+  - Socket: arm_R
+    Prefab: {fileID: 7183430894234824409, guid: afa4247ff20f4944991af4f224110f79, type: 3}

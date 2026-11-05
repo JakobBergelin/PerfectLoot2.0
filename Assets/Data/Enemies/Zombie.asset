@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Zombie
   m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
   Name: Zombie
-  Prefab: {fileID: 7900000000000000001, guid: d7346aa012cce4e63960479f5596bc23, type: 3}
-  OverrideColor: 1
+  Prefab: {fileID: 8348236457403795066, guid: ec9e0001d01328a48bbcf0056ff0dd8c, type: 3}
+  OverrideColor: 0
   Tint: {r: 0.45, g: 0.62, b: 0.35, a: 1}
   BodyType: 0
   Scale: 1
@@ -51,6 +51,7 @@ MonoBehaviour:
     CriticalDamage: 1
     BlockChance: 0.05
     DodgeChance: 0
+  HasAI: 1
   DetectionRadius: 15
   AttackRadius: 3
   TurnSpeed: 2

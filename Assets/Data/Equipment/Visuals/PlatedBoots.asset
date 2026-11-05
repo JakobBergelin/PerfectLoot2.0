@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: PlatedBoots
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: c4c3aecd912d425fba3fc2d142d49bb8, type: 2}
+  Parts:
+  - Socket: leg_L
+    Prefab: {fileID: 2472819192988803382, guid: a33487b4948811e4d8be5b972d724c03, type: 3}
+  - Socket: leg_R
+    Prefab: {fileID: 4736645759294776819, guid: a0931b6ed1992dd47bb772cdde732a65, type: 3}

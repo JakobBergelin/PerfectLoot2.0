@@ -1,0 +1,5 @@
+# object|material slots in submesh order
+EN_Skeleton_Animated|EN_Bone,EN_BoneDark,CT_Cloth,CT_GhostEye,CT_DarkStone,CT_Iron
+EN_Zombie_Animated|EN_ZombieRags,EN_ZombieSkin,EN_ZombieFlesh,EN_Bone,CT_GhostEye
+EN_Spider_Animated|EN_SpiderChitin,EN_SpiderMark,EN_Bone,CT_GhostEye,CT_DarkStone
+EN_Dummy_Animated|CT_Wood,EN_Burlap,EN_Straw,CT_Cloth,CT_DarkStone

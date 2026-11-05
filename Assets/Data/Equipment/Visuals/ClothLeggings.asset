@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: da9131a1bc6ff9f49bdb639695bc7a2f, type: 3}
+  m_Name: ClothLeggings
+  m_EditorClassIdentifier: Assembly-CSharp::EquipmentVisual
+  Item: {fileID: 11400000, guid: 0b06f65e60b4469ea31048f9734f5c33, type: 2}
+  Parts:
+  - Socket: leg_L
+    Prefab: {fileID: 2145257432061249624, guid: abc6a800e2d51c54eb8345197dd1043d, type: 3}
+  - Socket: leg_R
+    Prefab: {fileID: 6291880877619296323, guid: 6cf29f12d5f4ef64daa1dfc862c6bdc0, type: 3}
