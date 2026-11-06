@@ -48,6 +48,7 @@
     border-width: 0;
     border-radius: 4px;
     font-size: 14px;
+    -unity-text-align: middle-center;
 }
 
 .damage-meter__body--hidden {
@@ -70,6 +71,7 @@
     border-width: 0;
     border-radius: 4px;
     font-size: 12px;
+    -unity-text-align: middle-center;
 }
 
 .damage-meter__tab--selected {
