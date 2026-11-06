@@ -102,8 +102,8 @@ public static partial class VfxBuilder
         });
         yield return (VfxType.FireHydra, Save(hydra));
 
-        yield return (VfxType.TeslaField, Save(Field("VFX_TeslaField", "VFX_TeslaRing", Sapphire, -0.8f, 2f)));
-        yield return (VfxType.TimezoneField, Save(Field("VFX_TimezoneField", "VFX_TimezoneRing", Frost, 0.1f, 0.6f)));
+        yield return (VfxType.TeslaField, Save(Field("VFX_TeslaField", "VFX_TeslaRing", Sapphire, -0.16f, 2f)));
+        yield return (VfxType.TimezoneField, Save(Field("VFX_TimezoneField", "VFX_TimezoneRing", Frost, -0.115f, 0.6f)));
 
         var nova = Root_("VFX_ColdNova", 0.9f, out _);
         Ps(nova, "Flash", _additive, ps => Main(ps, 0.2f, 0f, 3f, Hex(FrostPale, 0.6f), burst: 1));
@@ -117,7 +117,7 @@ public static partial class VfxBuilder
         yield return (VfxType.ColdNova, Save(nova));
     }
 
-    /// <summary>A ground ring of radius 1 with motes on it. VfxManager.Scale sizes it: only the ring and the shape grow, not the motes.</summary>
+    /// <summary>A ground ring of radius 1 with motes on it. VfxManager.Scale sizes it: only the ring and the shape grow, not the motes. The scale also multiplies height, so height is about -1 / radius to land on the floor from a unit-height entity.</summary>
     static GameObject Field(string name, string ringMaterial, string hex, float height, float speed)
     {
         var root = Root_(name, 0.7f, out var instance);
