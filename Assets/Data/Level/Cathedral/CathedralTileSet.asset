@@ -269,6 +269,46 @@ MonoBehaviour:
     NorthWest: 0
     Weight: 4.8
     AllowRotations: 1
+  - Name: Tile_WWFF_Arch
+    Prefab: {fileID: 6603281056813317556, guid: 5b06df6331ddfa646914aee570b9f690, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 3
+    AllowRotations: 1
+  - Name: Tile_WWFF_Alcove
+    Prefab: {fileID: 3966870466348135159, guid: ac503fe39b858a64eb4f00893fe04ef5, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 3
+    AllowRotations: 1
+  - Name: Tile_WWFF_Steps
+    Prefab: {fileID: 8313638383506484034, guid: 6284edc85597a794195a941bb6843e72, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 2.5
+    AllowRotations: 1
+  - Name: Tile_WFFF_Broken
+    Prefab: {fileID: 5353589909581735512, guid: df3d79d2b95de8f4fa18b7445188d169, type: 3}
+    SouthWest: 1
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 24
+    AllowRotations: 1
+  - Name: Tile_WWWF_Broken
+    Prefab: {fileID: 520541254264493751, guid: ec2d50bda953c7e4783a0349f373092e, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 2
+    AllowRotations: 1
   Pieces:
   - Name: Arena 2x2
     Prefab: {fileID: 6567232586034226005, guid: fc4c56bdc4a67b0448918bb31855df10, type: 3}
