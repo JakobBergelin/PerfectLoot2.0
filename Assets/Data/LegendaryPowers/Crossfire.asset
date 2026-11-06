@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 193c84048e5f4fc7953483fe26fb731e, type: 3}
+  m_Name: Crossfire
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.CrossfirePower
+  Name: Crossfire
+  Description: 'While you channel a skill with Flamethrower equipped, two extra Flamethrowers spray to your left and right, and channeling skills cost {CostIncrease:P0} more. Without Flamethrower equipped, channeling skills cost {CostReduction:P0} less.'
+  CostIncrease: 0.3
+  CostReduction: 0.2

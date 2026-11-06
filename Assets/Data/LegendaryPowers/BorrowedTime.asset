@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4a62d1a976ce42db9ef1a1bb27579d98, type: 3}
+  m_Name: BorrowedTime
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.BorrowedTimePower
+  Name: Borrowed Time
+  Description: 'Instead of taking it at once, {DelayedShare:P0} of all damage you take is dealt over the next {Duration} seconds.'
+  DelayedShare: 0.8
+  Duration: 5

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: d809fd01b4bf43c893d59a83acb63532, type: 3}
+  m_Name: MirrorImage
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MirrorImageSkill
+  Name: Mirror Image
+  Icon: {fileID: 0}
+  Description: Summons a dark copy of you for 10 seconds that uses your attacks where it stands. It can't be targeted.
+  Tags: 16416
+  cooldown: 80
+  resourceCost: 30
+  Duration: 10
+  Tint: {r: 0.12, g: 0.1, b: 0.16, a: 1}
+  SightRadius: 12
+  Movement:
+    Position: 4
+    Distance: 3
+    Spread: 2
+    Leash: 8
+    AttackDistance: 2
+    CatchUpMultiplier: 1.5
+    TeleportDistance: 20
