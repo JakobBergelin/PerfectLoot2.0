@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Stormcaller's Torc
   Id: 1a56688b3f004d108ea75fb3c983736c
   Icon: {fileID: 21300000, guid: b2eb80feebd640849f40c4e32cb35980, type: 3}
+  Flavor: Your hair stands up first. Then everyone else's.
   BaseAffixes: []
   RollableAffixes: []
   LegendaryPower: {fileID: 11400000, guid: 4610f40df77240bc9ce628fe9772baef, type: 2}

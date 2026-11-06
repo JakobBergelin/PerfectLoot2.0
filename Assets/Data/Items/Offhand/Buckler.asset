@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Buckler
   Id: e3dfff5dda7a414f9d162a18c100af6e
   Icon: {fileID: 21300000, guid: eace39b70d454cebb6d351778d31fd33, type: 3}
+  Flavor: Small enough to carry, big enough to argue with.
   BaseAffixes:
   - Affix: 22
     RollRange:

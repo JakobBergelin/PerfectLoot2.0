@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Forked Lens
   Id: db06b5ad179e3bc24fee7dfbb9abb282
   Icon: {fileID: 21300000, guid: f965456b0ea047baa0962d28a9c9870d, type: 3}
+  Flavor: One thing goes in. Two come out. Nobody knows why.
   BaseAffixes:
   - Affix: 22
     RollRange:

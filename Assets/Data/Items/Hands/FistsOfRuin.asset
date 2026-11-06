@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Fists of Ruin
   Id: ba726c5ced974699ada804b618194344
   Icon: {fileID: 21300000, guid: 953a69b77ee043d99a8c527d016d11df, type: 3}
+  Flavor: Every crack in them was someone else's first.
   VisualBase: {fileID: 11400000, guid: 15e4ce2bd3414a2ca52afb7adfed5533, type: 2}
   BaseAffixes:
   - Affix: 22

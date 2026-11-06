@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Endless Well
   Id: 600b4d91352f4cf5a583adec9e60f71c
   Icon: {fileID: 21300000, guid: 8d58d2e44d0e406daa6d11d19dee3b8b, type: 3}
+  Flavor: Drop a coin. You'll never hear it land.
   BaseAffixes:
   - Affix: 7
     RollRange:

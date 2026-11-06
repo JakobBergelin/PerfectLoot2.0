@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Mantle of the Watcher
   Id: b7b74036ea8049289130a591472bbdcc
   Icon: {fileID: 21300000, guid: 3f943b8762f74347a0be330d668b6025, type: 3}
+  Flavor: It doesn't blink, so you can.
   VisualBase: {fileID: 11400000, guid: ea992f3b04014c00a41ce39b276804f4, type: 2}
   BaseAffixes:
   - Affix: 22

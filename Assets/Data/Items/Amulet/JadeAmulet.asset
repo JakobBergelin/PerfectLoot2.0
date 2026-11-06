@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Jade Amulet
   Id: bb38cf422cbc488ba24cec7815e13980
   Icon: {fileID: 21300000, guid: 3bada103eeea4049830bf9d3a2d945ee, type: 3}
+  Flavor: Cool to the touch, even by the fire.
   BaseAffixes:
   - Affix: 24
     RollRange:

@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Great Helm
   Id: 214de991ae2f425a92650b3cf7a8d532
   Icon: {fileID: 21300000, guid: b7671255a0234be1945512ae7b51b2cf, type: 3}
+  Flavor: You'll hear your own breathing. You'll come to like it.
   BaseAffixes:
   - Affix: 22
     RollRange:

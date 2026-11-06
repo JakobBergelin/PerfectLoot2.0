@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Signet of the Sage
   Id: ce2b8d96b52e49dd97d7d8d94ad81a4e
   Icon: {fileID: 21300000, guid: c8bc8aeecf2e4f239f93e2729bc30fcc, type: 3}
+  Flavor: Press it into wax, and the wax remembers.
   VisualBase: {fileID: 11400000, guid: 2d64619da4bf42f288851d66520d7298, type: 2}
   BaseAffixes:
   - Affix: 2

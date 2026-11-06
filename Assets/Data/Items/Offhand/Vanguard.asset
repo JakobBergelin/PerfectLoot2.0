@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Vanguard
   Id: 95459cc4030f4eabb2e3506cd2bb7140
   Icon: {fileID: 21300000, guid: 50199a5313f14411a4f579b06da44fdc, type: 3}
+  Flavor: Somebody has to go first.
   VisualBase: {fileID: 11400000, guid: 4ba43c1703f842ab9ebc30668cd74514, type: 2}
   BaseAffixes:
   - Affix: 22

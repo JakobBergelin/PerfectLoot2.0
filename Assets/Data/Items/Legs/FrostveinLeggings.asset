@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Frostvein Leggings
   Id: 8ef90ea7e2194b95b539aa9865a99b38
   Icon: {fileID: 21300000, guid: 4210db138b2244b9bb28a5479fee0dcf, type: 3}
+  Flavor: The chill climbs up to meet you.
   BaseAffixes:
   - Affix: 35
     RollRange:

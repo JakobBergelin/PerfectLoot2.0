@@ -72,6 +72,13 @@ public static class ItemText
             lines.Add(new StatLine { Text = $"<color={WorseColor}>Unverified</color>", Wide = true });
         }
         if (lines.Count == 0) lines.Add(new StatLine { Text = "No stats", Wide = true });
+
+        // Flavor text: muted and always last
+        if (!string.IsNullOrEmpty(item.BaseItem.Flavor))
+        {
+            lines.Add(new StatLine { Text = "", Wide = true });
+            lines.Add(new StatLine { Text = $"<i><color={RangeColor}>{item.BaseItem.Flavor}</color></i>", Wide = true });
+        }
         return lines;
     }
 

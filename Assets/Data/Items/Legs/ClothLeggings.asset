@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Cloth Leggings
   Id: 0b06f65e60b4469ea31048f9734f5c33
   Icon: {fileID: 21300000, guid: 4a0784e7646240f5ba740216410af3ec, type: 3}
+  Flavor: Patched at the knee, like all the good ones.
   BaseAffixes:
   - Affix: 3
     RollRange:

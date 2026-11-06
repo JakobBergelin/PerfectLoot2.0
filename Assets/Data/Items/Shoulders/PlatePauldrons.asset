@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Plate Pauldrons
   Id: c0d022c5fdae4084b7cfe655dc312173
   Icon: {fileID: 21300000, guid: e718d947a06e4d4b99322fffcd073e8f, type: 3}
+  Flavor: Doorways will need to be discussed.
   BaseAffixes:
   - Affix: 22
     RollRange:

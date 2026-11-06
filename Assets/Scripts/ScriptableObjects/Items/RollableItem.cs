@@ -14,6 +14,7 @@ namespace Equipment
         [Tooltip("Stable ID for save files: the asset's GUID, set automatically in the editor (Tools → Assign Item IDs)")]
         public string Id;
         public Sprite Icon;                     // Shown in inventory/loot UI and editor tooling
+        [TextArea] public string Flavor;        // A line of tooltip color, display only: no numbers
         [Tooltip("The base item whose 3D model this item uses on the character (empty: its own). Set it on uniques and legendaries.")]
         public RollableItem VisualBase;
         public abstract ItemType ItemType { get; }

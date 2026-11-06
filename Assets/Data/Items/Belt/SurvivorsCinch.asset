@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Survivor's Cinch
   Id: c773eddc0605456b8c449d2aee77b414
   Icon: {fileID: 21300000, guid: 4637078df04049f0bd14198528749d16, type: 3}
+  Flavor: One more notch. There's always one more notch.
   BaseAffixes:
   - Affix: 8
     RollRange:

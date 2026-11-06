@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Emberheart Ring
   Id: 08666eded96942acb4e5b9b88fad9c8e
   Icon: {fileID: 21300000, guid: 0e0dbbfbb0fd4cad92d9db64eb8d1196, type: 3}
+  Flavor: Never quite goes out, no matter how hard you blow.
   BaseAffixes:
   - Affix: 34
     RollRange:

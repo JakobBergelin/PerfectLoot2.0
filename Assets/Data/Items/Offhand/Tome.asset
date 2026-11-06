@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Tome
   Id: dc788de28c36ca51ca74c1fccfacba8e
   Icon: {fileID: 21300000, guid: ab18c96342bb4ae3b435800417ce735f, type: 3}
+  Flavor: Half the pages are margin notes. The notes are better.
   BaseAffixes:
   - Affix: 26
     RollRange:

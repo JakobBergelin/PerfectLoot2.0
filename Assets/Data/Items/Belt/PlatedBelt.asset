@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Plated Belt
   Id: 9f850d9dc03e4038a43a8a53c66b14d2
   Icon: {fileID: 21300000, guid: 33ae8eda37fa4e87afc552e982c3df78, type: 3}
+  Flavor: For adventurers who've been stabbed in the middle before.
   BaseAffixes:
   - Affix: 22
     RollRange:

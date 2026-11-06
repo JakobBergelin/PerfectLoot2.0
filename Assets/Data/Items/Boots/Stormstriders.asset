@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Stormstriders
   Id: 8faa2530fa164e24929e41757583d484
   Icon: {fileID: 21300000, guid: 11c12b39706740d5bb02948708115a41, type: 3}
+  Flavor: Static on every doorknob from here to the coast.
   VisualBase: {fileID: 11400000, guid: 15fe6c59dd6f44f28425b4991082b045, type: 2}
   BaseAffixes:
   - Affix: 22

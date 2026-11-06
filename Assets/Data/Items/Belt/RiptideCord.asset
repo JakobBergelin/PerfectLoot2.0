@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Riptide Cord
   Id: 796f95a46fb0d0e38dd42958c737fe3a
   Icon: {fileID: 21300000, guid: f802ce18863847c6b57ab0fc53d0ac3c, type: 3}
+  Flavor: Tied with a knot the sea taught somebody.
   BaseAffixes:
   - Affix: 16
     RollRange:

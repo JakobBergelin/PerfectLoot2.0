@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Sash
   Id: badbf344738a4a76a0b6723198af2223
   Icon: {fileID: 21300000, guid: 5de43e4bbee24e3485b856c8987ba471, type: 3}
+  Flavor: Holds up more than it looks like it should.
   BaseAffixes:
   - Affix: 7
     RollRange:

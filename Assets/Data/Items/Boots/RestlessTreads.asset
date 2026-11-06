@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Restless Treads
   Id: c084288706b4909beda68800327c46c8
   Icon: {fileID: 21300000, guid: 151f815c8fd7434e87c3c4cd1aae2b57, type: 3}
+  Flavor: They're already by the door.
   BaseAffixes:
   - Affix: 22
     RollRange:

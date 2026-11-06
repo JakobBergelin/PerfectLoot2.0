@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Bow
   Id: bd3a723866f044afab6e7f1001d86221
   Icon: {fileID: 21300000, guid: e687b9ca41e94252867233c6c8b68af9, type: 3}
+  Flavor: Smells of yew and good intentions.
   BaseAffixes:
   - Affix: 32
     RollRange:

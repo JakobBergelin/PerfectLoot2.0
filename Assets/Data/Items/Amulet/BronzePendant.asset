@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Bronze Pendant
   Id: 8c2d4aa99fd64d8cb1af9f8c48b7b7a2
   Icon: {fileID: 21300000, guid: e617be82e3494f26a7bdaea4e049f9aa, type: 3}
+  Flavor: Old bronze, warm from a long line of necks.
   BaseAffixes:
   - Affix: 21
     RollRange:

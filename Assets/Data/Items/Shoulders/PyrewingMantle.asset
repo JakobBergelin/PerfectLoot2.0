@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Pyrewing Mantle
   Id: b95764eb1092013ab25f820994e7d185
   Icon: {fileID: 21300000, guid: f6c9e6bf68f640999a40e152ba1f01d9, type: 3}
+  Flavor: Not recommended near hay.
   VisualBase: {fileID: 11400000, guid: ea992f3b04014c00a41ce39b276804f4, type: 2}
   BaseAffixes:
   - Affix: 22

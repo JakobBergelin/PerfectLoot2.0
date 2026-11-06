@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Deathwish Cuirass
   Id: 471ce364b09f4fdfb255025d643d8e97
   Icon: {fileID: 21300000, guid: 8ba3e03812054f379ec11026a955c40a, type: 3}
+  Flavor: The skull was here before you. It's smiling for a reason.
   BaseAffixes:
   - Affix: 21
     RollRange:

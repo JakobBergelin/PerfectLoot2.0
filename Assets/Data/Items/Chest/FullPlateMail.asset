@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Full Plate Mail
   Id: 502b36b4d92d4760904c95189795d469
   Icon: {fileID: 21300000, guid: b6baea7b2983470ab2abdf79766a0739, type: 3}
+  Flavor: A small, friendly castle you can walk around in.
   BaseAffixes:
   - Affix: 3
     RollRange:

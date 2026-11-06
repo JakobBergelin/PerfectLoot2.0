@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Gravity Orb
   Id: c6c2ab5b57a34b98bdff098abff77482
   Icon: {fileID: 21300000, guid: 88ddf5dfc1704a5c8f1b732556fc0fe6, type: 3}
+  Flavor: Mind your pockets.
   BaseAffixes:
   - Affix: 22
     RollRange:

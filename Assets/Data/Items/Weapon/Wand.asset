@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Wand
   Id: 52b6439b1f024ecc93ec90b16046b9e3
   Icon: {fileID: 21300000, guid: ee48ed8462984322b9eadb522bb81f96, type: 3}
+  Flavor: Point away from face.
   BaseAffixes:
   - Affix: 6
     RollRange:

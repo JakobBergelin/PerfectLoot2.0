@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Leather Gloves
   Id: 25922c2cb59d4f42a6ed0be5bbf05a65
   Icon: {fileID: 21300000, guid: 33992ffd683a43a3abc161dc32b7313e, type: 3}
+  Flavor: Soft in the palm, stubborn at the knuckle.
   BaseAffixes:
   - Affix: 22
     RollRange:

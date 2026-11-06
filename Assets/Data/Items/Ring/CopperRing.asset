@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Copper Ring
   Id: d62acfd7c1364e02bd3c4142bfe43623
   Icon: {fileID: 21300000, guid: 96446b8668394100a7c01d704c5d9a22, type: 3}
+  Flavor: Leaves a green mark. Worth it.
   BaseAffixes:
   - Affix: 12
     RollRange:

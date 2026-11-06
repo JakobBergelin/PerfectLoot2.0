@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Spaulders
   Id: 9e3a4d1a02263b8aa1a8b602b142715a
   Icon: {fileID: 21300000, guid: adc7b88b4cf64b7989e8cd8ee584125f, type: 3}
+  Flavor: Layered like a good pastry, and nearly as forgiving.
   BaseAffixes:
   - Affix: 22
     RollRange:

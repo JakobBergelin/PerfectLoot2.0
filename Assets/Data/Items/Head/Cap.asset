@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Cap
   Id: 281ace68cb604966ad4663377aaac89f
   Icon: {fileID: 21300000, guid: 594612cdf5884fc4a963a5e7c2ad8045, type: 3}
+  Flavor: Keeps the rain off. Most of it.
   BaseAffixes:
   - Affix: 22
     RollRange:

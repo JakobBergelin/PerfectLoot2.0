@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Short Sword
   Id: 67bb9dcccf9e4824bb0b8dfedf5e0bbf
   Icon: {fileID: 21300000, guid: c2c0692b337d456dac0f6d889cec504a, type: 3}
+  Flavor: Honest steel. Nothing fancy, nothing to apologize for.
   BaseAffixes:
   - Affix: 30
     RollRange:

@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Thunderhead Helm
   Id: 273bec36ee8a419880483c047884ff7a
   Icon: {fileID: 21300000, guid: 1a4aa05de00944d39918681d341e8778, type: 3}
+  Flavor: 'Forecast: you.'
   BaseAffixes:
   - Affix: 22
     RollRange:

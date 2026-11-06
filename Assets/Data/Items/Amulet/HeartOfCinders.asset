@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Heart of Cinders
   Id: 16b762b43f3640258d489349e5a532b8
   Icon: {fileID: 21300000, guid: d92c76a9387646afa353e22b8289712d, type: 3}
+  Flavor: Still warm. Try not to think about whose it was.
   BaseAffixes: []
   RollableAffixes: []
   LegendaryPower: {fileID: 11400000, guid: b651aea8011a49049bcd15be859b00f3, type: 2}

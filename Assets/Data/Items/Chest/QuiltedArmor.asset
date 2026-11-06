@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Quilted Armor
   Id: e893a748bbcc4bdfbb2b89e62cc3ef40
   Icon: {fileID: 21300000, guid: 75ec7ebdaa7244eea00a7c4f22ee0cf4, type: 3}
+  Flavor: Stitched by someone who hoped you'd come home.
   BaseAffixes:
   - Affix: 8
     RollRange:

@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Staff
   Id: 3c73fceddd9842b78e9ca22b14a611f1
   Icon: {fileID: 21300000, guid: 57d5f213754446b1b1fba204122cff3a, type: 3}
+  Flavor: A long walk's best friend.
   BaseAffixes:
   - Affix: 16
     RollRange:

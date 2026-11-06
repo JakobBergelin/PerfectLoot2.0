@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Farsight
   Id: 6eb434da4a44b4c973af7d630e2638ed
   Icon: {fileID: 21300000, guid: 722dadec73e14d028677312f2503fb12, type: 3}
+  Flavor: It saw them before you did.
   BaseAffixes:
   - Affix: 9
     RollRange:

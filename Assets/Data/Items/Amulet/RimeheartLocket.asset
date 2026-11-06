@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Rimeheart Locket
   Id: ffc15e0c907047f5a30e4bcfebaa7779
   Icon: {fileID: 21300000, guid: 883f56d5e02142c5aaf74a4ebb932175, type: 3}
+  Flavor: Inside, a portrait of someone who never wrote back.
   BaseAffixes: []
   RollableAffixes: []
   LegendaryPower: {fileID: 11400000, guid: c0c26a82f8c3440cb6c686d11740ecd1, type: 2}

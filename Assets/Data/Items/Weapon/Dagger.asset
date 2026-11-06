@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Dagger
   Id: 6ea140b3ec25425cab9bd845cd16d438
   Icon: {fileID: 21300000, guid: b34eecf16cb94fdfb332a77a62ba946b, type: 3}
+  Flavor: A short conversation, ended quickly.
   BaseAffixes:
   - Affix: 21
     RollRange:

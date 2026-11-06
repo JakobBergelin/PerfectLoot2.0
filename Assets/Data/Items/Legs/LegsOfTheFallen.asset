@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Legs of the Fallen
   Id: dd8dfec132fe449d8bfa98baf4610f78
   Icon: {fileID: 21300000, guid: 9900cda09a244a12b03e849f59f5ab4a, type: 3}
+  Flavor: These have gotten back up before.
   VisualBase: {fileID: 11400000, guid: 612e346d413043679e2033cf8d76c514, type: 2}
   BaseAffixes:
   - Affix: 12

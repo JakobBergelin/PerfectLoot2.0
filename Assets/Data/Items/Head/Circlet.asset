@@ -15,6 +15,7 @@ MonoBehaviour:
   Name: Circlet
   Id: 0e968d4062c1c67a9f6372a764ed8651
   Icon: {fileID: 21300000, guid: 86ebe4cb91ba48219d61a6e220f5f2ef, type: 3}
+  Flavor: Light enough to forget. Not light enough to lose.
   BaseAffixes:
   - Affix: 2
     RollRange:
