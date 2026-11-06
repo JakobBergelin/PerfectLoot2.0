@@ -16,4 +16,5 @@ MonoBehaviour:
   Rig: {fileID: 6440140711736956838, guid: 97545a426fc3ad2409f07b81f3775b42, type: 3}
   MenuScenes:
   - MainMenu
-  Town: SampleScene
+  Town: Hub
+  SelectDevCharacter: 1
