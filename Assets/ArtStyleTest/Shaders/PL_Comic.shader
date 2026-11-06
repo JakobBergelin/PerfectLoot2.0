@@ -74,6 +74,14 @@ Shader "PerfectLoot/Comic"
             half _OutlineJitter;
             half _UseSmoothNormals;
         CBUFFER_END
+        // Per-entity color for Entities Graphics (URPMaterialPropertyBaseColor: hit flash, unit tints)
+        #ifdef UNITY_DOTS_INSTANCING_ENABLED
+            UNITY_DOTS_INSTANCING_START(MaterialPropertyMetadata)
+                UNITY_DOTS_INSTANCED_PROP(float4, _BaseColor)
+            UNITY_DOTS_INSTANCING_END(MaterialPropertyMetadata)
+            #define _BaseColor UNITY_ACCESS_DOTS_INSTANCED_PROP_WITH_DEFAULT(float4, _BaseColor)
+        #endif
+
 
         TEXTURE2D(_BaseMap);     SAMPLER(sampler_BaseMap);
         TEXTURE2D(_EmissionMap); SAMPLER(sampler_EmissionMap);
