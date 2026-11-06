@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableHeadItem
   Name: Cap
   Id: 281ace68cb604966ad4663377aaac89f
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 594612cdf5884fc4a963a5e7c2ad8045, type: 3}
   BaseAffixes:
   - Affix: 22
     RollRange:

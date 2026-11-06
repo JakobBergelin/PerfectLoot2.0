@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableAmuletItem
   Name: Jade Amulet
   Id: bb38cf422cbc488ba24cec7815e13980
-  Icon: {fileID: -98144532151689337, guid: 60dd4c7c9ec8c694f82ab5a1593eef5b, type: 3}
+  Icon: {fileID: 21300000, guid: 3bada103eeea4049830bf9d3a2d945ee, type: 3}
   BaseAffixes:
   - Affix: 24
     RollRange:

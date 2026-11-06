@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
   Name: Geyser Pendant
   Id: 4406ff02a4be827e697abee662740b59
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: ac41fd03c3544ca08faf9134cf1cdfd0, type: 3}
   BaseAffixes:
   - Affix: 34
     RollRange:

@@ -33,8 +33,7 @@ public static class IconRegistry
     {
         foreach (var entry in Matching(pattern))
         {
-            string dir = Path.Combine(imagesRoot, entry.Folder);
-            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            string dir = Folder(imagesRoot, entry.Folder);
             string file = Path.Combine(dir, entry.Name + ".png");
             using (var ic = new Ic())
             {
@@ -44,6 +43,20 @@ public static class IconRegistry
             if (!File.Exists(file + ".meta"))
                 File.WriteAllText(file + ".meta", SpriteMeta.Text(Guid.NewGuid().ToString("N")));
         }
+    }
+
+    /// <summary>The folder for an icon, created with a .meta for each new level so Unity doesn't make its own.</summary>
+    static string Folder(string imagesRoot, string relative)
+    {
+        string dir = imagesRoot;
+        foreach (var name in relative.Split('/'))
+        {
+            dir = Path.Combine(dir, name);
+            if (!Directory.Exists(dir)) Directory.CreateDirectory(dir);
+            if (!File.Exists(dir + ".meta"))
+                File.WriteAllText(dir + ".meta", "fileFormatVersion: 2\nguid: " + Guid.NewGuid().ToString("N") + "\nfolderAsset: yes\nDefaultImporter:\n  externalObjects: {}\n  userData: \n  assetBundleName: \n  assetBundleVariant: \n");
+        }
+        return dir;
     }
 
     /// <summary>A review sheet: each icon at 128 px with a 48 px copy on a dark slot beneath it.</summary>

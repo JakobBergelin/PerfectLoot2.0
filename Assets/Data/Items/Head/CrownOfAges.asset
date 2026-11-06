@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryHeadItem
   Name: Crown of Ages
   Id: f6b3bdb4fe3f49cf94cbee26c371d5f3
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 63c91ccdabc34c879856058df17b472a, type: 3}
   VisualBase: {fileID: 11400000, guid: 281ace68cb604966ad4663377aaac89f, type: 2}
   BaseAffixes:
   - Affix: 22

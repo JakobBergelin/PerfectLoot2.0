@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegsItem
   Name: Mail Chausses
   Id: 612e346d413043679e2033cf8d76c514
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 2e405a6dac454d57a523973588372d48, type: 3}
   BaseAffixes:
   - Affix: 5
     RollRange:

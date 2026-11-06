@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableShouldersItem
   Name: Cloth Mantle
   Id: ea992f3b04014c00a41ce39b276804f4
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 2db9ecc8aa0a467a9950a40b2f13a54a, type: 3}
   BaseAffixes:
   - Affix: 22
     RollRange:

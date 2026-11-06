@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryChestItem
   Name: Debtor's Hauberk
   Id: 148e2fc9fb51b6ba7f6d0298f094a98f
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: c366bbc7881e4956b1d1bfcb068f4337, type: 3}
   VisualBase: {fileID: 11400000, guid: 502b36b4d92d4760904c95189795d469, type: 2}
   BaseAffixes:
   - Affix: 12

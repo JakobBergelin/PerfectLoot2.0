@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryChestItem
   Name: Heart of the Wyrm
   Id: c41bad8ea39c45f8bd6c1207e80d8cf0
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 4afb78bb947346749a0393dea37371f0, type: 3}
   VisualBase: {fileID: 11400000, guid: 502b36b4d92d4760904c95189795d469, type: 2}
   BaseAffixes:
   - Affix: 18

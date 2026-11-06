@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryLegsItem
   Name: Riposte Greaves
   Id: e930e3488a8249d59a93803d5e314e42
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: ab6e2f782c54428db1d2be8e5800ad30, type: 3}
   BaseAffixes:
   - Affix: 16
     RollRange:

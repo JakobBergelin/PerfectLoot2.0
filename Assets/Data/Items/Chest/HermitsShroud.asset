@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryChestItem
   Name: Hermit's Shroud
   Id: 3454a6db09bd40a33df34e3a6abb877f
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3991ff470fd84fa58f3ab7e9152086fc, type: 3}
   BaseAffixes:
   - Affix: 27
     RollRange:

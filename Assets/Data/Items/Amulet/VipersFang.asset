@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
   Name: Viper's Fang
   Id: 6133207e6c5c4d36bfa177ec419e44e7
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 45b530fa3a58458f930a2d5374888c2a, type: 3}
   BaseAffixes: []
   RollableAffixes: []
   LegendaryPower: {fileID: 11400000, guid: abacb5a4624e4e0cac44a1b0265593a1, type: 2}

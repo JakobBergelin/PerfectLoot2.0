@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryBeltItem
   Name: Girdle of Giants
   Id: 7fb339696af84064bf018e1cefcfcd47
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 994973906ba1471d939b3d56e2ceec49, type: 3}
   VisualBase: {fileID: 11400000, guid: 9f850d9dc03e4038a43a8a53c66b14d2, type: 2}
   BaseAffixes:
   - Affix: 24

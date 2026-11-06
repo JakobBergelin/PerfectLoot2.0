@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryAmuletItem
   Name: Eye of the Storm
   Id: 0c6a9d85175b47d5a0c10afcd1a481dd
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 222b74aa4ed3438886f84e174a293a8c, type: 3}
   VisualBase: {fileID: 11400000, guid: bb38cf422cbc488ba24cec7815e13980, type: 2}
   BaseAffixes:
   - Affix: 26

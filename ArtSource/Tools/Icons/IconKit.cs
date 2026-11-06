@@ -86,6 +86,49 @@ public static class G
         var p = New(); p.AddPolygon(pts.ToArray()); return p;
     }
 
+    /// <summary>Polygon with each corner rounded to about radius r: straight sides, soft corners.</summary>
+    public static GraphicsPath Round(float r, params float[] xy)
+    {
+        var pts = Pts(xy);
+        var p = New();
+        for (int i = 0; i < pts.Length; i++)
+        {
+            PointF a = pts[(i + pts.Length - 1) % pts.Length], b = pts[i], c = pts[(i + 1) % pts.Length];
+            PointF p1 = Toward(b, a, r), p2 = Toward(b, c, r);
+            p.AddBezier(p1, Mix(p1, b, .6f), Mix(p2, b, .6f), p2);
+        }
+        p.CloseFigure();
+        return p;
+    }
+
+    static PointF Toward(PointF from, PointF to, float distance)
+    {
+        float dx = to.X - from.X, dy = to.Y - from.Y, length = (float)Math.Sqrt(dx * dx + dy * dy);
+        float d = Math.Min(distance, length / 2) / length;
+        return new PointF(from.X + dx * d, from.Y + dy * d);
+    }
+
+    static PointF Mix(PointF a, PointF b, float t) { return new PointF(a.X + (b.X - a.X) * t, a.Y + (b.Y - a.Y) * t); }
+
+    /// <summary>An oval band, as a ring seen from above.</summary>
+    public static GraphicsPath EllRing(float x, float y, float rx, float ry, float thickness)
+    {
+        var p = new GraphicsPath(FillMode.Alternate);
+        p.AddEllipse(x - rx, y - ry, rx * 2, ry * 2);
+        p.AddEllipse(x - rx + thickness, y - ry + thickness * .7f, (rx - thickness) * 2, (ry - thickness * .7f) * 2);
+        return p;
+    }
+
+    /// <summary>The top half of an oval with a gently curved foot.</summary>
+    public static GraphicsPath Dome(float x, float y, float rx, float ry)
+    {
+        var p = New();
+        p.AddArc(x - rx, y - ry, rx * 2, ry * 2, 180, 180);
+        p.AddBezier(x + rx, y, x + rx * .5f, y + ry * .32f, x - rx * .5f, y + ry * .32f, x - rx, y);
+        p.CloseFigure();
+        return p;
+    }
+
     /// <summary>Closed smooth curve through the points.</summary>
     public static GraphicsPath Blob(params float[] xy)
     {
