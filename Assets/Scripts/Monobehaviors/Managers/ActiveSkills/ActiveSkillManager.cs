@@ -151,27 +151,32 @@ public class ActiveSkillManager : MonoBehaviour
         var buffer = entityManager.GetBuffer<Skill>(player);
         buffer.Clear();
         foreach (var (slotIndex, skill) in equipped)
-        {
-            buffer.Add(new Skill
-            {
-                Type = skill.Type,
-                SlotIndex = slotIndex,
-                BaseTags = skill.Tags,
-                Tags = skill.Tags,
-                State = new SkillState
-                {
-                    ResourceCost = skill.ResourceCost,
-                    ResourceCostPerSecond = skill.ResourceCostPerSecond,
-                    CooldownDuration = skill.Cooldown,
-                    HasEnoughResource = true
-                }
-            });
-        }
+            buffer.Add(ToSkill(slotIndex, skill));
+
+        // Its copy uses the skills above
+        foreach (var (_, skill) in equipped)
+            if (skill is MirrorImageSkill mirrorImage) mirrorImage.SetUpCopy(entityManager, player, equipped);
 
         _applied.Clear();
         foreach (var (_, skill) in equipped) _applied.Add(skill);
         _dirty = false;
     }
+
+    /// <summary>What goes in a unit's Skill buffer for this skill in this slot.</summary>
+    public static Skill ToSkill(int slotIndex, ActiveSkill skill) => new Skill
+    {
+        Type = skill.Type,
+        SlotIndex = slotIndex,
+        BaseTags = skill.Tags,
+        Tags = skill.Tags,
+        State = new SkillState
+        {
+            ResourceCost = skill.ResourceCost,
+            ResourceCostPerSecond = skill.ResourceCostPerSecond,
+            CooldownDuration = skill.Cooldown,
+            HasEnoughResource = true
+        }
+    };
 
     void MirrorState()
     {

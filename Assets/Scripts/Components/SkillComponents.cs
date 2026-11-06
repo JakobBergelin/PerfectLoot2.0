@@ -64,7 +64,7 @@ public enum SkillType
     Wolf,
     Wisp,
     RaiseThrall,
-
+    MirrorImage,
 }
 
 /// <summary>
@@ -380,6 +380,26 @@ public struct FireHydra : IComponentData, IEnableableComponent
 public struct FireHydraUnit : IComponentData
 {
     public float TimeRemaining;
+}
+
+public struct MirrorImage : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float ResourceCost;
+    public float Duration;      // Seconds a copy stays
+    public float SpawnDistance; // Meters in front of the caster
+    public UnityEngine.Color Tint;
+    public float Elapsed;       // Since the last cast, up to Cooldown
+    public Entity Prefab;       // The copy to summon, with the caster's attacks (MirrorImageSkill.SetUpCopy)
+}
+
+/// <summary>On a copy made by Mirror Image, which also has Companion. Goes away when TimeRemaining runs out (MirrorImageInputSystem).</summary>
+public struct MirrorImageUnit : IComponentData
+{
+    public float TimeRemaining;
+    public UnityEngine.Color Tint;
+    public bool Ending;         // Its keys are let go, it's removed next frame
+    public bool Tinted;         // MirrorImageTintSystem is done with it
 }
 
 /// <summary>

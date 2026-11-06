@@ -14,6 +14,7 @@ public struct NpcBehavior : IComponentData
     public float AttackRadius;
     public bool IsAttacking;
     public bool IsCasting;          // Telegraphing a skill: it stands still (EnemySkillCastSystem)
+    public bool IsAiming;           // Its skills turn it, not its walking (Mirror Image, BoidSystem)
     public int AttackCount;         // Goes up with every attack or skill going off, for its animation
     public float DesiredDistance;   // Ranged: the distance it keeps from its target. 0: walks up to AttackRadius
     public float DistanceTolerance;

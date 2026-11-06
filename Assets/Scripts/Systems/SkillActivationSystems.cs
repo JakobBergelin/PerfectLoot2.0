@@ -127,6 +127,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.FireHydra:
                 if (SystemAPI.HasComponent<FireHydra>(entity)) SystemAPI.SetComponentEnabled<FireHydra>(entity, enabled);
                 break;
+            case SkillType.MirrorImage:
+                if (SystemAPI.HasComponent<MirrorImage>(entity)) SystemAPI.SetComponentEnabled<MirrorImage>(entity, enabled);
+                break;
             case SkillType.StoneGuardian:
             case SkillType.Wolf:
             case SkillType.Wisp:

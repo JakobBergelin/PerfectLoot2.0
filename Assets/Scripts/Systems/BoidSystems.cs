@@ -123,7 +123,8 @@ public partial struct BoidSystem : ISystem
             }
 
             // Standing still while casting keeps the aim of the skill
-            if (SystemAPI.GetComponent<NpcBehavior>(entity).IsCasting)
+            var behavior = SystemAPI.GetComponent<NpcBehavior>(entity);
+            if (behavior.IsCasting)
             {
                 boid.Velocity = float3.zero;
                 continue;
@@ -157,7 +158,7 @@ public partial struct BoidSystem : ISystem
                 if (!chasing && !fleeing && flocks.TryGetValue(owner, out var flock))
                     desired += FlockPull(flock, position);
             }
-            transform.Rotation = math.slerp(transform.Rotation, quaternion.LookRotationSafe(facing, math.up()), math.saturate(TurnRate * deltaTime));
+            if (!behavior.IsAiming) transform.Rotation = math.slerp(transform.Rotation, quaternion.LookRotationSafe(facing, math.up()), math.saturate(TurnRate * deltaTime));
 
             desired += UnitSpatialGrid.Separation(grid, entity, position, steering.ValueRO.Radius, config.SeparationSpacing) * config.SeparationStrength(steering.ValueRO.BodyType);
 

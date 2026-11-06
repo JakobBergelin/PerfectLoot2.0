@@ -24,7 +24,7 @@ public partial class CharacterMovementSystem : SystemBase
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
-        foreach (var(movementSpeed, inputs, transform, velocity, entity) in SystemAPI.Query<RefRO<MovementSpeed>, RefRO<InputsData>, RefRW<LocalTransform>, RefRW<UnitMotion>>().WithEntityAccess())
+        foreach (var(movementSpeed, inputs, transform, velocity, entity) in SystemAPI.Query<RefRO<MovementSpeed>, RefRO<InputsData>, RefRW<LocalTransform>, RefRW<UnitMotion>>().WithNone<Companion>().WithEntityAccess())
         {
             float3 position = transform.ValueRO.Position;
             bool moving = false;

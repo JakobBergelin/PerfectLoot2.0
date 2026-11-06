@@ -1,10 +1,13 @@
 using System.Collections.Generic;
 using Enemies;
 using EnemySkills;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
 using Unity.Physics.Extensions;
+using Unity.Rendering;
+using Unity.Transforms;
 using static UnitEntitySetup;
 
 /// <summary>Adds what a companion needs to an entity: being on its owner's side and using skills, and for one that moves, its body and Boid.</summary>
@@ -71,5 +74,60 @@ public static class CompanionEntitySetup
         AddCombatComponents(entityManager, entity, baseStats);
         AddOrSet(entityManager, entity, new Steering { Radius = BodyRadius, BodyType = BodyType.Swarm });
         AddOrSet(entityManager, entity, new Boid { Settings = settings });
+    }
+
+    /// <summary>
+    /// Mirror Image's copy: moves like a companion and uses player skills (MirrorImageSkill adds them), with its owner's
+    /// stats. It has no health and isn't in the physics world, so nothing can target, hit or bump into it.
+    /// </summary>
+    public static void AddMirrorComponents(EntityManager entityManager, Entity entity, Entity owner, float sightRadius, BoidSettings settings)
+    {
+        AddGameplayComponents(entityManager, entity, owner, sightRadius, new List<EnemySkill>());
+        AddMovementComponents(entityManager, entity, default, settings);
+        AddOrSet(entityManager, entity, new MirrorImageUnit());
+        AddOrSet(entityManager, entity, new InputsData());
+        AddOrSet(entityManager, entity, new DesiredDirection());
+        AddOrSet(entityManager, entity, new Resource());
+        AddBuffer<ResourceChanger>(entityManager, entity);
+        AddBuffer<Skill>(entityManager, entity);
+
+        HideBars(entityManager, entity);
+        entityManager.RemoveComponent(entity, new ComponentTypeSet(new FixedList128Bytes<ComponentType>
+        {
+            ComponentType.ReadWrite<Health>(),
+            ComponentType.ReadWrite<HealthRegeneration>(),
+            ComponentType.ReadWrite<FillHealthAndResource>(),
+            ComponentType.ReadWrite<HealthBarUI>(),
+            ComponentType.ReadWrite<ResourceBarUI>(),
+            ComponentType.ReadWrite<PhysicsWorldIndex>(),
+        }));
+    }
+
+    // Everything drawn below the health and resource bars
+    static void HideBars(EntityManager entityManager, Entity entity)
+    {
+        var bars = new NativeList<Entity>(Allocator.Temp);
+        if (entityManager.HasComponent<HealthBarUI>(entity))
+        {
+            var health = entityManager.GetComponentData<HealthBarUI>(entity);
+            bars.Add(health.PivotEntity);
+            bars.Add(health.StickEntity);
+        }
+        if (entityManager.HasComponent<ResourceBarUI>(entity))
+        {
+            var resource = entityManager.GetComponentData<ResourceBarUI>(entity);
+            bars.Add(resource.PivotEntity);
+            bars.Add(resource.StickEntity);
+        }
+
+        using var group = entityManager.GetBuffer<LinkedEntityGroup>(entity).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);
+        foreach (var member in group)
+        {
+            if (!entityManager.HasComponent<MaterialMeshInfo>(member)) continue;
+            var part = member;
+            while (part != Entity.Null && !bars.Contains(part))
+                part = entityManager.HasComponent<Parent>(part) ? entityManager.GetComponentData<Parent>(part).Value : Entity.Null;
+            if (part != Entity.Null) entityManager.AddComponent<DisableRendering>(member);
+        }
     }
 }
