@@ -25,3 +25,6 @@ The stream stopped early on a usage budget, so priorities 3 to 5 were not starte
 
 - `VfxManager.Spawn` allocates one `Active` object per effect (`VfxManager.cs`, Low, performance). Status puffs add up to 50 spawns per 0.4 s at the cap, so pooling `Active` would be a cheap win.
 - Before this stream, a rebuild would have dropped SoulOrb and QuarryMark from the library, since the builder did not create them and replaces `Entries`. They were hand-added entries pointing at the fireball and bolt prefabs. Fixed by building real prefabs.
+
+## VFX builder adds a second VfxManager to scenes
+`Tools/VFX/Build Skill Effects` adds a scene `VfxManager` to SampleScene and HauntedCathedral, although `GameRig.prefab` already has one. The coordinator discarded those scene changes on this branch. Running the tool again brings them back, so the builder should stop adding it.
