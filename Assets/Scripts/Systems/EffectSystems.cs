@@ -347,6 +347,16 @@ public partial struct EffectDisplaySystem : ISystem
             }
             display.Add(entry);
         }
+        if (SystemAPI.HasBuffer<StolenPassive>(entity) && !SystemAPI.GetBuffer<StolenPassive>(entity).IsEmpty)
+        {
+            var entry = new EffectDisplay { Type = EffectType.StolenSouls };
+            foreach (var stolen in SystemAPI.GetBuffer<StolenPassive>(entity))
+            {
+                entry.Stacks++;
+                if (stolen.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = stolen.TimeRemaining; entry.Duration = stolen.Duration; }
+            }
+            display.Add(entry);
+        }
         if (SystemAPI.HasBuffer<DelayedDamage>(entity) && !SystemAPI.GetBuffer<DelayedDamage>(entity).IsEmpty)
         {
             var entry = new EffectDisplay { Type = EffectType.DelayedDamage, Stacks = 1 };

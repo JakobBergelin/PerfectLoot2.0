@@ -23,7 +23,7 @@ public struct VfxHitWatch : IComponentData
 
 /// <summary>
 /// Gives skill entities their look through VfxManager without the skill systems knowing: fireballs, barrage bolts and
-/// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; Fists of
+/// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
 /// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects).
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
@@ -31,7 +31,7 @@ public struct VfxHitWatch : IComponentData
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class VfxSystem : SystemBase
 {
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _bound, _gone, _unwatched;
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _bound, _gone, _unwatched;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
     readonly Dictionary<Entity, int> _dashes = new Dictionary<Entity, int>();
     readonly List<Entity> _stale = new List<Entity>();
@@ -41,6 +41,7 @@ public partial class VfxSystem : SystemBase
         _newProjectiles = SystemAPI.QueryBuilder().WithAll<Projectile, LocalTransform>().WithNone<VfxBinding, PeriodicAttack>().Build();
         _newPeriodic = SystemAPI.QueryBuilder().WithAll<PeriodicAttack, LocalTransform>().WithNone<VfxBinding>().Build();
         _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxBinding, Projectile>().Build();
+        _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
         _bound = SystemAPI.QueryBuilder().WithAll<VfxBinding, LocalTransform>().Build();
         _gone = SystemAPI.QueryBuilder().WithAll<VfxBinding>().WithNone<LocalTransform>().Build();
         _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
@@ -70,6 +71,9 @@ public partial class VfxSystem : SystemBase
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     bindings.Add((e, tornado ? Bind(vfx, VfxType.Tornado, VfxType.TornadoEnd, t) : default));
                 }
+            using (var entities = _newSouls.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                    bindings.Add((e, Bind(vfx, VfxType.SoulOrb, VfxType.None, EntityManager.GetComponentData<LocalTransform>(e))));
             using (var entities = _newAttacks.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {

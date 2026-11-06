@@ -32,6 +32,7 @@ public enum EffectType
     FesteringHorde,
     ThrallMark,
     DelayedDamage,
+    StolenSouls,
 }
 
 public enum EffectKind

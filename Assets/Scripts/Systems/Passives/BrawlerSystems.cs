@@ -4,7 +4,7 @@ using Unity.Mathematics;
 using Unity.Transforms;
 
 /// <summary>
-/// Brawler: main hits of the wearer on enemies within Radius of it deal DamageBonus more, whatever the skill. Measured
+/// Brawler: main hits of the wearer on units within Radius of it deal DamageBonus more, whatever the skill. Measured
 /// flat, between working out the damage and dealing it.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
@@ -22,7 +22,7 @@ public partial struct BrawlerSystem : ISystem
         var brawlers = SystemAPI.GetComponentLookup<Brawler>(true);
         var transforms = SystemAPI.GetComponentLookup<LocalTransform>(true);
 
-        foreach (var (taken, entity) in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>().WithAll<Enemy>().WithEntityAccess())
+        foreach (var (taken, entity) in SystemAPI.Query<DynamicBuffer<CalculatedDamageInstance>>().WithAll<LocalTransform>().WithEntityAccess())
         {
             for (int i = 0; i < taken.Length; i++)
             {

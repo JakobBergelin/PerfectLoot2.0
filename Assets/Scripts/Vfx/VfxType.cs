@@ -15,4 +15,5 @@ public enum VfxType
     UnitHit = 11,
     UnitDeath = 12,
     UndeadDeath = 13,
+    SoulOrb = 14,
 }
