@@ -26,13 +26,18 @@ public struct VfxHitWatch : IComponentData
 /// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
 /// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects). A marker
-/// hovers over each Quarry wearer's target.
+/// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class VfxSystem : SystemBase
 {
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _bound, _gone, _unwatched;
+    const float StatusInterval = 0.4f;
+    const int StatusCap = 10;   // Per status and interval, so swarms stay cheap
+
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _bound, _gone, _unwatched, _charged;
+    (EntityQuery Query, VfxType Effect)[] _statuses;
+    double _nextStatus;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
     readonly Dictionary<Entity, int> _dashes = new Dictionary<Entity, int>();
     readonly Dictionary<Entity, int> _quarryMarks = new Dictionary<Entity, int>();
@@ -44,6 +49,15 @@ public partial class VfxSystem : SystemBase
         _newPeriodic = SystemAPI.QueryBuilder().WithAll<PeriodicAttack, LocalTransform>().WithNone<VfxBinding>().Build();
         _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxBinding, Projectile>().Build();
         _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
+        _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
+        _statuses = new[]
+        {
+            (SystemAPI.QueryBuilder().WithAll<Burning, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusBurn),
+            (SystemAPI.QueryBuilder().WithAll<Poisoned, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusPoison),
+            (SystemAPI.QueryBuilder().WithAll<Chilled, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusChill),
+            (SystemAPI.QueryBuilder().WithAll<Bleeding, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusBleed),
+        };
         _bound = SystemAPI.QueryBuilder().WithAll<VfxBinding, LocalTransform>().Build();
         _gone = SystemAPI.QueryBuilder().WithAll<VfxBinding>().WithNone<LocalTransform>().Build();
         _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
@@ -62,27 +76,49 @@ public partial class VfxSystem : SystemBase
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     bool homing = EntityManager.HasComponent<HomingProjectile>(e);
                     bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
+                    bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
                     var (type, impact) = homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
-                        : fire ? (VfxType.FireballOrb, VfxType.FireballImpact) : (VfxType.None, VfxType.None);
+                        : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
+                        : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
+                        : poison ? (VfxType.PoisonDart, VfxType.None) : (VfxType.None, VfxType.None);
                     bindings.Add((e, Bind(vfx, type, impact, t)));
                 }
             using (var entities = _newPeriodic.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
-                    bool tornado = EntityManager.GetComponentData<PeriodicAttack>(e).Skill == SkillType.Tornado;
+                    var attack = EntityManager.GetComponentData<PeriodicAttack>(e);
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    bindings.Add((e, tornado ? Bind(vfx, VfxType.Tornado, VfxType.TornadoEnd, t) : default));
+                    var binding = attack.Skill switch
+                    {
+                        SkillType.Tornado => Bind(vfx, VfxType.Tornado, VfxType.TornadoEnd, t),
+                        SkillType.FrozenOrb => Bind(vfx, VfxType.FrozenOrb, VfxType.None, t),
+                        SkillType.Flamethrower => Bind(vfx, VfxType.Flame, VfxType.None, t),
+                        SkillType.TeslaCoil => Bind(vfx, VfxType.TeslaField, VfxType.None, t),
+                        _ => default,
+                    };
+                    if (attack.Skill == SkillType.TeslaCoil) vfx.Scale(binding.Handle, attack.Radius);
+                    bindings.Add((e, binding));
                 }
             using (var entities = _newSouls.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                     bindings.Add((e, Bind(vfx, VfxType.SoulOrb, VfxType.None, EntityManager.GetComponentData<LocalTransform>(e))));
+            using (var entities = _newBodies.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var t = EntityManager.GetComponentData<LocalTransform>(e);
+                    bool field = EntityManager.HasComponent<TimezoneField>(e);
+                    var binding = Bind(vfx, field ? VfxType.TimezoneField : VfxType.FireHydra, VfxType.None, t);
+                    if (field) vfx.Scale(binding.Handle, EntityManager.GetComponentData<TimezoneField>(e).Radius);
+                    bindings.Add((e, binding));
+                }
             using (var entities = _newAttacks.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
                     // Single-frame lightning attacks are Fists of Thunder punches landing
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    if (EntityManager.GetComponentData<Attack>(e).Type == DamageType.Lightning)
-                        vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                    var damageType = EntityManager.GetComponentData<Attack>(e).Type;
+                    if (damageType == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                    else if (damageType == DamageType.Cold) vfx.Burst(VfxType.ColdNova, t.Position, Quaternion.identity);
                     bindings.Add((e, new VfxBinding { Position = t.Position, Rotation = quaternion.identity }));
                 }
         }
@@ -116,8 +152,35 @@ public partial class VfxSystem : SystemBase
             UpdatePlayerEffects(vfx);
             UpdateUnitEffects(vfx);
             UpdateQuarryMarks(vfx);
+            UpdateStatusEffects(vfx);
         }
     }
+
+    // One-shot puffs rather than an effect per unit: nothing to track, and the cap bounds the cost in a swarm
+    void UpdateStatusEffects(VfxManager vfx)
+    {
+        double now = SystemAPI.Time.ElapsedTime;
+        if (now < _nextStatus) return;
+        _nextStatus = now + StatusInterval;
+
+        foreach (var (query, effect) in _statuses)
+            using (var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp))
+                for (int i = 0; i < math.min(transforms.Length, StatusCap); i++)
+                    StatusPuff(vfx, effect, transforms[i]);
+
+        int puffs = 0;
+        using (var entities = _charged.ToEntityArray(Allocator.Temp))
+            foreach (var e in entities)
+            {
+                if (puffs == StatusCap) break;
+                if (EntityManager.GetBuffer<ChargedInstance>(e, true).Length == 0) continue;
+                StatusPuff(vfx, VfxType.StatusCharged, EntityManager.GetComponentData<LocalTransform>(e));
+                puffs++;
+            }
+    }
+
+    static void StatusPuff(VfxManager vfx, VfxType effect, LocalTransform t) =>
+        vfx.Burst(effect, (Vector3)t.Position + Vector3.up * 0.8f * t.Scale, Quaternion.identity);
 
     // Keyed by the wearer: the marker jumps to the next target, and goes with the passive or the wearer
     void UpdateQuarryMarks(VfxManager vfx)

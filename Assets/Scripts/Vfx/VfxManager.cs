@@ -58,6 +58,7 @@ public class VfxManager : MonoBehaviour
         var pool = _pools[type];
         var instance = pool.Count > 0 ? pool.Pop() : Create(type);
         instance.transform.SetPositionAndRotation(position, rotation);
+        instance.transform.localScale = Vector3.one;
         instance.gameObject.SetActive(true);
         instance.Begin();
         int handle = _nextHandle++;
@@ -79,6 +80,12 @@ public class VfxManager : MonoBehaviour
     {
         if (_active.TryGetValue(handle, out var active) && active.ReturnAt < 0f)
             active.Instance.transform.SetPositionAndRotation(position, rotation);
+    }
+
+    /// <summary>Sizes a following effect, such as a ground ring to its field's radius.</summary>
+    public void Scale(int handle, float scale)
+    {
+        if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = Vector3.one * scale;
     }
 
     /// <summary>Stops emitting; the effect returns to the pool once its particles have faded.</summary>
