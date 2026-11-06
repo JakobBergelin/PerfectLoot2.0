@@ -147,7 +147,7 @@ public static class HubLevelsCreator
             else Object.DestroyImmediate(root);
         }
 
-        layout.transform.position = Vector3.zero;
+        layout.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
         layout.Kind = AreaKind.Town;
         layout.Dungeon = null;
         layout.Width = width;
