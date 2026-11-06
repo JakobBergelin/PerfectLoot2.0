@@ -43,10 +43,10 @@ public static class SkillTooltip
         var resourceIcon = GameIcons.Affix(Affix.Resource);
         if (skill.ResourceCost > 0f)
             container.Add(Line(Reduced(new SkillLine().Icon(resourceIcon).Text("Cost: "), skill.ResourceCost,
-                                       stats is StatBlock s ? SkillUtil.Cost(skill.ResourceCost, s) : (float?)null, "")));
+                                       stats is StatBlock s ? SkillUtil.Cost(skill.ResourceCost, s, skill.Tags) : (float?)null, "")));
         if (skill.ResourceCostPerSecond > 0f)
             container.Add(Line(Reduced(new SkillLine().Icon(resourceIcon).Text("Cost: "), skill.ResourceCostPerSecond,
-                                       stats is StatBlock s ? SkillUtil.Cost(skill.ResourceCostPerSecond, s) : (float?)null, " per second")));
+                                       stats is StatBlock s ? SkillUtil.Cost(skill.ResourceCostPerSecond, s, skill.Tags) : (float?)null, " per second")));
         if (skill.Cooldown > 0f)
             container.Add(Line(Reduced(new SkillLine().Icon(GameIcons.Stat(StatIcon.Cooldown)).Text("Cooldown: "), skill.Cooldown,
                                        stats is StatBlock s ? skill.CooldownFor(s) : (float?)null, " s")));

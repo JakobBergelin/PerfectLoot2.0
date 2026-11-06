@@ -115,6 +115,13 @@ public class SkillUtil
     /// </summary>
     public static float Cost(float cost, in StatBlock stats) => cost * math.max(0f, 1f - stats.ResourceCostReduction);
 
+    /// <summary>Cost for a Channeled skill: also changed by the caster's ChannelCostChange (Crossfire).</summary>
+    public static float ChannelCost(float cost, in StatBlock stats) => Cost(cost, stats) * math.max(0f, 1f + stats.ChannelCostChange);
+
+    /// <summary>Cost or ChannelCost, going by the skill's tags.</summary>
+    public static float Cost(float cost, in StatBlock stats, SkillTags tags) =>
+        (tags & SkillTags.Channeled) != 0 ? ChannelCost(cost, stats) : Cost(cost, stats);
+
     /// <summary>
     /// Whether a one-off cost (from Cost) can be paid: enough resource, or a cost up to the caster's AlwaysAffordableCost
     /// (Bottomless), which empties what it has. Not for costs per second.

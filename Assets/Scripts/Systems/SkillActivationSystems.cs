@@ -55,8 +55,8 @@ public partial class SkillActivationSystem : SystemBase
                 skill.Tags = skill.BaseTags;
                 skill.State.IsPressed = IsHeld(inputs.ValueRO, skill.SlotIndex);
                 skill.State.IsActive = enabled;  // Skills with a longer-running effect (Dash, Teleport, Whirlwind) override this
-                skill.State.HasEnoughResource = SkillUtil.CanAfford(resource, SkillUtil.Cost(skill.State.ResourceCost, stats), calculatedStats)
-                                             && resource >= SkillUtil.Cost(skill.State.ResourceCostPerSecond, stats) * deltaTime;
+                skill.State.HasEnoughResource = SkillUtil.CanAfford(resource, SkillUtil.Cost(skill.State.ResourceCost, stats, skill.Tags), calculatedStats)
+                                             && resource >= SkillUtil.Cost(skill.State.ResourceCostPerSecond, stats, skill.Tags) * deltaTime;
             }
         }
     }

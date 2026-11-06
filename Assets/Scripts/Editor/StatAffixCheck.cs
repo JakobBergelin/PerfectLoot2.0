@@ -14,7 +14,7 @@ using UnityEngine;
 static class StatAffixCheck
 {
     // StatBlock fields that deliberately have no Affix
-    static readonly string[] Excluded = { nameof(StatBlock.WeaponCooldown) };
+    static readonly string[] Excluded = { nameof(StatBlock.WeaponCooldown), nameof(StatBlock.ChannelCostChange) };
 
     static StatAffixCheck()
     {

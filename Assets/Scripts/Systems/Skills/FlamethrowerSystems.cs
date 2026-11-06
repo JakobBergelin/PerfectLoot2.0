@@ -8,10 +8,13 @@ using UnityEngine;
 /// Flamethrower while held: turns the unit toward the cursor, pays the start cost once, then drains resource and sprays
 /// flames in a cone. Each flame is a ground-following projectile with a fire PeriodicAttack that grows (GrowingFlameSystem)
 /// until its lifetime runs out; walls put it out, enemies don't. While spraying the unit is Channeling, turns only toward
-/// the cursor (DisableTurning) and is slowed (FlamethrowerSlowSystem). Casts requested by effects are ignored.
+/// the cursor (DisableTurning) and is slowed (FlamethrowerSlowSystem). Casts requested by effects are ignored. After
+/// WhirlwindSystem: that system takes Channeling and DisableTurning off whenever it isn't spinning, so they're added back
+/// here every frame.
 /// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(SkillSystemGroup))]
+[UpdateAfter(typeof(WhirlwindSystem))]
 public partial class FlamethrowerSystem : SystemBase
 {
     const float MaxAimAngle = 30f;      // Degrees off the cursor the unit may still be turned and spray
@@ -44,8 +47,8 @@ public partial class FlamethrowerSystem : SystemBase
             bool held = SystemAPI.IsComponentEnabled<Flamethrower>(entity);
 
             // Starting costs the start cost on top of the first frame's drain; continuing only the drain
-            float drain = SkillUtil.Cost(f.ResourceCostPerSecond, statBlock) * deltaTime;
-            float startCost = f.Spraying ? 0f : SkillUtil.Cost(f.ResourceCost, statBlock);
+            float drain = SkillUtil.ChannelCost(f.ResourceCostPerSecond, statBlock) * deltaTime;
+            float startCost = f.Spraying ? 0f : SkillUtil.ChannelCost(f.ResourceCost, statBlock);
             float needed = drain + startCost;
             // The drain needs real resource; the start cost may be one Bottomless covers
             float available = resource.ValueRO.CurrentValue;
@@ -55,12 +58,7 @@ public partial class FlamethrowerSystem : SystemBase
             {
                 f.Spraying = spraying;
                 f.Elapsed = 0f;
-                if (spraying)
-                {
-                    commandBuffer.AddComponent<Channeling>(entity);
-                    commandBuffer.AddComponent<DisableTurning>(entity);
-                }
-                else
+                if (!spraying)
                 {
                     commandBuffer.RemoveComponent<Channeling>(entity);
                     commandBuffer.RemoveComponent<DisableTurning>(entity);
@@ -68,6 +66,8 @@ public partial class FlamethrowerSystem : SystemBase
             }
             if (!spraying) continue;
 
+            commandBuffer.AddComponent<Channeling>(entity);
+            commandBuffer.AddComponent<DisableTurning>(entity);
             resourceChanges.Add(new ResourceChanger{Value = -needed});
 
             localTransform.ValueRW.Rotation = Quaternion.RotateTowards(localTransform.ValueRO.Rotation, desiredDirection.ValueRO.Quaternion, movementConfig.RotationSpeed * deltaTime);
@@ -87,7 +87,7 @@ public partial class FlamethrowerSystem : SystemBase
     }
 
     /// <summary>One flame toward direction, turned up to Spread to either side. The AoE stat scales its size.</summary>
-    static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in Flamethrower flamethrower, in StatBlock stats, float3 casterPosition, float3 direction, ref Unity.Mathematics.Random random)
+    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in Flamethrower flamethrower, in StatBlock stats, float3 casterPosition, float3 direction, ref Unity.Mathematics.Random random)
     {
         var newEntity = commandBuffer.CreateEntity();
 

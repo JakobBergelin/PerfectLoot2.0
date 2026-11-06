@@ -37,7 +37,7 @@ public partial struct TeslaCoilSystem : ISystem
             {
                 float cooldown = SkillUtil.Cooldown(c.Cooldown, statBlock);
                 c.Elapsed = math.min(c.Elapsed + deltaTime, cooldown);
-                if (!held || c.Elapsed < cooldown || available < SkillUtil.Cost(c.ResourceCostPerSecond, statBlock) * deltaTime) continue;
+                if (!held || c.Elapsed < cooldown || available < SkillUtil.ChannelCost(c.ResourceCostPerSecond, statBlock) * deltaTime) continue;
 
                 c.Channeling = true;
                 c.ChannelTime = 0f;
@@ -45,7 +45,7 @@ public partial struct TeslaCoilSystem : ISystem
                 if (SystemAPI.HasBuffer<Skill>(entity)) SkillUtil.MarkUsed(SystemAPI.GetBuffer<Skill>(entity), SkillType.TeslaCoil);
             }
 
-            float drain = SkillUtil.Cost(c.ResourceCostPerSecond + c.ResourceCostIncrease * c.ChannelTime, statBlock) * deltaTime;
+            float drain = SkillUtil.ChannelCost(c.ResourceCostPerSecond + c.ResourceCostIncrease * c.ChannelTime, statBlock) * deltaTime;
             if (!held || available < drain)
             {
                 // TeslaCoilFieldSystem removes the field
