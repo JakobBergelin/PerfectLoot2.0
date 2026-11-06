@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Wolf
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.WolfSkill
   Name: Wolf
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b66fb373b8094bb882ca447cfc559613, type: 3}
   Description: Summons a fast Wolf that roams around you. Allies near it have +10% critical chance. The cooldown starts when it dies.
   Tags: 18432
   cooldown: 20

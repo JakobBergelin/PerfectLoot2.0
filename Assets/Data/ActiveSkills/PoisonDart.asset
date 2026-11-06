@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PoisonDart
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.PoisonDartSkill
   Name: Poison Dart
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 4db4d4cb317c4749b5c8f0b50d72a873, type: 3}
   Description: Throw a dart that marks the enemy it hits. A marked enemy explodes in poison when it dies.
   Tags: 577
   AttackSpeed: 0.5

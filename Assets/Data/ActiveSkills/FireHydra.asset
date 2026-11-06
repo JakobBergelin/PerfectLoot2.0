@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FireHydra
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.FireHydraSkill
   Name: Fire Hydra
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: a00d39f1646f4cb189c93417c594b574, type: 3}
   Description: Places a Hydra that shoots fireballs at nearby enemies. Casting it again replaces the Hydra.
   Tags: 16576
   cooldown: 1

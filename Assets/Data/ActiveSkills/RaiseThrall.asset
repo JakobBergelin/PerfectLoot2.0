@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RaiseThrall
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.RaiseThrallSkill
   Name: Raise Thrall
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 403fa5a222f94eacb0f5b411fd56e810, type: 3}
   Description: Toggle. While on you have -20% critical chance, and enemies you or your companions hit are marked. A marked enemy that dies rises as your Thrall, up to 5. The oldest dies when a new one rises.
   Tags: 16384
   CriticalChancePenalty: 0.2

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Bloodrush
   m_EditorClassIdentifier: Assembly-CSharp::Passives.BloodrushPassive
   Name: Bloodrush
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b9b3223a6c9241478fa6438d1bebb488, type: 3}
   Description: Every enemy death gives +3% attack speed for 4 seconds, stacking up to 10 times.
   AttackSpeedPerStack: 0.03
   MaxStacks: 10

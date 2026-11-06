@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: StoneGuardian
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.StoneGuardianSkill
   Name: Stone Guardian
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b12c9fbebceb437084752eb475ccaf83, type: 3}
   Description: Summons a Guardian that walks ahead of you and draws enemies to itself. The cooldown starts when it dies.
   Tags: 20480
   cooldown: 20

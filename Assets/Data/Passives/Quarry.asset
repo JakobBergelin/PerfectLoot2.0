@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Quarry
   m_EditorClassIdentifier: Assembly-CSharp::Passives.QuarryPassive
   Name: Quarry
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 447fd31437be4bb28160eca0d056f6d2, type: 3}
   Description: A random nearby enemy is your target. Other enemies take 30% less damage from you. When your target dies you regain 20% of your resource.
   Radius: 15
   DamagePenalty: 0.3

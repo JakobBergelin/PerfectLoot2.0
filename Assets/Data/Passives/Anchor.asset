@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Anchor
   m_EditorClassIdentifier: Assembly-CSharp::Passives.AnchorPassive
   Name: Anchor
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 4f0e35edc0ac42f9b0172fa2be06639a, type: 3}
   Description: Every second you stand still gives +2 armor, up to 10 times. Moving removes it all.
   ArmorPerStack: 2
   MaxStacks: 10

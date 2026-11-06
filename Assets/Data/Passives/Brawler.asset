@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Brawler
   m_EditorClassIdentifier: Assembly-CSharp::Passives.BrawlerPassive
   Name: Brawler
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 67c1fde9226e4ef8891b14da86732120, type: 3}
   Description: Enemies within 4 m of you take +20% damage from your hits.
   DamageBonus: 0.2
   Radius: 4

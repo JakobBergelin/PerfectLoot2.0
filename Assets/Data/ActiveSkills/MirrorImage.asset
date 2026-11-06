@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MirrorImage
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MirrorImageSkill
   Name: Mirror Image
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 875cb76c2aec4e569f8a3725b8975287, type: 3}
   Description: Summons a dark copy of you for 10 seconds that uses your attacks where it stands. It can't be targeted.
   Tags: 16416
   cooldown: 80

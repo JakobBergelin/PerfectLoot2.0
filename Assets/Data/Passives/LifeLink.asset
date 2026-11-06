@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: LifeLink
   m_EditorClassIdentifier: Assembly-CSharp::Passives.LifeLinkPassive
   Name: Life Link
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 388b0fb4b5f14bbb89cbae5b4ae2a5b7, type: 3}
   Description: Links to the player with the lowest Health, who also gets the wearer's Health regeneration and every heal it receives.
   PlayerSelectable: 0
   Range: 30

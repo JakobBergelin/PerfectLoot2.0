@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Meditation
   m_EditorClassIdentifier: Assembly-CSharp::Passives.MeditationPassive
   Name: Meditation
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: a595b06912c947bdb743a4cfcb426cf8, type: 3}
   Description: While channeling you take 20% less damage and gain +2 health regeneration.
   DamageReduction: 0.2
   HealthRegeneration: 2

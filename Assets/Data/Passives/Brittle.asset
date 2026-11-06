@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Brittle
   m_EditorClassIdentifier: Assembly-CSharp::Passives.BrittlePassive
   Name: Brittle
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 09da3b07b30147689c977f9ffe1afb89, type: 3}
   Description: Frozen enemies take +30% damage from you, damage over time included.
   DamageBonus: 0.3

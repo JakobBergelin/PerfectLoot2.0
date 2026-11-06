@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TeslaCoil
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TeslaCoilSkill
   Name: Tesla Coil
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: a246431a1735436c8cbb31462acf300c, type: 3}
   Description: Root yourself and charge the air around you. Enemies inside take lightning damage and enemy projectiles can't get in, but the cost climbs for every second you hold it.
   Tags: 70760
   cooldown: 10

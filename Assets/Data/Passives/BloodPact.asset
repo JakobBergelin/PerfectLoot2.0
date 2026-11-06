@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: BloodPact
   m_EditorClassIdentifier: Assembly-CSharp::Passives.BloodPactPassive
   Name: Blood Pact
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 18f9a75fa660477b8b6f8d25525d2e3d, type: 3}
   Description: Your companions' hits use your Life on Hit and Resource on Hit.
