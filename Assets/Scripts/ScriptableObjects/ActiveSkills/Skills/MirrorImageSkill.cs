@@ -70,6 +70,7 @@ namespace ActiveSkills
             mirror.Prefab = CreatePrefab(entityManager);
             entityManager.SetComponentData(owner, mirror);
             CompanionEntitySetup.AddMirrorComponents(entityManager, mirror.Prefab, owner, SightRadius, Movement);
+            UnitEntitySetup.AddOrSet(entityManager, mirror.Prefab, new UnitInfo { Source = this });
 
             var attacks = equipped.FindAll(e => (e.Skill.Tags & NotCopied) == 0);
             foreach (var (_, skill) in attacks)

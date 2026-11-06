@@ -133,7 +133,7 @@ public partial struct HookshotSlashSystem : ISystem
         float weaponDamage = stats.WeaponDamage + random.NextFloat(-stats.WeaponDamageRange, stats.WeaponDamageRange);
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = math.max(0f, weaponDamage * hookshot.WeaponDamageMultiplier), Type = DamageType.Physical,
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.HookshotSlash, Damage = math.max(0f, weaponDamage * hookshot.WeaponDamageMultiplier), Type = DamageType.Physical,
             DamageHierarchy = DamageHierarchy.Main, Radius = hookshot.Radius, HitForce = hookshot.HitForce, GracePeriod = 2f});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});

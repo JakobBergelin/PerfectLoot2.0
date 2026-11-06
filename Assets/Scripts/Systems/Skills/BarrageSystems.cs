@@ -59,7 +59,7 @@ public partial class BarrageSystem : SystemBase
 
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + new float3(0, 1, 0), Rotation = quaternion.identity, Scale = 0.5f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = new float3(0,1,0), Speed = barrage.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = barrage.Damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = barrage.Radius});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.Barrage, Damage = barrage.Damage, Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = barrage.Radius});
         commandBuffer.AddComponent(newEntity, new HomingProjectile{TurnSpeed = barrage.HomingTurnSpeed, TurnAcceleration = barrage.HomingTurnAcceleration, HomingType = HomingType.Strongest});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});

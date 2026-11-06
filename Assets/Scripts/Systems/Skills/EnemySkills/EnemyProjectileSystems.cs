@@ -33,19 +33,19 @@ public partial struct EnemyProjectileSystem : ISystem
             foreach (var fire in fires)
             {
                 if (fire.Type == EnemySkillType.Projectile)
-                    Spawn(commandBuffer, source, targetType, projectile.ValueRO, transform.ValueRO.Position + fire.Direction, fire.Direction, critBonus);
+                    Spawn(commandBuffer, entity, source, targetType, projectile.ValueRO, transform.ValueRO.Position + fire.Direction, fire.Direction, critBonus);
             }
         }
     }
 
-    static void Spawn(EntityCommandBuffer commandBuffer, Entity source, TargetType targetType, in EnemyProjectile skill, float3 position, float3 direction, float criticalChanceBonus)
+    static void Spawn(EntityCommandBuffer commandBuffer, Entity unit, Entity source, TargetType targetType, in EnemyProjectile skill, float3 position, float3 direction, float criticalChanceBonus)
     {
         var newEntity = commandBuffer.CreateEntity();
 
         commandBuffer.AddComponent(newEntity, new LocalTransform { Position = position, Rotation = quaternion.identity, Scale = 0.5f });
         commandBuffer.AddComponent(newEntity, new Projectile { Direction = direction, Speed = skill.ProjectileSpeed, DestroyOnHit = true, FollowGround = true });
         commandBuffer.AddComponent(newEntity, new ProjectileRange { MaxDistance = skill.MaxDistance, LastPosition = position });
-        commandBuffer.AddComponent(newEntity, new Attack { Damage = skill.Damage, Type = skill.Type, DamageHierarchy = DamageHierarchy.Main, Radius = skill.Radius, HitForce = skill.HitForce, CriticalChanceBonus = criticalChanceBonus });
+        commandBuffer.AddComponent(newEntity, new Attack { Origin = new DamageOrigin { Unit = unit }, Damage = skill.Damage, Type = skill.Type, DamageHierarchy = DamageHierarchy.Main, Radius = skill.Radius, HitForce = skill.HitForce, CriticalChanceBonus = criticalChanceBonus });
         commandBuffer.AddComponent(newEntity, new Source { Entity = source });
         commandBuffer.AddComponent(newEntity, new AttackTarget { TargetType = targetType });
         commandBuffer.AddComponent(newEntity, new InitializeFromSource { });

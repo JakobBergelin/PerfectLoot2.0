@@ -81,7 +81,7 @@ public partial class FrozenOrbSystem : SystemBase
         float startAngle = math.degrees(math.atan2(direction.x, direction.z));
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + direction, Rotation = quaternion.RotateY(math.radians(startAngle)), Scale = 1f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = direction, Speed = orb.Speed, DestroyOnHit = false, FollowGround = true});
-        commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = orb.DamagePerSecond, Type = DamageType.Cold, Radius = orb.Radius, TimeRemaining = orb.Lifetime, Skill = SkillType.FrozenOrb, TickRate = orb.TickRate});
+        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.FrozenOrb, DamagePerSecond = orb.DamagePerSecond, Type = DamageType.Cold, Radius = orb.Radius, TimeRemaining = orb.Lifetime, Skill = SkillType.FrozenOrb, TickRate = orb.TickRate});
         commandBuffer.AddComponent(newEntity, new FrozenOrbProjectile
         {
             SpinSpeed = orb.SpinSpeed, SpinAngle = startAngle, ShardInterval = orb.ShardInterval,
@@ -128,8 +128,8 @@ public partial struct FrozenOrbSpinSystem : ISystem
             var front = math.rotate(rotation, new float3(0f, 0f, 1f));
             float edge = transform.ValueRO.Scale * 0.5f;
             var center = transform.ValueRO.Position;
-            IceShard.Spawn(commandBuffer, source.ValueRO.Entity, o.ShardDamage, o.ShardSpeed, o.ShardRadius, o.ShardRange, center + front * edge, front);
-            IceShard.Spawn(commandBuffer, source.ValueRO.Entity, o.ShardDamage, o.ShardSpeed, o.ShardRadius, o.ShardRange, center - front * edge, -front);
+            IceShard.Spawn(commandBuffer, source.ValueRO.Entity, o.ShardDamage, o.ShardSpeed, o.ShardRadius, o.ShardRange, center + front * edge, front, DamageLabel.FrozenOrb);
+            IceShard.Spawn(commandBuffer, source.ValueRO.Entity, o.ShardDamage, o.ShardSpeed, o.ShardRadius, o.ShardRange, center - front * edge, -front, DamageLabel.FrozenOrb);
         }
     }
 }

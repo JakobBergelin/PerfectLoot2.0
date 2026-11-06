@@ -39,7 +39,7 @@ public partial class LuminositySystem : SystemBase
                         var newEntity = commandBuffer.CreateEntity();
 
                         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
-                        commandBuffer.AddComponent(newEntity, new Heal{Value = luminosity.HealValue, Type = TargetType.Player, Radius = luminosity.HealRadius});
+                        commandBuffer.AddComponent(newEntity, new Heal{Label = DamageLabel.Luminosity, Value = luminosity.HealValue, Type = TargetType.Player, Radius = luminosity.HealRadius});
                         commandBuffer.AddComponent(newEntity, new Source{Entity = instance.Source});
                         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
                         // single frame heal

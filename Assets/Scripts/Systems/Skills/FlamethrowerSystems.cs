@@ -100,7 +100,7 @@ public partial class FlamethrowerSystem : SystemBase
         float endRadius = flamethrower.EndRadius * size;
 
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + direction * SpawnDistance, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = flamethrower.DamagePerSecond, Type = DamageType.Fire, Radius = startRadius, TimeRemaining = flamethrower.Lifetime,
+        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.Flamethrower, DamagePerSecond = flamethrower.DamagePerSecond, Type = DamageType.Fire, Radius = startRadius, TimeRemaining = flamethrower.Lifetime,
             Skill = SkillType.Flamethrower, TickRate = flamethrower.TickRate, HitForce = flamethrower.HitForce});
         commandBuffer.AddComponent(newEntity, new GrowingFlame{StartRadius = startRadius, EndRadius = endRadius, Lifetime = flamethrower.Lifetime});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});

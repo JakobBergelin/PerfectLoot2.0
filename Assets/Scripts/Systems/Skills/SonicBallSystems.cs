@@ -129,7 +129,7 @@ public partial struct SonicBallSystem : ISystem
         float damage = SkillUtil.CooldownDamage((stats.Value.Armor + ball.ArmorBonus) * ball.ArmorDamageMultiplier, ball.Cooldown, stats);
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = math.max(0f, damage), Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = ball.Radius, HitForce = ball.HitForce});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.SonicBall, Damage = math.max(0f, damage), Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = ball.Radius, HitForce = ball.HitForce});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

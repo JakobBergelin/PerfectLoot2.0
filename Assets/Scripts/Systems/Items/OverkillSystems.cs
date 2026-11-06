@@ -79,7 +79,7 @@ public partial struct OverkillSystem : ISystem
 
             damageBuffers[nearest].Add(new DamageInstance
             {
-                Damage = spare, Type = lastHit.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Source = source, IsCenterTarget = true,
+                Damage = spare, Type = lastHit.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.Overkill, Source = source, IsCenterTarget = true,
                 HitDirection = AttackSystem.HitDirection(position, transforms[nearest].Position, ref random),
             });
         }

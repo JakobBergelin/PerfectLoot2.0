@@ -1,0 +1,141 @@
+/* Variables and font on the meter's own root so everything inherits them */
+.damage-meter-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --panel-bg: rgba(20, 22, 28, 0.9);
+    --panel-border: #3A3F4B;
+    --bar-color: rgba(224, 160, 32, 0.35);
+    --selected-color: #E0A020;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.damage-meter {
+    position: absolute;
+    right: 16px;
+    bottom: 16px;
+    width: 340px;
+    background-color: var(--panel-bg);
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 6px;
+}
+
+.damage-meter__header {
+    flex-direction: row;
+    align-items: center;
+    padding: 4px 6px 4px 10px;
+}
+
+.damage-meter__title {
+    flex-grow: 1;
+    color: var(--text-color);
+    font-size: 14px;
+    -unity-font-style: bold;
+}
+
+.damage-meter__toggle {
+    width: 24px;
+    height: 22px;
+    margin: 0;
+    padding: 0;
+    color: var(--text-color);
+    background-color: rgba(255, 255, 255, 0.08);
+    border-width: 0;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.damage-meter__body--hidden {
+    display: none;
+}
+
+.damage-meter__tabs {
+    flex-direction: row;
+    padding: 0 6px;
+}
+
+.damage-meter__tab {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 24px;
+    margin: 0 2px 0 0;
+    padding: 0;
+    color: var(--text-muted);
+    background-color: rgba(255, 255, 255, 0.05);
+    border-width: 0;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.damage-meter__tab--selected {
+    color: var(--text-color);
+    border-bottom-width: 2px;
+    border-color: var(--selected-color);
+}
+
+.damage-meter__columns {
+    flex-direction: row;
+    align-items: center;
+    padding: 6px 12px 2px 8px;
+}
+
+.damage-meter__view {
+    flex-grow: 1;
+    height: 20px;
+    margin: 0;
+    padding: 0 4px;
+    color: var(--selected-color);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+    font-size: 12px;
+    -unity-text-align: middle-left;
+}
+
+.damage-meter__rows {
+    max-height: 240px;
+    margin: 0 6px 6px 6px;
+}
+
+.damage-meter__row {
+    flex-direction: row;
+    align-items: center;
+    height: 22px;
+    padding: 0 6px;
+    margin-bottom: 2px;
+}
+
+.damage-meter__bar {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: var(--bar-color);
+    border-radius: 3px;
+}
+
+.damage-meter__name {
+    flex-grow: 1;
+    flex-basis: 0;
+    overflow: hidden;
+    color: var(--text-color);
+    font-size: 13px;
+    -unity-text-overflow-position: end;
+    text-overflow: ellipsis;
+}
+
+.damage-meter__number {
+    width: 56px;
+    color: var(--text-color);
+    font-size: 13px;
+    -unity-text-align: middle-right;
+}
+
+.damage-meter__number--heading {
+    color: var(--text-muted);
+    font-size: 12px;
+}

@@ -70,7 +70,7 @@ public partial struct ShatterSystem : ISystem
                 for (int i = 0; i < count; i++)
                 {
                     var shardDirection = math.rotate(quaternion.RotateY(math.radians(firstAngle + i * shatter.SpreadAngle)), direction);
-                    IceShard.Spawn(commandBuffer, wearer, shatter.Damage, shatter.ProjectileSpeed, shatter.Radius, shatter.Range, transform.ValueRO.Position + shardDirection * 0.5f, shardDirection);
+                    IceShard.Spawn(commandBuffer, wearer, shatter.Damage, shatter.ProjectileSpeed, shatter.Radius, shatter.Range, transform.ValueRO.Position + shardDirection * 0.5f, shardDirection, DamageLabel.Shatter);
                 }
             }
         }

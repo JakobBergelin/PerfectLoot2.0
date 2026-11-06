@@ -7,12 +7,12 @@ using UnityEngine;
 public static class EnemyMeleeUtil
 {
     /// <summary>One melee hit: a single-frame Attack with half of reach as its radius, that far in front of the unit.</summary>
-    public static Entity SpawnHit(EntityCommandBuffer commandBuffer, Entity source, TargetType targetType, float3 position, float3 direction, float reach, float damage, DamageType type, float hitForce, float criticalChanceBonus = 0f)
+    public static Entity SpawnHit(EntityCommandBuffer commandBuffer, Entity unit, Entity source, TargetType targetType, float3 position, float3 direction, float reach, float damage, DamageType type, float hitForce, float criticalChanceBonus = 0f)
     {
         var newEntity = commandBuffer.CreateEntity();
 
         commandBuffer.AddComponent(newEntity, new LocalTransform { Position = position + direction * reach / 2, Rotation = quaternion.identity, Scale = 1f });
-        commandBuffer.AddComponent(newEntity, new Attack { Damage = damage, Type = type, Radius = reach / 2, DamageHierarchy = DamageHierarchy.Main, HitForce = hitForce, CriticalChanceBonus = criticalChanceBonus });
+        commandBuffer.AddComponent(newEntity, new Attack { Origin = new DamageOrigin { Unit = unit }, Damage = damage, Type = type, Radius = reach / 2, DamageHierarchy = DamageHierarchy.Main, HitForce = hitForce, CriticalChanceBonus = criticalChanceBonus });
         commandBuffer.AddComponent(newEntity, new EnemyMeleeHit { });
         commandBuffer.AddComponent(newEntity, new Source { Entity = source });
         commandBuffer.AddComponent(newEntity, new AttackTarget { TargetType = targetType });
@@ -52,7 +52,7 @@ public partial struct EnemyMeleeSystem : ISystem
             foreach (var fire in fires)
             {
                 if (fire.Type != EnemySkillType.Melee) continue;
-                var hit = EnemyMeleeUtil.SpawnHit(commandBuffer, source, targetType, transform.ValueRO.Position, fire.Direction, melee.ValueRO.Reach, melee.ValueRO.Damage, melee.ValueRO.Type, melee.ValueRO.HitForce, critBonus);
+                var hit = EnemyMeleeUtil.SpawnHit(commandBuffer, entity, source, targetType, transform.ValueRO.Position, fire.Direction, melee.ValueRO.Reach, melee.ValueRO.Damage, melee.ValueRO.Type, melee.ValueRO.HitForce, critBonus);
                 if (isCompanion) commandBuffer.AddComponent(hit, new InitializeFromSource { });
             }
         }
@@ -103,7 +103,7 @@ public partial class EnemyMeleeAttackSystem : SystemBase
 
             if (enemyMeleeAttack.ValueRO.Elapsed >= enemyMeleeAttack.ValueRO.AttackSpeed && npcBehavior.ValueRO.IsAttacking)
             {
-                EnemyMeleeUtil.SpawnHit(commandBuffer, entity, TargetType.Player, localTransform.ValueRO.Position, npcBehavior.ValueRO.Direction, npcBehavior.ValueRO.AttackRadius, enemyMeleeAttack.ValueRO.Damage, DamageType.Physical, 0f);
+                EnemyMeleeUtil.SpawnHit(commandBuffer, entity, entity, TargetType.Player, localTransform.ValueRO.Position, npcBehavior.ValueRO.Direction, npcBehavior.ValueRO.AttackRadius, enemyMeleeAttack.ValueRO.Damage, DamageType.Physical, 0f);
                 enemyMeleeAttack.ValueRW.Elapsed = 0.0f;
                 npcBehavior.ValueRW.AttackCount++;
             }

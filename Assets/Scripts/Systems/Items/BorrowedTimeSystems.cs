@@ -70,13 +70,15 @@ public partial struct DelayedDamageSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
-        foreach (var (health, delayed) in SystemAPI.Query<RefRW<Health>, DynamicBuffer<DelayedDamage>>())
+        var meter = new DamageMeterRecorder(ref state, SystemAPI.GetSingleton<DamageMeter>());
+        foreach (var (health, delayed, entity) in SystemAPI.Query<RefRW<Health>, DynamicBuffer<DelayedDamage>>().WithEntityAccess())
         {
             for (int i = delayed.Length - 1; i >= 0; i--)
             {
                 ref var entry = ref delayed.ElementAt(i);
                 float time = math.min(deltaTime, entry.TimeRemaining);
                 health.ValueRW.CurrentValue -= entry.DamagePerSecond * time;
+                meter.Damage(entity, Entity.Null, DamageLabel.BorrowedTime, entry.DamagePerSecond * time);
                 entry.TimeRemaining -= time;
                 if (entry.TimeRemaining <= 0f) delayed.RemoveAt(i);
             }

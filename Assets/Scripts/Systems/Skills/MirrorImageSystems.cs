@@ -160,11 +160,18 @@ public partial struct MirrorImageSourceSystem : ISystem
     {
         var units = SystemAPI.GetComponentLookup<MirrorImageUnit>(true);
         var companions = SystemAPI.GetComponentLookup<Companion>(true);
+        var attacks = SystemAPI.GetComponentLookup<Attack>();
+        var periodicAttacks = SystemAPI.GetComponentLookup<PeriodicAttack>();
+        state.CompleteDependency();  // The lookups are used here on the main thread
 
-        foreach (var source in SystemAPI.Query<RefRW<Source>>().WithPresent<InitializeFromSource>().WithNone<ShieldProjectile, TeslaCoilField>())
+        foreach (var (source, entity) in SystemAPI.Query<RefRW<Source>>().WithPresent<InitializeFromSource>().WithNone<ShieldProjectile, TeslaCoilField>().WithEntityAccess())
         {
             var caster = source.ValueRO.Entity;
-            if (units.HasComponent(caster)) source.ValueRW.Entity = companions[caster].Owner;
+            if (!units.HasComponent(caster)) continue;
+
+            source.ValueRW.Entity = companions[caster].Owner;
+            if (attacks.HasComponent(entity)) attacks.GetRefRW(entity).ValueRW.Origin.Unit = caster;
+            if (periodicAttacks.HasComponent(entity)) periodicAttacks.GetRefRW(entity).ValueRW.Origin.Unit = caster;
         }
     }
 }

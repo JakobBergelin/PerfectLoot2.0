@@ -81,7 +81,7 @@ public partial struct TeslaCoilSystem : ISystem
     {
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = SkillUtil.CooldownDamage(coil.DamagePerSecond, coil.Cooldown, stats), Type = DamageType.Lightning, Radius = coil.Radius,
+        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.TeslaCoil, DamagePerSecond = SkillUtil.CooldownDamage(coil.DamagePerSecond, coil.Cooldown, stats), Type = DamageType.Lightning, Radius = coil.Radius,
             TimeRemaining = float.MaxValue, Skill = SkillType.TeslaCoil, TickRate = coil.TickRate});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});

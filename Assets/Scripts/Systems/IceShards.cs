@@ -8,14 +8,14 @@ using Unity.Transforms;
 /// </summary>
 public static class IceShard
 {
-    public static void Spawn(EntityCommandBuffer commandBuffer, Entity source, float damage, float speed, float radius, float range, float3 position, float3 direction)
+    public static void Spawn(EntityCommandBuffer commandBuffer, Entity source, float damage, float speed, float radius, float range, float3 position, float3 direction, DamageLabel label)
     {
         var newEntity = commandBuffer.CreateEntity();
 
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 0.5f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = direction, Speed = speed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0, FollowGround = true});
         commandBuffer.AddComponent(newEntity, new ProjectileRange{MaxDistance = range, LastPosition = position});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Cold, DamageHierarchy = DamageHierarchy.Main, Radius = radius});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = label, Damage = damage, Type = DamageType.Cold, DamageHierarchy = DamageHierarchy.Main, Radius = radius});
         commandBuffer.AddComponent(newEntity, new Source{Entity = source});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

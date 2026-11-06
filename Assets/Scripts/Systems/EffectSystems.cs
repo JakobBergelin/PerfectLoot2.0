@@ -170,7 +170,7 @@ public partial struct EffectDamageSystem : ISystem
             for (int i = bleeds.Length - 1; i >= 0; i--)
             {
                 float amount = health.ValueRO.CurrentValue * settings.BleedDamageHealthMultiplier * deltaTime;
-                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Physical, Hierarchy = DamageHierarchy.Sub, Source = bleeds[i].Source });
+                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Physical, Hierarchy = DamageHierarchy.Sub, Origin = DamageLabel.Bleed, Source = bleeds[i].Source });
                 text.ValueRW.Bleed += amount;
 
                 ref var bleed = ref bleeds.ElementAt(i);
@@ -185,7 +185,7 @@ public partial struct EffectDamageSystem : ISystem
             for (int i = burns.Length - 1; i >= 0; i--)
             {
                 float amount = burns[i].DamagePerSecond * deltaTime;
-                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Fire, Hierarchy = DamageHierarchy.Sub, Source = burns[i].Source });
+                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Fire, Hierarchy = DamageHierarchy.Sub, Origin = DamageLabel.Burn, Source = burns[i].Source });
                 text.ValueRW.Burn += amount;
 
                 ref var burn = ref burns.ElementAt(i);
@@ -199,7 +199,7 @@ public partial struct EffectDamageSystem : ISystem
         foreach (var (poisoned, damage, text) in SystemAPI.Query<RefRO<Poisoned>, DynamicBuffer<DamageInstance>, RefRW<EffectDamageText>>())
         {
             float amount = poisoned.ValueRO.DamagePerSecond * deltaTime;
-            damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Poison, Hierarchy = DamageHierarchy.Sub, Source = poisoned.ValueRO.Source });
+            damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Poison, Hierarchy = DamageHierarchy.Sub, Origin = DamageLabel.Poison, Source = poisoned.ValueRO.Source });
             text.ValueRW.Poison += amount;
         }
     }

@@ -44,7 +44,7 @@ public partial struct SteamSystem : ISystem
 
                 float amount = remaining * steamLookup[instance.Source].DamageFraction;
                 if (amount <= 0f) continue;
-                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Fire, Hierarchy = DamageHierarchy.Sub, Source = instance.Source });
+                damage.Add(new DamageInstance { Damage = amount, Type = DamageType.Fire, Hierarchy = DamageHierarchy.Sub, Origin = DamageLabel.Steam, Source = instance.Source });
                 text.ValueRW.Burn += amount;
             }
             if (burns.IsEmpty) SystemAPI.SetComponentEnabled<Burning>(entity, false);

@@ -129,7 +129,7 @@ public partial class AttackSystem : SystemBase
                             var targetPosition = SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position;
                             var hitDirection = HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
                             var damageBuffer = SystemAPI.GetBuffer<DamageInstance>(hit.Entity);
-                            damageBuffer.Add(new DamageInstance{Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce, Attack = entity});
+                            damageBuffer.Add(new DamageInstance{Origin = attack.ValueRO.Origin, Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce, Attack = entity});
 
                             float gracePeriod = attack.ValueRO.GracePeriod > 0f ? attack.ValueRO.GracePeriod : Attack.DefaultGracePeriod;
                             ignoreBuffer.Add(new IgnoreEntity{Entity = hit.Entity, GraceTimer = gracePeriod});
@@ -284,7 +284,7 @@ public partial class PeriodicAttackSystem : SystemBase
                             }
                             if(index == -1)
                             {
-                                periodicDamageBuffer.Add(new PeriodicDamageInstance{AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity,
+                                periodicDamageBuffer.Add(new PeriodicDamageInstance{Origin = periodicAttack.ValueRO.Origin, AccumilatedDamage = damage, Type = periodicAttack.ValueRO.Type, Hierarchy = DamageHierarchy.Main, Skill = periodicAttack.ValueRO.Skill, Tick = periodicAttack.ValueRO.TickRate, Source = source.ValueRO.Entity,
                                     HitDirection = hitDirection, HitForce = periodicAttack.ValueRO.HitForce});
                             }
                             else
@@ -360,7 +360,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
 
                     AttackSystem.CalculateCrit(instance.Source, entity, EntityManager, ref _random, ref damage, ref isCrit);
 
-                    DamageInstance.Add(new DamageInstance{Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
+                    DamageInstance.Add(new DamageInstance{Origin = instance.Origin, Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
                     periodicDamageInstance.RemoveAt(i);
                     i--;
                 }

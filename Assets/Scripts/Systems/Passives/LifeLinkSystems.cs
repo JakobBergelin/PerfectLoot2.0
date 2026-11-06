@@ -67,7 +67,7 @@ public partial struct LifeLinkSystem : ISystem
             instances.ElementAt(i).AccumulatedHeal += heal;
             return;
         }
-        instances.Add(new PeriodicHealingInstance { Area = wearer, AccumulatedHeal = heal, Tick = tickRate, Source = wearer });
+        instances.Add(new PeriodicHealingInstance { Area = wearer, AccumulatedHeal = heal, Tick = tickRate, Source = wearer, Label = DamageLabel.LifeLink });
     }
 }
 

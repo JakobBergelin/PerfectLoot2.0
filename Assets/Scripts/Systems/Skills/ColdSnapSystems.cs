@@ -57,7 +57,7 @@ public partial struct ColdSnapSystem : ISystem
             float damage = SkillUtil.CooldownDamage(c.Damage, c.Cooldown, stats.ValueRO);
             var newEntity = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
-            commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Cold, Radius = c.Radius, DamageHierarchy = DamageHierarchy.Main});
+            commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.ColdSnap, Damage = damage, Type = DamageType.Cold, Radius = c.Radius, DamageHierarchy = DamageHierarchy.Main});
             commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
             commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
             commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

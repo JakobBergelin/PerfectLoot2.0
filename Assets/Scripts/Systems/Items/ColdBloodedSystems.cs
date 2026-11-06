@@ -73,7 +73,7 @@ public partial struct ColdBloodedSystem : ISystem
                 var targetPosition = SystemAPI.GetComponent<LocalTransform>(hit.Entity).Position;
                 SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance
                 {
-                    Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Source = entity, IsCrit = isCrit,
+                    Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.ColdBlooded, Source = entity, IsCrit = isCrit,
                     HitDirection = AttackSystem.HitDirection(position, targetPosition, ref _random),
                 });
             }

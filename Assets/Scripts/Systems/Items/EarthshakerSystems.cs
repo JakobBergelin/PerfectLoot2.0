@@ -70,7 +70,7 @@ public partial struct EarthshakerSystem : ISystem
                 var targetPosition = SystemAPI.GetComponent<LocalTransform>(hit.Entity).Position;
                 SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance
                 {
-                    Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Source = entity, IsCrit = isCrit,
+                    Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.Earthshaker, Source = entity, IsCrit = isCrit,
                     HitDirection = AttackSystem.HitDirection(position, targetPosition, ref _random), HitForce = e.HitForce,
                 });
             }

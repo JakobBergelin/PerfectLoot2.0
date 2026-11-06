@@ -31,6 +31,7 @@ public struct DamageInstance : IBufferElementData
     public float HitForce;
     public bool IsCenterTarget;     // The hit target closest to the attack's center (one per attack; lightning charges only it)
     public Entity Attack;           // The Attack that hit; Entity.Null for other damage (periodic attacks, damage over time)
+    public DamageOrigin Origin;     // What the Damage Meter credits it to
 }
 
 /// <summary>On every unit: its latest main hit that dealt damage, written by DamagingSystem (e.g. which way a killing blow went).</summary>
@@ -46,6 +47,7 @@ public struct HealingInstance : IBufferElementData
 {    
     public float Value;
     public Entity Source;
+    public DamageLabel Label;
 }
 
 public struct PeriodicDamageInstance : IBufferElementData
@@ -54,6 +56,7 @@ public struct PeriodicDamageInstance : IBufferElementData
     public DamageType Type;
     public DamageHierarchy Hierarchy;
     public SkillType Skill;
+    public DamageOrigin Origin;
     public float Tick;
     public Entity Source;
     public float3 HitDirection;     // Away from the attack, updated every frame it overlaps
@@ -72,4 +75,5 @@ public struct CalculatedDamageInstance : IBufferElementData
     public float HitForce;
     public bool IsCenterTarget;
     public Entity Attack;
+    public DamageOrigin Origin;
 }

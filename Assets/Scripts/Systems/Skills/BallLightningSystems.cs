@@ -160,7 +160,7 @@ public partial struct BallLightningSystem : ISystem
         float damage = SkillUtil.CooldownDamage(ball.Damage * (1f + ball.Spent / math.max(ball.SpentToDouble, 1e-3f)), ball.Cooldown, stats);
         var newEntity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = landing, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = damage, Type = DamageType.Lightning, Radius = ball.Radius, DamageHierarchy = DamageHierarchy.Main, HitForce = ball.HitForce});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.BallLightning, Damage = damage, Type = DamageType.Lightning, Radius = ball.Radius, DamageHierarchy = DamageHierarchy.Main, HitForce = ball.HitForce});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

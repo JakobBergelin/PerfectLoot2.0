@@ -72,6 +72,7 @@ namespace ActiveSkills
         {
             UnitEntitySetup.AddOrSet(entityManager, prefab, LocalTransform.Identity);
             UnitEntitySetup.AddOrSet(entityManager, prefab, new FireHydraUnit());
+            UnitEntitySetup.AddOrSet(entityManager, prefab, new UnitInfo { Source = this });
             CompanionEntitySetup.AddGameplayComponents(entityManager, prefab, owner, SightRadius, Skills);
             entityManager.AddComponent<Prefab>(prefab);
         }

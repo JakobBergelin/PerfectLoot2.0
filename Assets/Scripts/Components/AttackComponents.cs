@@ -11,6 +11,7 @@ public struct Attack : IComponentData
     public float HitForce;
     // Added to its Source's critical chance: a companion's own bonus, as its hits use its owner's stats
     public float CriticalChanceBonus;
+    public DamageOrigin Origin;
     // Seconds before it can hit the same target again (e.g. long for one hit per target). 0 = DefaultGracePeriod.
     public float GracePeriod;
     public const float DefaultGracePeriod = 0.3f;
@@ -31,6 +32,7 @@ public struct PeriodicAttack : IComponentData
     public float Radius;
     public float TimeRemaining;
     public SkillType Skill;
+    public DamageOrigin Origin;
     public float TickRate;
     // Push on each damage tick, see Attack
     public float HitForce;

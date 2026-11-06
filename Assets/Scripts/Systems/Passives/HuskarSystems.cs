@@ -18,7 +18,7 @@ public partial struct HuskarSystem : ISystem
             {
                 if(resource[i].Value < 0.0f)
                 {
-                    damage.Add(new DamageInstance{Damage = math.abs(resource[i].Value), Hierarchy = DamageHierarchy.Sub, Type = DamageType.Fire, Source = Entity.Null, IsCrit = false});
+                    damage.Add(new DamageInstance{Damage = math.abs(resource[i].Value), Hierarchy = DamageHierarchy.Sub, Type = DamageType.Fire, Origin = DamageLabel.Huskar, Source = Entity.Null, IsCrit = false});
                     resource.RemoveAt(i);
                     i--;
                 }

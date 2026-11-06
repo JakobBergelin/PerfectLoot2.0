@@ -7,6 +7,7 @@ using Unity.Transforms;
 /// <summary>Instant heal on every unit of Type within Radius, on the frame the entity exists (e.g. Luminosity).</summary>
 public struct Heal : IComponentData
 {
+    public DamageLabel Label;
     public float Value;
     public float Radius;
     public TargetType Type;
@@ -18,6 +19,7 @@ public struct Heal : IComponentData
 /// </summary>
 public struct PeriodicHeal : IComponentData
 {
+    public DamageLabel Label;
     public float HealPerSecond;
     public float Radius;
     public float TimeRemaining;
@@ -32,6 +34,7 @@ public struct PeriodicHealingInstance : IBufferElementData
     public float AccumulatedHeal;
     public float Tick;
     public Entity Source;
+    public DamageLabel Label;
 }
 
 public static class HealingUtil
@@ -74,7 +77,7 @@ public partial class HealingSystem : SystemBase
                 if (!SystemAPI.HasBuffer<HealingInstance>(hit.Entity)) continue;
 
                 // Written directly (not via ECB) so ApplyHealingSystem handles it this frame
-                SystemAPI.GetBuffer<HealingInstance>(hit.Entity).Add(new HealingInstance { Value = heal.ValueRO.Value, Source = source.ValueRO.Entity });
+                SystemAPI.GetBuffer<HealingInstance>(hit.Entity).Add(new HealingInstance { Value = heal.ValueRO.Value, Source = source.ValueRO.Entity, Label = heal.ValueRO.Label });
             }
         }
     }
@@ -115,7 +118,7 @@ public partial class PeriodicHealSystem : SystemBase
                 }
                 if (index == -1)
                 {
-                    instances.Add(new PeriodicHealingInstance { Area = entity, AccumulatedHeal = heal, Tick = periodicHeal.ValueRO.TickRate, Source = source.ValueRO.Entity });
+                    instances.Add(new PeriodicHealingInstance { Area = entity, AccumulatedHeal = heal, Tick = periodicHeal.ValueRO.TickRate, Source = source.ValueRO.Entity, Label = periodicHeal.ValueRO.Label });
                 }
                 else
                 {
@@ -158,7 +161,7 @@ public partial class AccumilatedPeriodicHealSystem : SystemBase
                 if (instance.Tick > 0.0f) continue;
 
                 if (instance.AccumulatedHeal > 0.0f)
-                    healingInstances.Add(new HealingInstance { Value = instance.AccumulatedHeal, Source = instance.Source });
+                    healingInstances.Add(new HealingInstance { Value = instance.AccumulatedHeal, Source = instance.Source, Label = instance.Label });
                 periodicInstances.RemoveAt(i);
                 i--;
             }

@@ -83,7 +83,7 @@ public partial struct StaticFieldSystem : ISystem
             AttackSystem.CalculateCrit(entity, target, state.EntityManager, ref _random, ref damage, ref isCrit);
             SystemAPI.GetBuffer<DamageInstance>(target).Add(new DamageInstance
             {
-                Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Source = entity, IsCrit = isCrit, IsCenterTarget = true,
+                Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.StaticField, Source = entity, IsCrit = isCrit, IsCenterTarget = true,
                 HitDirection = AttackSystem.HitDirection(position, targetPosition, ref _random),
             });
 

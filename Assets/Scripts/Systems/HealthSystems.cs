@@ -41,10 +41,14 @@ partial struct HealthRegenerationSystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (health, healthRegeneration) in SystemAPI.Query<RefRW<Health>, RefRO<HealthRegeneration>>().WithAbsent<Golem>().WithNone<ColdBlooded>())
+        var meter = new DamageMeterRecorder(ref state, SystemAPI.GetSingleton<DamageMeter>());
+        foreach (var (health, healthRegeneration, entity) in SystemAPI.Query<RefRW<Health>, RefRO<HealthRegeneration>>().WithAbsent<Golem>().WithNone<ColdBlooded>().WithEntityAccess())
         {
+            float before = health.ValueRO.CurrentValue;
             health.ValueRW.CurrentValue += healthRegeneration.ValueRO.Value * SystemAPI.Time.DeltaTime;
             health.ValueRW.CurrentValue = Mathf.Min(health.ValueRO.CurrentValue, health.ValueRO.MaxValue);
+            float healed = health.ValueRO.CurrentValue - before;
+            if (healed > 0.0f) meter.Healing(entity, entity, DamageLabel.Regeneration, healed);
         }
     }
 }
@@ -179,7 +183,7 @@ public partial class CalculateDamageSystem : SystemBase
                     calculatedDamage = 0.0f;
                     if(SystemAPI.HasComponent<Vigil>(entity))
                     {
-                        SystemAPI.GetBuffer<HealingInstance>(entity).Add(new HealingInstance{Value = SystemAPI.GetComponent<Vigil>(entity).HealAmount, Source = entity});
+                        SystemAPI.GetBuffer<HealingInstance>(entity).Add(new HealingInstance{Value = SystemAPI.GetComponent<Vigil>(entity).HealAmount, Source = entity, Label = DamageLabel.Vigil});
                     }
                 }
                 else if(hasRefraction && instance.Hierarchy == DamageHierarchy.Main && calculatedDamage > 0.0f)
@@ -209,7 +213,7 @@ public partial class CalculateDamageSystem : SystemBase
                         }
                     }
                 }
-                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget, Attack = instance.Attack});
+                calculatedDamageBuffer.Add(new CalculatedDamageInstance{Origin = instance.Origin, Damage = calculatedDamage, Hierarchy = instance.Hierarchy, Type = instance.Type, IsCrit = instance.IsCrit, Source = instance.Source, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget, Attack = instance.Attack});
             }
             damageBuffer.Clear();
         }
@@ -241,6 +245,7 @@ public partial class DamagingSystem : SystemBase
         double elapsedTime = SystemAPI.Time.ElapsedTime;
         // Optional: without it units just don't flash
         SystemAPI.TryGetSingleton<HitFlashConfig>(out var hitFlashConfig);
+        var meter = new DamageMeterRecorder(ref CheckedStateRef, SystemAPI.GetSingleton<DamageMeter>());
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<CalculatedDamageInstance>(entity);
@@ -256,6 +261,7 @@ public partial class DamagingSystem : SystemBase
                     }
                     OnDamageTaken?.Invoke(damage, position, instance.IsCrit);
                     health.ValueRW.CurrentValue -= damage;
+                    meter.Damage(entity, instance.Source, instance.Origin, damage);
                     if(SystemAPI.HasComponent<LastHit>(entity))
                     {
                         var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime, Type = instance.Type};
@@ -332,6 +338,7 @@ public partial class DamagingSystem : SystemBase
                         break;
                     }
                     health.ValueRW.CurrentValue -= damage;
+                    meter.Damage(entity, instance.Source, instance.Origin, damage);
                 }
             }
             instances.Clear();
@@ -352,6 +359,7 @@ public partial class ApplyHealingSystem : SystemBase
     protected override void OnUpdate()
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        var meter = new DamageMeterRecorder(ref CheckedStateRef, SystemAPI.GetSingleton<DamageMeter>());
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<HealingInstance>(entity);
@@ -366,6 +374,7 @@ public partial class ApplyHealingSystem : SystemBase
                 var position = EntityManager.GetComponentData<LocalTransform>(entity).Position;
                 OnHealingReceived?.Invoke(heal, position);
                 health.ValueRW.CurrentValue += heal;
+                meter.Healing(entity, instance.Source, instance.Label, heal);
             }
             instances.Clear();
         }

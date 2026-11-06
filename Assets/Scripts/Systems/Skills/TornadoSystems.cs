@@ -86,7 +86,7 @@ public partial class TornadoSystem : SystemBase
         var weaponDamage = stats.WeaponDamage + random.NextFloat(-stats.WeaponDamageRange, stats.WeaponDamageRange);
         var damage = weaponDamage * tornado.WeaponDamagePerSecond + tornado.DamagePerSecond;
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = startPos, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new PeriodicAttack{DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.Radius, TimeRemaining = tornado.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.TickRate, HitForce = tornado.HitForce});
+        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.Tornado, DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.Radius, TimeRemaining = tornado.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.TickRate, HitForce = tornado.HitForce});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         // A projectile (so projectile bonuses apply) that wanders along the ground and passes through walls

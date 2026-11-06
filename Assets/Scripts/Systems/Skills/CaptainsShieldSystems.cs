@@ -120,7 +120,7 @@ public partial struct CaptainsShieldSystem : ISystem
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = start, Rotation = quaternion.identity, Scale = 0.5f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = flatDirection, Speed = shield.ProjectileSpeed, DestroyOnHit = false, BounceCount = shield.Bounces, PierceCount = 0});
         commandBuffer.AddComponent(newEntity, shieldProjectile);
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = shield.Damage * math.max(0f, 1f + stats.BlockChance), Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = shield.Radius, HitForce = shield.HitForce});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.CaptainsShield, Damage = shield.Damage * math.max(0f, 1f + stats.BlockChance), Type = DamageType.Physical, DamageHierarchy = DamageHierarchy.Main, Radius = shield.Radius, HitForce = shield.HitForce});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

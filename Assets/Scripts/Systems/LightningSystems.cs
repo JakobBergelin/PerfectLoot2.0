@@ -32,7 +32,7 @@ public partial class LightningSystem : SystemBase
                 var newEntity = commandBuffer.CreateEntity();
                 
                 commandBuffer.AddComponent(newEntity, new LocalTransform{Position = localTransform.ValueRO.Position, Rotation = Quaternion.identity, Scale = 1f});
-                commandBuffer.AddComponent(newEntity, new Attack{Damage = instances[i].Damage, Type = DamageType.Lightning, Radius = instances[i].Radius, DamageHierarchy = DamageHierarchy.Sub});
+                commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.Charged, Damage = instances[i].Damage, Type = DamageType.Lightning, Radius = instances[i].Radius, DamageHierarchy = DamageHierarchy.Sub});
                 commandBuffer.AddComponent(newEntity, new DestroyWithChildren{});
                 commandBuffer.AddComponent(newEntity, new Source{Entity = instances[i].Source});
                 // The charge jumps away from the charged unit

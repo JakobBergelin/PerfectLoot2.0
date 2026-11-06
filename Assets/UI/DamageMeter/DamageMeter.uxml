@@ -1,0 +1,26 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="DamageMeter.uss" />
+    <ui:VisualElement name="damageMeterRoot" class="damage-meter-root" picking-mode="Ignore">
+        <ui:VisualElement name="panel" class="damage-meter">
+            <ui:VisualElement class="damage-meter__header">
+                <ui:Label text="Damage Meter" class="damage-meter__title" />
+                <ui:Button name="toggle" class="damage-meter__toggle" />
+            </ui:VisualElement>
+            <ui:VisualElement name="body" class="damage-meter__body">
+                <ui:VisualElement class="damage-meter__tabs">
+                    <ui:Button name="tab0" text="Dmg Done" class="damage-meter__tab" />
+                    <ui:Button name="tab1" text="Dmg Taken" class="damage-meter__tab" />
+                    <ui:Button name="tab2" text="Heal Done" class="damage-meter__tab" />
+                    <ui:Button name="tab3" text="Heal Taken" class="damage-meter__tab" />
+                </ui:VisualElement>
+                <ui:VisualElement class="damage-meter__columns">
+                    <ui:Button name="view" class="damage-meter__view" />
+                    <ui:Label text="10 s" class="damage-meter__number damage-meter__number--heading" />
+                    <ui:Label text="Level" class="damage-meter__number damage-meter__number--heading" />
+                </ui:VisualElement>
+                <!-- Rows are created by DamageMeterHUD -->
+                <ui:ScrollView name="rows" class="damage-meter__rows" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

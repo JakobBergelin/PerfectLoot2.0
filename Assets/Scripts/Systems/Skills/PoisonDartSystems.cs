@@ -63,7 +63,7 @@ public partial struct PoisonDartSystem : ISystem
 
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + direction, Rotation = quaternion.identity, Scale = 0.5f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = direction, Speed = dart.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0, FollowGround = true});
-        commandBuffer.AddComponent(newEntity, new Attack{Damage = math.max(0f, weaponDamage * dart.WeaponDamageMultiplier), Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = dart.Radius, HitForce = dart.HitForce});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.PoisonDart, Damage = math.max(0f, weaponDamage * dart.WeaponDamageMultiplier), Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = dart.Radius, HitForce = dart.HitForce});
         commandBuffer.AddComponent(newEntity, new PoisonDartHit{MarkDuration = dart.MarkDuration, ExplosionDamage = dart.ExplosionDamage, ExplosionRadius = dart.ExplosionRadius});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
@@ -134,7 +134,7 @@ public partial struct PoisonMarkExplosionSystem : ISystem
 
             var newEntity = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(newEntity, new LocalTransform{Position = transform.ValueRO.Position, Rotation = quaternion.identity, Scale = 1f});
-            commandBuffer.AddComponent(newEntity, new Attack{Damage = mark.ValueRO.ExplosionDamage, Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = mark.ValueRO.ExplosionRadius});
+            commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.PoisonExplosion, Damage = mark.ValueRO.ExplosionDamage, Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = mark.ValueRO.ExplosionRadius});
             commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
             commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
             commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
