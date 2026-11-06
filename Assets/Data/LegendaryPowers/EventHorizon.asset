@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: EventHorizon
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.EventHorizonPower
   Name: Event Horizon
+  Icon: {fileID: 21300000, guid: af77ea125e9544728f740a2367991439, type: 3}
   Description: 'Up to {MaxProjectiles} of your projectiles orbit you; faster ones orbit further out. Each new one pushes the oldest out of orbit.'
   MaxProjectiles: 10
   RadiusPerSpeed: 0.25

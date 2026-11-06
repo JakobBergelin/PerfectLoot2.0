@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Overkill
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.OverkillPower
   Name: Overkill
+  Icon: {fileID: 21300000, guid: ec675a0eb37342cdb67e2d57d0c33ef6, type: 3}
   Description: 'Damage beyond what a killing hit needed carries over to the nearest enemy within {Radius} meters.'
   Radius: 8

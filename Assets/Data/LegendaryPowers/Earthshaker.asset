@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Earthshaker
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.EarthshakerPower
   Name: Earthshaker
+  Icon: {fileID: 21300000, guid: cd541cc542e8416c9e81c90bc739f316, type: 3}
   Description: 'Casting a skill with a cooldown sends out a shockwave, dealing {Damage} physical damage plus {DamagePerStrength} per Strength to enemies within {Radius} meters.'
   Damage: 3
   DamagePerStrength: 0.1

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: StaticField
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.StaticFieldPower
   Name: Static Field
+  Icon: {fileID: 21300000, guid: 8d37a69089e046e695ff0b871a9a23a3, type: 3}
   Description: 'Every {Interval} seconds, zap the nearest enemy within {Range} meters for {Damage} lightning damage. Each zap lowers its lightning resistance by {ResistancePerStack}, up to {MaxStacks} times, for {StackDuration} seconds.'
   Interval: 0.5
   Range: 5

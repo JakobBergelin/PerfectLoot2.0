@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Pyromancy
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.ElementalConversionPower
   Name: Pyromancy
+  Icon: {fileID: 21300000, guid: 5a561c9250b646a28478d67990b2e33f, type: 3}
   Description: 'All damage from your skills is converted to Fire.'
   Type: 1

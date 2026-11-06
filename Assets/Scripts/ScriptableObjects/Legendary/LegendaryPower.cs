@@ -10,6 +10,7 @@ namespace Equipment
     public abstract class LegendaryPower : ScriptableObject
     {
         public string Name;
+        public Sprite Icon;     // Shown beside the power's name in tooltips, display only
         [Tooltip("Can contain the power's own fields: {FieldName} or {FieldName:format}, e.g. {HitsRequired}, or {Effect.Duration} for a referenced asset")]
         [TextArea] public string Description;
 

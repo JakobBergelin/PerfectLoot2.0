@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Insight
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.InsightPower
   Name: Insight
+  Icon: {fileID: 21300000, guid: fe57b0c48acd4a248522d2f536b67742, type: 3}
   Description: 'Every {CastsNeeded}th skill cast that costs resource is free.'
   CastsNeeded: 5

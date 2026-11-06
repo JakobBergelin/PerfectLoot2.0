@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Bottomless
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.BottomlessPower
   Name: Bottomless
+  Icon: {fileID: 21300000, guid: 93dff0386ce5426280316d21e0c13efd, type: 3}
   Description: 'Skills that cost {MaxCost} or less can always be cast, even without enough resource. Casting one empties what you have.'
   MaxCost: 5

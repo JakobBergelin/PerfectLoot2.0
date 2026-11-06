@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Vanguard
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.VanguardPower
   Name: Vanguard
+  Icon: {fileID: 21300000, guid: c06c16356c284e679a712ab012abd0ef, type: 3}
   Description: 'Incoming physical hits deal {DamageReduction} less damage, after armor.'
   DamageReduction: 1

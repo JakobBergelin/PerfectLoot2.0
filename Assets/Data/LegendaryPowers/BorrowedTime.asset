@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: BorrowedTime
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.BorrowedTimePower
   Name: Borrowed Time
+  Icon: {fileID: 21300000, guid: f17a6b62487b4818b0cee5ff5db4c422, type: 3}
   Description: 'Instead of taking it at once, {DelayedShare:P0} of all damage you take is dealt over the next {Duration} seconds.'
   DelayedShare: 0.8
   Duration: 5

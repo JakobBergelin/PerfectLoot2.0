@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: ToxicTrail
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.ToxicTrailPower
   Name: Toxic Trail
+  Icon: {fileID: 21300000, guid: 2703f148ed59470caf9386ff6423323f, type: 3}
   Description: 'While you run, you leave poison hazards behind you for {Lifetime} seconds. Enemies standing in them take {DamagePerSecond} poison damage per second.'
   DamagePerSecond: 2
   Lifetime: 5

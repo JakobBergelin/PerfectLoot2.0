@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: ColdBlooded
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.ColdBloodedPower
   Name: Cold Blooded
+  Icon: {fileID: 21300000, guid: 269435c609a14298b78ee11e4f8749d2, type: 3}
   Description: 'Your health regeneration no longer heals you. Instead, enemies within {Radius} meters take {DamageMultiplier:P0} of it as cold damage.'
   DamageMultiplier: 1
   Radius: 3

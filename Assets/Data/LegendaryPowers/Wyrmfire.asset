@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Wyrmfire
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.WyrmfirePower
   Name: Wyrmfire
+  Icon: {fileID: 21300000, guid: c3c28e1a9ee24422900ddbc5b97a3a70, type: 3}
   Description: 'Enemies that hit you in melee burn for {Damage} fire damage over {Duration} seconds.'
   Damage: 4
   Duration: 3

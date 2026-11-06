@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Sunder
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.SunderPower
   Name: Sunder
+  Icon: {fileID: 21300000, guid: 231a4f498c9e47b2ad2411e4a96bab2a, type: 3}
   Description: 'Each hit leaves a stack of Sundered on the enemy for {StackDuration} seconds, up to {MaxStacks}. Your hits deal {DamagePerStack} more damage per stack on the target.'
   DamagePerStack: 0.2
   MaxStacks: 50

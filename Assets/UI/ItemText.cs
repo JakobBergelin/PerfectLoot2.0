@@ -25,6 +25,7 @@ public static class ItemText
         public string Text;
         public Affix? Affix;
         public bool Wide;       // Not part of the stat column (the power, notes): no icon space
+        public Sprite Icon;     // Beside a wide line: a power's icon by its name
     }
 
     /// <summary>The item's stats as text (Lines joined), for places without icons.</summary>
@@ -61,7 +62,7 @@ public static class ItemText
         {
             var color = ColorUtility.ToHtmlStringRGB(TitleColor(item));
             if (lines.Count > 0) lines.Add(new StatLine { Text = "", Wide = true });
-            lines.Add(new StatLine { Text = $"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>", Wide = true });
+            lines.Add(new StatLine { Text = $"<b><color=#{color}>{legendary.Power.DisplayName}</color></b>", Wide = true, Icon = legendary.Power.Icon });
             lines.Add(new StatLine { Text = legendary.Power.FormattedDescription?.TrimEnd() ?? "", Wide = true });
         }
 

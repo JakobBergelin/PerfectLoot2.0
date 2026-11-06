@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Crossfire
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.CrossfirePower
   Name: Crossfire
+  Icon: {fileID: 21300000, guid: b36b08ef94194c0fa6d2568da2abf152, type: 3}
   Description: 'While you channel a skill with Flamethrower equipped, two extra Flamethrowers spray to your left and right, and channeling skills cost {CostIncrease:P0} more. Without Flamethrower equipped, channeling skills cost {CostReduction:P0} less.'
   CostIncrease: 0.3
   CostReduction: 0.2

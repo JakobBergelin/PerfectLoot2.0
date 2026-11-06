@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: SecondWind
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.SecondWindPower
   Name: Second Wind
+  Icon: {fileID: 21300000, guid: 7de0eb2f947a4c8f99d46cbe804e10ea, type: 3}
   Description: 'Health regeneration is increased the lower your health is, up to +{MaxRegenerationBonus:P0} at {FullBonusHealth:P0} health or below.'
   MaxRegenerationBonus: 1
   FullBonusHealth: 0.1

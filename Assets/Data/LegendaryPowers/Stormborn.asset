@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Stormborn
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.ElementalConversionPower
   Name: Stormborn
+  Icon: {fileID: 21300000, guid: 7fa36cf9afa444389690f527022426f7, type: 3}
   Description: 'All damage from your skills is converted to Lightning.'
   Type: 4

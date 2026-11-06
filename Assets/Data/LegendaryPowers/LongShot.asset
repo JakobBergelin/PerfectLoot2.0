@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: LongShot
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.LongShotPower
   Name: Long Shot
+  Icon: {fileID: 21300000, guid: 208976f8e5e54286b3b104ade8031899, type: 3}
   Description: 'Projectile hits deal {DamagePerMeter:P0} more damage per meter from where they were fired, up to {MaxBonus:P0}.'
   DamagePerMeter: 0.02
   MaxBonus: 0.3

@@ -13,5 +13,6 @@ MonoBehaviour:
   m_Name: Ambush
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.AmbushPower
   Name: Ambush
+  Icon: {fileID: 21300000, guid: 20ad830fe30445ab822ee8dc9c52bba5, type: 3}
   Description: 'Hits against enemies at full health always critically strike.'
   HealthThreshold: 1
