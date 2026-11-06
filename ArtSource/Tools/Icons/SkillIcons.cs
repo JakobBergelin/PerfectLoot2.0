@@ -289,4 +289,3 @@ public static class SkillIcons
     }
 }
 
-public static class PowerIcons { public static void Register() { } }

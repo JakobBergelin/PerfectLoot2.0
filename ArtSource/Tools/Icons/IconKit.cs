@@ -500,9 +500,11 @@ public class Ic : IDisposable
         Fill(p, Color.FromArgb(alpha, 255, 255, 255));
     }
 
-    /// <summary>A soft round glow, strongest in the middle.</summary>
+    /// <summary>A soft round glow, strongest in the middle and kept inside the tile.</summary>
     public void Glow(float x, float y, float r, Color color, int alpha)
     {
+        var keep = G2.Save();
+        G2.SetClip(G.RR(5, 5, 246, 246, 46), CombineMode.Intersect);
         using (var path = G.Circle(x, y, r))
         using (var b = new PathGradientBrush(path))
         {
@@ -511,6 +513,7 @@ public class Ic : IDisposable
             b.SurroundColors = new[] { Color.FromArgb(0, color) };
             G2.FillPath(b, path);
         }
+        G2.Restore(keep);
     }
 
     /// <summary>A four-point twinkle with a thin ink edge.</summary>
