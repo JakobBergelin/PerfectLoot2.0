@@ -262,8 +262,8 @@ public partial class DamagingSystem : SystemBase
                         SystemAPI.SetComponent(entity, lastHit);
                     }
 
-                    // Push the target; KnockbackSystem moves it and lets the push die out
-                    if(instance.HitForce > 0.0f && SystemAPI.HasComponent<Knockback>(entity))
+                    // Push the target, or pull it if negative (Undertow); KnockbackSystem moves it and lets the push die out
+                    if(instance.HitForce != 0.0f && SystemAPI.HasComponent<Knockback>(entity))
                     {
                         // HitForce is an impulse: heavier units are pushed less (mass 1 = HitForce as speed)
                         float inverseMass = SystemAPI.HasComponent<BodyMass>(entity) ? SystemAPI.GetComponent<BodyMass>(entity).InverseMass : 1.0f;
