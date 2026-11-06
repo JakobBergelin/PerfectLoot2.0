@@ -1,0 +1,186 @@
+# Multiplayer Plan
+
+How local split-screen and later online play can work. Written 2026-11-06 on `flair/evening-polish`. No code has been changed for this plan.
+
+Marks: **[V]** verified by reading the code at this commit. **[A]** assumed or from memory, check before relying on it. Nothing here was run with two real players.
+
+Netcode for Entities is not in this project (`Packages/manifest.json`, `Library/PackageCache`). Everything said about it is from memory unless marked otherwise. Docs exist for a [`com.unity.netcode` 6.5](https://docs.unity3d.com/Packages/com.unity.netcode@6.5/manual/index.html), but I could not confirm which version pairs with Entities 6.6. Check Package Manager first.
+
+## Summary
+
+- **The simulation is mostly ready. The layer around it is not.** Skills, damage, enemy AI and flow fields work per entity. Input, managers, camera and HUDs all assume one player.
+- **Split-screen needs no networking.** All players live in one world, so it can ship on its own, and its work also pays for online.
+- **Order:** per-player input and managers, then cameras and HUDs, then a networking spike.
+- **Online recommendation:** Netcode for Entities with a player-hosted server. The server runs the whole simulation; clients predict only their own movement. Decide after a spike, because of the blockers in "Networking".
+
+## What is already ready [V]
+
+| System | Why it works |
+|---|---|
+| Skill systems | Per-entity queries over `InputsData`, `Skill`, `DesiredDirection`. No player singleton. |
+| Enemy targeting | `EnemyTargets` lists every `EnemyTargetable` unit each frame (`EnemyDetectionSystems.cs:75`). Detection uses nearest and threat. |
+| Flow fields | One per `FieldSlot`, up to 4 (`FlowFieldSystems.cs:156,243`). Enemies use the field of the unit they chase. Works once slots are assigned. |
+| Companions, thralls | Owner-based, and take the owner's `FieldSlot` (`CompanionEntitySetup.cs:35`). |
+| Mirror Image | Copies its owner's `InputsData` (`MirrorImageSystems.cs:131`), and its prefab is stored per owner (`MirrorImageSkill.cs:70`). |
+| Effects, bars, visuals | `EffectDisplay`, `HoveredEffect` and `EquippedVisual` are buffers on each player. |
+| Life Link | Walks all players (`LifeLinkSystems.cs:36`). |
+| Menus | Nothing uses `Time.timeScale`, so one player's menu never pauses the others. |
+| Test tools | `CharacterManager` can spawn a `TestPlayer` on field slot 1, so several players can be tried today. |
+
+## Inventory of one-player assumptions [V]
+
+**Input**
+
+| Where | Assumption | Fix |
+|---|---|---|
+| `InputsDataSystem.cs:16,24` | One `InputSystem_Actions`, reading all devices | One per local player (M1) |
+| `InputsDataSystem.cs:41` | Writes every `InputsData` from that device, including Mirror copies | Query `LocalPlayer` too; keep the `DesiredDirection` loop as is |
+| `InputsDataSystem.cs:39` | `Camera.main` for the aim ray | The player's camera |
+| `MirrorImageSystems.cs:94` | Runs after `InputsDataSystem` to overwrite it | Still fine; a copy simply stops being written first |
+| `MenuPanels.cs:13-16,43` | Static open panel, blockers, typing | Per-player instance |
+| `CharacterPanelHUD.cs:113`, `SkillsPanelHUD.cs:53`, `ItemDatabasePanelHUD.cs:97` | Each makes its own actions | Use the player's `LocalPlayerInput` |
+| `Keyboard.current`, `Mouse.current` in 7 HUDs | Global devices | See `ControllerSupportPlan.md` C0 |
+
+**Managers**
+
+| Where | Assumption | Fix |
+|---|---|---|
+| `CharacterManager.cs:17,212,64` | `Instance`, one `_player`, one `Class`, `Resource`, respawn timer | One per player |
+| `CharacterManager.cs:20,23` | Static `PlayerSpawned` and `PlayerDied` | Instance events |
+| `ActiveSkillManager.cs:13,121-122` | `TryGetPlayer` takes `players[0]`. Query order is not a stable meaning of "first". | Holds its own player |
+| `PassiveSkillManager.cs:10,147` | Pushes one list to **every** player | Own player only |
+| `InventoryManager.cs:19,259-268` | Pushes one gear set to **every** player; `_appliedPowers` is shared across the loop (see backlog) | Own player only |
+| `AccountManager.cs:29` | One account, one item database, one drop queue | Depends on question 1 |
+| `SoulThiefSystems.cs:156` | ECS system asks `PassiveSkillManager.Instance` whether a passive is equipped | Read the owner's `Passive` buffer |
+
+**Camera and HUD**
+
+| Where | Assumption | Fix |
+|---|---|---|
+| `CameraFollowSystems.cs:21` | Loop overwrites, so the last non-test player wins | `CameraFollow` names its target |
+| `CameraMonoBehavior.cs:37,45` | `GetSingleton` on the camera entity | Look up by player index |
+| `Camera.main` in `HealthSystems.cs:20`, `ResourceSystems.cs:15`, `CombatTextHUD.cs:167`, `GroundLootHUD.cs:85`, `PortalHUD.cs:88`, `DungeonManager.cs:455` | One camera | HUDs use their player's. Bars only use `forward`, which is equal for all cameras at the same pitch, so they can stay. |
+| `CharacterManager.Player` in `EffectBarHUD.cs:106`, `UnitPanelHUD.cs:99`, `SkillTooltip.cs:25`, `CharacterPanelHUD.cs:814` | The HUD's player | Context from M2 |
+| `PortalHUD.cs:122-125` | `players[0]` | Its own player |
+| `SkillBarHUD`, `DropPopupHUD`, `DungeonHUD` | Manager `.Instance` | Context from M2 |
+| `Assets/UI/PanelSettings.asset` | One 1920x1080 panel for all HUDs | See M4 |
+| `GameRig.prefab` | One camera with one `AudioListener` | Only one listener in the scene |
+
+**World**
+
+| Where | Assumption | Fix |
+|---|---|---|
+| `PlayerEntitySetup.cs:13` | Real players always get `FieldSlot` 0, only test players get a slot | Take a player index |
+| `DamageMeterSystems.cs:87`, `DamageMeterHUD.cs:232` | Names come from `FieldSlot + 1`, so two real players are both "Player 1" | Fixed by the line above |
+| `MeterName` (`DamageMeterComponents.cs:78`) | Rows are keyed by skill label or unit type, with no owner, so two players' Fireballs and companions merge | Add owner index, plus a per-player view |
+| `LevelGenerationSystems.cs:106` | Chunks stream around the last player only | Stream around each player |
+| `LevelGenerationSystems.cs:515-517`, `EnemySpawner.cs:40` | Spawners trigger on `CharacterManager.Player` only | Any player in range |
+| `DungeonManager.cs:444` and its `TryGetPlayer` callers (273, 311, 345, 392) | Waves, boss, exit check and return portal use one player | Pick by rule: nearest, or random living player |
+| `DungeonManager.cs:385` | One death fails a Survive step | All players dead, or a rule from you |
+| `GroundLootManager.cs:124,132,144` | Reach and pickup use one player, and items go to the one account | Pass the picking player |
+| `GameSceneLoader.cs` | Replaces the whole world on a portal | Fine for a party that moves together; needs a rule (question 5) |
+| `GameArea.IsTown` | One area at a time | Fine under the same rule |
+
+Harmless for now: `EnemyManager.cs:168` (dev spawn position), `VfxManager.Instance` and `AssetStorage.Instance` (shared by design), and `LootGenerationManager.Instance` (stateless service as far as I read, not fully checked).
+
+## Phases: local split-screen
+
+Sizes are rough: S is a day or less, M a few days, L a week or more.
+
+**M1. Per-player input (M).** Add `LocalPlayer { int Index }`, and `LocalPlayerInput` as in the controller plan. `InputsDataSystem` loops over local players and gives each its own actions, camera and menu state. Pair devices through the generated `devices` property. Ships with one player and no visible change. Shared with controller phase C0.
+
+**M2. Per-player context (L).** Split `GameRig` into a shared `WorldRig` (dungeon, ground loot, enemies, VFX) and a `PlayerRig` (camera, Character, ActiveSkill, Passive and Inventory managers, HUDs), one instance per player. A `PlayerContext` on the `PlayerRig` root replaces the `.Instance` calls for those managers (`GetComponentInParent`). This is many edits, but simple ones. Keep state in the managers rather than moving it to ECS: they hold ScriptableObject loadouts and are not hot code. Managers push only to their own player. Assign `FieldSlot` from the index. Fixes the Soul Thief lookup too. Ships with one player and no visible change.
+
+**M3. World rules for several players (M).** Spawner triggers, chunk streaming, dungeon targeting, fail rule, loot pickup, meter owner. Test with a second real `PlayerRig` on one screen with a shared camera, before any split rendering.
+
+**M4. Split-screen cameras and HUD (L).** `Camera.rect` per player: left and right for 2 players, quarters for 3-4. `CameraFollow` targets by index. HUD roots stretch to the player's viewport rather than the screen, and world-anchored labels subtract the root's origin. The hard part is size: panels are designed for 1920x1080 and a half-screen viewport can't hold the character panel at full scale. Try scaling the root first. If that fails, try a `PanelSettings` per player rendering to a texture. [A] Spike this before committing.
+
+**M5. Join flow (M).** Press Start on an unpaired pad to join, in town only. Character pick for the new player, leave, and pad disconnect handling. Save handling depends on question 1.
+
+## Networking
+
+Work on M1-M3 first: they also create the seams online needs. Input per player becomes commands, and manager pushes become requests.
+
+### Facts about this code that matter [V]
+
+1. **No fixed tick.** Every gameplay group is in `SimulationSystemGroup` at frame rate; "FixedStep" appears nowhere in `Assets/Scripts`, and 55 files use `DeltaTime`. Prediction needs a fixed tick.
+2. **Components are added at runtime.** `PlayerEntitySetup.AddGameplayComponents` builds a player on a visual-only prefab. `Apply` adds and removes components as gear changes, across about 25 skill, 24 passive and 35 legendary script files. Replicated ghost components must be on the ghost prefab. [A] This is the main blocker for replicating the full player.
+3. **Prefabs are built at runtime** (`MirrorImageSkill.cs:85-93`, thralls from enemy bodies). Ghost prefabs must match on both sides. [A]
+4. **Simulation calls managed code:** `VfxSystems`, `RaiseThrallSystems.cs:142`, `SoulThiefSystems.cs:156`, and loot goes `DungeonManager` to `GroundLootManager` to `AccountManager`.
+5. **Randomness:** `AttackSystems.cs:20,216,343` and `HealthSystems.cs:113` seed from the tick count, and `SoulThiefSystems.cs:56`, `DungeonManager.cs:319,331` use `UnityEngine.Random`. Fine on a server only; prediction of these could never match.
+6. **The world is disposed on each portal** (`GameSceneLoader.cs`). Netcode worlds and connections must survive a level change, so this needs a server-driven level change.
+7. **Levels are generated at runtime** from a seed (`LevelGenerationSystems.cs:134`). Good: send the seed, not the level. Whether the solve gives the same result on every machine is unverified. [A]
+8. **Items are small:** saves store base item id, seed, rarity and roll version (`AccountSaves.cs:68-75`). Cheap to send.
+9. **Cosmetics follow entities:** `VfxSystems` binds effects to new `Projectile`, `Attack` and `Soul` entities. If those exist on clients, much VFX just works. Combat text needs its events replicated.
+10. **No world filters:** 214 `UpdateInGroup` uses, 0 `WorldSystemFilter`. But most gameplay sits under a few groups in `ExecutionGroups.cs`, a natural place to mark server-only. Whether a group's filter covers its children needs checking. [A]
+
+### Options
+
+| Option | Fit | Verdict |
+|---|---|---|
+| Netcode for Entities, full prediction | Native to DOTS. Must predict skills, spawns and structural changes, and all the facts above bite. | Too costly for co-op |
+| **Netcode for Entities, thin prediction** | Server runs all of the simulation unchanged. Clients get a small replicated view and predict only their own movement. | **Recommended, pending spike** |
+| Client-authoritative movement over Netcode for Entities | Each client owns its position; server checks it loosely. No rollback, and simplest to build. Cheating is possible, which matters little in friend co-op. | Good fallback if prediction is painful |
+| Own replication on Unity Transport | Full control, but you write ghost sync, relevancy and snapshots yourself. | Only if Netcode for Entities fails the spike |
+| Netcode for GameObjects | Built for GameObjects, not entities. | No |
+| Deterministic lockstep | Needs a fixed tick, exact determinism, no managed code in the simulation, and hurts late joining. | No |
+
+### Recommended design
+
+- **Topology:** one player hosts (listen server), friends join through a relay. No dedicated servers at first. The Multiplayer Services packages are the obvious first try, Steam sockets if you ship on Steam. [A]
+- **Client world:** does not run skill or damage systems. It shows ghosts, runs VFX and HUD.
+- **Replicated player view:** transform, health, resource, skill slots with cooldown state (the `Skill` buffer is what the HUD reads), `EffectDisplay`, visuals. A fixed component set on the prefab, so per-skill components stay on the server. This sidesteps blocker 2.
+- **Commands:** `InputsData` becomes the command: `Move`, held and pressed skills, aim point, and hovered target. `SkillPressedThisFrame` needs latching across ticks; only `RaiseThrallSystems.cs:35` reads it.
+
+What each side owns:
+
+| Thing | Authority | Client behaviour |
+|---|---|---|
+| Own movement | Server | **Predicted** with a small movement-only copy of `CharacterMovementSystem` and `UnitMoverSystem` |
+| Dash, Teleport, Ball Lightning, Sonic Ball, Hookshot | Server | Not predicted at first: the player would feel latency here. Dash is the first candidate for prediction. |
+| Skill casts, cooldowns, resources | Server | Instant cosmetic response (animation, sound), real result arrives after |
+| Damage, crits, effects, death | Server | Interpolated, numbers from events |
+| Enemies, companions, projectiles | Server | Interpolated ghosts. Projectiles may need events instead of ghosts if bandwidth suffers. |
+| Level | Server sends seed | Generated locally, with colliders for movement prediction |
+| Loot rolls | Server | Receives the item |
+| Inventory, passives, skill choice | Client asks, server applies | Server checks the request against the items the client says it owns |
+| Saves | Each client, local | Trusted. Fine for friends, not for trading or ladders. |
+
+### Loot rules
+
+Recommended: **personal loot.** Each kill rolls separately for each player, and only they see and can pick up their drops. It suits a game about hunting the perfect roll, avoids fights over items, and needs no trading. It maps well to the code: `GroundLootManager` gets an owner per item, and `DropFromTable` (called from `DungeonManager.cs:210`) runs once per player. In split-screen each HUD filters labels by owner. The drop rate per player stays the same.
+
+### Online phases
+
+**N0. Spike (L, a throwaway branch).** Add the package. Host plus one client. One player ghost with the thin view, one enemy type, move and cast Fireball, in the town scene. Must answer: the right package version; two-world or single-world host and its cost; world filters on groups; a runtime-composed ghost prefab; how the fixed tick feels; bandwidth with 40+ enemies (`DungeonDefinition.MaxAlive` default is 40, level spawners add more).
+
+**N1. Fixed tick offline (L).** Move gameplay to a fixed rate, with interpolation for rendering. Gameplay feel will shift, so it needs its own testing. Worth doing only after N0 says yes.
+
+**N2. Server and client split (L).** Filters, thin player view, enemy ghosts, commands, prediction for movement.
+
+**N3. Events and sessions (L).** Combat text and VFX events, level seed, server-driven level change replacing `GameSceneLoader` for online, join and leave, relay.
+
+**N4. Loot and loadouts online (M).** Requests, personal loot, reconnect rules.
+
+## Risks
+
+- **Size of M2.** Largest refactor before anything visible happens. Mitigation: it ships with no change for one player, one manager at a time.
+- **Split-screen UI.** Panels may need a second layout. Biggest unknown in the local work.
+- **Render cost.** Each viewport renders the scene again, and `PC_Renderer` has two renderer features I did not check against `Camera.rect`. Measure in M4 on target hardware. [A]
+- **Flow field cost** scales with players: each field refreshes separately and walks physics. Should be fine at 4, not measured.
+- **Fixed tick.** Touches every skill's feel, and frame-based assumptions may hide in the skills.
+- **Netcode version risk.** Entities 6.6 is newer than what I know. The package's API may differ from my memory, so facts marked [A] may need rework.
+- **Late joins and level streaming** online, since each client streams its own chunks around its player, and the server around all of them.
+
+## Questions for you
+
+1. Split-screen accounts: is the second player a second character on the same account (and can two characters wear the same item?), or a second account on the same machine?
+2. Maximum players: 2 or 4? `FlowFields.MaxFields` is 4 today; 2 makes the UI far easier.
+3. Is true split-screen a must, or is a shared camera acceptable? Shared would skip M4 but needs a leash, and the flow field comment suggests you want players far apart.
+4. Death in a party: wait for respawn as now, or revive by a teammate? Does a Survive step fail only when all are down?
+5. Portals: does one player pull everyone along, or must all stand in range or vote?
+6. Personal loot as recommended, or shared loot that can be fought over or traded?
+7. Is cheating a concern at all (trading, ladders)? If yes, saves must move to a server, which is a much bigger project.
+8. Should online and split-screen combine (two local players joining an online game)? I'd leave this out at first.
+9. Enemy scaling by player count: wanted later? Stats are placeholders, so this only needs a hook for now.
+10. Which platforms? Steam or console changes relay and session choices.
