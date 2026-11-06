@@ -41,7 +41,7 @@ public static class IconRegistry
                 using (var bmp = ic.Result()) bmp.Save(file, ImageFormat.Png);
             }
             if (!File.Exists(file + ".meta"))
-                File.WriteAllText(file + ".meta", SpriteMeta.Text(Guid.NewGuid().ToString("N")));
+                File.WriteAllText(file + ".meta", SpriteMeta.Text(Guid.NewGuid().ToString("N"), entry.Folder == "SkillIcons" ? 128 : 2048));
         }
     }
 
@@ -86,10 +86,13 @@ public static class IconRegistry
     }
 }
 
-/// <summary>Sprite importer settings matching Assets/Data/Images/SkillIcons, with mipmaps on because these are drawn at 256 px and shown at 34 to 64 px.</summary>
+/// <summary>
+/// Sprite importer settings matching the existing icons. Icons are drawn at 256 px but shown at 34 to 64 px, so they need
+/// mipmaps to stay smooth. AffixIconImporter turns mipmaps off in SkillIcons, so those import at 128 px instead.
+/// </summary>
 public static class SpriteMeta
 {
-    public static string Text(string guid)
+    public static string Text(string guid, int maxSize)
     {
         return string.Join("\n", new[] {
 "fileFormatVersion: 2",
@@ -125,7 +128,7 @@ public static class SpriteMeta
 "  cubemapConvolution: 0",
 "  seamlessCubemap: 0",
 "  textureFormat: 1",
-"  maxTextureSize: 2048",
+"  maxTextureSize: " + maxSize,
 "  textureSettings:",
 "    serializedVersion: 2",
 "    filterMode: 1",
@@ -165,7 +168,7 @@ public static class SpriteMeta
 "  platformSettings:",
 "  - serializedVersion: 4",
 "    buildTarget: DefaultTexturePlatform",
-"    maxTextureSize: 2048",
+"    maxTextureSize: " + maxSize,
 "    resizeAlgorithm: 0",
 "    textureFormat: -1",
 "    textureCompression: 0",
