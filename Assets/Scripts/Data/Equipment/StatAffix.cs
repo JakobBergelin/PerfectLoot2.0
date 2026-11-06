@@ -21,7 +21,7 @@ namespace Equipment
                 case Affix.AttackSpeed: block.AttackSpeed += value; break;
                 case Affix.WeaponDamage: block.WeaponDamage += value; break;
                 case Affix.WeaponDamageRange: block.WeaponDamageRange += value; break;
-                case Affix.Lifesteal: block.Lifesteal += value; break;
+                case Affix.LifeOnHit: block.LifeOnHit += value; break;
                 case Affix.ProjectilePierces: block.Pierce += (int)math.round(value); break;
                 case Affix.ProjectileBounces: block.Bounces += (int)math.round(value); break;
                 case Affix.ProjectileSpeed: block.ProjectileSpeed += value; break;
@@ -38,7 +38,7 @@ namespace Equipment
                 case Affix.CriticalChance: block.CriticalChance += value; break;
                 case Affix.CriticalDamage: block.CriticalDamage += value; break;
                 case Affix.Armor: block.Armor += (int)math.round(value); break;
-                case Affix.ResourceSteal: block.ResourceSteal += value; break;
+                case Affix.ResourceOnHit: block.ResourceOnHit += value; break;
                 case Affix.Health: block.Health += value; break;
                 case Affix.HealthRegeneration: block.HealthRegeneration += value; break;
                 case Affix.Resource: block.Resource += value; break;

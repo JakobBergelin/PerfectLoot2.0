@@ -170,7 +170,8 @@ public class UnitPanelHUD : MonoBehaviour
         AddStat(Affix.CriticalDamage, stats.CriticalDamage);
         AddStat(Affix.ArmorPierce, stats.ArmorPierce);
         AddStat(Affix.AreaOfEffect, stats.AreaOfEffect);
-        AddStat(Affix.Lifesteal, stats.Lifesteal);
+        AddStat(Affix.LifeOnHit, stats.LifeOnHit);
+        AddStat(Affix.ResourceOnHit, stats.ResourceOnHit);
 
         // For enemies it is a speed, for companions a bonus, as for players
         float speed = entityManager.GetComponentData<MovementSpeed>(unit).Value;

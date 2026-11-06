@@ -29,8 +29,8 @@ public struct StatBlock
     public float Resource;
     public float ResourceRegeneration;
     public float ResourceCostReduction;
-    public float ResourceSteal;
-    public float Lifesteal;
+    public float ResourceOnHit;
+    public float LifeOnHit;
 
     public int Pierce;
     public int Bounces;
@@ -109,8 +109,8 @@ public struct StatBlock
         Resource += other.Resource;
         ResourceRegeneration += other.ResourceRegeneration;
         ResourceCostReduction += other.ResourceCostReduction;
-        ResourceSteal += other.ResourceSteal;
-        Lifesteal += other.Lifesteal;
+        ResourceOnHit += other.ResourceOnHit;
+        LifeOnHit += other.LifeOnHit;
 
         Pierce += other.Pierce;
         Bounces += other.Bounces;
@@ -159,8 +159,8 @@ public struct StatBlock
         Resource -= other.Resource;
         ResourceRegeneration -= other.ResourceRegeneration;
         ResourceCostReduction -= other.ResourceCostReduction;
-        ResourceSteal -= other.ResourceSteal;
-        Lifesteal -= other.Lifesteal;
+        ResourceOnHit -= other.ResourceOnHit;
+        LifeOnHit -= other.LifeOnHit;
 
         Pierce -= other.Pierce;
         Bounces -= other.Bounces;

@@ -44,6 +44,6 @@ MonoBehaviour:
       Max: 0.1
   - Affix: 23
     RollRange:
-      Min: 0.01
-      Max: 0.03
+      Min: 0.2
+      Max: 0.6
   LegendaryPower: {fileID: 11400000, guid: 24bf16d558efc29ad9de36dcaf0ee10e, type: 2}

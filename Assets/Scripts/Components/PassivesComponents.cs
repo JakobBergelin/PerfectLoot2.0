@@ -71,6 +71,7 @@ public enum PassiveType
     FesteringHorde,
     Quarry,
     Bulwark,
+    BloodPact,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -159,6 +160,9 @@ public struct Recharge : IComponentData
     public float Spent;                 // Toward the next cut
     public Unity.Mathematics.Random Random;
 }
+
+/// <summary>The wearer's companions' hits use its Life on Hit and Resource on Hit (OnHitSystem).</summary>
+public struct BloodPact : IComponentData { }
 
 public struct Bulwark : IComponentData
 {

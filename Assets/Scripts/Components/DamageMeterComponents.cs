@@ -51,6 +51,7 @@ public enum DamageLabel
 
     // Healing
     LifeLink,
+    LifeOnHit,
     Luminosity,
     Regeneration,
     Vigil,

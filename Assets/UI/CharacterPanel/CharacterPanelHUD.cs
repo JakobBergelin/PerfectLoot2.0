@@ -673,8 +673,8 @@ public class CharacterPanelHUD : MonoBehaviour
         AddRow(section, Affix.AreaOfEffect, "Area of Effect", s => s.Stats.AreaOfEffect, Pct, plus: true);
         AddRow(section, Affix.CooldownReduction, "Cooldown Reduction", s => s.Stats.CooldownReduction, Pct);
         AddRow(section, Affix.ResourceCostReduction, "Resource Cost Reduction", s => s.Stats.ResourceCostReduction, Pct);
-        AddRow(section, Affix.Lifesteal, "Lifesteal", s => s.Stats.Lifesteal, Pct);
-        AddRow(section, Affix.ResourceSteal, "Resource Steal", s => s.Stats.ResourceSteal, Pct);
+        AddRow(section, Affix.LifeOnHit, "Life on Hit", s => s.Stats.LifeOnHit, Flat);
+        AddRow(section, Affix.ResourceOnHit, "Resource on Hit", s => s.Stats.ResourceOnHit, Flat);
         AddRow(section, Affix.ProjectilePierces, "Pierce", s => s.Stats.Pierce, Whole);
         AddRow(section, Affix.ProjectileBounces, "Bounces", s => s.Stats.Bounces, Whole);
         AddRow(section, Affix.ProjectileSpeed, "Projectile Speed", s => s.Stats.ProjectileSpeed, Pct, plus: true);
