@@ -70,6 +70,7 @@ public enum PassiveType
     BoneWard,
     FesteringHorde,
     Quarry,
+    Bulwark,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -157,6 +158,12 @@ public struct Recharge : IComponentData
     public float CooldownReduction;     // Seconds taken off one random skill's remaining cooldown
     public float Spent;                 // Toward the next cut
     public Unity.Mathematics.Random Random;
+}
+
+public struct Bulwark : IComponentData
+{
+    public float FrontReduction;    // Hits from in front, 0.4 = -40%
+    public float BackIncrease;      // Hits from behind, 0.5 = +50%
 }
 
 public struct Bloodrush : IComponentData

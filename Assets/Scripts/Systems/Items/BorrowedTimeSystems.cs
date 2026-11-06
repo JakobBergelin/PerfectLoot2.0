@@ -27,6 +27,7 @@ public struct DelayedDamage : IBufferElementData
 [UpdateAfter(typeof(BrawlerSystem))]
 [UpdateAfter(typeof(BrittleSystem))]
 [UpdateAfter(typeof(LongShotSystem))]
+[UpdateAfter(typeof(BulwarkSystem))]
 [UpdateBefore(typeof(DamagingSystem))]
 [BurstCompile]
 public partial struct BorrowedTimeSystem : ISystem
