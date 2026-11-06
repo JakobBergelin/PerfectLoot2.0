@@ -69,6 +69,7 @@ public enum PassiveType
     LifeLink,
     BoneWard,
     FesteringHorde,
+    Quarry,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -227,4 +228,13 @@ public struct FesteringHorde : IComponentData
 {
     public float Radius;            // Meters from the wearer
     public float PoisonResistance;  // Added to ResistanceAuraBuff by each wearer
+}
+
+public struct Quarry : IComponentData
+{
+    public float Radius;            // Meters from the wearer a target is picked in and kept in
+    public float DamagePenalty;     // To enemies other than the target, 0.3 = -30%
+    public float ResourceRefund;    // Part of maximum resource when the target dies, 0.2 = 20%
+    public Entity Target;           // Entity.Null: none (QuarrySystem)
+    public Unity.Mathematics.Random Random;
 }

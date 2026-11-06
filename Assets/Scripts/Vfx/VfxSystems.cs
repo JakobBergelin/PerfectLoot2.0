@@ -25,7 +25,8 @@ public struct VfxHitWatch : IComponentData
 /// Gives skill entities their look through VfxManager without the skill systems knowing: fireballs, barrage bolts and
 /// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
-/// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects).
+/// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects). A marker
+/// hovers over each Quarry wearer's target.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
@@ -34,6 +35,7 @@ public partial class VfxSystem : SystemBase
     EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _bound, _gone, _unwatched;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
     readonly Dictionary<Entity, int> _dashes = new Dictionary<Entity, int>();
+    readonly Dictionary<Entity, int> _quarryMarks = new Dictionary<Entity, int>();
     readonly List<Entity> _stale = new List<Entity>();
 
     protected override void OnCreate()
@@ -113,7 +115,27 @@ public partial class VfxSystem : SystemBase
         {
             UpdatePlayerEffects(vfx);
             UpdateUnitEffects(vfx);
+            UpdateQuarryMarks(vfx);
         }
+    }
+
+    // Keyed by the wearer: the marker jumps to the next target, and goes with the passive or the wearer
+    void UpdateQuarryMarks(VfxManager vfx)
+    {
+        var transforms = SystemAPI.GetComponentLookup<LocalTransform>(true);
+        foreach (var (quarry, entity) in SystemAPI.Query<RefRO<Quarry>>().WithEntityAccess())
+        {
+            var target = quarry.ValueRO.Target;
+            bool marked = transforms.HasComponent(target);
+            var t = marked ? transforms[target] : default;
+            t.Position.y += 1.6f * t.Scale;  // Over the head: the root is the capsule's centre
+            Track(vfx, _quarryMarks, entity, marked, VfxType.QuarryMark, VfxType.None, t);
+        }
+
+        _stale.Clear();
+        foreach (var (entity, handle) in _quarryMarks)
+            if (!EntityManager.HasComponent<Quarry>(entity)) { vfx.Release(handle); _stale.Add(entity); }
+        foreach (var entity in _stale) _quarryMarks.Remove(entity);
     }
 
     // A burst when a unit's hit flash starts, and one when it starts dying (RigidDeath)

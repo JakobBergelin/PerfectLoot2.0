@@ -16,4 +16,5 @@ public enum VfxType
     UnitDeath = 12,
     UndeadDeath = 13,
     SoulOrb = 14,
+    QuarryMark = 15,
 }
