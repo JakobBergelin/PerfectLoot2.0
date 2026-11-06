@@ -14,5 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Passives.PixieDustPassive
   Name: Pixie Dust
   Icon: {fileID: 21300000, guid: 2e8c43fee63840a68bce5fca31f4faef, type: 3}
-  Description:
+  Description: While Invulnerable, health and resource regenerate three times as fast. A little sparkle goes a long way.
   RegenerationMultiplier: 2

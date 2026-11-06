@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Passives.MedusaPassive
   Name: Medusa
   Icon: {fileID: 21300000, guid: 87e6599a1a39448b94625b96a3a13c90, type: 3}
-  Description: 
+  Description: Damage comes out of your resource before it touches your health.

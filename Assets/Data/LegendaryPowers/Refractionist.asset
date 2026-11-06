@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Refractionist
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.RefractionistPower
   Name: Refractionist
-  Description: 'Using a mobility skill grants {RefractionStacks} Refraction, up to {MaxStacks}.'
+  Description: 'Using a mobility skill grants {RefractionStacks} Refraction, up to {MaxStacks}. Each stack absorbs one hit.'
   RefractionStacks: 3
   MaxStacks: 10

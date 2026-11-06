@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.BarrageSkill
   Name: Barrage
   Icon: {fileID: 21300000, guid: 8cf7070c631c4fb685ef6e4ccf5de3b4, type: 3}
-  Description: 
+  Description: Launch homing missiles straight up. They turn and chase down enemies, and they cost no resource.
   Tags: 1
   AttackSpeed: 0.3
   Damage: 3

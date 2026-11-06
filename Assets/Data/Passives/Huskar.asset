@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Passives.HuskarPassive
   Name: Huskar
   Icon: {fileID: 21300000, guid: c186127ad788422684904f03c3e8a1ac, type: 3}
-  Description: 
+  Description: Skills cost health instead of resource. Pay in blood, if you've got it to spare.
