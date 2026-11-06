@@ -78,7 +78,7 @@ public static class HubLevelsCreator
                 light.intensity = 0.45f;
             }
 
-        foreach (var (x, z) in new[] { (22.5f, 35f), (11f, 29f), (34f, 29f), (11f, 15f), (22.5f, 22f), (22.5f, 11f), (34f, 13f) })
+        foreach (var (x, z) in new[] { (19f, 35f), (26f, 35f), (7.5f, 29f), (14.5f, 29f), (30.5f, 29f), (37.5f, 29f), (7.5f, 13f), (14.5f, 13f), (22.5f, 22f), (22.5f, 12f), (15f, 20f), (30f, 20f), (35f, 12f) })
             AddCandleLight(x, z);
         EditorSceneManager.SaveScene(main);
     }
@@ -225,14 +225,15 @@ public static class HubLevelsCreator
         });
     }
 
+    // The Comic shader cuts additional lights off at a fixed attenuation, so a pool only reaches about 2 m: keep lights low and many
     static void AddCandleLight(float x, float z)
     {
         var light = new GameObject("Candle Light").AddComponent<Light>();
-        light.transform.position = new Vector3(x, 3.2f, z);
+        light.transform.position = new Vector3(x, 1.1f, z);
         light.type = LightType.Point;
         light.color = CandleColor;
-        light.range = 15f;
-        light.intensity = 14f;
+        light.range = 6f;
+        light.intensity = 2.2f;
         light.shadows = LightShadows.None;
     }
 }
