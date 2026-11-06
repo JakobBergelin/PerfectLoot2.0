@@ -31,6 +31,7 @@ public enum EffectType
     BoneWard,
     FesteringHorde,
     ThrallMark,
+    DelayedDamage,
 }
 
 public enum EffectKind

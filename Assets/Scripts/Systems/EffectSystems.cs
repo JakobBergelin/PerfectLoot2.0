@@ -347,6 +347,16 @@ public partial struct EffectDisplaySystem : ISystem
             }
             display.Add(entry);
         }
+        if (SystemAPI.HasBuffer<DelayedDamage>(entity) && !SystemAPI.GetBuffer<DelayedDamage>(entity).IsEmpty)
+        {
+            var entry = new EffectDisplay { Type = EffectType.DelayedDamage, Stacks = 1 };
+            foreach (var delayed in SystemAPI.GetBuffer<DelayedDamage>(entity))
+            {
+                entry.Magnitude += delayed.DamagePerSecond;
+                if (delayed.TimeRemaining > entry.TimeRemaining) { entry.TimeRemaining = delayed.TimeRemaining; entry.Duration = delayed.Duration; }
+            }
+            display.Add(entry);
+        }
         if (IsActive<Poisoned>(ref state, entity))
         {
             var poisoned = SystemAPI.GetComponent<Poisoned>(entity);
