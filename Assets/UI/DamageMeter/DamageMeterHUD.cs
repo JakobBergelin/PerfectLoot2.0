@@ -8,7 +8,8 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// Shows the DamageMeter in DamageMeter.uxml: a stat per tab, by unit or by skill, each row as per second over the last 10
-/// seconds and since the level started, highest level rate first. ToggleKey or the title bar's button minimizes it, and
+/// seconds and since the level started. Clicking a column's heading sorts and sizes the bars by it (the level rate at first).
+/// ToggleKey or the title bar's button minimizes it, and
 /// gameplay input is ignored while the pointer is over it. Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
@@ -16,6 +17,7 @@ public class DamageMeterHUD : MonoBehaviour
 {
     const string SelectedTabClass = "damage-meter__tab--selected";
     const string HiddenBodyClass = "damage-meter__body--hidden";
+    const string SelectedHeadingClass = "damage-meter__number--selected";
     const float RefreshInterval = 0.25f;
 
     class RowView
@@ -28,6 +30,8 @@ public class DamageMeterHUD : MonoBehaviour
     {
         public string Name;
         public float Recent, Level;
+
+        public float Sorted(bool byRecent) => byRecent ? Recent : Level;
     }
 
     public Key ToggleKey = Key.M;
@@ -36,7 +40,7 @@ public class DamageMeterHUD : MonoBehaviour
     bool _bound;
     int _boundVersion = -1;
     VisualElement _panel, _body;
-    Button _toggle, _view;
+    Button _toggle, _view, _recentHeading, _levelHeading;
     ScrollView _rows;
     readonly Button[] _tabs = new Button[4];
     readonly List<RowView> _rowViews = new List<RowView>();
@@ -45,6 +49,7 @@ public class DamageMeterHUD : MonoBehaviour
 
     bool _minimized = true;
     bool _bySource;
+    bool _byRecent;     // Sort and size the bars by the 10 s column, otherwise by the Level column
     MeterStat _stat = MeterStat.DamageDone;
     float _nextRefresh;
 
@@ -85,6 +90,8 @@ public class DamageMeterHUD : MonoBehaviour
         _body = root.Q<VisualElement>("body");
         _toggle = root.Q<Button>("toggle");
         _view = root.Q<Button>("view");
+        _recentHeading = root.Q<Button>("recentHeading");
+        _levelHeading = root.Q<Button>("levelHeading");
         _rows = root.Q<ScrollView>("rows");
         _rowViews.Clear();
 
@@ -94,6 +101,16 @@ public class DamageMeterHUD : MonoBehaviour
         _view.clicked += () =>
         {
             _bySource = !_bySource;
+            Refresh();
+        };
+        _recentHeading.clicked += () =>
+        {
+            _byRecent = true;
+            Refresh();
+        };
+        _levelHeading.clicked += () =>
+        {
+            _byRecent = false;
             Refresh();
         };
         for (int i = 0; i < _tabs.Length; i++)
@@ -137,6 +154,8 @@ public class DamageMeterHUD : MonoBehaviour
         for (int i = 0; i < _tabs.Length; i++)
             _tabs[i].EnableInClassList(SelectedTabClass, (MeterStat)i == _stat);
         _view.text = _bySource ? "By skill" : "By unit";
+        _recentHeading.EnableInClassList(SelectedHeadingClass, _byRecent);
+        _levelHeading.EnableInClassList(SelectedHeadingClass, !_byRecent);
 
         ReadRows();
         ShowRows();
@@ -161,7 +180,7 @@ public class DamageMeterHUD : MonoBehaviour
                 Level = pair.Value.Total / levelSeconds,
             });
         }
-        _data.Sort((a, b) => b.Level.CompareTo(a.Level));
+        _data.Sort((a, b) => b.Sorted(_byRecent).CompareTo(a.Sorted(_byRecent)));
     }
 
     bool TryGetMeter(out DamageMeter meter)
@@ -185,7 +204,7 @@ public class DamageMeterHUD : MonoBehaviour
     {
         while (_rowViews.Count < _data.Count) _rowViews.Add(CreateRow());
 
-        float highest = _data.Count > 0 ? _data[0].Level : 0f;
+        float highest = _data.Count > 0 ? _data[0].Sorted(_byRecent) : 0f;
         for (int i = 0; i < _rowViews.Count; i++)
         {
             var view = _rowViews[i];
@@ -197,7 +216,7 @@ public class DamageMeterHUD : MonoBehaviour
             view.Name.text = row.Name;
             view.Recent.text = Format(row.Recent);
             view.Level.text = Format(row.Level);
-            view.Bar.style.width = Length.Percent(highest > 0f ? 100f * row.Level / highest : 0f);
+            view.Bar.style.width = Length.Percent(highest > 0f ? 100f * row.Sorted(_byRecent) / highest : 0f);
         }
     }
 

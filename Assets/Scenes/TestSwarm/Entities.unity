@@ -291,7 +291,7 @@ MonoBehaviour:
   BendAngle: 0
   HillHeight: 0
   HillScale: 0.15
-  PlayerStart: {x: 10, y: 3}
+  PlayerStart: {x: 11, y: 3}
   ForcedTiles: []
   Pieces: []
   EnemySpawners:

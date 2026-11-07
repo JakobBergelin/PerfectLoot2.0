@@ -8,14 +8,14 @@ using Unity.Transforms;
 /// <summary>Wildfire legendary power, added by WildfirePower while the item is equipped.</summary>
 public struct Wildfire : IComponentData
 {
-    public float SpreadFraction;    // Of the dying enemy's remaining burn damage, given to each enemy around it
+    public float SpreadFraction;    // Of the dying enemy's remaining burn damage, split among the enemies around it
     public float Radius;            // Scaled by the wearer's area of effect
 }
 
 /// <summary>
-/// Wildfire: when a burning enemy dies, the burn damage it had left from a wearer's burns is given to every enemy within
-/// Radius of it (times SpreadFraction) as one new burn over the usual burn duration, by that wearer. Those can spread it
-/// again when they die. After the damage is dealt and before CheckDeathSystem removes the dead, while they still burn.
+/// Wildfire: when a burning enemy dies, the burn damage it had left from a wearer's burns (times SpreadFraction) is split
+/// evenly among the enemies within Radius of it, each as one new burn over the usual burn duration, by that wearer. Those
+/// can spread it again when they die. After the damage is dealt and before CheckDeathSystem removes the dead, while they still burn.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup), OrderLast = true)]
 [UpdateAfter(typeof(DamagingSystem))]
@@ -80,14 +80,20 @@ public partial struct WildfireSystem : ISystem
             if (damage <= 0f) continue;
             float area = stats.HasComponent(spread.Source) ? stats[spread.Source].Value.AreaMultiplier : 1f;
 
+            // Not the dying enemy, nor others dying this frame (they spread their own)
             hits.Clear();
             physicsWorld.OverlapSphere(spread.Position, wildfire.Radius * area, ref hits, filter);
-            foreach (var hit in hits)
+            for (int i = hits.Length - 1; i >= 0; i--)
             {
-                // Not the dying enemy, nor others dying this frame (they spread their own)
-                if (hit.Entity == spread.Origin || !health.HasComponent(hit.Entity) || health[hit.Entity].CurrentValue <= 0f) continue;
-                EffectApply.AddBurn(burns, burning, hit.Entity, damage / settings.BurnDuration, settings.BurnDuration, spread.Source);
+                var hit = hits[i].Entity;
+                if (hit == spread.Origin || !health.HasComponent(hit) || health[hit].CurrentValue <= 0f) hits.RemoveAtSwapBack(i);
             }
+            if (hits.IsEmpty) continue;
+
+            // Split among them, so each death passes on less than it had and the chain dies out
+            float share = damage / hits.Length;
+            foreach (var hit in hits)
+                EffectApply.AddBurn(burns, burning, hit.Entity, share / settings.BurnDuration, settings.BurnDuration, spread.Source);
         }
     }
 

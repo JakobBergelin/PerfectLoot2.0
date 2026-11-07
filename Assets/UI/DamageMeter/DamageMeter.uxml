@@ -15,8 +15,8 @@
                 </ui:VisualElement>
                 <ui:VisualElement class="damage-meter__columns">
                     <ui:Button name="view" class="damage-meter__view" />
-                    <ui:Label text="10 s" class="damage-meter__number damage-meter__number--heading" />
-                    <ui:Label text="Level" class="damage-meter__number damage-meter__number--heading" />
+                    <ui:Button name="recentHeading" text="10 s" class="damage-meter__number damage-meter__number--heading" />
+                    <ui:Button name="levelHeading" text="Level" class="damage-meter__number damage-meter__number--heading" />
                 </ui:VisualElement>
                 <!-- Rows are created by DamageMeterHUD -->
                 <ui:ScrollView name="rows" class="damage-meter__rows" />

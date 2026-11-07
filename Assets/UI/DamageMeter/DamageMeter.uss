@@ -137,7 +137,17 @@
     -unity-text-align: middle-right;
 }
 
+/* A button that looks like a heading: click it to sort and size the bars by its column */
 .damage-meter__number--heading {
+    height: 20px;
+    margin: 0;
+    padding: 0;
     color: var(--text-muted);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
     font-size: 12px;
+}
+
+.damage-meter__number--selected {
+    color: var(--selected-color);
 }
