@@ -30,4 +30,9 @@ public enum VfxType
     StatusChill = 26,
     StatusBleed = 27,
     StatusCharged = 28,
+    LootBeam = 29,
+    LootPickup = 30,
+    SoulPop = 31,
+    PortalSwirl = 32,
+    PlayerSpawn = 33,
 }

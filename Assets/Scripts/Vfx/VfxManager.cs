@@ -90,6 +90,20 @@ public class VfxManager : MonoBehaviour
         if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = new Vector3(scale, 1f, scale);
     }
 
+    /// <summary>
+    /// Colors an effect's particles, such as a loot beam in its item's rarity color. Call it right after Spawn or Burst,
+    /// before the first particles come out. Stays on the pooled instance, so only use it for types that are always tinted.
+    /// </summary>
+    public void Tint(int handle, Color color)
+    {
+        if (!_active.TryGetValue(handle, out var active)) return;
+        foreach (var particles in active.Instance.GetComponentsInChildren<ParticleSystem>(true))
+        {
+            var main = particles.main;
+            main.startColor = color;
+        }
+    }
+
     /// <summary>Stops emitting; the effect returns to the pool once its particles have faded.</summary>
     public void Release(int handle)
     {

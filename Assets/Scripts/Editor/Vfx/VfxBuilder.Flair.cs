@@ -207,6 +207,104 @@ public static partial class VfxBuilder
         yield return (VfxType.StatusCharged, Save(charged));
     }
 
+    // Loot, souls, portals and spawning. The loot effects are white: GroundLootVfx tints them to the item's rarity.
+    static IEnumerable<(VfxType, GameObject)> JuiceEffects()
+    {
+        var up = new Vector3(-90f, 0f, 0f);     // Turns a cone's Z up, and lays a circle flat
+
+        var beam = Root_("VFX_LootBeam", 1.2f, out _);
+        Ps(beam, "Column", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.9f, 1.3f), new ParticleSystem.MinMaxCurve(1.6f, 2.4f), new ParticleSystem.MinMaxCurve(0.25f, 0.4f), Color.white, rate: 10f);
+            Shape(ps, ParticleSystemShapeType.Cone, 0.12f, up);
+            var shape = ps.shape; shape.angle = 0f;
+            Fade(ps, Hex("#FFFFFF", 0.7f), Hex("#FFFFFF", 0.5f), Hex("#FFFFFF", 0f));
+            Stretch(ps, 4f);
+        });
+        Ps(beam, "Glow", _additive, ps =>
+        {
+            Main(ps, 0.4f, 0f, 0.9f, Color.white, local: true, rate: 6f);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.01f, default, new Vector3(0f, 0.15f, 0f));
+            Fade(ps, Hex("#FFFFFF", 0.35f), Hex("#FFFFFF", 0.35f), Hex("#FFFFFF", 0f));   // Alpha here: Tint sets the start color
+        });
+        Ps(beam, "Motes", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(1f, 1.6f), new ParticleSystem.MinMaxCurve(0.1f, 0.3f), new ParticleSystem.MinMaxCurve(0.08f, 0.14f), Color.white, rate: 6f);
+            var m = ps.main; m.gravityModifier = -0.3f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.35f, default, new Vector3(0f, 0.3f, 0f));
+            Fade(ps, Hex("#FFFFFF"), Hex("#FFFFFF", 0.7f), Hex("#FFFFFF", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.LootBeam, Save(beam));
+
+        var pickup = Root_("VFX_LootPickup", 1f, out _);
+        Ps(pickup, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.2f, 0f, 1.4f, Color.white, burst: 1);
+            Fade(ps, Hex("#FFFFFF", 0.5f), Hex("#FFFFFF", 0.4f), Hex("#FFFFFF", 0f));
+        });
+        Ps(pickup, "Sparkles", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(2f, 4f), new ParticleSystem.MinMaxCurve(0.1f, 0.2f), Color.white, burst: 18);
+            var m = ps.main; m.gravityModifier = -0.5f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f, default, new Vector3(0f, 0.3f, 0f));
+            Fade(ps, Hex("#FFFFFF"), Hex("#FFFFFF", 0.8f), Hex("#FFFFFF", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.LootPickup, Save(pickup));
+
+        // In the soul orb's colours
+        var pop = Root_("VFX_SoulPop", 0.9f, out _);
+        Ps(pop, "Flash", _additive, ps => Main(ps, 0.2f, 0f, 1.2f, Hex("#9FC4FF", 0.5f), burst: 1));
+        Ps(pop, "Wisps", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(1.5f, 3f), new ParticleSystem.MinMaxCurve(0.12f, 0.24f), Color.white, burst: 14);
+            var m = ps.main; m.gravityModifier = -0.3f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f);
+            Fade(ps, Hex("#E8F0F8"), Hex("#C8E0FF", 0.6f), Hex("#7FA0D0", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.SoulPop, Save(pop));
+
+        // Motes circling into the portal's ring (upright, facing Z, its centre 1.32 m up). Local, so it turns with the portal.
+        // From a thick ring rather than a line, so the portal's opaque surface hides only the motes behind it.
+        var swirl = Root_("VFX_PortalSwirl", 1.6f, out _);
+        Ps(swirl, "Swirl", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(1.2f, 1.6f), 0f, new ParticleSystem.MinMaxCurve(0.12f, 0.22f), Color.white, rate: 26f, local: true);
+            Shape(ps, ParticleSystemShapeType.Donut, 1.05f, default, new Vector3(0f, 1.32f, 0f));
+            var shape = ps.shape; shape.donutRadius = 0.3f;
+            var velocity = ps.velocityOverLifetime;
+            velocity.enabled = true;
+            velocity.space = ParticleSystemSimulationSpace.Local;
+            velocity.x = velocity.y = velocity.z = new ParticleSystem.MinMaxCurve(0f);
+            velocity.orbitalX = velocity.orbitalY = new ParticleSystem.MinMaxCurve(0f);
+            velocity.orbitalZ = new ParticleSystem.MinMaxCurve(1.2f);
+            velocity.radial = new ParticleSystem.MinMaxCurve(-0.5f);
+            Fade(ps, Hex("#E0C8FF", 0.9f), Hex("#8C4DFF", 0.7f), Hex("#5A2A9E", 0f));
+        });
+        yield return (VfxType.PortalSwirl, Save(swirl));
+
+        // At the player's centre (1.05 m up): warm candle light rising from the feet, and a puff of dust
+        var spawn = Root_("VFX_PlayerSpawn", 1.4f, out _);
+        Ps(spawn, "Flash", _additive, ps => Main(ps, 0.25f, 0f, 2.2f, Hex("#FFC66B", 0.5f), burst: 1));
+        Ps(spawn, "Light", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(3f, 5f), new ParticleSystem.MinMaxCurve(0.2f, 0.35f), Color.white, burst: 24);
+            Shape(ps, ParticleSystemShapeType.Cone, 0.5f, up, new Vector3(0f, -1f, 0f));
+            var shape = ps.shape; shape.angle = 0f;
+            Fade(ps, Hex("#FFF2C8"), Hex("#FFC66B", 0.7f), Hex("#E0A020", 0f));
+            Stretch(ps, 3f);
+        });
+        Ps(spawn, "Dust", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(1.5f, 2.5f), new ParticleSystem.MinMaxCurve(0.3f, 0.5f), Hex("#B8A890", 0.6f), burst: 20);
+            Shape(ps, ParticleSystemShapeType.Circle, 0.3f, up, new Vector3(0f, -0.95f, 0f));
+            Grow(ps, 1.6f);
+        });
+        yield return (VfxType.PlayerSpawn, Save(spawn));
+    }
+
     /// <summary>A long diamond pointing down: 0.95 tall, 0.64 wide.</summary>
     static Mesh Gem(string name)
     {

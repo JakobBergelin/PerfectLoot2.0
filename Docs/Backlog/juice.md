@@ -16,9 +16,18 @@ The stream stopped early on a usage budget, so priorities 3 to 5 were not starte
 
 ## Not started
 
-- Priority 3: ground loot beams, pickup, Soul pickup and level-up bursts, portal swirl, respawn.
+- Priority 3 is done (loot beams, pickup sparkle, soul pop, portal swirl, spawn shimmer), except the level-up burst: nothing gives experience yet, so nothing would trigger it. Add it to `VfxSystem` once `Level.Value` can go up.
 - Priority 4: camera shake, footstep dust, dodge and block flashes, crit pop, Mirror Image shimmer, Undertow ripples, Slingshot spark, Bulwark shimmer.
 - Priority 5: HUD transitions, cooldown-ready flash, and the skill bar labels (1-4 should read LMB, RMB, Q, E).
+
+## Priority 3 (seen in TestSwarm)
+
+- Loot beams: a column of light over each ground item in its rarity's color, faint for Normal items (`GroundLootVfx.NormalAlpha`, on the GroundLootManager prefab). Dropped from four loot tables: gold, yellow, blue and gray beams showed.
+- Pickup sparkle in the item's color, through the new `GroundLootManager.ItemPickedUp` event. Seen for a Legendary.
+- Soul pop when a soul goes, taken or faded. Seen on a soul made by hand that faded.
+- Portal swirl: motes circling into the ring. Subtle; raise the Swirl rate in `VfxBuilder.Flair.cs` if it should stand out more.
+- Spawn shimmer: warm light and dust at the feet on every `CharacterManager.PlayerSpawned`, so entering a level and respawning. Seen both.
+- `VfxManager.Tint` colors a pooled effect by setting its particles' start color, alpha included. Put an effect's own transparency in its Fade gradient if it will be tinted.
 
 ## Notes
 

@@ -26,7 +26,8 @@ public struct VfxHitWatch : IComponentData
 /// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
 /// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects). A marker
-/// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second.
+/// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second. Portals
+/// swirl, and players shimmer as they spawn. Loot on the ground has its own, GroundLootVfx.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
@@ -35,7 +36,8 @@ public partial class VfxSystem : SystemBase
     const float StatusInterval = 0.4f;
     const int StatusCap = 10;   // Per status and interval, so swarms stay cheap
 
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _bound, _gone, _unwatched, _charged;
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _bound, _gone, _unwatched, _charged;
+    readonly List<Entity> _spawned = new List<Entity>();    // From CharacterManager.PlayerSpawned
     (EntityQuery Query, VfxType Effect)[] _statuses;
     double _nextStatus;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
@@ -50,6 +52,8 @@ public partial class VfxSystem : SystemBase
         _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxBinding, Projectile>().Build();
         _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
         _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
+        _newPortals = SystemAPI.QueryBuilder().WithAll<Portal, LocalTransform>().WithNone<VfxBinding>().Build();
+        CharacterManager.PlayerSpawned += OnPlayerSpawned;
         _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
         _statuses = new[]
         {
@@ -62,6 +66,10 @@ public partial class VfxSystem : SystemBase
         _gone = SystemAPI.QueryBuilder().WithAll<VfxBinding>().WithNone<LocalTransform>().Build();
         _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
     }
+
+    protected override void OnDestroy() => CharacterManager.PlayerSpawned -= OnPlayerSpawned;
+
+    void OnPlayerSpawned(Entity player) => _spawned.Add(player);
 
     protected override void OnUpdate()
     {
@@ -99,9 +107,23 @@ public partial class VfxSystem : SystemBase
                     if (attack.Skill == SkillType.TeslaCoil) vfx.Scale(binding.Handle, attack.Radius);
                     bindings.Add((e, binding));
                 }
+            // A pop when the soul goes, taken or faded
             using (var entities = _newSouls.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
-                    bindings.Add((e, Bind(vfx, VfxType.SoulOrb, VfxType.None, EntityManager.GetComponentData<LocalTransform>(e))));
+                    bindings.Add((e, Bind(vfx, VfxType.SoulOrb, VfxType.SoulPop, EntityManager.GetComponentData<LocalTransform>(e))));
+            // Turned like the portal, as its ring faces one way
+            using (var entities = _newPortals.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var t = EntityManager.GetComponentData<LocalTransform>(e);
+                    var binding = Bind(vfx, VfxType.PortalSwirl, VfxType.None, t);
+                    binding.Rotation = t.Rotation;
+                    bindings.Add((e, binding));
+                }
+            // Players that spawned since the last update: at their position now
+            foreach (var player in _spawned)
+                if (EntityManager.Exists(player) && EntityManager.HasComponent<LocalTransform>(player))
+                    vfx.Burst(VfxType.PlayerSpawn, EntityManager.GetComponentData<LocalTransform>(player).Position, Quaternion.identity);
             using (var entities = _newBodies.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
@@ -127,6 +149,7 @@ public partial class VfxSystem : SystemBase
                     bindings.Add((e, new VfxBinding { Position = t.Position, Rotation = quaternion.identity }));
                 }
         }
+        _spawned.Clear();
         foreach (var (entity, binding) in bindings) EntityManager.AddComponentData(entity, binding);
 
         // Follow, facing the way they move

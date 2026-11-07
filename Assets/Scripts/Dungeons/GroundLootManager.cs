@@ -45,6 +45,9 @@ public class GroundLootManager : MonoBehaviour
     /// <summary>Items picked up in this scene.</summary>
     public int PickedUp { get; private set; }
 
+    /// <summary>Raised when an item is picked up, after it's off the ground (GroundLootVfx bursts there).</summary>
+    public event System.Action<GroundItem> ItemPickedUp;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
@@ -138,6 +141,7 @@ public class GroundLootManager : MonoBehaviour
         PickedUp++;
         Version++;
         account.ReceiveDrop(item.Item);
+        ItemPickedUp?.Invoke(item);
         return true;
     }
 
