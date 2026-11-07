@@ -68,12 +68,14 @@ public class VfxManager : MonoBehaviour
 
     /// <summary>
     /// A one-shot: plays out and returns to the pool after its Linger. Not stopped like Release does: a burst only emits
-    /// on the particle system's first update, so stopping it in the frame it starts would cancel it.
+    /// on the particle system's first update, so stopping it in the frame it starts would cancel it. Returns its handle
+    /// for Scale.
     /// </summary>
-    public void Burst(VfxType type, Vector3 position, Quaternion rotation)
+    public int Burst(VfxType type, Vector3 position, Quaternion rotation)
     {
         int handle = Spawn(type, position, rotation);
         if (_active.TryGetValue(handle, out var active)) active.ReturnAt = Time.time + active.Instance.Linger;
+        return handle;
     }
 
     public void Move(int handle, Vector3 position, Quaternion rotation)
@@ -82,10 +84,10 @@ public class VfxManager : MonoBehaviour
             active.Instance.transform.SetPositionAndRotation(position, rotation);
     }
 
-    /// <summary>Sizes a following effect, such as a ground ring to its field's radius.</summary>
+    /// <summary>Sizes an effect sideways only, such as a ground ring to its field's radius, so its heights stay in meters.</summary>
     public void Scale(int handle, float scale)
     {
-        if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = Vector3.one * scale;
+        if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = new Vector3(scale, 1f, scale);
     }
 
     /// <summary>Stops emitting; the effect returns to the pool once its particles have faded.</summary>

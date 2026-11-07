@@ -86,18 +86,3 @@ public partial struct FireHydraSystem : ISystem
         commandBuffer.SetComponent(newEntity, new FireHydraUnit{TimeRemaining = hydra.Duration});
     }
 }
-
-/// <summary>Placeholder art: each Hydra as a sphere.</summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-[BurstCompile]
-partial struct FireHydraUISystem : ISystem
-{
-    const float Radius = 0.6f;
-
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var transform in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<FireHydraUnit>())
-            ProgrammerArt.DrawSphere(transform.ValueRO.Position, Radius, Color.orangeRed);
-    }
-}

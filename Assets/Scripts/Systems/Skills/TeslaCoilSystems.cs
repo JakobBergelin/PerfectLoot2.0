@@ -132,16 +132,3 @@ public partial struct TeslaCoilFieldSystem : ISystem
         }
     }
 }
-
-/// <summary>Placeholder art: each Tesla Coil field as a sphere.</summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-[BurstCompile]
-partial struct TeslaCoilFieldUISystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var (attack, transform) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>>().WithAll<TeslaCoilField>())
-            ProgrammerArt.DrawSphere(transform.ValueRO.Position, attack.ValueRO.Radius, Color.yellow);
-    }
-}

@@ -116,9 +116,14 @@ public partial class VfxSystem : SystemBase
                 {
                     // Single-frame lightning attacks are Fists of Thunder punches landing
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    var damageType = EntityManager.GetComponentData<Attack>(e).Type;
-                    if (damageType == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
-                    else if (damageType == DamageType.Cold) vfx.Burst(VfxType.ColdNova, t.Position, Quaternion.identity);
+                    var attack = EntityManager.GetComponentData<Attack>(e);
+                    if (attack.Type == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                    else if (attack.Type == DamageType.Cold)
+                    {
+                        // Sized to the attack's area (Cold Snap's radius); drawn at radius 1
+                        int nova = vfx.Burst(VfxType.ColdNova, t.Position, Quaternion.identity);
+                        if (attack.Radius > 0f) vfx.Scale(nova, attack.Radius);
+                    }
                     bindings.Add((e, new VfxBinding { Position = t.Position, Rotation = quaternion.identity }));
                 }
         }

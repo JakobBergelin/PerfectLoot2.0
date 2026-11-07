@@ -102,22 +102,38 @@ public static partial class VfxBuilder
         });
         yield return (VfxType.FireHydra, Save(hydra));
 
-        yield return (VfxType.TeslaField, Save(Field("VFX_TeslaField", "VFX_TeslaRing", Sapphire, -0.16f, 2f)));
-        yield return (VfxType.TimezoneField, Save(Field("VFX_TimezoneField", "VFX_TimezoneRing", Frost, -0.115f, 0.6f)));
+        // Both fields sit at unit height (1.05), so -1 puts the ring just above the floor
+        yield return (VfxType.TeslaField, Save(Field("VFX_TeslaField", "VFX_TeslaRing", Sapphire, -1f, 2f)));
+        yield return (VfxType.TimezoneField, Save(Field("VFX_TimezoneField", "VFX_TimezoneRing", Frost, -1f, 0.6f)));
 
+        // Drawn at radius 1: VfxSystem scales it to the attack's radius. Shape scaling, so only where the particles start
+        // grows, not their size or speed. A shard ring marks the edge, frost fills the inside, low over the floor.
         var nova = Root_("VFX_ColdNova", 0.9f, out _);
-        Ps(nova, "Flash", _additive, ps => Main(ps, 0.2f, 0f, 3f, Hex(FrostPale, 0.6f), burst: 1));
+        Ps(nova, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.2f, 0f, 3f, Hex(FrostPale, 0.6f), burst: 1);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape;
+        });
         Ps(nova, "Shards", _additive, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.35f, 0.6f), new ParticleSystem.MinMaxCurve(5f, 9f), new ParticleSystem.MinMaxCurve(0.14f, 0.26f), Color.white, burst: 26);
-            Shape(ps, ParticleSystemShapeType.Circle, 0.3f, new Vector3(-90f, 0f, 0f));
+            Main(ps, new ParticleSystem.MinMaxCurve(0.35f, 0.6f), new ParticleSystem.MinMaxCurve(0.5f, 1.5f), new ParticleSystem.MinMaxCurve(0.18f, 0.32f), Color.white, burst: 40);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape;
+            Shape(ps, ParticleSystemShapeType.Circle, 1f, new Vector3(-90f, 0f, 0f), new Vector3(0f, -0.6f, 0f));
+            var shape = ps.shape; shape.radiusThickness = 0f;   // From the edge only
             Fade(ps, Hex("#FFFFFF"), Hex(FrostPale), Hex(Frost, 0f));
             Shrink(ps);
+        });
+        Ps(nova, "Frost", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(0.1f, 0.4f), new ParticleSystem.MinMaxCurve(0.2f, 0.35f), Color.white, burst: 24);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape;
+            Shape(ps, ParticleSystemShapeType.Circle, 1f, new Vector3(-90f, 0f, 0f), new Vector3(0f, -0.8f, 0f));
+            Fade(ps, Hex("#FFFFFF", 0.6f), Hex(FrostPale, 0.4f), Hex(Frost, 0f));
         });
         yield return (VfxType.ColdNova, Save(nova));
     }
 
-    /// <summary>A ground ring of radius 1 with motes on it. VfxManager.Scale sizes it: only the ring and the shape grow, not the motes. The scale also multiplies height, so height is about -1 / radius to land on the floor from a unit-height entity.</summary>
+    /// <summary>A ground ring of radius 1 with motes on it, height meters from its entity. VfxManager.Scale sizes it sideways: only the ring and the shape grow, not the motes.</summary>
     static GameObject Field(string name, string ringMaterial, string hex, float height, float speed)
     {
         var root = Root_(name, 0.7f, out var instance);
@@ -142,7 +158,7 @@ public static partial class VfxBuilder
         var burn = Root_("VFX_StatusBurn", 0.9f, out _);
         Ps(burn, "Embers", _additive, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.3f, 0.8f), new ParticleSystem.MinMaxCurve(0.12f, 0.22f), Color.white, burst: 3);
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.3f, 0.8f), new ParticleSystem.MinMaxCurve(0.16f, 0.29f), Color.white, burst: 4);
             var m = ps.main; m.gravityModifier = -0.4f;
             Shape(ps, ParticleSystemShapeType.Sphere, 0.35f);
             Fade(ps, Hex("#FFD24A"), Hex("#FF7A1A"), Hex("#B8301A"));
@@ -153,7 +169,7 @@ public static partial class VfxBuilder
         var poison = Root_("VFX_StatusPoison", 1f, out _);
         Ps(poison, "Bubbles", _additive, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.6f, 0.9f), new ParticleSystem.MinMaxCurve(0.2f, 0.5f), new ParticleSystem.MinMaxCurve(0.14f, 0.24f), Color.white, burst: 2);
+            Main(ps, new ParticleSystem.MinMaxCurve(0.6f, 0.9f), new ParticleSystem.MinMaxCurve(0.2f, 0.5f), new ParticleSystem.MinMaxCurve(0.18f, 0.31f), Color.white, burst: 3);
             var m = ps.main; m.gravityModifier = -0.2f;
             Shape(ps, ParticleSystemShapeType.Sphere, 0.35f);
             Fade(ps, Hex("#DFFFB0"), Hex(Poison), Hex("#5E7C46", 0f));
@@ -163,7 +179,7 @@ public static partial class VfxBuilder
         var chill = Root_("VFX_StatusChill", 0.9f, out _);
         Ps(chill, "Frost", _additive, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.1f, 0.4f), new ParticleSystem.MinMaxCurve(0.1f, 0.18f), Color.white, burst: 3);
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.1f, 0.4f), new ParticleSystem.MinMaxCurve(0.13f, 0.24f), Color.white, burst: 4);
             var m = ps.main; m.gravityModifier = 0.12f;
             Shape(ps, ParticleSystemShapeType.Sphere, 0.45f);
             Fade(ps, Hex("#FFFFFF"), Hex(FrostPale), Hex(Frost, 0f));
@@ -173,7 +189,7 @@ public static partial class VfxBuilder
         var bleed = Root_("VFX_StatusBleed", 0.7f, out _);
         Ps(bleed, "Drips", _alpha, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.35f, 0.55f), new ParticleSystem.MinMaxCurve(0.2f, 0.6f), new ParticleSystem.MinMaxCurve(0.12f, 0.18f), Hex("#8E1B2E", 0.95f), burst: 2);
+            Main(ps, new ParticleSystem.MinMaxCurve(0.35f, 0.55f), new ParticleSystem.MinMaxCurve(0.2f, 0.6f), new ParticleSystem.MinMaxCurve(0.16f, 0.24f), Hex("#8E1B2E", 0.95f), burst: 3);
             var m = ps.main; m.gravityModifier = 1.4f;
             Shape(ps, ParticleSystemShapeType.Sphere, 0.3f);
             Shrink(ps);
@@ -183,7 +199,7 @@ public static partial class VfxBuilder
         var charged = Root_("VFX_StatusCharged", 0.4f, out _);
         Ps(charged, "Sparks", _additive, ps =>
         {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.12f, 0.22f), new ParticleSystem.MinMaxCurve(2f, 4f), new ParticleSystem.MinMaxCurve(0.06f, 0.1f), Color.white, burst: 3);
+            Main(ps, new ParticleSystem.MinMaxCurve(0.12f, 0.22f), new ParticleSystem.MinMaxCurve(2f, 4f), new ParticleSystem.MinMaxCurve(0.08f, 0.13f), Color.white, burst: 4);
             Shape(ps, ParticleSystemShapeType.Sphere, 0.4f);
             Fade(ps, Hex("#FFFFFF"), Hex(Sapphire), Hex("#2A4A9E", 0f));
             Stretch(ps, 3f);
