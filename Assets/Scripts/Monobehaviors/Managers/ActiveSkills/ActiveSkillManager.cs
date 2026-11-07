@@ -169,6 +169,8 @@ public class ActiveSkillManager : MonoBehaviour
         SlotIndex = slotIndex,
         BaseTags = skill.Tags,
         Tags = skill.Tags,
+        Label = SkillDamageLabel.Of(skill.Type),
+        CritShake = skill.CritShake,
         State = new SkillState
         {
             ResourceCost = skill.ResourceCost,

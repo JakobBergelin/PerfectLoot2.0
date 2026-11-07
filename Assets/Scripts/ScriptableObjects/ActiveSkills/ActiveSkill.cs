@@ -12,6 +12,8 @@ namespace ActiveSkills
         [TextArea] public string Description;
         [Tooltip("What kind of skill it is: effects pick skills by tag, and Melee / Mobility uses raise their events")]
         public SkillTags Tags;
+        [Tooltip("How hard the camera shakes when one of this skill's hits crits: 0 = not at all, 1 = CameraSettings' full Shake Strength")]
+        [Range(0f, 1f)] public float CritShake;
 
         public abstract SkillType Type { get; }
 

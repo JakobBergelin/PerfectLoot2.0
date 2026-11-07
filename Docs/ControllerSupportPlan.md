@@ -15,7 +15,7 @@ Numbers such as angles and distances are starting guesses to tune by feel.
 - Five panels poll `Keyboard.current` for Esc, `DamageMeterHUD.cs:127` polls M, `PortalHUD.cs:109` polls F, and `CharacterPanelHUD.cs:219,425` read `Mouse.current`. [V]
 - UI: 22 `clicked +=` handlers, 12 `RegisterCallback<ClickEvent>`, 11 `PointerEnterEvent` hovers. A gamepad submit reaches `clicked` but not `ClickEvent`. [V count, D behaviour]
 - There is no `EventSystem` in any scene or prefab, and `InputSystem_Actions` is the project-wide asset. UI Toolkit then reads its `UI` map directly, so gamepad `Navigate` may already reach focusable elements. [V setup, D behaviour, not tested]
-- No rumble, no camera shake, and no use of `Time.timeScale` in game code, so menus never pause. [V]
+- No rumble, and no use of `Time.timeScale` in game code, so menus never pause. [V] Camera shake exists since the juice work (crits from skills with Crit Shake, `CritShakeSystem`), so a controller rumble could follow the same trauma value.
 
 ## The main idea: skills keep reading one world point
 

@@ -43,7 +43,8 @@ public class CameraMonoBehavior : MonoBehaviour
 #endif
 
         var cameraTransform = cameraQuery.GetSingleton<LocalTransform>();
-        transform.position = cameraTransform.Position;
+        var shake = cameraQuery.GetSingleton<CameraFollow>().ShakeOffset;
+        transform.position = cameraTransform.Position + shake;
         transform.rotation = cameraTransform.Rotation;
     }
 }

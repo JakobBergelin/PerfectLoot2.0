@@ -305,6 +305,163 @@ public static partial class VfxBuilder
         yield return (VfxType.PlayerSpawn, Save(spawn));
     }
 
+    // Combat feel: ice shards, crits, dodges, blocks, footsteps, and the looks of a few powers
+    static IEnumerable<(VfxType, GameObject)> CombatEffects()
+    {
+        var flat = new Vector3(-90f, 0f, 0f);   // Lays a circle flat
+
+        // An inked ice crystal pointing the way it flies (VfxSystem turns it to face its movement), with a short frost trail
+        var shard = Root_("VFX_IceShard", 0.4f, out var shardInstance);
+        var crystal = MeshPart(shard, "Crystal", Gem("VFX_Gem"), ComicGlow("VFX_ShardCore", FrostPale, Frost, 1.8f, 0f), Vector3.zero, new Vector3(0.45f, 0.9f, 0.45f));
+        crystal.transform.localRotation = Quaternion.Euler(-90f, 0f, 0f);   // The gem's long tip forward
+        shardInstance.HideOnRelease = new Renderer[] { crystal };
+        Ps(shard, "Trail", _additive, ps =>
+        {
+            Main(ps, 0.25f, 0f, new ParticleSystem.MinMaxCurve(0.14f, 0.22f), Color.white);
+            var e = ps.emission; e.rateOverDistance = 14f;
+            Fade(ps, Hex("#FFFFFF", 0.9f), Hex(Frost, 0.6f), Hex(Frost, 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.IceShard, Save(shard));
+
+        var shardBreak = Root_("VFX_IceShardImpact", 0.6f, out _);
+        Ps(shardBreak, "Flash", _additive, ps => Main(ps, 0.12f, 0f, 1f, Hex(FrostPale, 0.6f), burst: 1));
+        Ps(shardBreak, "Splinters", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.2f, 0.35f), new ParticleSystem.MinMaxCurve(3f, 6f), new ParticleSystem.MinMaxCurve(0.08f, 0.14f), Color.white, burst: 10);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.15f);
+            Fade(ps, Hex("#FFFFFF"), Hex(FrostPale), Hex(Frost, 0f));
+            Stretch(ps, 2.5f);
+        });
+        yield return (VfxType.IceShardImpact, Save(shardBreak));
+
+        // A sharp golden star over the unit, with the crit's combat text
+        var crit = Root_("VFX_CritPop", 0.5f, out _);
+        Ps(crit, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.14f, 0f, 1.6f, Color.white, burst: 1);
+            Fade(ps, Hex("#FFF6D0", 0.8f), Hex("#FFD24A", 0.6f), Hex("#FFB020", 0f));
+            Grow(ps, 1.4f);
+        });
+        Ps(crit, "Rays", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.15f, 0.25f), new ParticleSystem.MinMaxCurve(6f, 9f), new ParticleSystem.MinMaxCurve(0.12f, 0.18f), Color.white, burst: 10);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.1f);
+            Fade(ps, Hex("#FFFFFF"), Hex("#FFE58A"), Hex("#FFB020", 0f));
+            Stretch(ps, 3f);
+        });
+        yield return (VfxType.CritPop, Save(crit));
+
+        // A pale whoosh to the sides, like the dash's afterimage
+        var dodge = Root_("VFX_DodgeFlash", 0.6f, out _);
+        Ps(dodge, "Afterimage", _additive, ps =>
+        {
+            Main(ps, 0.25f, 0f, 1.8f, Color.white, burst: 1);
+            Fade(ps, Hex("#BFD6FF", 0.4f), Hex("#BFD6FF", 0.25f), Hex("#BFD6FF", 0f));
+            Grow(ps, 1.3f);
+        });
+        Ps(dodge, "Whoosh", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.2f, 0.35f), new ParticleSystem.MinMaxCurve(2.5f, 4f), new ParticleSystem.MinMaxCurve(0.1f, 0.18f), Color.white, burst: 10);
+            Shape(ps, ParticleSystemShapeType.Circle, 0.4f, flat);
+            Fade(ps, Hex("#FFFFFF", 0.8f), Hex("#BFD6FF", 0.5f), Hex("#8AA8E0", 0f));
+            Stretch(ps, 2f);
+        });
+        yield return (VfxType.DodgeFlash, Save(dodge));
+
+        // Steel sparks off a blocked hit
+        var block = Root_("VFX_BlockFlash", 0.5f, out _);
+        Ps(block, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.12f, 0f, 1.3f, Color.white, burst: 1);
+            Fade(ps, Hex("#FFFFFF", 0.7f), Hex("#9FB4D0", 0.5f), Hex("#9FB4D0", 0f));
+        });
+        Ps(block, "Sparks", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.2f, 0.35f), new ParticleSystem.MinMaxCurve(4f, 7f), new ParticleSystem.MinMaxCurve(0.07f, 0.12f), Color.white, burst: 12);
+            var m = ps.main; m.gravityModifier = 1f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.15f);
+            Fade(ps, Hex("#FFFFFF"), Hex("#E2E8F0"), Hex("#6A7A90", 0f));
+            Stretch(ps, 2.5f);
+        });
+        yield return (VfxType.BlockFlash, Save(block));
+
+        // A small puff at the feet; VfxSystem plays it at floor height
+        var step = Root_("VFX_FootstepDust", 0.8f, out _);
+        Ps(step, "Dust", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.6f), new ParticleSystem.MinMaxCurve(0.3f, 0.7f), new ParticleSystem.MinMaxCurve(0.25f, 0.4f), Color.white, burst: 3);
+            Shape(ps, ParticleSystemShapeType.Circle, 0.15f, flat, new Vector3(0f, 0.05f, 0f));
+            Fade(ps, Hex("#B8A890", 0.45f), Hex("#9A8C78", 0.3f), Hex("#9A8C78", 0f));
+            Grow(ps, 1.6f);
+        });
+        yield return (VfxType.FootstepDust, Save(step));
+
+        // Faint violet sparkles on a Mirror Image copy while it lasts, and a pop when it comes and goes
+        var mirror = Root_("VFX_MirrorShimmer", 0.8f, out _);
+        Ps(mirror, "Sparkles", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.1f, 0.3f), new ParticleSystem.MinMaxCurve(0.08f, 0.16f), Color.white, rate: 12f);
+            var m = ps.main; m.gravityModifier = -0.3f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.5f);
+            Fade(ps, Hex("#F0E8FF"), Hex("#C8B0FF", 0.7f), Hex("#8C6DFF", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.MirrorShimmer, Save(mirror));
+
+        var mirrorPop = Root_("VFX_MirrorPop", 0.9f, out _);
+        Ps(mirrorPop, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.2f, 0f, 2f, Color.white, burst: 1);
+            Fade(ps, Hex("#E0D0FF", 0.5f), Hex("#C8B0FF", 0.35f), Hex("#8C6DFF", 0f));
+        });
+        Ps(mirrorPop, "Sparkles", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(1.5f, 3f), new ParticleSystem.MinMaxCurve(0.1f, 0.2f), Color.white, burst: 18);
+            var m = ps.main; m.gravityModifier = -0.3f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.4f);
+            Fade(ps, Hex("#F0E8FF"), Hex("#C8B0FF", 0.7f), Hex("#8C6DFF", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.MirrorPop, Save(mirrorPop));
+
+        // Water drawn inward at a pulled enemy's feet (VfxSystem plays it at floor height)
+        var ripple = Root_("VFX_UndertowRipple", 0.6f, out _);
+        Ps(ripple, "Ripple", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.3f, 0.4f), new ParticleSystem.MinMaxCurve(-3f, -2.4f), new ParticleSystem.MinMaxCurve(0.12f, 0.2f), Color.white, burst: 20);
+            Shape(ps, ParticleSystemShapeType.Circle, 1.2f, flat, new Vector3(0f, 0.08f, 0f));
+            var shape = ps.shape; shape.radiusThickness = 0f;   // From the edge only, flowing in
+            Fade(ps, Hex("#BFF6FF", 0.9f), Hex("#5AC8E8", 0.7f), Hex("#2A7A9E", 0f));
+            Stretch(ps, 2f);
+        });
+        yield return (VfxType.UndertowRipple, Save(ripple));
+
+        // Where a shot splits
+        var spark = Root_("VFX_SlingshotSpark", 0.5f, out _);
+        Ps(spark, "Flash", _additive, ps => Main(ps, 0.1f, 0f, 1.1f, Hex("#FFE8B0", 0.7f), burst: 1));
+        Ps(spark, "Sparks", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.15f, 0.3f), new ParticleSystem.MinMaxCurve(5f, 8f), new ParticleSystem.MinMaxCurve(0.07f, 0.12f), Color.white, burst: 10);
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.1f);
+            Fade(ps, Hex("#FFFFFF"), Hex("#FFE08A"), Hex("#FF9A3A", 0f));
+            Stretch(ps, 2.5f);
+        });
+        yield return (VfxType.SlingshotSpark, Save(spark));
+
+        // A half ring of light in front of the wearer (played turned like the wearer, so +Z is its front)
+        var bulwark = Root_("VFX_BulwarkShimmer", 0.6f, out _);
+        Ps(bulwark, "Arc", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.25f, 0.4f), new ParticleSystem.MinMaxCurve(0.3f, 0.8f), new ParticleSystem.MinMaxCurve(0.2f, 0.32f), Color.white, burst: 26);
+            Shape(ps, ParticleSystemShapeType.Circle, 1.1f, new Vector3(90f, 0f, 0f));   // Flat, its arc from +X round through +Z
+            var shape = ps.shape; shape.radiusThickness = 0f; shape.arc = 180f;
+            Fade(ps, Hex("#FFFFFF", 0.9f), Hex("#FFE08A", 0.6f), Hex("#C8A040", 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.BulwarkShimmer, Save(bulwark));
+    }
+
     /// <summary>A long diamond pointing down: 0.95 tall, 0.64 wide.</summary>
     static Mesh Gem(string name)
     {

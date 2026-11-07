@@ -41,6 +41,7 @@ public struct LastHit : IComponentData
     public Entity Source;
     public double Time;             // SystemAPI.Time.ElapsedTime of the frame it landed; 0 = never hit
     public DamageType Type;
+    public float HitForce;          // The hit's HitForce; negative pulls (Undertow)
 }
 
 public struct HealingInstance : IBufferElementData

@@ -16,6 +16,9 @@ public struct Skill : IBufferElementData
 
     public float CooldownReduction; // Seconds to take off the remaining cooldown, used up by the skill's system (SkillUtil.ApplyCooldownReduction)
 
+    public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
+    public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
+
     public struct Triggers
     {
         public bool OnUsed;

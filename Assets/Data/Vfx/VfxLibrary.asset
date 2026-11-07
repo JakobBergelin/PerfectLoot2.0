@@ -112,3 +112,36 @@ MonoBehaviour:
   - Type: 33
     Prefab: {fileID: 3705351471790350960, guid: 0b0bc022fbe54fd4f98eba3d11132b6e, type: 3}
     Prewarm: 4
+  - Type: 34
+    Prefab: {fileID: 283278672661036055, guid: 8ce06dcaba5c07f49812257e2f027dd0, type: 3}
+    Prewarm: 12
+  - Type: 35
+    Prefab: {fileID: 7603564918184440789, guid: 9ea0854a0128eee4c8ea0f39571e0c40, type: 3}
+    Prewarm: 8
+  - Type: 36
+    Prefab: {fileID: 3861714170246899669, guid: 4e7dff9104cfad645b4083f0de697e7f, type: 3}
+    Prewarm: 8
+  - Type: 37
+    Prefab: {fileID: 9161472227955625527, guid: f825d3c866fff6346821c979f6047c7e, type: 3}
+    Prewarm: 4
+  - Type: 38
+    Prefab: {fileID: 1053571842892932052, guid: 70d81befdf5c94746abf607d8edc488f, type: 3}
+    Prewarm: 4
+  - Type: 39
+    Prefab: {fileID: 2559012655887018501, guid: fbaa6f8dd1105d34da46ba263385e81e, type: 3}
+    Prewarm: 8
+  - Type: 40
+    Prefab: {fileID: 2826501952617477484, guid: 2f33c42ee75d6bb4a82955867c702358, type: 3}
+    Prewarm: 4
+  - Type: 41
+    Prefab: {fileID: 1623378857190111828, guid: f20278ff78c068f40b81e677a42024d7, type: 3}
+    Prewarm: 4
+  - Type: 42
+    Prefab: {fileID: 7683965985358929055, guid: 84dafef07d496a842844097444420fc8, type: 3}
+    Prewarm: 4
+  - Type: 43
+    Prefab: {fileID: 2971714475636062412, guid: 89ca06d823a322248ae6f25dbeca3521, type: 3}
+    Prewarm: 4
+  - Type: 44
+    Prefab: {fileID: 7367779083257089415, guid: 719a8159d4fc0004e84e52978d7ffd64, type: 3}
+    Prewarm: 4

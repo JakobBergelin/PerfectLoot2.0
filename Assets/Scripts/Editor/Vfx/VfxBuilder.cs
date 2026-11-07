@@ -49,6 +49,7 @@ public static partial class VfxBuilder
         foreach (var (type, prefab) in SkillFlair()) prefabs[type] = prefab;
         foreach (var (type, prefab) in StatusEffects()) prefabs[type] = prefab;
         foreach (var (type, prefab) in JuiceEffects()) prefabs[type] = prefab;
+        foreach (var (type, prefab) in CombatEffects()) prefabs[type] = prefab;
 
         string libraryPath = $"{Root}/VfxLibrary.asset";
         var library = AssetDatabase.LoadAssetAtPath<VfxLibrary>(libraryPath);
@@ -57,8 +58,8 @@ public static partial class VfxBuilder
             library = ScriptableObject.CreateInstance<VfxLibrary>();
             AssetDatabase.CreateAsset(library, libraryPath);
         }
-        library.Entries = prefabs.Select(p => new VfxLibrary.Entry { Type = p.Key, Prefab = p.Value, Prewarm = p.Key is VfxType.LightningHit or VfxType.BarrageBolt or VfxType.UnitHit or VfxType.Flame ? 12
-            : p.Key is VfxType.SoulOrb or VfxType.LootBeam or VfxType.StatusBurn or VfxType.StatusPoison or VfxType.StatusChill or VfxType.StatusBleed or VfxType.StatusCharged ? 8 : 4 }).ToList();
+        library.Entries = prefabs.Select(p => new VfxLibrary.Entry { Type = p.Key, Prefab = p.Value, Prewarm = p.Key is VfxType.LightningHit or VfxType.BarrageBolt or VfxType.UnitHit or VfxType.Flame or VfxType.IceShard ? 12
+            : p.Key is VfxType.SoulOrb or VfxType.LootBeam or VfxType.IceShardImpact or VfxType.CritPop or VfxType.FootstepDust or VfxType.StatusBurn or VfxType.StatusPoison or VfxType.StatusChill or VfxType.StatusBleed or VfxType.StatusCharged ? 8 : 4 }).ToList();
         EditorUtility.SetDirty(library);
         AssetDatabase.SaveAssets();
         Debug.Log($"Skill effects built: {prefabs.Count} prefabs in {libraryPath}.");

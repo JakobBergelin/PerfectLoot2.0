@@ -21,13 +21,19 @@ public struct VfxHitWatch : IComponentData
     public bool Died;
 }
 
+/// <summary>A split projectile (Slingshot) whose spark has played.</summary>
+public struct VfxSplitSeen : IComponentData { }
+
 /// <summary>
 /// Gives skill entities their look through VfxManager without the skill systems knowing: fireballs, barrage bolts and
 /// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
 /// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
 /// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects). A marker
 /// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second. Portals
-/// swirl, and players shimmer as they spawn. Loot on the ground has its own, GroundLootVfx.
+/// swirl, and players shimmer as they spawn. Ice shards (Shatter, Frozen Orb) are any non-homing Cold projectile. Crits,
+/// dodges and blocks pop where they happen (the combat text's events); players kick up dust as they walk; Mirror Image
+/// copies shimmer; Undertow's pulls ripple at the enemy's feet; Slingshot's splits spark; Bulwark flashes on hits from
+/// the front. Loot on the ground has its own, GroundLootVfx.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
@@ -35,9 +41,16 @@ public partial class VfxSystem : SystemBase
 {
     const float StatusInterval = 0.4f;
     const int StatusCap = 10;   // Per status and interval, so swarms stay cheap
+    const int HitCap = 8;       // Crit, dodge, block and ripple bursts per frame, each
+    const float StepLength = 1.2f;  // Meters walked between footstep puffs
+    const float FootDepth = 1.05f;  // Meters from a unit's root (its capsule's centre) down to its feet, times its scale
 
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _bound, _gone, _unwatched, _charged;
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _newMirrors, _newSplits, _bound, _gone, _unwatched, _charged;
     readonly List<Entity> _spawned = new List<Entity>();    // From CharacterManager.PlayerSpawned
+    readonly List<Vector3> _crits = new List<Vector3>(), _dodges = new List<Vector3>(), _blocks = new List<Vector3>();   // From the damage systems' events
+    readonly Dictionary<Entity, float3> _lastSteps = new Dictionary<Entity, float3>();
+    DamagingSystem _damaging;
+    CalculateDamageSystem _calculateDamage;
     (EntityQuery Query, VfxType Effect)[] _statuses;
     double _nextStatus;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
@@ -53,7 +66,14 @@ public partial class VfxSystem : SystemBase
         _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
         _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
         _newPortals = SystemAPI.QueryBuilder().WithAll<Portal, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newMirrors = SystemAPI.QueryBuilder().WithAll<MirrorImageUnit, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newSplits = SystemAPI.QueryBuilder().WithAll<SplitProjectile, LocalTransform>().WithNone<VfxSplitSeen>().Build();
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
+        _damaging = World.GetOrCreateSystemManaged<DamagingSystem>();
+        _damaging.OnDamageTaken += OnDamageTaken;
+        _calculateDamage = World.GetOrCreateSystemManaged<CalculateDamageSystem>();
+        _calculateDamage.OnDamageDodged += OnDodged;
+        _calculateDamage.OnDamageBlocked += OnBlocked;
         _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
         _statuses = new[]
         {
@@ -67,9 +87,18 @@ public partial class VfxSystem : SystemBase
         _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
     }
 
-    protected override void OnDestroy() => CharacterManager.PlayerSpawned -= OnPlayerSpawned;
+    protected override void OnDestroy()
+    {
+        CharacterManager.PlayerSpawned -= OnPlayerSpawned;
+        _damaging.OnDamageTaken -= OnDamageTaken;
+        _calculateDamage.OnDamageDodged -= OnDodged;
+        _calculateDamage.OnDamageBlocked -= OnBlocked;
+    }
 
     void OnPlayerSpawned(Entity player) => _spawned.Add(player);
+    void OnDamageTaken(float damage, float3 position, bool isCrit) { if (isCrit && _crits.Count < HitCap) _crits.Add(position); }
+    void OnDodged(float3 position) { if (_dodges.Count < HitCap) _dodges.Add(position); }
+    void OnBlocked(float amount, float3 position) { if (_blocks.Count < HitCap) _blocks.Add(position); }
 
     protected override void OnUpdate()
     {
@@ -85,10 +114,12 @@ public partial class VfxSystem : SystemBase
                     bool homing = EntityManager.HasComponent<HomingProjectile>(e);
                     bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
                     bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
+                    bool cold = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Cold;
                     var (type, impact) = homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
                         : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
-                        : poison ? (VfxType.PoisonDart, VfxType.None) : (VfxType.None, VfxType.None);
+                        : poison ? (VfxType.PoisonDart, VfxType.None)
+                        : cold ? (VfxType.IceShard, VfxType.IceShardImpact) : (VfxType.None, VfxType.None);
                     bindings.Add((e, Bind(vfx, type, impact, t)));
                 }
             using (var entities = _newPeriodic.ToEntityArray(Allocator.Temp))
@@ -120,6 +151,23 @@ public partial class VfxSystem : SystemBase
                     binding.Rotation = t.Rotation;
                     bindings.Add((e, binding));
                 }
+            // A shimmer while the copy lasts, and a pop as it comes and as it goes
+            using (var entities = _newMirrors.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var t = EntityManager.GetComponentData<LocalTransform>(e);
+                    vfx.Burst(VfxType.MirrorPop, t.Position, Quaternion.identity);
+                    bindings.Add((e, Bind(vfx, VfxType.MirrorShimmer, VfxType.MirrorPop, t)));
+                }
+            // A split makes a copy of the shot with neither one's spark played: the original still has its binding (Instantiate
+            // doesn't copy cleanup components), so one spark per split
+            using (var entities = _newSplits.ToEntityArray(Allocator.Temp))
+            {
+                foreach (var e in entities)
+                    if (EntityManager.HasComponent<VfxBinding>(e))
+                        vfx.Burst(VfxType.SlingshotSpark, EntityManager.GetComponentData<LocalTransform>(e).Position, Quaternion.identity);
+                EntityManager.AddComponent<VfxSplitSeen>(_newSplits);
+            }
             // Players that spawned since the last update: at their position now
             foreach (var player in _spawned)
                 if (EntityManager.Exists(player) && EntityManager.HasComponent<LocalTransform>(player))
@@ -181,8 +229,62 @@ public partial class VfxSystem : SystemBase
             UpdateUnitEffects(vfx);
             UpdateQuarryMarks(vfx);
             UpdateStatusEffects(vfx);
+            UpdateCombatEffects(vfx);
         }
+        _crits.Clear();
+        _dodges.Clear();
+        _blocks.Clear();
     }
+
+    void UpdateCombatEffects(VfxManager vfx)
+    {
+        // The events give the unit's root, its capsule's centre
+        foreach (var position in _crits) vfx.Burst(VfxType.CritPop, position + Vector3.up * 1.1f, Quaternion.identity);
+        foreach (var position in _dodges) vfx.Burst(VfxType.DodgeFlash, position + Vector3.up * 0.2f, Quaternion.identity);
+        foreach (var position in _blocks) vfx.Burst(VfxType.BlockFlash, position + Vector3.up * 0.3f, Quaternion.identity);
+
+        double now = SystemAPI.Time.ElapsedTime;
+
+        // Undertow: hits that pulled (a negative HitForce) this frame
+        int ripples = 0;
+        foreach (var (lastHit, transform) in SystemAPI.Query<RefRO<LastHit>, RefRO<LocalTransform>>().WithAll<Enemy>().WithNone<RigidDeath>())
+        {
+            if (ripples == HitCap) break;
+            if (lastHit.ValueRO.Time != now || lastHit.ValueRO.HitForce >= 0f) continue;
+            vfx.Burst(VfxType.UndertowRipple, Feet(transform.ValueRO), Quaternion.identity);
+            ripples++;
+        }
+
+        // Bulwark: hits from in front this frame, the way BulwarkSystem tells (the hit goes away from its attacker)
+        foreach (var (lastHit, transform) in SystemAPI.Query<RefRO<LastHit>, RefRO<LocalTransform>>().WithAll<Bulwark>())
+        {
+            if (lastHit.ValueRO.Time != now) continue;
+            if (math.dot(-lastHit.ValueRO.Direction.xz, transform.ValueRO.Forward().xz) <= 0f) continue;
+            vfx.Burst(VfxType.BulwarkShimmer, transform.ValueRO.Position, transform.ValueRO.Rotation);
+        }
+
+        // Footsteps: a puff every StepLength walked; none while dashing, nor after a jump (teleport, respawn)
+        var dashes = SystemAPI.GetComponentLookup<Dash>(true);
+        foreach (var (transform, entity) in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Player>().WithEntityAccess())
+        {
+            var position = transform.ValueRO.Position;
+            bool dashing = dashes.HasComponent(entity) && dashes[entity].Dashing;
+            if (!_lastSteps.TryGetValue(entity, out var last) || dashing || math.distance(last.xz, position.xz) > StepLength * 4f)
+            {
+                _lastSteps[entity] = position;
+                continue;
+            }
+            if (math.distance(last.xz, position.xz) < StepLength) continue;
+            vfx.Burst(VfxType.FootstepDust, Feet(transform.ValueRO), Quaternion.identity);
+            _lastSteps[entity] = position;
+        }
+        _stale.Clear();
+        foreach (var entity in _lastSteps.Keys)
+            if (!EntityManager.Exists(entity)) _stale.Add(entity);
+        foreach (var entity in _stale) _lastSteps.Remove(entity);
+    }
+
+    static Vector3 Feet(LocalTransform t) => t.Position - new float3(0f, FootDepth * t.Scale, 0f);
 
     // One-shot puffs rather than an effect per unit: nothing to track, and the cap bounds the cost in a swarm
     void UpdateStatusEffects(VfxManager vfx)

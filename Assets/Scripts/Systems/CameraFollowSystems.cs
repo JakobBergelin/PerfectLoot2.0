@@ -8,6 +8,7 @@ using UnityEngine;
 /// Moves the camera toward the player plus its offset, smoothed (SmoothTime) and no faster than MaxSpeed, so teleports
 /// and dashes glide instead of jumping. Snaps there when the gap is over SnapDistance, or when it first finds a player.
 /// Follows the rendered position (LocalToWorld, which includes physics smoothing), so it runs after the transforms.
+/// Also wears off the camera's shake (Trauma) and works out this frame's ShakeOffset.
 /// </summary>
 [UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct CameraFollowSystem : ISystem
@@ -32,6 +33,8 @@ public partial struct CameraFollowSystem : ISystem
             if (!hasPlayer)
             {
                 f.HasTarget = false;
+                f.Trauma = 0f;
+                f.ShakeOffset = float3.zero;
                 continue;
             }
 
@@ -52,6 +55,15 @@ public partial struct CameraFollowSystem : ISystem
 
             cameraTransform.ValueRW.Position = current;
             cameraTransform.ValueRW.Rotation = f.Rotation;
+
+            // Shake: smooth noise in the camera's own plane, trauma squared so small shakes stay small. Kept apart from the
+            // position above so the smoothing never follows it.
+            f.Trauma = math.max(0f, f.Trauma - f.ShakeDecay * deltaTime);
+            float time = (float)SystemAPI.Time.ElapsedTime * f.ShakeFrequency;
+            float2 wobble = new float2(noise.snoise(new float2(time, 0f)), noise.snoise(new float2(0f, time)));
+            float3 right = math.mul(f.Rotation, math.right());
+            float3 up = math.mul(f.Rotation, math.up());
+            f.ShakeOffset = (right * wobble.x + up * wobble.y) * f.ShakeStrength * f.Trauma * f.Trauma;
         }
     }
 }

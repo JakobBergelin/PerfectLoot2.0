@@ -34,7 +34,12 @@ public struct CameraFollow : IComponentData
     public float SmoothTime;
     public float MaxSpeed;
     public float SnapDistance;
+    public float ShakeStrength;     // Meters the camera moves at most, at full trauma
+    public float ShakeDecay;        // Trauma lost per second
+    public float ShakeFrequency;    // How fast the shake wobbles
 
     public float3 Velocity;     // SmoothDamp's running velocity
     public bool HasTarget;      // False until a player is found (and while there is none), so the camera snaps to it first
+    public float Trauma;        // 0 to 1, raised by shakes (CritShakeSystem), wears off at ShakeDecay
+    public float3 ShakeOffset;  // This frame's shake, added on top of the followed position by CameraMonoBehavior
 }

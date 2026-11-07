@@ -264,7 +264,7 @@ public partial class DamagingSystem : SystemBase
                     meter.Damage(entity, instance.Source, instance.Origin, damage);
                     if(SystemAPI.HasComponent<LastHit>(entity))
                     {
-                        var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime, Type = instance.Type};
+                        var lastHit = new LastHit{Direction = instance.HitDirection, Source = instance.Source, Time = elapsedTime, Type = instance.Type, HitForce = instance.HitForce};
                         SystemAPI.SetComponent(entity, lastHit);
                     }
 

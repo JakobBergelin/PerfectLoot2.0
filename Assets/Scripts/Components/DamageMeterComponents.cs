@@ -57,6 +57,29 @@ public enum DamageLabel
     Vigil,
 }
 
+public static class SkillDamageLabel
+{
+    /// <summary>The label a skill's hits carry (its own attacks; a skill's extra parts, like Poison Dart's explosion, have their own). None: the skill deals no damage of its own.</summary>
+    public static DamageLabel Of(SkillType type) => type switch
+    {
+        SkillType.BallLightning => DamageLabel.BallLightning,
+        SkillType.Barrage => DamageLabel.Barrage,
+        SkillType.CaptainsShield => DamageLabel.CaptainsShield,
+        SkillType.ColdSnap => DamageLabel.ColdSnap,
+        SkillType.Fireball => DamageLabel.Fireball,
+        SkillType.FistOfThunder => DamageLabel.FistsOfThunder,
+        SkillType.Flamethrower => DamageLabel.Flamethrower,
+        SkillType.FrozenOrb => DamageLabel.FrozenOrb,
+        SkillType.HookshotSlash => DamageLabel.HookshotSlash,
+        SkillType.PoisonDart => DamageLabel.PoisonDart,
+        SkillType.SonicBall => DamageLabel.SonicBall,
+        SkillType.TeslaCoil => DamageLabel.TeslaCoil,
+        SkillType.Tornado => DamageLabel.Tornado,
+        SkillType.Whirlwind => DamageLabel.Whirlwind,
+        _ => DamageLabel.None,
+    };
+}
+
 /// <summary>What the Damage Meter credits a hit to, on attacks and damage instances.</summary>
 public struct DamageOrigin
 {

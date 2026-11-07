@@ -17,7 +17,7 @@ The stream stopped early on a usage budget, so priorities 3 to 5 were not starte
 ## Not started
 
 - Priority 3 is done (loot beams, pickup sparkle, soul pop, portal swirl, spawn shimmer), except the level-up burst: nothing gives experience yet, so nothing would trigger it. Add it to `VfxSystem` once `Level.Value` can go up.
-- Priority 4: camera shake, footstep dust, dodge and block flashes, crit pop, Mirror Image shimmer, Undertow ripples, Slingshot spark, Bulwark shimmer.
+- Priority 4 is done, see below.
 - Priority 5: HUD transitions, cooldown-ready flash, and the skill bar labels (1-4 should read LMB, RMB, Q, E).
 
 ## Priority 3 (seen in TestSwarm)
@@ -28,6 +28,20 @@ The stream stopped early on a usage budget, so priorities 3 to 5 were not starte
 - Portal swirl: motes circling into the ring. Subtle; raise the Swirl rate in `VfxBuilder.Flair.cs` if it should stand out more.
 - Spawn shimmer: warm light and dust at the feet on every `CharacterManager.PlayerSpawned`, so entering a level and respawning. Seen both.
 - `VfxManager.Tint` colors a pooled effect by setting its particles' start color, alpha included. Put an effect's own transparency in its Fade gradient if it will be tinted.
+
+## Priority 4 (seen in TestSwarm)
+
+Counted in Play mode with a test build (always crit, 30% dodge and block, Undertow, Bulwark and Slingshot added to the player), and the ice shards, crits, ripples and dust seen in screenshots.
+- Ice shards (Shatter and Frozen Orb, any non-homing Cold projectile): an inked ice crystal with a frost trail, splinters where it breaks. Shards also break at the end of their range, so a Frozen Orb leaves a ring of splinters around it (up to 80 at once).
+- Crit pop: a golden star over the unit on every crit (`DamagingSystem.OnDamageTaken`), at most 8 per frame.
+- Dodge whoosh and block sparks, from `CalculateDamageSystem`'s events. Refraction absorbing a hit shows as a block.
+- Footstep dust: a puff every 1.2 m a player walks, none while dashing.
+- Mirror Image: violet sparkles on the copy, a pop when it comes and when it goes. The pop on going was not seen (the copy lasts its full duration).
+- Undertow ripple: water drawn in at the feet of an enemy pulled this frame (`LastHit.HitForce` below 0). Only hits with knockback pull: Tornado does, Frozen Orb doesn't.
+- Slingshot spark where a shot splits. Seen once, a shard through the Mirror Image copy.
+- Bulwark: a gold half ring in front of the wearer when a hit lands from the front.
+- Camera shake on crits: each skill asset has Crit Shake (0 to 1). The strongest crit of the frame counts, so a crowd doesn't add up. `CameraSettings` has Shake Strength (1 m at Crit Shake 1, trauma squared, so 0.3 is about 9 cm), Shake Decay and Shake Frequency; Shake Strength 0 turns it off. Starting values: Cold Snap 0.5, Ball Lightning 0.35, Frozen Orb 0.3, Tornado 0.3, Hookshot Slash 0.25. Frozen Orb and Tornado crits went through (trauma 0.27); the 1 m strength was set after, and how it feels hasn't been judged.
+- One camera: any player's crit shakes it. With split-screen, each camera should take only its own player's shakes.
 
 ## Notes
 

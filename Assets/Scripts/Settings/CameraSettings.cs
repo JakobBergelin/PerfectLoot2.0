@@ -28,10 +28,18 @@ public class CameraSettings : ScriptableObject
     [Tooltip("When the player is further than this (meters) from where the camera is heading, it jumps there instead")]
     public float SnapDistance = 20f;
 
+    [Header("Shake")]
+    [Tooltip("Meters the camera moves at most when a skill with Crit Shake 1 crits; 0 turns shaking off")]
+    [Min(0f)] public float ShakeStrength = 1f;
+    [Tooltip("How fast a shake dies out: the share of a full shake lost per second")]
+    [Min(0.01f)] public float ShakeDecay = 2.5f;
+    [Tooltip("How fast the camera wobbles while shaking")]
+    [Min(0f)] public float ShakeFrequency = 18f;
+
     public Quaternion Rotation => Quaternion.Euler(Pitch, Yaw, 0f);
     public Vector3 Offset => Vector3.up * LookHeight - Rotation * Vector3.forward * Distance;
 
-    /// <summary>Writes the framing and smoothing into the component; leaves its running state (Velocity, HasTarget) alone.</summary>
+    /// <summary>Writes the framing, smoothing and shake into the component; leaves its running state (Velocity, HasTarget, Trauma) alone.</summary>
     public void ApplyTo(ref CameraFollow follow)
     {
         follow.Offset = Offset;
@@ -39,5 +47,8 @@ public class CameraSettings : ScriptableObject
         follow.SmoothTime = SmoothTime;
         follow.MaxSpeed = MaxSpeed;
         follow.SnapDistance = SnapDistance;
+        follow.ShakeStrength = ShakeStrength;
+        follow.ShakeDecay = ShakeDecay;
+        follow.ShakeFrequency = ShakeFrequency;
     }
 }

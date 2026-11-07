@@ -16,6 +16,7 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 67889f48d5f34ac4a8ef629145c377c5, type: 3}
   Description: Fire a hook toward the cursor. It latches there or on the first wall and pulls you in, slashing every enemy you pass.
   Tags: 6
+  CritShake: 0.25
   resourceCost: 8
   Range: 12
   HookSpeed: 40

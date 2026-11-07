@@ -20,3 +20,6 @@ MonoBehaviour:
   SmoothTime: 0.15
   MaxSpeed: 30
   SnapDistance: 20
+  ShakeStrength: 1
+  ShakeDecay: 2.5
+  ShakeFrequency: 18

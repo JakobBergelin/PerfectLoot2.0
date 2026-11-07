@@ -16,6 +16,7 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 56e9020584af4ea0b933b09340ca2869, type: 3}
   Description: Fly in a straight line to the cursor as a ball of lightning, over walls and out of harm's way. The more resource the flight burns, the harder you land.
   Tags: 1124
+  CritShake: 0.35
   cooldown: 2
   resourceCost: 10
   resourceCostPerSecond: 10
