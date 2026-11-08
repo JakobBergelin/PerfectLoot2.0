@@ -41,6 +41,7 @@
                         <ui:Label name="detailResource" class="cs-detail-info" />
                         <ui:Label name="detailDescription" class="cs-description" />
                         <ui:Label name="detailClassInfo" class="cs-class-info" />
+                        <ui:Label name="detailResourceInfo" class="cs-class-info" />
                         <ui:VisualElement class="cs-spacer" />
                         <ui:Button name="adventureButton" text="Adventure" class="mm-button mm-button--primary" />
                         <ui:Button name="deleteButton" text="Delete character" class="mm-link mm-link--danger" />
@@ -65,6 +66,7 @@
                         <ui:Label text="Resource" class="cs-label" />
                         <ui:VisualElement name="resourceGrid" class="cs-grid" />
                         <ui:Label name="resourceDescription" class="cs-description" />
+                        <ui:Label name="resourceInfo" class="cs-class-info" />
                         <ui:VisualElement class="cs-spacer" />
                         <ui:VisualElement class="cs-row">
                             <ui:Button name="createButton" text="Create" class="mm-button mm-button--primary cs-row-button" />

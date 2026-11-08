@@ -22,10 +22,10 @@ public class CharacterSelectScreen
     ScrollView _list;
     Label _noCharacters, _noSelection;
     VisualElement _detailsView, _createView, _deleteConfirm;
-    Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _deleteQuestion;
+    Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _detailResourceInfo, _deleteQuestion;
     Button _deleteButton;
     TextField _nameField;
-    Label _nameError, _classDescription, _classInfo, _resourceDescription;
+    Label _nameError, _classDescription, _classInfo, _resourceDescription, _resourceInfo;
     Button _createButton;
 
     readonly Dictionary<string, VisualElement> _rows = new Dictionary<string, VisualElement>();
@@ -66,6 +66,7 @@ public class CharacterSelectScreen
         _detailResource = root.Q<Label>("detailResource");
         _detailDescription = root.Q<Label>("detailDescription");
         _detailClassInfo = root.Q<Label>("detailClassInfo");
+        _detailResourceInfo = root.Q<Label>("detailResourceInfo");
         _deleteQuestion = root.Q<Label>("deleteQuestion");
         _deleteButton = root.Q<Button>("deleteButton");
         _nameField = root.Q<TextField>("characterNameField");
@@ -73,6 +74,7 @@ public class CharacterSelectScreen
         _classDescription = root.Q<Label>("classDescription");
         _classInfo = root.Q<Label>("classInfo");
         _resourceDescription = root.Q<Label>("resourceDescription");
+        _resourceInfo = root.Q<Label>("resourceInfo");
         _createButton = root.Q<Button>("createButton");
         var classGrid = root.Q<VisualElement>("classGrid");
         var resourceGrid = root.Q<VisualElement>("resourceGrid");
@@ -83,8 +85,9 @@ public class CharacterSelectScreen
         var cancelCreate = root.Q<Button>("cancelCreateButton");
         if (_list == null || _noCharacters == null || _noSelection == null || _detailsView == null || _createView == null ||
             _deleteConfirm == null || _detailName == null || _detailClass == null || _detailResource == null ||
-            _detailDescription == null || _detailClassInfo == null || _deleteQuestion == null || _deleteButton == null || _nameField == null ||
-            _nameError == null || _classDescription == null || _classInfo == null || _resourceDescription == null || _createButton == null ||
+            _detailDescription == null || _detailClassInfo == null || _detailResourceInfo == null || _deleteQuestion == null ||
+            _deleteButton == null || _nameField == null || _nameError == null || _classDescription == null || _classInfo == null ||
+            _resourceDescription == null || _resourceInfo == null || _createButton == null ||
             classGrid == null || resourceGrid == null || createCharacter == null || adventure == null || deleteYes == null ||
             deleteNo == null || cancelCreate == null)
             return false;
@@ -199,6 +202,7 @@ public class CharacterSelectScreen
         _detailResource.text = ResourceName(character.Resource);
         SetDescription(_detailDescription, ClassAsset(character.Class)?.Description);
         SetDescription(_detailClassInfo, ClassInfo(ClassAsset(character.Class)));
+        SetDescription(_detailResourceInfo, ResourceInfo(ResourceAsset(character.Resource), withDescription: true));
         ShowView(details: true, create: false);
     }
 
@@ -265,6 +269,7 @@ public class CharacterSelectScreen
         _resource = type;
         foreach (var pair in _resourceChoices) pair.Value.EnableInClassList(SelectedChoiceClass, pair.Key == type);
         SetDescription(_resourceDescription, ResourceAsset(type)?.Description);
+        SetDescription(_resourceInfo, ResourceInfo(ResourceAsset(type), withDescription: false));
         UpdateCreateButton();
     }
 
@@ -348,6 +353,19 @@ public class CharacterSelectScreen
             text.Append($"\n\n<b>Class passive: <color=#E0A020>{name}</color></b>\n");
             text.Append($"<color=#A8ADB8>{passive.Description}</color>");
         }
+        return text.ToString();
+    }
+
+    // The resource in its bar colour and how it works (ResourceDefinition.Explanation), as rich text; null without one.
+    // The selected character's view has no description line of its own, so it can take the description too.
+    static string ResourceInfo(ResourceDefinition resource, bool withDescription)
+    {
+        if (resource == null) return null;
+        string name = string.IsNullOrWhiteSpace(resource.Name) ? resource.name : resource.Name;
+        var text = new System.Text.StringBuilder();
+        text.Append($"<b>Resource: <color={ResourceColors.Hex(resource.Type)}>{name}</color></b>\n");
+        if (withDescription && !string.IsNullOrWhiteSpace(resource.Description)) text.Append($"<color=#A8ADB8>{resource.Description}</color>\n");
+        text.Append(resource.Explanation);
         return text.ToString();
     }
 

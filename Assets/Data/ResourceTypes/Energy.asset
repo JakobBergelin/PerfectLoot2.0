@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Characters.EnergyResource
   Name: Energy
   Icon: {fileID: 0}
-  Description: 
+  Description: A small, quick pool. Every skill you use gives a little back, so keep moving between them.
   MaxResource: 35
   Regeneration: 1
   ResourceOnSkillUse: 2

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Characters.RageResource
   Name: Rage
   Icon: {fileID: 0}
-  Description: 
+  Description: Fury that builds as you're hit and fades when you're not. Stay in the fight to keep it.
   MaxResource: 40
   Regeneration: -3
   ResourcePerHit: 3

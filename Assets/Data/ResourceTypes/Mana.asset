@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Characters.ManaResource
   Name: Mana
   Icon: {fileID: 0}
-  Description: 
+  Description: A steady flow that refills on its own. Spend it freely and it comes back.
   MaxResource: 50
   Regeneration: 5

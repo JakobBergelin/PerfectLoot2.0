@@ -9,6 +9,7 @@ namespace Characters
         public float ResourceOnSkillUse = 2f;
 
         public override ResourceType Type => ResourceType.Energy;
+        public override string Rule => $"+{Number(ResourceOnSkillUse)} each time you use a skill";
 
         protected override Energy CreateComponent() => new Energy { MaxResource = MaxResource, Regeneration = Regeneration, ResourceOnSkillUse = ResourceOnSkillUse };
     }

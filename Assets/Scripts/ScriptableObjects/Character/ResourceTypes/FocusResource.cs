@@ -10,6 +10,7 @@ namespace Characters
         public float StandingStillRegenerationMultiplier = 0.2f;
 
         public override ResourceType Type => ResourceType.Focus;
+        public override string Rule => $"Regeneration from gear and passives is +{Percent(StandingStillRegenerationMultiplier)} while you stand still or channel";
 
         protected override Focus CreateComponent() => new Focus
         {

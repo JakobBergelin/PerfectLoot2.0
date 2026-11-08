@@ -9,6 +9,7 @@ namespace Characters
         public float ResourcePerHit = 3f;
 
         public override ResourceType Type => ResourceType.Rage;
+        public override string Rule => $"+{Number(ResourcePerHit)} for each hit you take";
 
         protected override Rage CreateComponent() => new Rage { MaxResource = MaxResource, Regeneration = Regeneration, ResourcePerHit = ResourcePerHit };
     }

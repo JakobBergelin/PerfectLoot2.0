@@ -49,6 +49,7 @@ public class SkillsPanelHUD : MonoBehaviour
     readonly List<SlotView> _activeSlots = new List<SlotView>();
     readonly List<SlotView> _passiveSlots = new List<SlotView>();
     SlotView _classPassive;     // The class's own passive, beside the slots: always on, can't be changed
+    SlotView _resource;         // The character's resource and how it works, beside the class passive
     SlotView _selected;
 
     InputSystem_Actions _actions;
@@ -151,6 +152,11 @@ public class SkillsPanelHUD : MonoBehaviour
         foreach (var view in _passiveSlots) RefreshSlot(view);
         RefreshSlot(_classPassive);
         _classPassive.Element.style.display = _classPassive.Shown != null ? DisplayStyle.Flex : DisplayStyle.None;
+        RefreshSlot(_resource);
+        _resource.Element.style.display = _resource.Shown != null ? DisplayStyle.Flex : DisplayStyle.None;
+        // No icons for resources: a disc in its bar colour
+        if (_resource.Shown is Characters.ResourceDefinition resource && resource.Icon == null)
+            _resource.Icon.style.backgroundColor = ResourceColors.Of(resource.Type);
     }
 
     // Another menu panel opened: close this one
@@ -242,26 +248,31 @@ public class SkillsPanelHUD : MonoBehaviour
             _passiveSlots.Add(view);
         }
 
-        // The class passive: shown like a passive, marked as the class's, with a tooltip but no picker
-        _classPassive = new SlotView
-        {
-            GetEquipped = () => CharacterManager.Instance != null && CharacterManager.Instance.Class != null ? CharacterManager.Instance.Class.ClassPassive : null,
-        };
-        _classPassive.Element = new VisualElement();
-        _classPassive.Element.AddToClassList("sp-passive");
-        _classPassive.Element.AddToClassList("sp-passive--class");
-        _classPassive.Icon = new VisualElement { pickingMode = PickingMode.Ignore };
-        _classPassive.Icon.AddToClassList("sp-passive__icon");
-        _classPassive.Name = new Label { pickingMode = PickingMode.Ignore };
-        _classPassive.Name.AddToClassList("sp-passive__name");
-        var tag = new Label("Class") { pickingMode = PickingMode.Ignore };
+        // The class passive and the resource: shown like passives, tagged, with a tooltip but no picker
+        _classPassive = InfoTile(container, "Class",
+            () => CharacterManager.Instance != null && CharacterManager.Instance.Class != null ? CharacterManager.Instance.Class.ClassPassive : null);
+        _resource = InfoTile(container, "Resource", () => CharacterManager.Instance != null ? CharacterManager.Instance.Resource : null);
+    }
+
+    SlotView InfoTile(VisualElement container, string tagText, Func<ScriptableObject> getShown)
+    {
+        var view = new SlotView { GetEquipped = getShown };
+        view.Element = new VisualElement();
+        view.Element.AddToClassList("sp-passive");
+        view.Element.AddToClassList("sp-passive--class");
+        view.Icon = new VisualElement { pickingMode = PickingMode.Ignore };
+        view.Icon.AddToClassList("sp-passive__icon");
+        view.Name = new Label { pickingMode = PickingMode.Ignore };
+        view.Name.AddToClassList("sp-passive__name");
+        var tag = new Label(tagText) { pickingMode = PickingMode.Ignore };
         tag.AddToClassList("sp-passive__class-tag");
-        _classPassive.Element.Add(_classPassive.Icon);
-        _classPassive.Element.Add(_classPassive.Name);
-        _classPassive.Element.Add(tag);
-        _classPassive.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(_classPassive.GetEquipped(), _classPassive.Element));
-        _classPassive.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
-        container.Add(_classPassive.Element);
+        view.Element.Add(view.Icon);
+        view.Element.Add(view.Name);
+        view.Element.Add(tag);
+        view.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(view.GetEquipped(), view.Element));
+        view.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+        container.Add(view.Element);
+        return view;
     }
 
     void RegisterSlotCallbacks(SlotView view)
@@ -424,6 +435,11 @@ public class SkillsPanelHUD : MonoBehaviour
                 name = string.IsNullOrEmpty(passive.Name) ? passive.name : passive.Name;
                 icon = passive.Icon;
                 description = passive.Description;
+                break;
+            case Characters.ResourceDefinition resource:
+                name = string.IsNullOrEmpty(resource.Name) ? resource.name : resource.Name;
+                icon = resource.Icon;
+                description = string.IsNullOrWhiteSpace(resource.Description) ? resource.Explanation : resource.Description + "\n\n" + resource.Explanation;
                 break;
             default:
                 name = "";
