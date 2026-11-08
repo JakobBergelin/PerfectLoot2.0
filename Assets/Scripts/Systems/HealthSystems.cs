@@ -5,12 +5,9 @@ using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
 
-// TODO: Replace the stick/pivot bars (here and in ResourceUISystem) with a single billboard quad per bar.
-// The shader faces the camera and draws the fill from a per-entity [MaterialProperty] float, so the CPU only
-// writes one value when health changes. Scales to many enemies and makes the ordering below unnecessary.
-
-// Counter-rotates the bar against the unit's rotation, so it has to run after everything that rotates units
-// (skills, movement; physics runs first in the frame) and before the transforms are calculated: FeedbackSystemGroup
+// Health bars over units: how full, and the colour by side (UnitBar.shader). Players' are hidden, as UnitBarHUD draws
+// theirs with the values. Counter-rotates the bar against the unit's rotation, so it has to run after everything that
+// rotates units (skills, movement; physics runs first in the frame) and before the transforms are calculated: FeedbackSystemGroup
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class HealthUISystem : SystemBase
 {
@@ -22,13 +19,16 @@ public partial class HealthUISystem : SystemBase
             cameraForward = Camera.main.transform.forward;
         }
 
-        foreach (var (healthBar, health, localTransform) in SystemAPI.Query<RefRO<HealthBarUI>, RefRO<Health>, RefRO<LocalTransform>>())
+        var bars = SystemAPI.GetComponentLookup<UnitBarParams>();
+        var players = SystemAPI.GetComponentLookup<Player>(true);
+        var companions = SystemAPI.GetComponentLookup<Companion>(true);
+        foreach (var (healthBar, health, localTransform, entity) in SystemAPI.Query<RefRO<HealthBarUI>, RefRO<Health>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            float healthNormalized = health.ValueRO.CurrentValue / health.ValueRO.MaxValue;
-            var stickTransform = SystemAPI.GetComponentRW<LocalTransform>(healthBar.ValueRO.StickEntity);
-            var pivotMatrix = SystemAPI.GetComponentRW<PostTransformMatrix>(healthBar.ValueRO.PivotEntity);
-            pivotMatrix.ValueRW.Value = float4x4.Scale(healthNormalized, 1, 1);
+            float kind = players.HasComponent(entity) ? UnitBarKind.Hidden : companions.HasComponent(entity) ? UnitBarKind.Companion : UnitBarKind.Enemy;
+            if (bars.HasComponent(healthBar.ValueRO.BarEntity))
+                bars[healthBar.ValueRO.BarEntity] = new UnitBarParams { Value = new float4(health.ValueRO.CurrentValue / health.ValueRO.MaxValue, kind, 0f, 0f) };
 
+            var stickTransform = SystemAPI.GetComponentRW<LocalTransform>(healthBar.ValueRO.StickEntity);
             stickTransform.ValueRW.Rotation = localTransform.ValueRO.InverseTransformRotation(quaternion.LookRotation(cameraForward, math.up()));
         }
     }

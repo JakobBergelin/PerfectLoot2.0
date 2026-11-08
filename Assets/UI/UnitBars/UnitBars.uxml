@@ -1,0 +1,4 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="UnitBars.uss" />
+    <ui:VisualElement name="unitBarsLayer" class="unit-bars-layer" picking-mode="Ignore" />
+</ui:UXML>

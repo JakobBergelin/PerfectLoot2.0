@@ -1,15 +1,17 @@
 using UnityEngine;
+using UnityEngine.Serialization;
 using Unity.Entities;
 
 /// <summary>
 /// Visual part of a unit: links its health/resource bar child objects. Used on visual-only prefabs
-/// (e.g. PlayerVisual) whose gameplay components are added at runtime.
+/// (e.g. PlayerVisual) whose gameplay components are added at runtime. Each bar is a Stick, turned to face the
+/// camera, holding the Bar quad (UnitBarAuthoring) that UnitBar.shader draws.
 /// </summary>
 public class UnitBarsAuthoring : MonoBehaviour
 {
-    public GameObject HealthBarPivotGameObject;
+    [FormerlySerializedAs("HealthBarPivotGameObject")] public GameObject HealthBarGameObject;
     public GameObject HealthBarStickGameObject;
-    public GameObject ResourceBarPivotGameObject;
+    [FormerlySerializedAs("ResourceBarPivotGameObject")] public GameObject ResourceBarGameObject;
     public GameObject ResourceBarStickGameObject;
 
     public class Baker : Baker<UnitBarsAuthoring>
@@ -19,20 +21,20 @@ public class UnitBarsAuthoring : MonoBehaviour
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
             // The player visual is the rendered part of the player, so it carries the hit flash
             HitFlashBaking.Add(this, entity);
-            if (authoring.HealthBarPivotGameObject != null && authoring.HealthBarStickGameObject != null)
+            if (authoring.HealthBarGameObject != null && authoring.HealthBarStickGameObject != null)
             {
                 AddComponent(entity, new HealthBarUI
                 {
-                    PivotEntity = GetEntity(authoring.HealthBarPivotGameObject, TransformUsageFlags.NonUniformScale),
-                    StickEntity = GetEntity(authoring.HealthBarStickGameObject, TransformUsageFlags.NonUniformScale)
+                    BarEntity = GetEntity(authoring.HealthBarGameObject, TransformUsageFlags.Dynamic),
+                    StickEntity = GetEntity(authoring.HealthBarStickGameObject, TransformUsageFlags.Dynamic)
                 });
             }
-            if (authoring.ResourceBarPivotGameObject != null && authoring.ResourceBarStickGameObject != null)
+            if (authoring.ResourceBarGameObject != null && authoring.ResourceBarStickGameObject != null)
             {
                 AddComponent(entity, new ResourceBarUI
                 {
-                    PivotEntity = GetEntity(authoring.ResourceBarPivotGameObject, TransformUsageFlags.NonUniformScale),
-                    StickEntity = GetEntity(authoring.ResourceBarStickGameObject, TransformUsageFlags.NonUniformScale)
+                    BarEntity = GetEntity(authoring.ResourceBarGameObject, TransformUsageFlags.Dynamic),
+                    StickEntity = GetEntity(authoring.ResourceBarStickGameObject, TransformUsageFlags.Dynamic)
                 });
             }
         }

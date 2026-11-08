@@ -301,7 +301,7 @@ public class DungeonManager : MonoBehaviour
 
     // ---------- Survive ----------
 
-    // A wave every WaveInterval (the first at once), unless MaxAlive enemies are alive: one of the step's groups, picked
+    // A wave every WaveInterval (the first at once), unless MaxAlive enemies are alive (0: no limit): one of the step's groups, picked
     // by weight, rising out of the ground WaveDistance from the player in a random direction and coming for the player
     void UpdateWaves(EntityManager entityManager, DungeonStep step)
     {
@@ -312,7 +312,7 @@ public class DungeonManager : MonoBehaviour
         _nextWave = step.WaveInterval;
 
         using var alive = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Enemy>());
-        if (alive.CalculateEntityCount() >= step.MaxAlive) return;
+        if (step.MaxAlive > 0 && alive.CalculateEntityCount() >= step.MaxAlive) return;
         var wave = PickWave(step);
         if (wave == null) return;
 

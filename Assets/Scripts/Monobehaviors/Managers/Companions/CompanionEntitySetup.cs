@@ -110,13 +110,13 @@ public static class CompanionEntitySetup
         if (entityManager.HasComponent<HealthBarUI>(entity))
         {
             var health = entityManager.GetComponentData<HealthBarUI>(entity);
-            bars.Add(health.PivotEntity);
+            bars.Add(health.BarEntity);
             bars.Add(health.StickEntity);
         }
         if (entityManager.HasComponent<ResourceBarUI>(entity))
         {
             var resource = entityManager.GetComponentData<ResourceBarUI>(entity);
-            bars.Add(resource.PivotEntity);
+            bars.Add(resource.BarEntity);
             bars.Add(resource.StickEntity);
         }
 

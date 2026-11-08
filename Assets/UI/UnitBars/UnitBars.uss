@@ -1,0 +1,110 @@
+/* Player bars over their heads (UnitBarHUD). Enemy and companion bars are drawn in the world in the same style
+   (UnitBar.shader): a rounded pill, a thick dark outline, a flat fill with a lighter band along its top. */
+
+.unit-bars-layer {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* One player's bars. A fixed box just above the anchor (negative margins), so code only sets a translate */
+.unit-bars {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 132px;
+    margin-left: -66px;
+    margin-top: -44px;
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.unit-bars--hidden {
+    display: none;
+}
+
+.unit-bar {
+    height: 28px;
+    border-width: 3px;
+    border-color: #120D1C;
+    border-radius: 14px;
+    background-color: rgba(43, 35, 64, 0.92);
+    overflow: hidden;
+}
+
+.unit-bar--resource {
+    height: 20px;
+    border-radius: 10px;
+    margin-top: 2px;
+    margin-left: 12px;
+    margin-right: 12px;
+}
+
+/* Width set from code, as a percentage */
+.unit-bar__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #5BD43A;
+}
+
+/* Resource fill by ResourceType (UnitBarHUD adds unit-bar--<type>). None keeps the default blue */
+.unit-bar--resource .unit-bar__fill {
+    background-color: #3E8CFF;
+}
+
+.unit-bar--mana .unit-bar__fill {
+    background-color: #1FB4FF;
+}
+
+.unit-bar--rage .unit-bar__fill {
+    background-color: #D8362E;
+}
+
+.unit-bar--focus .unit-bar__fill {
+    background-color: #FFC21F;
+}
+
+.unit-bar--energy .unit-bar__fill {
+    background-color: #A6F01E;
+}
+
+.unit-bar--arcane .unit-bar__fill {
+    background-color: #C93BC0;
+}
+
+/* The lighter top band */
+.unit-bar__band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 40%;
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+.unit-bar__value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -4px;
+    bottom: -4px;
+    font-size: 20px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #FFFFFF;
+    padding: 0;
+    margin: 0;
+}
+
+.unit-bar--resource .unit-bar__value {
+    font-size: 15px;
+    -unity-text-outline-width: 1.2px;
+}

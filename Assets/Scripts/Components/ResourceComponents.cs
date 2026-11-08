@@ -8,9 +8,10 @@ public struct Resource : IComponentData
     public float RegenerationMultiplier;
 }
 
+/// <summary>A unit's resource bar, like HealthBarUI.</summary>
 public struct ResourceBarUI : IComponentData
 {
-    public Entity PivotEntity;
+    public Entity BarEntity;
     public Entity StickEntity;
 }
 

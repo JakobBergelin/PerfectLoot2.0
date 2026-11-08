@@ -8,10 +8,24 @@ public struct Health : IComponentData
     public float MaxHealthMultiplier;
 }
 
+/// <summary>A unit's health bar over its head: the stick turns it to the camera, the bar is the quad UnitBar.shader draws.</summary>
 public struct HealthBarUI : IComponentData
 {
-    public Entity PivotEntity;
+    public Entity BarEntity;
     public Entity StickEntity;
+}
+
+/// <summary>What UnitBar.shader draws on a bar's quad. x: how full, 0 to 1. y: kind (UnitBarKind).</summary>
+[Unity.Rendering.MaterialProperty("_UnitBar")]
+public struct UnitBarParams : IComponentData
+{
+    public float4 Value;
+}
+
+/// <summary>The bar's colour in UnitBar.shader. Players' bars are hidden: UnitBarHUD draws theirs, with the values.</summary>
+public static class UnitBarKind
+{
+    public const float Hidden = 0f, Enemy = 1f, Companion = 2f, Resource = 3f;
 }
 
 public struct HealthRegeneration : IComponentData

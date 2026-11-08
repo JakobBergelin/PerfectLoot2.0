@@ -33,8 +33,8 @@ public class DungeonStep
     [Min(1f)] public float WaveDistance = 16f;
     [Tooltip("How far around its point a wave is scattered")]
     [Min(0f)] public float WaveSpread = 3f;
-    [Tooltip("No wave comes while this many enemies are alive (all of the level's, not only the waves')")]
-    [Min(1)] public int MaxAlive = 40;
+    [Tooltip("No wave comes while this many enemies are alive (all of the level's, not only the waves'). 0: no limit.")]
+    [Min(0)] public int MaxAlive = 40;
 }
 
 /// <summary>

@@ -1172,6 +1172,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: b9b04ce37dbf77c4c8b8f2e3756e639c, type: 3}
+--- !u!1001 &1431118511
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_Name
+      value: Portal to TestSurvive
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 33
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: Scene
+      value: 
+      objectReference: {fileID: 102900000, guid: eccd407c7f973de4eb88bc6d6076a487, type: 3}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: DisplayName
+      value: 'Test: Survive'
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
 --- !u!1001 &1462049443
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1286,6 +1351,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef13ae5949c6b6d499c9abf6f8dc08a6, type: 3}
+--- !u!1001 &1727460255
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_Name
+      value: Portal to TestKillBoss
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 19
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: Scene
+      value: 
+      objectReference: {fileID: 102900000, guid: 30896952a8e7a944bb8e5504515f5c5a, type: 3}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: DisplayName
+      value: 'Test: Kill Boss'
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
 --- !u!1001 &1743669158
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1410,6 +1540,71 @@ PrefabInstance:
     - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
       propertyPath: DisplayName
       value: Test Swarm
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+--- !u!1001 &1961506512
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_Name
+      value: Portal to TestReachExit
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 26
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: Scene
+      value: 
+      objectReference: {fileID: 102900000, guid: 75ac3939671b5e14e8d11068121145c1, type: 3}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: DisplayName
+      value: 'Test: Reach Exit'
       objectReference: {fileID: 0}
     m_RemovedComponents: []
     m_RemovedGameObjects: []
@@ -1587,6 +1782,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d88b38550b401c343a388a2c7053d335, type: 3}
+--- !u!1001 &2094312622
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_Name
+      value: Portal to TestKillEnemies
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 12
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 8.5
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: Scene
+      value: 
+      objectReference: {fileID: 102900000, guid: 82e11725f284efe46833e6b7e15b4d6d, type: 3}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: DisplayName
+      value: 'Test: Kill Enemies'
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1616,3 +1876,7 @@ SceneRoots:
   - {fileID: 467134811}
   - {fileID: 1364047659}
   - {fileID: 1374357318}
+  - {fileID: 2094312622}
+  - {fileID: 1727460255}
+  - {fileID: 1961506512}
+  - {fileID: 1431118511}

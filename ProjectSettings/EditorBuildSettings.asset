@@ -23,5 +23,17 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TestSwarm.unity
     guid: 1f284ce9d0b84b44c9b0dbf38e2ba2f4
+  - enabled: 1
+    path: Assets/Scenes/TestKillEnemies.unity
+    guid: 82e11725f284efe46833e6b7e15b4d6d
+  - enabled: 1
+    path: Assets/Scenes/TestKillBoss.unity
+    guid: 30896952a8e7a944bb8e5504515f5c5a
+  - enabled: 1
+    path: Assets/Scenes/TestReachExit.unity
+    guid: 75ac3939671b5e14e8d11068121145c1
+  - enabled: 1
+    path: Assets/Scenes/TestSurvive.unity
+    guid: eccd407c7f973de4eb88bc6d6076a487
   m_configObjects:
     com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

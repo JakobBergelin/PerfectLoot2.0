@@ -5,7 +5,8 @@ using Unity.Collections;
 using Unity.Transforms;
 using Unity.Mathematics;
 
-// Same as HealthUISystem: after everything that rotates units, before the transforms are calculated
+// Same as HealthUISystem: after everything that rotates units, before the transforms are calculated. Players' are
+// hidden, as UnitBarHUD draws theirs.
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class ResourceUISystem : SystemBase
 {
@@ -17,14 +18,15 @@ public partial class ResourceUISystem : SystemBase
             cameraForward = Camera.main.transform.forward;
         }
 
-        foreach (var (resourceBar, resource, localTransform) in SystemAPI.Query<RefRO<ResourceBarUI>, RefRO<Resource>, RefRO<LocalTransform>>())
+        var bars = SystemAPI.GetComponentLookup<UnitBarParams>();
+        var players = SystemAPI.GetComponentLookup<Player>(true);
+        foreach (var (resourceBar, resource, localTransform, entity) in SystemAPI.Query<RefRO<ResourceBarUI>, RefRO<Resource>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            float resourceNormalized = resource.ValueRO.CurrentValue / resource.ValueRO.MaxValue;
-            var stickTransform = SystemAPI.GetComponentRW<LocalTransform>(resourceBar.ValueRO.StickEntity);
-            var pivotMatrix = SystemAPI.GetComponentRW<PostTransformMatrix>(resourceBar.ValueRO.PivotEntity);
-            pivotMatrix.ValueRW.Value = float4x4.Scale(resourceNormalized, 1, 1);
-            
+            float kind = players.HasComponent(entity) ? UnitBarKind.Hidden : UnitBarKind.Resource;
+            if (bars.HasComponent(resourceBar.ValueRO.BarEntity))
+                bars[resourceBar.ValueRO.BarEntity] = new UnitBarParams { Value = new float4(resource.ValueRO.CurrentValue / resource.ValueRO.MaxValue, kind, 0f, 0f) };
 
+            var stickTransform = SystemAPI.GetComponentRW<LocalTransform>(resourceBar.ValueRO.StickEntity);
             stickTransform.ValueRW.Rotation = localTransform.ValueRO.InverseTransformRotation(quaternion.LookRotation(cameraForward, math.up()));
         }
     }

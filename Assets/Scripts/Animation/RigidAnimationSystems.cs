@@ -216,7 +216,7 @@ public static class RigidDeathUtility
             if (entityManager.HasComponent<HealthBarUI>(entity))
             {
                 var bars = entityManager.GetComponentData<HealthBarUI>(entity);
-                HideHierarchy(entityManager, bars.PivotEntity);
+                HideHierarchy(entityManager, bars.BarEntity);
                 HideHierarchy(entityManager, bars.StickEntity);
             }
         }
