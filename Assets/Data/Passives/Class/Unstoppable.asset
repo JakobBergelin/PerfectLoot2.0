@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 882343800088c7f439bbf8bbec619ac7, type: 3}
+  m_Name: Unstoppable
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.UnstoppablePassive
+  Name: Unstoppable
+  Icon: {fileID: 21300000, guid: a82f4507003f4fdfb820004ea1b78e1f, type: 3}
+  Description: While 3 or more enemies are within 4 meters, you can't be chilled, slowed or knocked back.
+  PlayerSelectable: 0
+  Radius: 4
+  EnemyCount: 3

@@ -217,6 +217,7 @@ public class CharacterManager : MonoBehaviour
 
     // What is currently applied to the player entity, so it can be replaced
     ResourceDefinition _appliedResource;
+    CharacterClass _appliedClass;   // Whose class passive the player has
     int? _pushedLevel;
     bool _dirty;
 
@@ -360,6 +361,7 @@ public class CharacterManager : MonoBehaviour
 
         // Fresh entity: nothing applied yet
         _appliedResource = null;
+        _appliedClass = null;
         _pushedLevel = null;
         _hasSpawned = true;
         PushCharacter();
@@ -442,6 +444,7 @@ public class CharacterManager : MonoBehaviour
         var entityManager = world.EntityManager;
         if (_player == Entity.Null || !entityManager.Exists(_player)) return;
 
+        if (_appliedClass != null && _appliedClass != Class) _appliedClass.RemovePassive(entityManager, _player);
         if (Class != null) Class.Apply(entityManager, _player);
         else CharacterClass.Remove(entityManager, _player);
 
@@ -462,6 +465,7 @@ public class CharacterManager : MonoBehaviour
         }
 
         _appliedResource = Resource;
+        _appliedClass = Class;
         _pushedLevel = StartingLevel;
         _dirty = false;
     }

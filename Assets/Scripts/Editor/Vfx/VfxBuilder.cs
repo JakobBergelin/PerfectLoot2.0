@@ -51,6 +51,7 @@ public static partial class VfxBuilder
         foreach (var (type, prefab) in JuiceEffects()) prefabs[type] = prefab;
         foreach (var (type, prefab) in CombatEffects()) prefabs[type] = prefab;
         foreach (var (type, prefab) in ChargeAndFreezeEffects()) prefabs[type] = prefab;
+        foreach (var (type, prefab) in ClassPassiveEffects()) prefabs[type] = prefab;
 
         string libraryPath = $"{Root}/VfxLibrary.asset";
         var library = AssetDatabase.LoadAssetAtPath<VfxLibrary>(libraryPath);

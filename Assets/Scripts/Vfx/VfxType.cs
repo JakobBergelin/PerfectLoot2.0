@@ -48,4 +48,7 @@ public enum VfxType
     BulwarkShimmer = 44,
     LightningArc = 45,
     IceBlock = 46,
+    HealOrb = 47,
+    HealBurst = 48,
+    Consecration = 49,
 }

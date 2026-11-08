@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 02f415dd0ea77104fa83c1735583027a, type: 3}
+  m_Name: Recall
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.RecallPassive
+  Name: Recall
+  Icon: {fileID: 21300000, guid: ca6ea3cee6aa48c48a6f3483b243c2e9, type: 3}
+  Description: Using all your skills within 6 seconds restores 25% of your resource and finishes your shortest cooldown.
+  PlayerSelectable: 0
+  Window: 6
+  ResourceFraction: 0.25

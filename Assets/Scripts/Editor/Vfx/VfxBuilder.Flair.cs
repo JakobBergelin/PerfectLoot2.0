@@ -502,6 +502,64 @@ public static partial class VfxBuilder
         yield return (VfxType.IceBlock, Save(block));
     }
 
+    // Class passives: Iron Palm's healing orb and the burst where it lands, and Guardian's Consecration
+    static IEnumerable<(VfxType, GameObject)> ClassPassiveEffects()
+    {
+        const string Life = "#9CF5B0", Gold = "#FFD86A";
+
+        // A glowing gold-green orb with a soft trail, like the soul orb
+        var orb = Root_("VFX_HealOrb", 0.6f, out var orbInstance);
+        var core = MeshPart(orb, "Core", Ico("VFX_Ico"), ComicGlow("VFX_HealCore", Life, Gold, 1.8f, 0.5f), Vector3.zero, Vector3.one * 0.36f);
+        orbInstance.HideOnRelease = new Renderer[] { core };
+        Ps(orb, "Glow", _additive, ps => Main(ps, 0.3f, 0f, 1.1f, Hex(Life, 0.4f), local: true, rate: 10f));
+        Ps(orb, "Trail", _additive, ps =>
+        {
+            Main(ps, 0.35f, 0f, new ParticleSystem.MinMaxCurve(0.12f, 0.2f), Color.white);
+            var e = ps.emission; e.rateOverDistance = 12f;
+            Fade(ps, Hex("#FFFFFF", 0.9f), Hex(Life, 0.6f), Hex(Gold, 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.HealOrb, Save(orb));
+
+        var burst = Root_("VFX_HealBurst", 0.8f, out _);
+        Ps(burst, "Flash", _additive, ps => Main(ps, 0.15f, 0f, 1.4f, Hex(Life, 0.6f), burst: 1));
+        Ps(burst, "Motes", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.5f, 1.5f), new ParticleSystem.MinMaxCurve(0.1f, 0.18f), Color.white, burst: 14);
+            var m = ps.main; m.gravityModifier = -0.5f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.4f);
+            Fade(ps, Hex("#FFFFFF"), Hex(Life), Hex(Gold, 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.HealBurst, Save(burst));
+
+        // Like Cold Snap's nova in gold: drawn at radius 1, VfxSystem scales it to the radius
+        var nova = Root_("VFX_Consecration", 1f, out _);
+        Ps(nova, "Flash", _additive, ps =>
+        {
+            Main(ps, 0.25f, 0f, 3f, Hex(Gold, 0.6f), burst: 1);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape;
+        });
+        Ps(nova, "Ring", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(0.3f, 1f), new ParticleSystem.MinMaxCurve(0.2f, 0.34f), Color.white, burst: 40);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape;
+            Shape(ps, ParticleSystemShapeType.Circle, 1f, new Vector3(-90f, 0f, 0f), new Vector3(0f, -0.6f, 0f));
+            var shape = ps.shape; shape.radiusThickness = 0f;
+            Fade(ps, Hex("#FFFFFF"), Hex(Gold), Hex("#C8902A", 0f));
+            Shrink(ps);
+        });
+        Ps(nova, "Rays", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.9f), new ParticleSystem.MinMaxCurve(1.5f, 3f), new ParticleSystem.MinMaxCurve(0.14f, 0.24f), Color.white, burst: 20);
+            var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape; m.gravityModifier = -0.3f;
+            Shape(ps, ParticleSystemShapeType.Circle, 1f, new Vector3(-90f, 0f, 0f), new Vector3(0f, -0.8f, 0f));
+            Fade(ps, Hex("#FFFFFF", 0.8f), Hex(Life, 0.5f), Hex(Gold, 0f));
+            Stretch(ps, 2f);
+        });
+        yield return (VfxType.Consecration, Save(nova));
+    }
+
     static void BoltLine(GameObject parent, string name, Material material, float width, Color start, Color end)
     {
         var go = new GameObject(name);

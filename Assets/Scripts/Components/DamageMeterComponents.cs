@@ -55,6 +55,11 @@ public enum DamageLabel
     Luminosity,
     Regeneration,
     Vigil,
+
+    // Class passives
+    Consecration,   // Guardian's release: its damage and its heal
+    GuardianShare,  // Damage a Guardian takes for an ally
+    IronPalm,       // Iron Palm's healing projectiles
 }
 
 public static class SkillDamageLabel

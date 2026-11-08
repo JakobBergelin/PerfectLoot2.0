@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e67fcf5b71404d4aae455facdfbcd88, type: 3}
+  m_Name: Guardian
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.GuardianPassive
+  Name: Guardian
+  Icon: {fileID: 21300000, guid: 90627328ae258684198d3eb9ea10ddc8, type: 3}
+  Description: 'Allies within 6 meters pass 25% of the damage they take to you, and you gain 2 armor for each of them. Every 100 damage you take, yours or theirs, releases Consecration: allies within 5 meters heal 10% of your max health and enemies take 5 physical damage.'
+  PlayerSelectable: 0
+  Radius: 6
+  Share: 0.25
+  ArmorPerAlly: 2
+  Threshold: 100
+  ConsecrationRadius: 5
+  Damage: 5
+  HealShare: 0.1

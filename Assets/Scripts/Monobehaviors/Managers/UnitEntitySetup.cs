@@ -32,6 +32,8 @@ public static class UnitEntitySetup
         AddBuffer<CalculatedDamageInstance>(entityManager, entity);
         AddOrSet(entityManager, entity, new Knockback());
         AddOrSet(entityManager, entity, new LastHit());
+        AddOrSet(entityManager, entity, new Barrier());
+        AddOrSet(entityManager, entity, new HitsAvoided());
         AddOrSet(entityManager, entity, new AttackRecovery());
         AddBuffer<ChargedInstance>(entityManager, entity);
 

@@ -20,8 +20,10 @@ public class UnitBarHUD : MonoBehaviour
     class Bar
     {
         public VisualElement Fill;
+        public VisualElement Barrier;       // Over the fill from the left: the barrier as a share of max (health bar only)
         public Label Value;
-        public int Shown = int.MinValue;    // The number on it, so the text only changes when it does
+        public int Shown = int.MinValue;    // The numbers on it, so the text only changes when they do
+        public int ShownBarrier;
     }
 
     class Group
@@ -97,7 +99,8 @@ public class UnitBarHUD : MonoBehaviour
                 group.Seen = true;
 
                 var health = entityManager.GetComponentData<Health>(player);
-                SetBar(group.Health, health.CurrentValue, health.MaxValue);
+                float barrier = entityManager.HasComponent<Barrier>(player) ? entityManager.GetComponentData<Barrier>(player).Value : 0f;
+                SetBar(group.Health, health.CurrentValue, health.MaxValue, barrier);
                 bool hasResource = entityManager.HasComponent<Resource>(player);
                 group.Resource.Fill.parent.style.display = hasResource ? DisplayStyle.Flex : DisplayStyle.None;
                 if (hasResource)
@@ -133,7 +136,14 @@ public class UnitBarHUD : MonoBehaviour
         var root = new VisualElement { pickingMode = PickingMode.Ignore };
         root.AddToClassList(GroupClass);
         _layer.Add(root);
-        return new Group { Root = root, Health = CreateBar(root, "unit-bar--health"), Resource = CreateBar(root, "unit-bar--resource") };
+        var group = new Group { Root = root, Health = CreateBar(root, "unit-bar--health"), Resource = CreateBar(root, "unit-bar--resource") };
+
+        // The barrier lies over the health fill, under the numbers
+        group.Health.Barrier = new VisualElement { pickingMode = PickingMode.Ignore };
+        group.Health.Barrier.AddToClassList("unit-bar__barrier");
+        var healthBar = group.Health.Fill.parent;
+        healthBar.Insert(healthBar.IndexOf(group.Health.Value), group.Health.Barrier);
+        return group;
     }
 
     static Bar CreateBar(VisualElement parent, string kindClass)
@@ -165,14 +175,18 @@ public class UnitBarHUD : MonoBehaviour
         group.ResourceClass = resourceClass;
     }
 
-    // Rounded up, so a sliver of health left never reads 0
-    static void SetBar(Bar bar, float current, float max)
+    // Rounded up, so a sliver of health left never reads 0. A barrier shows over the fill and as "+N" after the number.
+    static void SetBar(Bar bar, float current, float max, float barrier = 0f)
     {
         float fraction = max > 0f ? Mathf.Clamp01(current / max) : 0f;
         bar.Fill.style.width = Length.Percent(fraction * 100f);
+        if (bar.Barrier != null) bar.Barrier.style.width = Length.Percent(max > 0f ? Mathf.Clamp01(barrier / max) * 100f : 0f);
+
         int shown = Mathf.CeilToInt(Mathf.Max(0f, current) - 0.001f);
-        if (shown == bar.Shown) return;
+        int shownBarrier = Mathf.CeilToInt(Mathf.Max(0f, barrier) - 0.001f);
+        if (shown == bar.Shown && shownBarrier == bar.ShownBarrier) return;
         bar.Shown = shown;
-        bar.Value.text = shown.ToString();
+        bar.ShownBarrier = shownBarrier;
+        bar.Value.text = shownBarrier > 0 ? $"{shown} <color=#DDEEFF>+{shownBarrier}</color>" : shown.ToString();
     }
 }

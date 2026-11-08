@@ -78,6 +78,16 @@
     background-color: #C93BC0;
 }
 
+/* A Barrier over the health fill, from the left; width set from code as a share of max health */
+.unit-bar__barrier {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background-color: rgba(230, 242, 255, 0.75);
+}
+
 /* The lighter top band */
 .unit-bar__band {
     position: absolute;

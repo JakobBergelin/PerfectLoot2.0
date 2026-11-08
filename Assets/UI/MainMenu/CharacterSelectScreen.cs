@@ -22,10 +22,10 @@ public class CharacterSelectScreen
     ScrollView _list;
     Label _noCharacters, _noSelection;
     VisualElement _detailsView, _createView, _deleteConfirm;
-    Label _detailName, _detailClass, _detailResource, _detailDescription, _deleteQuestion;
+    Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _deleteQuestion;
     Button _deleteButton;
     TextField _nameField;
-    Label _nameError, _classDescription, _resourceDescription;
+    Label _nameError, _classDescription, _classInfo, _resourceDescription;
     Button _createButton;
 
     readonly Dictionary<string, VisualElement> _rows = new Dictionary<string, VisualElement>();
@@ -65,11 +65,13 @@ public class CharacterSelectScreen
         _detailClass = root.Q<Label>("detailClass");
         _detailResource = root.Q<Label>("detailResource");
         _detailDescription = root.Q<Label>("detailDescription");
+        _detailClassInfo = root.Q<Label>("detailClassInfo");
         _deleteQuestion = root.Q<Label>("deleteQuestion");
         _deleteButton = root.Q<Button>("deleteButton");
         _nameField = root.Q<TextField>("characterNameField");
         _nameError = root.Q<Label>("nameError");
         _classDescription = root.Q<Label>("classDescription");
+        _classInfo = root.Q<Label>("classInfo");
         _resourceDescription = root.Q<Label>("resourceDescription");
         _createButton = root.Q<Button>("createButton");
         var classGrid = root.Q<VisualElement>("classGrid");
@@ -81,8 +83,8 @@ public class CharacterSelectScreen
         var cancelCreate = root.Q<Button>("cancelCreateButton");
         if (_list == null || _noCharacters == null || _noSelection == null || _detailsView == null || _createView == null ||
             _deleteConfirm == null || _detailName == null || _detailClass == null || _detailResource == null ||
-            _detailDescription == null || _deleteQuestion == null || _deleteButton == null || _nameField == null ||
-            _nameError == null || _classDescription == null || _resourceDescription == null || _createButton == null ||
+            _detailDescription == null || _detailClassInfo == null || _deleteQuestion == null || _deleteButton == null || _nameField == null ||
+            _nameError == null || _classDescription == null || _classInfo == null || _resourceDescription == null || _createButton == null ||
             classGrid == null || resourceGrid == null || createCharacter == null || adventure == null || deleteYes == null ||
             deleteNo == null || cancelCreate == null)
             return false;
@@ -196,6 +198,7 @@ public class CharacterSelectScreen
         _detailClass.text = $"Level {character.Level} {ClassName(character.Class)}";
         _detailResource.text = ResourceName(character.Resource);
         SetDescription(_detailDescription, ClassAsset(character.Class)?.Description);
+        SetDescription(_detailClassInfo, ClassInfo(ClassAsset(character.Class)));
         ShowView(details: true, create: false);
     }
 
@@ -253,6 +256,7 @@ public class CharacterSelectScreen
         _class = type;
         foreach (var pair in _classChoices) pair.Value.EnableInClassList(SelectedChoiceClass, pair.Key == type);
         SetDescription(_classDescription, ClassAsset(type)?.Description);
+        SetDescription(_classInfo, ClassInfo(ClassAsset(type)));
         UpdateCreateButton();
     }
 
@@ -325,6 +329,26 @@ public class CharacterSelectScreen
     {
         var asset = ResourceAsset(type);
         return asset != null && !string.IsNullOrWhiteSpace(asset.Name) ? asset.Name : ItemText.SplitWords(type.ToString());
+    }
+
+    // Attributes gained per level (and by the max level) and the class passive, as rich text; null without a class
+    static string ClassInfo(CharacterClass characterClass)
+    {
+        if (characterClass == null) return null;
+        int max = Experience.MaxLevel;
+        var text = new System.Text.StringBuilder();
+        text.Append("<b>Attributes per level</b>\n");
+        text.Append($"Strength +{characterClass.StrengthPerLevel}   Agility +{characterClass.AgilityPerLevel}   Intelligence +{characterClass.IntelligencePerLevel}\n");
+        text.Append($"<color=#A8ADB8>At level {max}: {characterClass.StrengthPerLevel * max} / {characterClass.AgilityPerLevel * max} / {characterClass.IntelligencePerLevel * max}</color>");
+
+        var passive = characterClass.ClassPassive;
+        if (passive != null)
+        {
+            string name = string.IsNullOrWhiteSpace(passive.Name) ? passive.name : passive.Name;
+            text.Append($"\n\n<b>Class passive: <color=#E0A020>{name}</color></b>\n");
+            text.Append($"<color=#A8ADB8>{passive.Description}</color>");
+        }
+        return text.ToString();
     }
 
     // Hidden when empty, so an asset without a description leaves no gap

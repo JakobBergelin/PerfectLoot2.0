@@ -58,8 +58,9 @@ public partial struct BorrowedTimeSystem : ISystem
 }
 
 /// <summary>
-/// Deals delayed damage straight to health: it has already been through armor and the like. Doesn't need the power, so
-/// taking the item off doesn't clear what's owed. After DamagingSystem and before Last Stand and CheckDeathSystem.
+/// Deals delayed damage straight to health: it has already been through armor and the like, but a Barrier still soaks it.
+/// Doesn't need the power, so taking the item off doesn't clear what's owed. After DamagingSystem and before Last Stand
+/// and CheckDeathSystem.
 /// </summary>
 [UpdateInGroup(typeof(DamageSystemGroup))]
 [UpdateAfter(typeof(DamagingSystem))]
@@ -71,14 +72,17 @@ public partial struct DelayedDamageSystem : ISystem
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
         var meter = new DamageMeterRecorder(ref state, SystemAPI.GetSingleton<DamageMeter>());
+        var barriers = SystemAPI.GetComponentLookup<Barrier>();
         foreach (var (health, delayed, entity) in SystemAPI.Query<RefRW<Health>, DynamicBuffer<DelayedDamage>>().WithEntityAccess())
         {
             for (int i = delayed.Length - 1; i >= 0; i--)
             {
                 ref var entry = ref delayed.ElementAt(i);
                 float time = math.min(deltaTime, entry.TimeRemaining);
-                health.ValueRW.CurrentValue -= entry.DamagePerSecond * time;
-                meter.Damage(entity, Entity.Null, DamageLabel.BorrowedTime, entry.DamagePerSecond * time);
+                float damage = entry.DamagePerSecond * time;
+                if (barriers.HasComponent(entity)) damage = BarrierUtil.Absorb(ref barriers.GetRefRW(entity).ValueRW, damage);
+                health.ValueRW.CurrentValue -= damage;
+                meter.Damage(entity, Entity.Null, DamageLabel.BorrowedTime, damage);
                 entry.TimeRemaining -= time;
                 if (entry.TimeRemaining <= 0f) delayed.RemoveAt(i);
             }

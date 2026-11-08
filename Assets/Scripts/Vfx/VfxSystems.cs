@@ -133,7 +133,8 @@ public partial class VfxSystem : SystemBase
                     bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
                     bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
                     bool cold = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Cold;
-                    var (type, impact) = homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
+                    var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e) ? (VfxType.HealOrb, VfxType.HealBurst)
+                        : homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
                         : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
                         : poison ? (VfxType.PoisonDart, VfxType.None)
@@ -205,7 +206,12 @@ public partial class VfxSystem : SystemBase
                     // Single-frame lightning attacks are Fists of Thunder punches landing
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     var attack = EntityManager.GetComponentData<Attack>(e);
-                    if (attack.Type == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                    if (attack.Origin.Label == DamageLabel.Consecration)
+                    {
+                        int nova = vfx.Burst(VfxType.Consecration, t.Position, Quaternion.identity);
+                        if (attack.Radius > 0f) vfx.Scale(nova, attack.Radius);
+                    }
+                    else if (attack.Type == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
                     // A discharge (LightningSystem) hits the charged unit's allies: enemies when it has an enemy target
                     if (attack.Type == DamageType.Lightning && attack.Origin.Label == DamageLabel.Charged)
                     {

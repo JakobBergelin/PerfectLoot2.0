@@ -11,6 +11,7 @@ Shader "PerfectLoot/UnitBar"
         _CompanionColor ("Companion", Color) = (0.18, 0.83, 0.75, 1)
         _ResourceColor ("Resource", Color) = (0.24, 0.55, 1, 1)
         _BackColor ("Empty", Color) = (0.17, 0.14, 0.25, 0.9)
+        _BarrierColor ("Barrier", Color) = (0.9, 0.95, 1, 0.75)
         _OutlineColor ("Outline", Color) = (0.07, 0.05, 0.11, 1)
         _OutlineWidth ("Outline Width (m)", Range(0, 0.15)) = 0.045
         _Highlight ("Top Band Brightness", Range(0, 1)) = 0.3
@@ -44,6 +45,7 @@ Shader "PerfectLoot/UnitBar"
                 half4 _CompanionColor;
                 half4 _ResourceColor;
                 half4 _BackColor;
+                half4 _BarrierColor;
                 half4 _OutlineColor;
                 float _OutlineWidth;
                 float _Highlight;
@@ -109,6 +111,11 @@ Shader "PerfectLoot/UnitBar"
                 float band = smoothstep(0.0, aa * 2.0, p.y - (halfSize.y - _OutlineWidth) * 0.15);
                 half3 fill = lerp(fillColor, lerp(fillColor, 1.0, _Highlight), band);
                 half4 inside = lerp(_BackColor, half4(fill, 1.0), filled);
+
+                // A Barrier (z, a share of max health) lies over it from the left
+                float barrierEdge = lerp(left, right, saturate(bar.z)) - p.x;
+                float shielded = saturate(barrierEdge / max(fwidth(p.x), 1e-5) + 0.5) * step(0.001, bar.z);
+                inside = lerp(inside, half4(_BarrierColor.rgb, 1.0), shielded * _BarrierColor.a);
 
                 float outline = smoothstep(-aa, aa, edge + _OutlineWidth);
                 half4 color = lerp(inside, _OutlineColor, outline);

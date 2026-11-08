@@ -166,6 +166,29 @@
     padding: 0;
 }
 
+/* The class passive, after the slots: a gold ring and a "Class" tag; it can't be changed */
+.sp-passive--class {
+    margin-left: 16px;
+    border-left-width: 1px;
+    border-left-color: var(--card-border);
+    border-radius: 0;
+}
+
+.sp-passive--class:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.sp-passive--class .sp-passive__icon {
+    border-color: var(--accent);
+}
+
+.sp-passive__class-tag {
+    font-size: 11px;
+    color: var(--accent);
+    margin: 2px 0 0 0;
+    padding: 0;
+}
+
 /* Picker with the skills that can go in the selected slot */
 .sp-picker {
     flex-direction: row;

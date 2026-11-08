@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe2964e36b619884f8ac223fbe677e35, type: 3}
+  m_Name: Overflow
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.OverflowPassive
+  Name: Overflow
+  Icon: {fileID: 21300000, guid: 388b0fb4b5f14bbb89cbae5b4ae2a5b7, type: 3}
+  Description: Healing you do beyond full health, on yourself, companions or other players, becomes a barrier on them, up to 20% of their max health. It fades 5 seconds after its last top-up.
+  PlayerSelectable: 0
+  MaxShare: 0.2
+  Duration: 5

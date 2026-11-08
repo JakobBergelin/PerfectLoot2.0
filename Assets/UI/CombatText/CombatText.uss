@@ -41,6 +41,10 @@
     color: #7FE3D4;
 }
 
+.combat-text--absorbed {
+    color: #DDEEFF;
+}
+
 .combat-text--bleed {
     color: #FF7AB6;
 }

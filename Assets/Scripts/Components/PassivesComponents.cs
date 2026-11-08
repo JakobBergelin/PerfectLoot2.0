@@ -84,6 +84,18 @@ public enum PassiveType
     Quarry,
     Bulwark,
     BloodPact,
+
+    // Class passives
+    Precision,
+    Exploit,
+    Unstoppable,
+    Vanish,
+    Brace,
+    Recall,
+    Desperation,
+    Overflow,
+    Guardian,
+    IronPalm,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset

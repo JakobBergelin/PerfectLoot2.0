@@ -19,6 +19,7 @@ MonoBehaviour:
   StrengthPerLevel: 0
   AgilityPerLevel: 1
   IntelligencePerLevel: 2
+  ClassPassive: {fileID: 11400000, guid: fff30279a56db494fa0c83abaabe0edc, type: 2}
   StartingItems:
   - {fileID: 11400000, guid: 52b6439b1f024ecc93ec90b16046b9e3, type: 2}
   - {fileID: 11400000, guid: 281ace68cb604966ad4663377aaac89f, type: 2}

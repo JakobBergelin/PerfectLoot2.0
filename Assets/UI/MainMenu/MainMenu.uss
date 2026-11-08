@@ -249,6 +249,17 @@
     margin: 2px 0 0 0;
 }
 
+/* A class's attributes per level and its class passive (CharacterSelectScreen.ClassInfo), rich text */
+.cs-class-info {
+    font-size: 12px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 6px 8px;
+    margin: 6px 0 0 0;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 4px;
+}
+
 .cs-error {
     font-size: 12px;
     color: #E05050;

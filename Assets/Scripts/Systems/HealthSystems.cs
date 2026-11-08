@@ -22,11 +22,14 @@ public partial class HealthUISystem : SystemBase
         var bars = SystemAPI.GetComponentLookup<UnitBarParams>();
         var players = SystemAPI.GetComponentLookup<Player>(true);
         var companions = SystemAPI.GetComponentLookup<Companion>(true);
+        var barriers = SystemAPI.GetComponentLookup<Barrier>(true);
         foreach (var (healthBar, health, localTransform, entity) in SystemAPI.Query<RefRO<HealthBarUI>, RefRO<Health>, RefRO<LocalTransform>>().WithEntityAccess())
         {
             float kind = players.HasComponent(entity) ? UnitBarKind.Hidden : companions.HasComponent(entity) ? UnitBarKind.Companion : UnitBarKind.Enemy;
+            // z: the barrier, as a share of max health, drawn over the bar
+            float barrier = barriers.HasComponent(entity) ? barriers[entity].Value / health.ValueRO.MaxValue : 0f;
             if (bars.HasComponent(healthBar.ValueRO.BarEntity))
-                bars[healthBar.ValueRO.BarEntity] = new UnitBarParams { Value = new float4(health.ValueRO.CurrentValue / health.ValueRO.MaxValue, kind, 0f, 0f) };
+                bars[healthBar.ValueRO.BarEntity] = new UnitBarParams { Value = new float4(health.ValueRO.CurrentValue / health.ValueRO.MaxValue, kind, barrier, 0f) };
 
             var stickTransform = SystemAPI.GetComponentRW<LocalTransform>(healthBar.ValueRO.StickEntity);
             stickTransform.ValueRW.Rotation = localTransform.ValueRO.InverseTransformRotation(quaternion.LookRotation(cameraForward, math.up()));
@@ -181,6 +184,7 @@ public partial class CalculateDamageSystem : SystemBase
                 {
                     OnDamageDodged?.Invoke(SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
                     calculatedDamage = 0.0f;
+                    if(SystemAPI.HasComponent<HitsAvoided>(entity)) SystemAPI.GetComponentRW<HitsAvoided>(entity).ValueRW.Count++;
                     if(SystemAPI.HasComponent<Vigil>(entity))
                     {
                         SystemAPI.GetBuffer<HealingInstance>(entity).Add(new HealingInstance{Value = SystemAPI.GetComponent<Vigil>(entity).HealAmount, Source = entity, Label = DamageLabel.Vigil});
@@ -210,6 +214,7 @@ public partial class CalculateDamageSystem : SystemBase
                             calculatedDamage = math.max(0, calculatedDamage - combatConfig.BlockAmount);
                             diff = diff - calculatedDamage;
                             OnDamageBlocked?.Invoke(diff, SystemAPI.GetComponentRO<LocalTransform>(entity).ValueRO.Position);
+                            if(SystemAPI.HasComponent<HitsAvoided>(entity)) SystemAPI.GetComponentRW<HitsAvoided>(entity).ValueRW.Count++;
                         }
                     }
                 }
@@ -225,6 +230,8 @@ public partial class CalculateDamageSystem : SystemBase
 public partial class DamagingSystem : SystemBase
 {
     public event System.Action<float, float3, bool> OnDamageTaken;
+    /// <summary>A Barrier soaked a whole hit (amount, position).</summary>
+    public event System.Action<float, float3> OnDamageAbsorbed;
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     protected override void OnCreate()
     {
@@ -246,9 +253,11 @@ public partial class DamagingSystem : SystemBase
         // Optional: without it units just don't flash
         SystemAPI.TryGetSingleton<HitFlashConfig>(out var hitFlashConfig);
         var meter = new DamageMeterRecorder(ref CheckedStateRef, SystemAPI.GetSingleton<DamageMeter>());
+        var barriers = SystemAPI.GetComponentLookup<Barrier>();
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<CalculatedDamageInstance>(entity);
+            bool hasBarrier = barriers.HasComponent(entity);
             foreach(var instance in instances)
             {
                 if(instance.Hierarchy == DamageHierarchy.Main)
@@ -258,6 +267,17 @@ public partial class DamagingSystem : SystemBase
                     if(damage <= 0.0f)
                     {
                         continue;
+                    }
+                    // A Barrier soaks it first. A hit it soaks whole does nothing at all (no push, no status);
+                    // statuses of a hit that gets through come from what got through
+                    if(hasBarrier && barriers[entity].Value > 0.0f)
+                    {
+                        damage = BarrierUtil.Absorb(ref barriers.GetRefRW(entity).ValueRW, damage);
+                        if(damage <= 0.0f)
+                        {
+                            OnDamageAbsorbed?.Invoke(instance.Damage, position);
+                            continue;
+                        }
                     }
                     OnDamageTaken?.Invoke(damage, position, instance.IsCrit);
                     health.ValueRW.CurrentValue -= damage;
@@ -317,6 +337,7 @@ public partial class DamagingSystem : SystemBase
                 else //Subdamage
                 {
                     float damage = instance.Damage;
+                    if(hasBarrier && damage > 0.0f && barriers[entity].Value > 0.0f) damage = BarrierUtil.Absorb(ref barriers.GetRefRW(entity).ValueRW, damage);
                     if(damage <= 0.0f)
                     {
                         continue;
@@ -360,6 +381,8 @@ public partial class ApplyHealingSystem : SystemBase
     {
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var meter = new DamageMeterRecorder(ref CheckedStateRef, SystemAPI.GetSingleton<DamageMeter>());
+        var overflows = SystemAPI.GetComponentLookup<Overflow>(true);
+        var barriers = SystemAPI.GetComponentLookup<Barrier>();
         foreach (var (health, calculatedStats, entity) in SystemAPI.Query<RefRW<Health>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             var instances = EntityManager.GetBuffer<HealingInstance>(entity);
@@ -367,6 +390,15 @@ public partial class ApplyHealingSystem : SystemBase
             {
                 // Never above max health; the combat text shows what was actually restored
                 float heal = math.min(instance.Value, health.ValueRO.MaxValue - health.ValueRO.CurrentValue);
+
+                // Overflow: what a healer with it heals past full health becomes a barrier on the one healed
+                float extra = instance.Value - math.max(0.0f, heal);
+                if(extra > 0.0f && overflows.HasComponent(instance.Source) && barriers.HasComponent(entity))
+                {
+                    var overflow = overflows[instance.Source];
+                    BarrierUtil.Add(ref barriers.GetRefRW(entity).ValueRW, extra, health.ValueRO.MaxValue * overflow.MaxShare, overflow.Duration);
+                }
+
                 if(heal <= 0.0f)
                 {
                     continue;
