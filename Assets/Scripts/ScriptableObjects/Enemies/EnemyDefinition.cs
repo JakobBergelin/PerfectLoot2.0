@@ -40,6 +40,10 @@ namespace Enemies
             BlockChance = 0.05f,
         };
 
+        [Header("Rewards")]
+        [Tooltip("Given to every player when it dies")]
+        [Min(0)] public int Experience = 10;
+
         [Header("Behavior")]
         [Tooltip("Chases and attacks the player. Off for training dummies (the behavior, skill and melee values below are then unused).")]
         public bool HasAI = true;

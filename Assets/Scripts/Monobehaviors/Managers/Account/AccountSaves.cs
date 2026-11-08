@@ -36,6 +36,7 @@ public static class AccountSaves
         public string Class;
         public string Resource;
         public int Level;
+        public int Experience;
         public List<EquippedData> Equipped = new List<EquippedData>();
         public List<CompletedDungeonData> CompletedDungeons = new List<CompletedDungeonData>();
     }
@@ -175,6 +176,7 @@ public static class AccountSaves
                 Class = character.Class.ToString(),
                 Resource = character.Resource.ToString(),
                 Level = character.Level,
+                Experience = character.Experience,
             };
             foreach (var equipped in character.Equipped)
                 saved.Equipped.Add(new EquippedData { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = equipped.Rarity.ToString() });
@@ -229,7 +231,8 @@ public static class AccountSaves
                 Name = saved.Name,
                 Class = classType,
                 Resource = resourceType,
-                Level = Mathf.Max(1, saved.Level),
+                Level = Mathf.Clamp(saved.Level, 1, global::Experience.MaxLevel),
+                Experience = Mathf.Max(0, saved.Experience),
             };
             // Saves from before equipment have none; whether the items still exist is checked when they're equipped
             foreach (var equipped in saved.Equipped ?? new List<EquippedData>())

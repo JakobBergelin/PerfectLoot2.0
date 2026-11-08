@@ -51,6 +51,8 @@ public class DungeonDefinition : ScriptableObject
     public LootTable KillLootTable;
     [Tooltip("Rolled when the dungeon is finished; the items land in front of the return portal")]
     public LootTable CompletionLootTable;
+    [Tooltip("Given to every player when the dungeon is finished")]
+    [Min(0)] public int CompletionExperience = 1000;
     [Tooltip("Done in order; the last one finishes the dungeon")]
     public List<DungeonStep> Steps = new List<DungeonStep>();
     [Tooltip("Spawned next to the player when the dungeon is finished (the Portal prefab). Leads back where the player came from.")]

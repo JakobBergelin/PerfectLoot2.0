@@ -16,11 +16,24 @@ MonoBehaviour:
   Name: Haunted Cathedral
   KillLootTable: {fileID: 11400000, guid: 468b1846f25e4a279b7aed368459754a, type: 2}
   CompletionLootTable: {fileID: 11400000, guid: f764a92f648e45709bb720f6dab20b61, type: 2}
+  CompletionExperience: 1000
   Steps:
   - Kind: 0
     KillPercent: 90
     Boss: {fileID: 0}
+    SurviveSeconds: 60
+    WaveInterval: 8
+    Waves: []
+    WaveDistance: 16
+    WaveSpread: 3
+    MaxAlive: 40
   - Kind: 1
     KillPercent: 90
     Boss: {fileID: 11400000, guid: eba4b1eebcb8ae94990b9ac374e442c9, type: 2}
+    SurviveSeconds: 60
+    WaveInterval: 8
+    Waves: []
+    WaveDistance: 16
+    WaveSpread: 3
+    MaxAlive: 40
   ReturnPortal: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}

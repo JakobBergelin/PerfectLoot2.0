@@ -27,6 +27,7 @@ public class AccountCharacter
     public ClassType Class;
     public ResourceType Resource;
     public int Level = 1;
+    public int Experience;      // Toward the next level
     public List<EquippedItem> Equipped = new List<EquippedItem>();
     public List<CompletedDungeon> CompletedDungeons = new List<CompletedDungeon>();
 }

@@ -16,6 +16,7 @@ MonoBehaviour:
   Name: 'Test: Kill Enemies'
   KillLootTable: {fileID: 11400000, guid: 468b1846f25e4a279b7aed368459754a, type: 2}
   CompletionLootTable: {fileID: 11400000, guid: f764a92f648e45709bb720f6dab20b61, type: 2}
+  CompletionExperience: 1000
   Steps:
   - Kind: 0
     KillPercent: 90

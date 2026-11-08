@@ -1,0 +1,138 @@
+/* The player's experience bar and level, between the skill bar and the buff row (ExperienceBarHUD).
+   Same style as the unit bars: a rounded pill, a thick dark outline, a flat fill with a lighter band along its top. */
+
+.experience-bar-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* Just above the skill bar (24px padding + 88px slots + key labels), as wide as its four slots */
+.experience-row {
+    position: absolute;
+    left: 50%;
+    bottom: 150px;
+    width: 416px;
+    height: 32px;
+    margin-left: -208px;
+    justify-content: center;
+}
+
+.experience-bar {
+    height: 16px;
+    margin-left: 14px;
+    border-width: 3px;
+    border-color: #120D1C;
+    border-radius: 8px;
+    background-color: rgba(43, 35, 64, 0.92);
+    overflow: hidden;
+    transition-property: border-color, height;
+    transition-duration: 0.25s, 0.1s;
+}
+
+.experience-bar--hovered {
+    height: 24px;
+    border-radius: 12px;
+}
+
+/* Width set from code, as a percentage */
+.experience-bar__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0;
+    background-color: #D9A62E;
+}
+
+.experience-bar__band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 40%;
+    background-color: rgba(255, 255, 255, 0.28);
+}
+
+/* "1,659 / 4,000", only while the pointer is over the bar */
+.experience-bar__value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: -4px;
+    bottom: -4px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 2px;
+    -unity-text-outline-color: #120D1C;
+    color: #FFFFFF;
+    padding: 0;
+    margin: 0;
+    display: none;
+}
+
+.experience-bar--hovered .experience-bar__value {
+    display: flex;
+}
+
+/* The level, in a round badge over the bar's left end */
+.experience-row__level {
+    position: absolute;
+    left: -6px;
+    top: 0;
+    width: 32px;
+    height: 32px;
+    border-width: 3px;
+    border-color: #120D1C;
+    border-radius: 16px;
+    background-color: #2B2340;
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.2px;
+    -unity-text-outline-color: #120D1C;
+    color: #F4E3A1;
+    padding: 0;
+    margin: 0;
+    transition-property: background-color, scale;
+    transition-duration: 0.25s;
+}
+
+/* "Level up!" above the bar, shown while experience-row--level-up is on */
+.experience-row__level-up {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    margin-bottom: 2px;
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #FFE27A;
+    padding: 0;
+    opacity: 0;
+    translate: 0 8px;
+    transition-property: opacity, translate;
+    transition-duration: 0.3s;
+}
+
+.experience-row--level-up .experience-row__level-up {
+    opacity: 1;
+    translate: 0 0;
+}
+
+.experience-row--level-up .experience-row__level {
+    background-color: #C9A227;
+    color: #FFFFFF;
+    scale: 1.2 1.2;
+}
+
+.experience-row--level-up .experience-bar {
+    border-color: #FFE27A;
+}

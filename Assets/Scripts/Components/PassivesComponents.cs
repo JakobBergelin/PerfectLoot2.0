@@ -1,9 +1,21 @@
 using Unity.Entities;
 
+/// <summary>A player's level and its experience toward the next one (ExperienceSystem levels it up).</summary>
 public struct Level : IComponentData
 {
     public int Value;
     public int Experience;
+}
+
+/// <summary>Experience every player gets when this enemy dies (EnemyDefinition.Experience).</summary>
+public struct ExperienceReward : IComponentData
+{
+    public int Value;
+}
+
+/// <summary>An enemy whose experience was handed out (dying enemies can stay at 0 health for a while).</summary>
+public struct ExperienceGiven : IComponentData
+{
 }
 
 public struct UnitResource : IComponentData

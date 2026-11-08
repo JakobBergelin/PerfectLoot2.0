@@ -358,6 +358,7 @@ public class DungeonManager : MonoBehaviour
         _state = RunState.Complete;
         _portalPending = true;
         OpenReturnPortal(entityManager);
+        Experience.GiveAllPlayers(entityManager, _dungeon.CompletionExperience);
 
         var account = AccountManager.Instance;
         if (account != null && account.SelectedCharacter != null && !string.IsNullOrEmpty(_dungeon.Id))

@@ -14,12 +14,12 @@
     -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
 }
 
-/* Just above the skill bar (24px padding + 88px slots + key labels) */
+/* Above the skill bar and the experience bar (ExperienceBar.uss) */
 .effect-bar {
     position: absolute;
     left: 0;
     right: 0;
-    bottom: 152px;
+    bottom: 194px;
     flex-direction: row;
     justify-content: center;
 }

@@ -12,6 +12,9 @@ public static class GameSceneLoader
     /// <summary>The scene played before the current one (where a dungeon's return portal leads), or null.</summary>
     public static string PreviousScene { get; private set; }
 
+    /// <summary>Raised just before the world is replaced, while the old scene's entities still exist (CharacterManager saves progress).</summary>
+    public static event System.Action Loading;
+
     /// <summary>Resets the ECS world and loads the scene (next frame). False when the scene isn't in Build Settings.</summary>
     public static bool Load(string sceneName)
     {
@@ -22,6 +25,7 @@ public static class GameSceneLoader
         }
 
         PreviousScene = SceneManager.GetActiveScene().name;
+        Loading?.Invoke();
         ResetWorld();
         SceneManager.LoadScene(sceneName);
         return true;

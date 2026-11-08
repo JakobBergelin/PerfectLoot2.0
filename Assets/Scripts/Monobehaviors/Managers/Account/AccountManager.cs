@@ -174,6 +174,15 @@ public class AccountManager : MonoBehaviour
         SaveCharacters();
     }
 
+    /// <summary>Sets the character's level and experience (CharacterManager). Saves now when save is true, otherwise with the next save.</summary>
+    public void SetProgress(AccountCharacter character, int level, int experience, bool save)
+    {
+        if (character == null || !_characters.Contains(character)) return;
+        character.Level = level;
+        character.Experience = experience;
+        if (save) SaveCharacters();
+    }
+
     // Equips a Normal item of each kind: the account's own if it has found one, otherwise a new one rolled into the
     // database. Each goes into the first free slot of its type.
     void GiveStartingItems(AccountCharacter character, IReadOnlyList<RollableItem> startingItems)

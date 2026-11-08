@@ -32,8 +32,9 @@ public class CharacterManager : MonoBehaviour
     public CharacterClass Class;
     public ResourceDefinition Resource;
 
-    [Tooltip("Pushed to the player's Level at spawn and whenever this value changes. Class attributes scale with level.")]
-    public int StartingLevel = 1;
+    [Tooltip("The player's level: pushed at spawn and whenever this value is changed here, and follows the levels it earns. " +
+             "Class attributes scale with level.")]
+    [Range(1, Experience.MaxLevel)] public int StartingLevel = 1;
 
     [Header("Everything that can be rolled at start")]
     public List<CharacterClass> AllClasses = new List<CharacterClass>();
@@ -219,11 +220,20 @@ public class CharacterManager : MonoBehaviour
     int? _pushedLevel;
     bool _dirty;
 
+    // The played character (null without the main menu) and the experience earned toward the next level, kept across
+    // respawns and scenes and saved on it
+    AccountCharacter _character;
+    int _experience;
+
     void Awake()
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
     }
+
+    void OnEnable() => GameSceneLoader.Loading += SaveProgress;
+    void OnDisable() => GameSceneLoader.Loading -= SaveProgress;
+    void OnApplicationQuit() => SaveProgress();
 
     void Start()
     {
@@ -237,7 +247,9 @@ public class CharacterManager : MonoBehaviour
     {
         Class = AllClasses.Find(c => c != null && c.Type == character.Class);
         Resource = AllResources.Find(r => r != null && r.Type == character.Resource);
-        StartingLevel = Mathf.Max(1, character.Level);
+        _character = character;
+        StartingLevel = Mathf.Clamp(character.Level, 1, Experience.MaxLevel);
+        _experience = Mathf.Max(0, character.Experience);
         if (Class == null && character.Class != ClassType.None)
             Debug.LogWarning($"CharacterManager: AllClasses has no {character.Class} for {character.Name}.", this);
         if (Resource == null && character.Resource != ResourceType.None)
@@ -285,6 +297,32 @@ public class CharacterManager : MonoBehaviour
         }
 
         if (_dirty) TryPushCharacter();
+        TrackProgress(entityManager);
+    }
+
+    // Keeps what the player earned (ExperienceSystem), for respawns and on the character. Saved right away on a level-up.
+    void TrackProgress(EntityManager entityManager)
+    {
+        // A dying player can still exist for a frame without its components
+        if (!entityManager.HasComponent<Level>(_player)) return;
+        var level = entityManager.GetComponentData<Level>(_player);
+        if (level.Value == StartingLevel && level.Experience == _experience) return;
+        bool levelledUp = level.Value > StartingLevel;
+        StartingLevel = level.Value;
+        _pushedLevel = level.Value;
+        _experience = level.Experience;
+        if (_character != null && AccountManager.Instance != null)
+            AccountManager.Instance.SetProgress(_character, StartingLevel, _experience, save: levelledUp);
+    }
+
+    // Leaving the scene or quitting: the latest progress, then the save
+    void SaveProgress()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null && world.IsCreated && world == _playerWorld && _player != Entity.Null && world.EntityManager.Exists(_player))
+            TrackProgress(world.EntityManager);
+        if (_character != null && AccountManager.Instance != null)
+            AccountManager.Instance.SetProgress(_character, StartingLevel, _experience, save: true);
     }
 
     void TrySpawn(EntityManager entityManager)
@@ -414,11 +452,12 @@ public class CharacterManager : MonoBehaviour
         entityManager.SetComponentData(_player, new UnitClass { Type = Class != null ? Class.Type : ClassType.None });
         entityManager.SetComponentData(_player, new UnitResource { Type = Resource != null ? Resource.Type : ResourceType.None });
 
-        // Only overwrite Level when StartingLevel changed (or on spawn), so a future XP system isn't reset
+        // Only overwrite Level when StartingLevel changed (or on spawn), so earned experience isn't reset
         if (_pushedLevel != StartingLevel)
         {
             var level = entityManager.GetComponentData<Level>(_player);
             level.Value = StartingLevel;
+            level.Experience = _experience;
             entityManager.SetComponentData(_player, level);
         }
 

@@ -18,6 +18,7 @@ public static class EnemyEntitySetup
     {
         AddOrSet(entityManager, entity, new Enemy());
         AddOrSet(entityManager, entity, new UnitInfo { Source = definition });
+        AddOrSet(entityManager, entity, new ExperienceReward { Value = definition.Experience });
 
         // Stats, health, damage buffers, status effects, knockback, smoothing, rotation lock
         AddCombatComponents(entityManager, entity, definition.Stats);

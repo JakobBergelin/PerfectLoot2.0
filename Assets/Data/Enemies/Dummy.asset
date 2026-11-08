@@ -29,19 +29,27 @@ MonoBehaviour:
     WeaponCooldown: 0
     AttackSpeed: 1
     Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
     Health: 9999
     HealthRegeneration: 9999
     Resource: 0
     ResourceRegeneration: 0
     ResourceCostReduction: 0
-    ResourceSteal: 0
-    Lifesteal: 0
+    ResourceOnHit: 0
+    LifeOnHit: 0
     Pierce: 0
     Bounces: 0
+    ProjectileSpeed: 0
     Armor: 0
+    ArmorPierce: 0
     MovementSpeed: 0
     AreaOfEffect: 0
     CooldownReduction: 0
+    BuffDuration: 0
     ColdResistance: 0
     FireResistance: 0
     PoisonResistance: 0
@@ -51,10 +59,21 @@ MonoBehaviour:
     CriticalDamage: 1
     BlockChance: 0.05
     DodgeChance: 0
+  Experience: 0
   HasAI: 0
   DetectionRadius: 15
+  ProximityRadius: 4
+  AlertRadius: 10
+  NearMissMargin: 2
+  ForgetTime: 5
   AttackRadius: 3
   TurnSpeed: 2
   TurnAcceleration: 1
+  DesiredDistance: 0
+  DistanceTolerance: 1.5
+  Skills: []
+  Passives: []
   MeleeDamage: 0.5
   SecondsBetweenAttacks: 1
+  AttackTurnSpeed: 360
+  AttackFacingAngle: 60

@@ -1,0 +1,15 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="ExperienceBar.uss" />
+    <ui:VisualElement name="experienceBarRoot" class="experience-bar-root" picking-mode="Ignore">
+        <ui:VisualElement name="experienceRow" class="experience-row" picking-mode="Ignore">
+            <ui:Label name="levelUp" text="Level up!" class="experience-row__level-up" picking-mode="Ignore" />
+            <ui:VisualElement name="bar" class="experience-bar">
+                <ui:VisualElement name="fill" class="experience-bar__fill" picking-mode="Ignore">
+                    <ui:VisualElement class="experience-bar__band" picking-mode="Ignore" />
+                </ui:VisualElement>
+                <ui:Label name="value" class="experience-bar__value" picking-mode="Ignore" />
+            </ui:VisualElement>
+            <ui:Label name="level" class="experience-row__level" picking-mode="Ignore" />
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>
