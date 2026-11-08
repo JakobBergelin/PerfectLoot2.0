@@ -1,0 +1,156 @@
+/* Variables and font on the panel's own root so everything inherits them. Same look as the Item Database panel. */
+.stats-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    --panel-bg: rgba(20, 22, 28, 0.97);
+    --panel-border: #3A3F4B;
+    --row-bg: rgba(10, 11, 14, 0.6);
+    --chip-bg: #2A2E38;
+    --chip-hover: #383D4A;
+    --chip-border: #4A5060;
+    --divider: #2C3039;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.stats-root--hidden {
+    display: none;
+}
+
+.stats-panel {
+    width: 760px;
+    height: 640px;
+    padding: 16px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.stats-header {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 10px;
+}
+
+.stats-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 0 4px;
+}
+
+.stats-chips {
+    flex-direction: row;
+}
+
+.stats-tabs {
+    flex-direction: row;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom-width: 1px;
+    border-color: var(--divider);
+}
+
+/* Tabs and the account/character switch */
+.stats-chip {
+    padding: 5px 14px;
+    margin: 0 6px 0 0;
+    font-size: 14px;
+    color: var(--text-muted);
+    background-color: var(--chip-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 4px;
+}
+
+.stats-chip:hover {
+    background-color: var(--chip-hover);
+    color: var(--text-color);
+}
+
+.stats-chip--selected {
+    color: var(--text-color);
+    border-color: var(--accent);
+}
+
+.stats-rows {
+    flex-grow: 1;
+}
+
+.stats-row {
+    flex-direction: row;
+    align-items: center;
+    height: 34px;
+    padding: 0 10px;
+    margin-bottom: 3px;
+    background-color: var(--row-bg);
+    border-radius: 4px;
+}
+
+.stats-row--headings {
+    background-color: transparent;
+    height: 28px;
+}
+
+.stats-cell {
+    font-size: 16px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+    -unity-text-align: middle-right;
+    width: 150px;
+}
+
+/* The first column: the stat's or subject's name */
+.stats-cell--name {
+    flex-grow: 1;
+    width: auto;
+    -unity-text-align: middle-left;
+}
+
+.stats-cell--heading {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+}
+
+.stats-cell--sortable:hover {
+    color: var(--text-color);
+}
+
+.stats-cell--sorted {
+    color: var(--accent);
+}
+
+/* Zero in a column: muted, like Minecraft's grey numbers */
+.stats-cell--zero {
+    color: #5C6270;
+}
+
+.stats-empty {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 50%;
+    font-size: 16px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+}
+
+.stats-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 8px 0 0 0;
+}

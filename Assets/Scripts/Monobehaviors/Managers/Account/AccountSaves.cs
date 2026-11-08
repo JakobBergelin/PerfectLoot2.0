@@ -19,6 +19,8 @@ public static class AccountSaves
     const int ItemDatabaseVersion = 2;
     const string CharactersFile = "Characters.json";
     const int CharactersVersion = 1;
+    const string StatisticsFile = "Statistics.json";
+    const int StatisticsVersion = 1;
 
     [Serializable]
     class CharactersData
@@ -319,6 +321,99 @@ public static class AccountSaves
             Debug.LogWarning($"{path}: {data.BaseItemName} ({data.Guid}) is marked Unverified: {string.Join("; ", problems)}.");
         }
         return item;
+    }
+
+    // ---------- Statistics ----------
+
+    [Serializable]
+    class StatisticsData
+    {
+        public int Version;
+        public List<StatData> Account = new List<StatData>();
+        public List<CharacterStatisticsData> Characters = new List<CharacterStatisticsData>();
+    }
+
+    [Serializable]
+    class CharacterStatisticsData
+    {
+        public string Guid;
+        public List<StatData> Stats = new List<StatData>();
+    }
+
+    [Serializable]
+    class StatData
+    {
+        public string Stat;
+        public string Subject;
+        public string Name;
+        public double Value;
+    }
+
+    static string StatisticsPath(string accountId) => Path.Combine(FolderOf(accountId), StatisticsFile);
+
+    /// <summary>Writes the account's statistics and its characters'.</summary>
+    public static void WriteStatistics(string accountId, AccountStatistics statistics)
+    {
+        var data = new StatisticsData { Version = StatisticsVersion };
+        ToData(statistics.Account, data.Account);
+        foreach (var (guid, set) in statistics.Characters)
+        {
+            var character = new CharacterStatisticsData { Guid = guid };
+            ToData(set, character.Stats);
+            data.Characters.Add(character);
+        }
+        Write(StatisticsPath(accountId), JsonUtility.ToJson(data, true));
+    }
+
+    /// <summary>
+    /// Fills statistics from the account's save (nothing when it has none yet). A stat type that no longer exists is
+    /// skipped. False when the save can't be read (it's then copied aside as .unreadable, since the next save replaces it).
+    /// </summary>
+    public static bool ReadStatistics(string accountId, AccountStatistics statistics)
+    {
+        string path = StatisticsPath(accountId);
+        if (!File.Exists(path)) return true;
+
+        StatisticsData data = null;
+        try
+        {
+            data = JsonUtility.FromJson<StatisticsData>(File.ReadAllText(path));
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Couldn't read {path}: {exception.Message}");
+        }
+        if (data == null)
+        {
+            CopyAside(path);
+            return false;
+        }
+
+        FromData(data.Account, statistics.Account, path);
+        foreach (var character in data.Characters ?? new List<CharacterStatisticsData>())
+            if (character != null && !string.IsNullOrEmpty(character.Guid))
+                FromData(character.Stats, statistics.Character(character.Guid), path);
+        return true;
+    }
+
+    static void ToData(StatisticsSet set, List<StatData> stats)
+    {
+        foreach (var entry in set.Entries)
+            stats.Add(new StatData { Stat = entry.Type.ToString(), Subject = entry.Subject, Name = entry.Name, Value = entry.Value });
+    }
+
+    static void FromData(List<StatData> stats, StatisticsSet set, string path)
+    {
+        foreach (var stat in stats ?? new List<StatData>())
+        {
+            if (stat == null) continue;
+            if (!Enum.TryParse(stat.Stat, out StatType type))
+            {
+                Debug.LogWarning($"{path}: unknown statistic '{stat.Stat}', skipping it.");
+                continue;
+            }
+            set.Set(type, stat.Subject, stat.Name, stat.Value);
+        }
     }
 
     static void CopyAside(string path)

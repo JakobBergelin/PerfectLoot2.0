@@ -104,6 +104,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Statistics",
+                    "type": "Button",
+                    "id": "5b2f8e61-3d4c-4f7a-9a1e-7c0d2b6e4f19",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -445,6 +454,17 @@
                     "processors": "",
                     "groups": ";Keyboard&Mouse",
                     "action": "ItemDatabase",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "9e4a1c37-6b8d-4e25-b0f3-2d7c5a9e8b46",
+                    "path": "<Keyboard>/o",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": ";Keyboard&Mouse",
+                    "action": "Statistics",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

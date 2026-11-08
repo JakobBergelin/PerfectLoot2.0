@@ -85,6 +85,7 @@ public class AccountManager : MonoBehaviour
         _pendingDrops.Clear();
         _charactersLoaded = false;
         _characters.Clear();
+        _statistics = null;
         SelectedCharacter = null;
         AccountChanged?.Invoke();
         PendingDropsChanged?.Invoke();
@@ -229,6 +230,8 @@ public class AccountManager : MonoBehaviour
         var character = FindCharacter(guid);
         if (character == null) return false;
         _characters.Remove(character);
+        Statistics.RemoveCharacter(guid);
+        SaveStatistics();
         if (_lastPlayedGuid == guid) _lastPlayedGuid = null;
         if (SelectedCharacter == character) SelectedCharacter = null;
         SaveCharacters();
@@ -256,6 +259,30 @@ public class AccountManager : MonoBehaviour
     }
 
     void SaveCharacters() => AccountSaves.WriteCharacters(AccountId, _characters, _lastPlayedGuid);
+
+    // ---------- Statistics ----------
+
+    AccountStatistics _statistics;
+
+    /// <summary>The account's statistics and its characters' (StatisticsRecorder counts them). Loaded on first use.</summary>
+    public AccountStatistics Statistics
+    {
+        get
+        {
+            if (_statistics == null)
+            {
+                _statistics = new AccountStatistics();
+                AccountSaves.ReadStatistics(AccountId, _statistics);
+            }
+            return _statistics;
+        }
+    }
+
+    /// <summary>Writes the statistics, if they were loaded.</summary>
+    public void SaveStatistics()
+    {
+        if (_statistics != null) AccountSaves.WriteStatistics(AccountId, _statistics);
+    }
 
     [SerializeField, Tooltip("Read-only: one entry per item kind and rarity, empty until found")]
     ItemDatabase _items = new ItemDatabase();
