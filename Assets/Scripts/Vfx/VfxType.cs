@@ -46,4 +46,6 @@ public enum VfxType
     UndertowRipple = 42,
     SlingshotSpark = 43,
     BulwarkShimmer = 44,
+    LightningArc = 45,
+    IceBlock = 46,
 }

@@ -32,7 +32,8 @@ public struct VfxSplitSeen : IComponentData { }
 /// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second. Portals
 /// swirl, and players shimmer as they spawn. Ice shards (Shatter, Frozen Orb) are any non-homing Cold projectile. Crits,
 /// dodges and blocks pop where they happen (the combat text's events); players kick up dust as they walk; Mirror Image
-/// copies shimmer; Undertow's pulls ripple at the enemy's feet; Slingshot's splits spark; Bulwark flashes on hits from
+/// copies shimmer; Undertow's pulls ripple at the enemy's feet; Slingshot's splits spark. A Charged discharge sends a
+/// bolt hopping through the units around it, a little after the damage; Frozen units stand in a block of ice. Bulwark flashes on hits from
 /// the front. Loot on the ground has its own, GroundLootVfx.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
@@ -58,6 +59,21 @@ public partial class VfxSystem : SystemBase
     readonly Dictionary<Entity, int> _quarryMarks = new Dictionary<Entity, int>();
     readonly List<Entity> _stale = new List<Entity>();
 
+    // Charged: each discharge's bolts, waiting for their moment
+    const int ChainLength = 6;      // Units a discharge's bolt hops through
+    const int ArcCap = 12;          // New bolts per frame, so swarms stay cheap
+    const float HopDelay = 0.06f;   // Seconds between hops
+    struct PendingArc { public float At; public Vector3 From, To; }
+    readonly List<PendingArc> _arcs = new List<PendingArc>();
+    readonly List<Vector3> _chainTargets = new List<Vector3>();
+    int _arcsThisFrame;
+    EntityQuery _enemyBodies, _friendlyBodies;
+
+    // Frozen: the ice block around each frozen unit
+    struct IceBlock { public int Handle; public quaternion Yaw; public Vector3 Position; }
+    readonly Dictionary<Entity, IceBlock> _iceBlocks = new Dictionary<Entity, IceBlock>();
+    readonly HashSet<Entity> _frozenSeen = new HashSet<Entity>();
+
     protected override void OnCreate()
     {
         _newProjectiles = SystemAPI.QueryBuilder().WithAll<Projectile, LocalTransform>().WithNone<VfxBinding, PeriodicAttack>().Build();
@@ -75,6 +91,8 @@ public partial class VfxSystem : SystemBase
         _calculateDamage.OnDamageDodged += OnDodged;
         _calculateDamage.OnDamageBlocked += OnBlocked;
         _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
+        _enemyBodies = SystemAPI.QueryBuilder().WithAll<Enemy, LocalTransform>().WithNone<RigidDeath>().Build();
+        _friendlyBodies = SystemAPI.QueryBuilder().WithAny<Player, Companion>().WithAll<LocalTransform>().WithNone<RigidDeath>().Build();
         _statuses = new[]
         {
             (SystemAPI.QueryBuilder().WithAll<Burning, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusBurn),
@@ -188,6 +206,12 @@ public partial class VfxSystem : SystemBase
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     var attack = EntityManager.GetComponentData<Attack>(e);
                     if (attack.Type == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                    // A discharge (LightningSystem) hits the charged unit's allies: enemies when it has an enemy target
+                    if (attack.Type == DamageType.Lightning && attack.Origin.Label == DamageLabel.Charged)
+                    {
+                        bool enemies = EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Enemy;
+                        QueueChain(t.Position, attack.Radius, enemies);
+                    }
                     else if (attack.Type == DamageType.Cold)
                     {
                         // Sized to the attack's area (Cold Snap's radius); drawn at radius 1
@@ -230,7 +254,10 @@ public partial class VfxSystem : SystemBase
             UpdateQuarryMarks(vfx);
             UpdateStatusEffects(vfx);
             UpdateCombatEffects(vfx);
+            UpdateArcs(vfx);
+            UpdateIceBlocks(vfx);
         }
+        _arcsThisFrame = 0;
         _crits.Clear();
         _dodges.Clear();
         _blocks.Clear();
@@ -379,6 +406,78 @@ public partial class VfxSystem : SystemBase
                 if (!EntityManager.Exists(entity)) { vfx.Release(handle); _stale.Add(entity); }
             foreach (var entity in _stale) map.Remove(entity);
         }
+    }
+
+    // A discharge's bolt: from the charged unit to the nearest unit in reach, from there to the nearest one left, and so
+    // on. Each hop a little after the last, so it reads as lightning jumping through the pack (the damage is already done).
+    void QueueChain(float3 origin, float radius, bool enemies)
+    {
+        if (_arcsThisFrame >= ArcCap || radius <= 0f) return;
+        _chainTargets.Clear();
+        using (var transforms = (enemies ? _enemyBodies : _friendlyBodies).ToComponentDataArray<LocalTransform>(Allocator.Temp))
+            foreach (var t in transforms)
+            {
+                float distance = math.distance(origin.xz, t.Position.xz);
+                // The charged unit itself stands where the discharge is
+                if (distance > 0.3f && distance <= radius) _chainTargets.Add(t.Position);
+            }
+
+        Vector3 from = origin;
+        float at = UnityEngine.Time.time;
+        for (int hop = 0; hop < ChainLength && _chainTargets.Count > 0 && _arcsThisFrame < ArcCap; hop++)
+        {
+            int nearest = 0;
+            for (int i = 1; i < _chainTargets.Count; i++)
+                if ((_chainTargets[i] - from).sqrMagnitude < (_chainTargets[nearest] - from).sqrMagnitude) nearest = i;
+            var to = _chainTargets[nearest];
+            _chainTargets.RemoveAt(nearest);
+            at += HopDelay;
+            _arcs.Add(new PendingArc { At = at, From = from, To = to });
+            _arcsThisFrame++;
+            from = to;
+        }
+    }
+
+    void UpdateArcs(VfxManager vfx)
+    {
+        for (int i = _arcs.Count - 1; i >= 0; i--)
+        {
+            var arc = _arcs[i];
+            if (UnityEngine.Time.time < arc.At) continue;
+            vfx.Arc(arc.From, arc.To);
+            vfx.Burst(VfxType.LightningHit, arc.To, Quaternion.identity);
+            _arcs.RemoveAt(i);
+        }
+    }
+
+    // A block of ice around every frozen unit, sized to it and turned a random way; it cracks apart when the unit thaws or dies
+    void UpdateIceBlocks(VfxManager vfx)
+    {
+        _frozenSeen.Clear();
+        foreach (var (transform, entity) in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Frozen>().WithNone<RigidDeath>().WithEntityAccess())
+        {
+            var t = transform.ValueRO;
+            if (!_iceBlocks.TryGetValue(entity, out var block))
+            {
+                block.Yaw = quaternion.RotateY(UnityEngine.Random.Range(0f, 2f * math.PI));
+                block.Handle = vfx.Spawn(VfxType.IceBlock, t.Position, block.Yaw);
+                vfx.ScaleUniform(block.Handle, t.Scale);
+            }
+            block.Position = t.Position;
+            vfx.Move(block.Handle, t.Position, block.Yaw);
+            _iceBlocks[entity] = block;
+            _frozenSeen.Add(entity);
+        }
+
+        _stale.Clear();
+        foreach (var (entity, block) in _iceBlocks)
+        {
+            if (_frozenSeen.Contains(entity)) continue;
+            vfx.Release(block.Handle);
+            vfx.Burst(VfxType.IceShardImpact, block.Position, Quaternion.identity);
+            _stale.Add(entity);
+        }
+        foreach (var entity in _stale) _iceBlocks.Remove(entity);
     }
 
     static void Track(VfxManager vfx, Dictionary<Entity, int> map, Entity entity, bool on, VfxType type, VfxType startBurst, LocalTransform t)

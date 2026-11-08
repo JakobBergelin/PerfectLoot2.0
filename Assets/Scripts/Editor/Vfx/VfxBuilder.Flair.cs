@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -460,6 +461,92 @@ public static partial class VfxBuilder
             Shrink(ps);
         });
         yield return (VfxType.BulwarkShimmer, Save(bulwark));
+    }
+
+    // Charged's bolts between the units its discharge hits, and the block of ice around Frozen units
+    static IEnumerable<(VfxType, GameObject)> ChargeAndFreezeEffects()
+    {
+        // Two lines with the same jagged points (LightningArcVfx): a wide blue glow and a thin white core
+        var bolt = ParticleMaterial("VFX_Bolt", true, null, CullMode.Off);
+        var arc = Root_("VFX_LightningArc", 0.25f, out _);
+        arc.AddComponent<LightningArcVfx>();
+        BoltLine(arc, "Glow", bolt, 0.45f, Hex(Sapphire, 0.5f), Hex("#9CC4FF", 0.35f));
+        BoltLine(arc, "Core", bolt, 0.11f, Hex("#FFFFFF"), Hex("#DDEEFF"));
+        yield return (VfxType.LightningArc, Save(arc));
+
+        // Sized for a unit of scale 1 (about 2.1 m tall, its root at the middle); VfxSystem scales it to the unit and turns it.
+        // See-through lit ice, so the unit shows inside and the faces catch the light; shards break up the box's outline.
+        var ice = IceMaterial("VFX_Ice");
+        var cube = Resources.GetBuiltinResource<Mesh>("Cube.fbx");
+        var gem = Gem("VFX_Gem");
+        var block = Root_("VFX_IceBlock", 0.05f, out var blockInstance);
+        var parts = new List<Renderer>
+        {
+            MeshPart(block, "Block", cube, ice, new Vector3(0f, 0.05f, 0f), new Vector3(1.35f, 2.35f, 1.3f)),
+            MeshPart(block, "Shard Top", gem, ice, new Vector3(0.3f, 1.2f, 0.1f), new Vector3(0.8f, 1.1f, 0.8f)),
+            MeshPart(block, "Shard Side", gem, ice, new Vector3(-0.7f, 0.5f, 0.2f), new Vector3(0.6f, 0.9f, 0.6f)),
+            MeshPart(block, "Shard Low", gem, ice, new Vector3(0.55f, -0.6f, -0.6f), new Vector3(0.55f, 0.8f, 0.55f)),
+        };
+        parts[0].transform.localRotation = Quaternion.Euler(0f, 0f, 4f);
+        parts[1].transform.localRotation = Quaternion.Euler(0f, 0f, 160f);     // Gems point down: these point out
+        parts[2].transform.localRotation = Quaternion.Euler(10f, 0f, -115f);
+        parts[3].transform.localRotation = Quaternion.Euler(-30f, 40f, 125f);
+        blockInstance.HideOnRelease = parts.ToArray();
+        Ps(block, "Sparkle", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.9f), 0f, new ParticleSystem.MinMaxCurve(0.08f, 0.16f), Color.white, rate: 4f);
+            Shape(ps, ParticleSystemShapeType.Box, 1f);
+            var shape = ps.shape; shape.scale = new Vector3(1.3f, 2.2f, 1.3f);
+            Fade(ps, Hex("#FFFFFF", 0f), Hex("#FFFFFF"), Hex(FrostPale, 0f));
+        });
+        yield return (VfxType.IceBlock, Save(block));
+    }
+
+    static void BoltLine(GameObject parent, string name, Material material, float width, Color start, Color end)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        var line = go.AddComponent<LineRenderer>();
+        line.sharedMaterial = material;
+        line.useWorldSpace = true;
+        line.alignment = LineAlignment.View;
+        line.widthMultiplier = width;
+        line.numCapVertices = 2;
+        line.numCornerVertices = 1;
+        line.shadowCastingMode = ShadowCastingMode.Off;
+        line.receiveShadows = false;
+        line.startColor = start;
+        line.endColor = end;
+        line.positionCount = 2;
+    }
+
+    /// <summary>URP Lit, transparent: pale blue, see-through and glossy, glowing a little so it reads in the dark.</summary>
+    static Material IceMaterial(string name)
+    {
+        string path = $"{Root}/Materials/{name}.mat";
+        var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+        if (material == null)
+        {
+            material = new Material(Shader.Find("Universal Render Pipeline/Lit"));
+            AssetDatabase.CreateAsset(material, path);
+        }
+        material.SetColor("_BaseColor", Hex("#A8E8FF", 0.42f));
+        material.SetFloat("_Smoothness", 0.92f);
+        material.SetFloat("_Metallic", 0f);
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", 0f);
+        material.SetFloat("_SrcBlend", (float)BlendMode.SrcAlpha);
+        material.SetFloat("_DstBlend", (float)BlendMode.OneMinusSrcAlpha);
+        material.SetFloat("_ZWrite", 0f);
+        material.SetFloat("_Cull", (float)CullMode.Back);
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        material.EnableKeyword("_EMISSION");
+        material.SetColor("_EmissionColor", Hex("#2A6A86"));
+        material.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
+        material.renderQueue = (int)RenderQueue.Transparent;
+        EditorUtility.SetDirty(material);
+        return material;
     }
 
     /// <summary>A long diamond pointing down: 0.95 tall, 0.64 wide.</summary>

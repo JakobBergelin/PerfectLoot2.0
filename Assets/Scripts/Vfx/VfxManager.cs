@@ -90,6 +90,20 @@ public class VfxManager : MonoBehaviour
         if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = new Vector3(scale, 1f, scale);
     }
 
+    /// <summary>Sizes an effect evenly in all directions, such as an ice block to the unit inside it.</summary>
+    public void ScaleUniform(int handle, float scale)
+    {
+        if (_active.TryGetValue(handle, out var active)) active.Instance.transform.localScale = Vector3.one * scale;
+    }
+
+    /// <summary>A lightning bolt from one point to the other (VfxType.LightningArc), gone after its Linger.</summary>
+    public void Arc(Vector3 from, Vector3 to)
+    {
+        int handle = Burst(VfxType.LightningArc, from, Quaternion.identity);
+        if (_active.TryGetValue(handle, out var active) && active.Instance.TryGetComponent<LightningArcVfx>(out var arc))
+            arc.SetEnds(from, to);
+    }
+
     /// <summary>
     /// Colors an effect's particles, such as a loot beam in its item's rarity color. Call it right after Spawn or Burst,
     /// before the first particles come out. Stays on the pooled instance, so only use it for types that are always tinted.
