@@ -31,7 +31,7 @@ namespace ActiveSkills
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
-            description.Damage.Add(WeaponDamageLine(DamageType.Poison, "Damage per second", DamagePerSecond, DamagePerSecond, WeaponDamagePerSecond, stats));
+            description.Damage.Add(WeaponDamageLine(DamageType.Lightning, "Damage per second", DamagePerSecond, DamagePerSecond, WeaponDamagePerSecond, stats));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Lasts", Lifetime, null, " s"));
             description.Effects.Add(AreaLine("Radius", Radius, stats));
             description.Effects.Add(AttackTimeLine("Time between tornadoes", AttackSpeed, stats));

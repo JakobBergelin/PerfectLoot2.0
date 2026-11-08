@@ -32,7 +32,7 @@ Transform:
   m_Children:
   - {fileID: 8996696004748604526}
   - {fileID: 6888392598587216963}
-  - {fileID: 4672285627347998703}
+  - {fileID: 3054250121456979318}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!114 &4951251328583720546
@@ -656,9 +656,9 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 0.43137255, g: 0.47843137, b: 0.36078432, a: 0.5}
-        key1: {r: 0.2901961, g: 0.3529412, b: 0.24313726, a: 0.4}
-        key2: {r: 0.22745098, g: 0.26666668, b: 0.21960784, a: 0}
+        key0: {r: 0.3529412, g: 0.4, b: 0.53333336, a: 0.5}
+        key1: {r: 0.24313726, g: 0.28235295, b: 0.4, a: 0.4}
+        key2: {r: 0.17254902, g: 0.2, b: 0.28235295, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
         key5: {r: 0, g: 0, b: 0, a: 0}
@@ -2452,7 +2452,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::VfxSpin
   DegreesPerSecond: 540
---- !u!1 &6344666751394714986
+--- !u!1 &8797146078276217949
 GameObject:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -2460,23 +2460,23 @@ GameObject:
   m_PrefabAsset: {fileID: 0}
   serializedVersion: 6
   m_Component:
-  - component: {fileID: 4672285627347998703}
-  - component: {fileID: 5605103380615178565}
-  - component: {fileID: 2314109682010040189}
+  - component: {fileID: 3054250121456979318}
+  - component: {fileID: 9154874217894118176}
+  - component: {fileID: 408698347077212549}
   m_Layer: 0
-  m_Name: Droplets
+  m_Name: Sparks
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!4 &4672285627347998703
+--- !u!4 &3054250121456979318
 Transform:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6344666751394714986}
+  m_GameObject: {fileID: 8797146078276217949}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: 0, z: 0}
@@ -2485,13 +2485,13 @@ Transform:
   m_Children: []
   m_Father: {fileID: 688157799751211066}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!198 &5605103380615178565
+--- !u!198 &9154874217894118176
 ParticleSystem:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6344666751394714986}
+  m_GameObject: {fileID: 8797146078276217949}
   serializedVersion: 8
   lengthInSec: 1
   simulationSpeed: 1
@@ -3058,9 +3058,9 @@ ParticleSystem:
       maxColor: {r: 1, g: 1, b: 1, a: 1}
       maxGradient:
         serializedVersion: 2
-        key0: {r: 0.8745098, g: 1, b: 0.6901961, a: 1}
-        key1: {r: 0.6117647, g: 1, b: 0.2901961, a: 1}
-        key2: {r: 0.36862746, g: 0.4862745, b: 0.27450982, a: 0}
+        key0: {r: 1, g: 1, b: 1, a: 1}
+        key1: {r: 0.6117647, g: 0.76862746, b: 1, a: 1}
+        key2: {r: 0.2901961, g: 0.4862745, b: 1, a: 0}
         key3: {r: 0, g: 0, b: 0, a: 0}
         key4: {r: 0, g: 0, b: 0, a: 0}
         key5: {r: 0, g: 0, b: 0, a: 0}
@@ -4670,14 +4670,14 @@ ParticleSystem:
         m_PostInfinity: 2
         m_RotationOrder: 4
     vectorLabel1_3: W
---- !u!199 &2314109682010040189
+--- !u!199 &408698347077212549
 ParticleSystemRenderer:
   serializedVersion: 7
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 6344666751394714986}
+  m_GameObject: {fileID: 8797146078276217949}
   m_Enabled: 1
   m_CastShadows: 0
   m_ReceiveShadows: 0
@@ -4719,13 +4719,13 @@ ParticleSystemRenderer:
   m_SortingLayer: 0
   m_SortingOrder: 0
   m_MaskInteraction: 0
-  m_RenderMode: 0
+  m_RenderMode: 1
   m_MeshDistribution: 0
   m_SortMode: 0
   m_MinParticleSize: 0
   m_MaxParticleSize: 0.5
   m_CameraVelocityScale: 0
-  m_VelocityScale: 0
+  m_VelocityScale: 0.05
   m_LengthScale: 2
   m_SortingFudge: 0
   m_NormalDirection: 1

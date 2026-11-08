@@ -44,14 +44,14 @@ public partial struct CaptainsShieldSystem : ISystem
             float cost = SkillUtil.Cost(shield.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.CaptainsShield, out var request))
             {
-                if (shieldOut.Contains(entity) || !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, stats.ValueRO)) continue;
+                if (shieldOut.Contains(entity) || (!request.Free && !SkillUtil.CanAfford(SystemAPI.GetComponent<Resource>(entity).CurrentValue, cost, stats.ValueRO))) continue;
                 var position = localTransform.ValueRO.Position;
                 var aim = SystemAPI.HasComponent<InputsData>(entity)
                     ? SystemAPI.GetComponent<InputsData>(entity).MousePosition
                     : position + request.Direction * shield.ValueRO.NoTargetDistance;
                 Throw(commandBuffer, entity, shield.ValueRO, stats.ValueRO.Value, position, request.Direction, aim, physics, targets, targetRange);
                 shieldOut.Add(entity);
-                resourceChanges.Add(new ResourceChanger{Value = -cost});
+                if (!request.Free) resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.CaptainsShield, request.AutoCast);
             }
         }

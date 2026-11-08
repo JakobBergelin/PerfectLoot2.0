@@ -33,10 +33,13 @@ public partial class FireballSystem : SystemBase
             float cost = SkillUtil.Cost(fireball.ValueRO.ResourceCost, stats.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Fireball, out var request))
             {
-                if (!SkillUtil.CanAfford(available, cost, stats)) continue;
-                available = Mathf.Max(0f, available - cost);
+                if (!request.Free)
+                {
+                    if (!SkillUtil.CanAfford(available, cost, stats)) continue;
+                    available = Mathf.Max(0f, available - cost);
+                    resourceChanges.Add(new ResourceChanger{Value = -cost});
+                }
                 Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
-                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
             }
         }

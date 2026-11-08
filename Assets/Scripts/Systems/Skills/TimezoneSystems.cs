@@ -23,17 +23,24 @@ public partial struct TimezoneSystem : ISystem
         foreach (var (timezone, stats) in SystemAPI.Query<RefRW<Timezone>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
             timezone.ValueRW.Elapsed = math.min(timezone.ValueRO.Elapsed + deltaTime, SkillUtil.Cooldown(timezone.ValueRO.Cooldown, stats.ValueRO.Value));
 
+        // Casts requested by effects (e.g. Cascade): an extra field, the cooldown untouched
+        foreach (var (timezone, transform, skillBuffer, requests, stats) in
+                 SystemAPI.Query<RefRO<Timezone>, RefRO<LocalTransform>, DynamicBuffer<Skill>, DynamicBuffer<SkillCastRequest>, RefRO<CalculatedStats>>()
+                          .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
+        {
+            while (SkillUtil.TryTakeRequest(requests, SkillType.Timezone, out var request))
+            {
+                Place(commandBuffer, timezone.ValueRO, stats.ValueRO.Value, transform.ValueRO.Position);
+                SkillUtil.MarkUsed(skillBuffer, SkillType.Timezone, request.AutoCast);
+            }
+        }
+
         foreach (var (timezone, transform, skillBuffer, stats) in SystemAPI.Query<RefRW<Timezone>, RefRO<LocalTransform>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>())
         {
             ref var t = ref timezone.ValueRW;
-            var statBlock = stats.ValueRO.Value;
-            if (t.Elapsed < SkillUtil.Cooldown(t.Cooldown, statBlock)) continue;
+            if (t.Elapsed < SkillUtil.Cooldown(t.Cooldown, stats.ValueRO.Value)) continue;
             t.Elapsed = 0f;
-
-            var newEntity = commandBuffer.CreateEntity();
-            commandBuffer.AddComponent(newEntity, new LocalTransform{Position = transform.ValueRO.Position, Rotation = quaternion.identity, Scale = 1f});
-            commandBuffer.AddComponent(newEntity, new TimezoneField{Radius = t.Radius * statBlock.AreaMultiplier, TimeRemaining = t.Duration, ChillPerTick = t.ChillPerTick, ProjectileSlow = t.ProjectileSlow});
-
+            Place(commandBuffer, t, stats.ValueRO.Value, transform.ValueRO.Position);
             SkillUtil.MarkUsed(skillBuffer, SkillType.Timezone);
         }
 
@@ -50,6 +57,14 @@ public partial struct TimezoneSystem : ISystem
                 skill.State.CooldownRemaining = math.max(0f, cooldown - timezone.ValueRO.Elapsed);
             }
         }
+    }
+
+    // A field where the caster stands
+    static void Place(EntityCommandBuffer commandBuffer, in Timezone t, StatBlock statBlock, float3 position)
+    {
+        var newEntity = commandBuffer.CreateEntity();
+        commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
+        commandBuffer.AddComponent(newEntity, new TimezoneField{Radius = t.Radius * statBlock.AreaMultiplier, TimeRemaining = t.Duration, ChillPerTick = t.ChillPerTick, ProjectileSlow = t.ProjectileSlow});
     }
 }
 

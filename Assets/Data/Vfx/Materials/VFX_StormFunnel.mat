@@ -7,7 +7,7 @@ Material:
   m_CorrespondingSourceObject: {fileID: 0}
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
-  m_Name: VFX_PoisonFunnel
+  m_Name: VFX_StormFunnel
   m_Shader: {fileID: 4800000, guid: ecda1aa34dd93674b9aea0b5a92db63d, type: 3}
   m_Parent: {fileID: 0}
   m_ModifiedSerializedProperties: 0
@@ -36,7 +36,7 @@ Material:
     m_Floats:
     - _AmbientStrength: 0.42
     - _DeepThreshold: 0.38
-    - _EmissionPulse: 0.3
+    - _EmissionPulse: 0.5
     - _EmissionPulseSpeed: 2.5
     - _OutlineJitter: 0.55
     - _OutlineWidth: 2.5
@@ -50,8 +50,8 @@ Material:
     - _ShadowReceive: 1
     - _UseSmoothNormals: 0
     m_Colors:
-    - _BaseColor: {r: 0.6117647, g: 1, b: 0.2901961, a: 1}
-    - _EmissionColor: {r: 0.49411765, g: 0.9, b: 0.20470588, a: 0.9}
+    - _BaseColor: {r: 0.5568628, g: 0.73333335, b: 1, a: 1}
+    - _EmissionColor: {r: 0.40627453, g: 0.6807843, b: 1.4, a: 1.4}
     - _InkColor: {r: 0.07058824, g: 0.047058824, b: 0.08627451, a: 1}
     - _OutlineColor: {r: 0.043137256, g: 0.03137255, b: 0.050980393, a: 1}
     - _RimColor: {r: 0.9490196, g: 0.9019608, b: 0.85490197, a: 1}

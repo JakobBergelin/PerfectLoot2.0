@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TornadoSkill
   Name: Tornado
   Icon: {fileID: 21300000, guid: 714cc43adc7e47e69f44a144c0a69686, type: 3}
-  Description: Send out a toxic tornado that wanders where it likes, hurting everything it passes over.
-  Tags: 66113
+  Description: Send out a crackling storm tornado that wanders where it likes, shocking everything it passes over.
+  Tags: 197696
   CritShake: 0.3
   AttackSpeed: 0.9
   resourceCost: 15

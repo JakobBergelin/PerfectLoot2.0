@@ -143,7 +143,7 @@ public static partial class VfxBuilder
     static GameObject TornadoFunnel()
     {
         var root = Root_("VFX_Tornado", 1.2f, out var instance);
-        var funnel = MeshPart(root, "Funnel", Funnel("VFX_Funnel"), ComicGlow("VFX_PoisonFunnel", "#9CFF4A", "#8CFF3A", 0.9f, 0.3f), new Vector3(0f, -0.9f, 0f), Vector3.one);
+        var funnel = MeshPart(root, "Funnel", Funnel("VFX_Funnel"), ComicGlow("VFX_StormFunnel", "#8EBBFF", Sapphire, 1.4f, 0.5f), new Vector3(0f, -0.9f, 0f), Vector3.one);
         funnel.gameObject.AddComponent<VfxSpin>().DegreesPerSecond = 540f;
         instance.HideOnRelease = new Renderer[] { funnel };
         Ps(root, "Dust", _alpha, ps =>
@@ -153,15 +153,16 @@ public static partial class VfxBuilder
             var v = ps.velocityOverLifetime; v.enabled = true; v.space = ParticleSystemSimulationSpace.Local;
             v.orbitalY = 4f; v.radial = -0.3f; v.y = 1.5f;
             v.x = v.z = 0f; v.orbitalX = v.orbitalZ = 0f;
-            Fade(ps, Hex("#6E7A5C", 0.5f), Hex("#4A5A3E", 0.4f), Hex("#3A4438", 0f));
+            Fade(ps, Hex("#5A6688", 0.5f), Hex("#3E4866", 0.4f), Hex("#2C3348", 0f));   // Storm cloud
             Grow(ps, 1.5f);
         });
-        Ps(root, "Droplets", _additive, ps =>
+        Ps(root, "Sparks", _additive, ps =>
         {
             Main(ps, new ParticleSystem.MinMaxCurve(0.4f, 0.7f), new ParticleSystem.MinMaxCurve(0.5f, 1.5f), new ParticleSystem.MinMaxCurve(0.08f, 0.15f), Color.white, rate: 18f);
             Shape(ps, ParticleSystemShapeType.Circle, 0.6f, new Vector3(-90f, 0f, 0f), new Vector3(0f, -0.6f, 0f));
             var m = ps.main; m.gravityModifier = -0.4f;
-            Fade(ps, Hex("#DFFFB0"), Hex("#9CFF4A"), Hex("#5E7C46", 0f));
+            Fade(ps, Hex("#FFFFFF"), Hex("#9CC4FF"), Hex(Sapphire, 0f));
+            Stretch(ps, 2f);
         });
         return Save(root);
     }
@@ -173,7 +174,7 @@ public static partial class VfxBuilder
         {
             Main(ps, new ParticleSystem.MinMaxCurve(0.6f, 1f), new ParticleSystem.MinMaxCurve(0.5f, 2f), new ParticleSystem.MinMaxCurve(0.5f, 1f), Color.white, burst: 14);
             Shape(ps, ParticleSystemShapeType.Sphere, 0.6f, offset: new Vector3(0f, -0.4f, 0f));
-            Fade(ps, Hex("#6E7A5C", 0.5f), Hex("#4A5A3E", 0.3f), Hex("#3A4438", 0f));
+            Fade(ps, Hex("#5A6688", 0.5f), Hex("#3E4866", 0.3f), Hex("#2C3348", 0f));
             Grow(ps, 1.6f);
         });
         return Save(root);

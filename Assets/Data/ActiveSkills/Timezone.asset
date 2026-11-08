@@ -15,7 +15,7 @@ MonoBehaviour:
   Name: Timezone
   Icon: {fileID: 21300000, guid: ad662e71c3e142969514f48065c9ec9e, type: 3}
   Description: A field of slowed time where you stand. Enemies in it are chilled until they freeze, and every projectile in it crawls.
-  Tags: 4384
+  Tags: 135520
   cooldown: 20
   Duration: 10
   Radius: 8

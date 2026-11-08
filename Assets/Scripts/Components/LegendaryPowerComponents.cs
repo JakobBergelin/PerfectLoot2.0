@@ -44,6 +44,15 @@ public struct EchoingBlade : IComponentData
 }
 
 /// <summary>
+/// Cascade (Cascade Grips): a frame with a critical hit from a Generator skill has Chance to also cast a random equipped
+/// Area skill, for free (CascadeSystem).
+/// </summary>
+public struct Cascade : IComponentData
+{
+    public float Chance;
+}
+
+/// <summary>
 /// Elemental conversion (Pyromancy, Frostbound, Stormborn, Venomous): every skill hit and area of the wearer deals Type
 /// damage instead, status effect included (ElementalConversionSystem sets it on the stats, InitializeFromSourceSystem converts).
 /// </summary>

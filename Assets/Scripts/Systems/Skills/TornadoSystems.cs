@@ -37,10 +37,13 @@ public partial class TornadoSystem : SystemBase
             float cost = SkillUtil.Cost(tornado.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.Tornado, out var request))
             {
-                if (!SkillUtil.CanAfford(available, cost, stats.ValueRO)) continue;
-                available = Mathf.Max(0f, available - cost);
+                if (!request.Free)
+                {
+                    if (!SkillUtil.CanAfford(available, cost, stats.ValueRO)) continue;
+                    available = Mathf.Max(0f, available - cost);
+                    resourceChanges.Add(new ResourceChanger{Value = -cost});
+                }
                 Spawn(commandBuffer, entity, tornado.ValueRO, stats.ValueRO.Value, localTransform.ValueRO.Position, request.Direction, ref _random);
-                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.Tornado, request.AutoCast);
             }
         }
@@ -86,7 +89,7 @@ public partial class TornadoSystem : SystemBase
         var weaponDamage = stats.WeaponDamage + random.NextFloat(-stats.WeaponDamageRange, stats.WeaponDamageRange);
         var damage = weaponDamage * tornado.WeaponDamagePerSecond + tornado.DamagePerSecond;
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = startPos, Rotation = quaternion.identity, Scale = 1f});
-        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.Tornado, DamagePerSecond = damage, Type = DamageType.Poison, Radius = tornado.Radius, TimeRemaining = tornado.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.TickRate, HitForce = tornado.HitForce});
+        commandBuffer.AddComponent(newEntity, new PeriodicAttack{Origin = DamageLabel.Tornado, DamagePerSecond = damage, Type = DamageType.Lightning, Radius = tornado.Radius, TimeRemaining = tornado.Lifetime, Skill= SkillType.Tornado, TickRate = tornado.TickRate, HitForce = tornado.HitForce});
         commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
         commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
         // A projectile (so projectile bonuses apply) that wanders along the ground and passes through walls

@@ -32,10 +32,13 @@ public partial class FrozenOrbSystem : SystemBase
             float cost = SkillUtil.Cost(orb.ValueRO.ResourceCost, stats.ValueRO.Value);
             while (SkillUtil.TryTakeRequest(requests, SkillType.FrozenOrb, out var request))
             {
-                if (!SkillUtil.CanAfford(available, cost, stats.ValueRO)) continue;
-                available = Mathf.Max(0f, available - cost);
+                if (!request.Free)
+                {
+                    if (!SkillUtil.CanAfford(available, cost, stats.ValueRO)) continue;
+                    available = Mathf.Max(0f, available - cost);
+                    resourceChanges.Add(new ResourceChanger{Value = -cost});
+                }
                 Spawn(commandBuffer, entity, orb.ValueRO, localTransform.ValueRO.Position, request.Direction);
-                resourceChanges.Add(new ResourceChanger{Value = -cost});
                 SkillUtil.MarkUsed(skills, SkillType.FrozenOrb, request.AutoCast);
             }
         }

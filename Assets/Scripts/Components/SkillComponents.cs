@@ -96,18 +96,21 @@ public enum SkillTags
     Companion = 1 << 14,
     Barrier = 1 << 15,
     Periodic = 1 << 16,     // Damages over time through a PeriodicAttack
+    Area = 1 << 17,         // Hits everything in an area (a field, a burst or a moving zone) rather than one target
 }
 
 /// <summary>
 /// A request on the caster to cast a skill now, made by an effect (e.g. Echoing Blade). The skill's own system handles
-/// it at the start of the next frame's skills: no attack recovery, the normal resource cost (skipped when it can't be paid),
-/// counted as a use with AutoCast. Requests nobody handled are cleared (SkillCastRequestCleanupSystem).
+/// it at the start of the next frame's skills: no attack recovery, the normal resource cost (skipped when it can't be paid)
+/// unless Free, counted as a use with AutoCast. Cooldown skills cast without waiting for or restarting their cooldown.
+/// Requests nobody handled are cleared (SkillCastRequestCleanupSystem).
 /// </summary>
 public struct SkillCastRequest : IBufferElementData
 {
     public SkillType Type;
     public float3 Direction;
     public bool AutoCast;
+    public bool Free;       // Costs no resource (e.g. Cascade)
 }
 
 public class SkillUtil

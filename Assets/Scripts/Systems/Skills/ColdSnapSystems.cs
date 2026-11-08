@@ -45,40 +45,27 @@ public partial struct ColdSnapSystem : ISystem
         foreach (var (coldSnap, stats) in SystemAPI.Query<RefRW<ColdSnap>, RefRO<CalculatedStats>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState))
             coldSnap.ValueRW.Elapsed = math.min(coldSnap.ValueRO.Elapsed + deltaTime, SkillUtil.Cooldown(coldSnap.ValueRO.Cooldown, stats.ValueRO.Value));
 
+        var enemies = SystemAPI.GetComponentLookup<Enemy>(true);
+
+        // Casts requested by effects (e.g. Cascade): an extra burst, the cooldown untouched
+        foreach (var (coldSnap, transform, skillBuffer, requests, stats, entity) in
+                 SystemAPI.Query<RefRO<ColdSnap>, RefRO<LocalTransform>, DynamicBuffer<Skill>, DynamicBuffer<SkillCastRequest>, RefRO<CalculatedStats>>()
+                          .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
+        {
+            while (SkillUtil.TryTakeRequest(requests, SkillType.ColdSnap, out var request))
+            {
+                Burst(commandBuffer, physicsWorld, ref chilledLookup, enemies, hits, filter, settings, coldSnap.ValueRO, stats.ValueRO, transform.ValueRO.Position, entity);
+                SkillUtil.MarkUsed(skillBuffer, SkillType.ColdSnap, request.AutoCast);
+            }
+        }
+
         foreach (var (coldSnap, transform, skillBuffer, stats, entity) in
                  SystemAPI.Query<RefRW<ColdSnap>, RefRO<LocalTransform>, DynamicBuffer<Skill>, RefRO<CalculatedStats>>().WithEntityAccess())
         {
             ref var c = ref coldSnap.ValueRW;
-            var statBlock = stats.ValueRO.Value;
-            if (c.Elapsed < SkillUtil.Cooldown(c.Cooldown, statBlock)) continue;
+            if (c.Elapsed < SkillUtil.Cooldown(c.Cooldown, stats.ValueRO.Value)) continue;
             c.Elapsed = 0f;
-
-            var position = transform.ValueRO.Position;
-            float damage = SkillUtil.CooldownDamage(c.Damage, c.Cooldown, stats.ValueRO);
-            var newEntity = commandBuffer.CreateEntity();
-            commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
-            commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.ColdSnap, Damage = damage, Type = DamageType.Cold, Radius = c.Radius, DamageHierarchy = DamageHierarchy.Main});
-            commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
-            commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
-            commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
-            commandBuffer.AddComponent(newEntity, new DestroyWithChildren{});
-
-            // What the hit chills by itself, as DamagingSystem works it out; only cold hits chill
-            var type = statBlock.ConvertedType(DamageType.Cold);
-            int hitChill = type == DamageType.Cold ? math.max(1, (int)math.round(damage * statBlock.DamageMultiplier(type) * settings.ChilledDamageMultiplier)) : 0;
-            int chill = c.ChillStacks - hitChill;
-
-            if (chill > 0)
-            {
-                hits.Clear();
-                physicsWorld.OverlapSphere(position, c.Radius * statBlock.AreaMultiplier, ref hits, filter);
-                foreach (var hit in hits)
-                {
-                    if (hit.Entity == entity || !SystemAPI.HasComponent<Enemy>(hit.Entity)) continue;
-                    EffectApply.AddChill(chilledLookup, hit.Entity, chill, settings.ChillMaxStacks, settings.ChillDuration);
-                }
-            }
-
+            Burst(commandBuffer, physicsWorld, ref chilledLookup, enemies, hits, filter, settings, c, stats.ValueRO, transform.ValueRO.Position, entity);
             SkillUtil.MarkUsed(skillBuffer, SkillType.ColdSnap);
         }
 
@@ -94,6 +81,36 @@ public partial struct ColdSnapSystem : ISystem
                 skill.State.CooldownDuration = cooldown;
                 skill.State.CooldownRemaining = math.max(0f, cooldown - coldSnap.ValueRO.Elapsed);
             }
+        }
+    }
+
+    // One burst around the caster: the cold attack, and the chill topped up to about ChillStacks
+    static void Burst(EntityCommandBuffer commandBuffer, PhysicsWorldSingleton physicsWorld, ref ComponentLookup<Chilled> chilledLookup,
+                      ComponentLookup<Enemy> enemies, NativeList<DistanceHit> hits, CollisionFilter filter, StatusEffectConfig settings,
+                      in ColdSnap c, in CalculatedStats stats, float3 position, Entity entity)
+    {
+        var statBlock = stats.Value;
+        float damage = SkillUtil.CooldownDamage(c.Damage, c.Cooldown, stats);
+        var newEntity = commandBuffer.CreateEntity();
+        commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = quaternion.identity, Scale = 1f});
+        commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.ColdSnap, Damage = damage, Type = DamageType.Cold, Radius = c.Radius, DamageHierarchy = DamageHierarchy.Main});
+        commandBuffer.AddComponent(newEntity, new Source{Entity = entity});
+        commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
+        commandBuffer.AddComponent(newEntity, new InitializeFromSource{});
+        commandBuffer.AddComponent(newEntity, new DestroyWithChildren{});
+
+        // What the hit chills by itself, as DamagingSystem works it out; only cold hits chill
+        var type = statBlock.ConvertedType(DamageType.Cold);
+        int hitChill = type == DamageType.Cold ? math.max(1, (int)math.round(damage * statBlock.DamageMultiplier(type) * settings.ChilledDamageMultiplier)) : 0;
+        int chill = c.ChillStacks - hitChill;
+        if (chill <= 0) return;
+
+        hits.Clear();
+        physicsWorld.OverlapSphere(position, c.Radius * statBlock.AreaMultiplier, ref hits, filter);
+        foreach (var hit in hits)
+        {
+            if (hit.Entity == entity || !enemies.HasComponent(hit.Entity)) continue;
+            EffectApply.AddChill(chilledLookup, hit.Entity, chill, settings.ChillMaxStacks, settings.ChillDuration);
         }
     }
 }
