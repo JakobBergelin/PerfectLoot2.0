@@ -17,13 +17,13 @@ MonoBehaviour:
   Description: Slam the ground in front of you. A moment later the ground heaves around the impact, throwing enemies away.
   Tags: 2
   CritShake: 0
-  AttackSpeed: 1.4
+  AttackSpeed: 1.2
   resourceCost: 25
-  SlamDamage: 3
+  SlamDamage: 2
   SlamWeaponDamageMultiplier: 0.8
   SlamRadius: 1.5
-  QuakeDelay: 1
-  QuakeDamage: 2
+  QuakeDelay: 0.7
+  QuakeDamage: 4
   QuakeWeaponDamageMultiplier: 0.6
-  QuakeRadius: 4
+  QuakeRadius: 5
   QuakeHitForce: 8

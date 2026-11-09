@@ -20,14 +20,13 @@ public partial struct EventHorizonCaptureSystem : ISystem
         // Capture
         var horizons = SystemAPI.GetComponentLookup<EventHorizon>();
         var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (source, projectile, entity) in SystemAPI.Query<RefRO<Source>, RefRO<Projectile>>()
-                     .WithPresent<InitializeFromSource>().WithNone<Orbiting>().WithEntityAccess())
+        foreach (var (source, entity) in SystemAPI.Query<RefRO<Source>>()
+                     .WithAll<Projectile>().WithPresent<InitializeFromSource>().WithNone<Orbiting>().WithEntityAccess())
         {
             var wearer = source.ValueRO.Entity;
             if (!horizons.HasComponent(wearer)) continue;
             var horizon = horizons.GetRefRW(wearer);
-            float radius = math.clamp(projectile.ValueRO.Speed * horizon.ValueRO.RadiusPerSpeed, horizon.ValueRO.MinRadius, horizon.ValueRO.MaxRadius);
-            commandBuffer.AddComponent(entity, new Orbiting { Center = wearer, Radius = math.max(radius, 0.1f), Order = horizon.ValueRO.NextOrder });
+            commandBuffer.AddComponent(entity, new Orbiting { Center = wearer, Order = horizon.ValueRO.NextOrder });
             horizon.ValueRW.NextOrder++;
         }
         commandBuffer.Playback(state.EntityManager);
@@ -71,7 +70,7 @@ public partial struct EventHorizonCaptureSystem : ISystem
 
 /// <summary>
 /// Steers orbiting projectiles around their center: toward the circle's tangent (all orbits turn the same way) plus a
-/// pull toward their radius, turned at most TurnSpeed per second and keeping their speed. A new projectile spirals out
+/// pull toward their radius (from their current speed, every frame), turned at most TurnSpeed per second and keeping their speed. A new projectile spirals out
 /// from the wearer. After homing and wandering, which keep steering too (they work against each other), and before
 /// ProjectileSystem moves them.
 /// </summary>
@@ -106,7 +105,9 @@ public partial struct OrbitSteeringSystem : ISystem
             var radial = distance > 1e-3f ? offset / distance : flatDirection;
             var tangent = new float3(-radial.z, 0f, radial.x);
 
-            float error = (orbit.ValueRO.Radius - distance) / orbit.ValueRO.Radius;
+            // Faster projectiles orbit further out, by their speed right now (slows included), so one that speeds up drifts outward
+            float radius = math.max(math.clamp(projectile.ValueRO.CurrentSpeed * horizon.RadiusPerSpeed, horizon.MinRadius, horizon.MaxRadius), 0.1f);
+            float error = (radius - distance) / radius;
             var desired = math.normalizesafe(tangent + radial * math.clamp(error * horizon.PullStrength, -1f, 1f), tangent);
 
             float speed = math.length(direction);

@@ -68,7 +68,7 @@ public struct ElementalConversion : IComponentData
 public struct EventHorizon : IComponentData
 {
     public int MaxProjectiles;
-    public float RadiusPerSpeed;    // Orbit radius = projectile speed * this, clamped to Min/MaxRadius
+    public float RadiusPerSpeed;    // Orbit radius = current projectile speed * this, clamped to Min/MaxRadius, every frame
     public float MinRadius;
     public float MaxRadius;
     public float PullStrength;      // How hard a projectile is steered toward its radius

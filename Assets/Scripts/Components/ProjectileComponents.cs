@@ -71,13 +71,12 @@ public struct WanderingProjectile : IComponentData
 
 /// <summary>
 /// A projectile orbiting Center (Event Horizon): OrbitSteeringSystem turns its direction around the center each frame,
-/// keeping its speed. Order is when it was captured (the oldest is released first). Removing this releases it on its
-/// current heading.
+/// keeping its speed, at a radius that follows its current speed. Order is when it was captured (the oldest is released
+/// first). Removing this releases it on its current heading.
 /// </summary>
 public struct Orbiting : IComponentData
 {
     public Entity Center;
-    public float Radius;
     public uint Order;
 }
 

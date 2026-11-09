@@ -19,8 +19,8 @@ MonoBehaviour:
   CritShake: 0
   AttackSpeed: 1.2
   resourceCost: 20
-  StartSpeed: 4
-  Acceleration: 8
+  StartSpeed: 3
+  Acceleration: 2
   MaxSpeed: 35
   HitRadius: 0.5
   SpinPerMeter: 120
