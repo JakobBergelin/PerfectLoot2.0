@@ -19,7 +19,7 @@ Balancing:
 
 - Standard items in a slot are sidegrades, never strict upgrades. Each has positive outliers that fit its theme.
 - Legendary and Unique items never share outliers with a standard item of the same slot. Their outliers could be tied to their legendary power's theme. Their generic rollable ranges are narrower or lower, because the power carries them.
-- Legendary and Unique items never have affixes that enable or strengthen their own power (for example no Area of Effect on an item whose power casts Area skills, no Critical Chance on one that triggers on crits). Standard items are what enable legendary powers: design Standard items that enable them better instead.
+- Legendary and Unique items may have affixes that help their own power, but never as outliers: those affixes roll only in narrow, low ranges. A standard item is what enables a legendary power best. If a character picks a second item to complement a power, a standard item with the right outlier should be a better pick than another Legendary or Unique. For example, an item whose power casts Area skills can roll a little Area of Effect, but the standard item with an Area of Effect outlier gives much more.
 - An affix is never both always-on (base affix or slot stat) and rollable.
 - Player and enemy stats are placeholders, so don't balance items against them.
 

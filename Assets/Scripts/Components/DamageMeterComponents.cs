@@ -67,6 +67,7 @@ public enum DamageLabel
     Upheaval,
     PhantomEdge,
     Meteor,
+    Execute,        // Obsidian Dagger's finishing blow
 }
 
 public static class SkillDamageLabel
