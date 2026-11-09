@@ -127,6 +127,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Meteor:
                 if (SystemAPI.HasComponent<Meteor>(entity)) SystemAPI.SetComponentEnabled<Meteor>(entity, enabled);
                 break;
+            case SkillType.CursedHammer:
+                if (SystemAPI.HasComponent<CursedHammer>(entity)) SystemAPI.SetComponentEnabled<CursedHammer>(entity, enabled);
+                break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;

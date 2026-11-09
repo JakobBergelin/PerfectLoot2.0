@@ -74,6 +74,7 @@ public enum SkillType
     PhantomEdge,
     Meteor,
     Immolation,
+    CursedHammer,
 }
 
 /// <summary>
@@ -631,6 +632,39 @@ public struct Immolation : IComponentData, IEnableableComponent
     public float ResourceCostPerSecond;
     public bool Active;
     public float Elapsed;                   // Seconds toward the next hit, only counted while it's burning
+}
+
+/// <summary>
+/// Cursed Hammer: throws a tumbling hammer toward the cursor that starts slow and keeps speeding up. It deals no damage
+/// itself: where it hits an enemy or a wall it bursts, hitting everything within Radius for Damage lightning. Repeats while held.
+/// </summary>
+public struct CursedHammer : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;           // Seconds between casts, before the attack speed stat
+    public float ResourceCost;
+    public float StartSpeed;            // Scaled by the projectile speed stat
+    public float Acceleration;          // Meters per second gained each second
+    public float MaxSpeed;
+    public float HitRadius;             // How close an enemy has to come to the hammer to be hit
+    public float SpinPerMeter;          // Radians it tumbles per meter flown
+    public float Damage;
+    public float Radius;
+}
+
+/// <summary>
+/// A flying Cursed Hammer (with a Projectile, LocalTransform and Source). CursedHammerFlightSystem speeds it up, spins it
+/// and bursts it on contact. With pierce it bursts on each enemy and flies on; with bounces it bursts on the wall too.
+/// </summary>
+public struct CursedHammerProjectile : IComponentData
+{
+    public float Acceleration;
+    public float MaxSpeed;
+    public float HitRadius;
+    public float SpinPerMeter;
+    public float Damage;
+    public float Radius;
+    public float SpinAngle;             // Radians tumbled so far
+    public Entity LastHit;              // The enemy it last burst on, so a pierce doesn't hit it again on the next frames
 }
 
 /// <summary>
