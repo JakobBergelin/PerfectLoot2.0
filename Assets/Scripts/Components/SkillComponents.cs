@@ -145,7 +145,7 @@ public class SkillUtil
     /// <summary>
     /// A skill's cooldown for a caster with these stats: shorter by its CooldownReduction (0.25 = 25% shorter, negative:
     /// longer), never below 0. For skills with a real cooldown (Dash, Teleport, Invulnerability, Ball Lightning); skills
-    /// that repeat an attack (Fireball, Tornado, Barrage, Fists of Thunder, Whirlwind) are timed by AttackSpeed instead.
+    /// that repeat an attack (Fireball, Tornado, Fists of Thunder, Whirlwind) are timed by AttackSpeed instead.
     /// </summary>
     public static float Cooldown(float cooldown, in StatBlock stats) => cooldown * math.max(0f, 1f - stats.CooldownReduction);
 
@@ -220,7 +220,7 @@ public class SkillUtil
 
 /// <summary>
 /// A caster's recovery from its last attack, shared by the skills that repeat an attack (Fireball, Tornado, Frozen Orb,
-/// Barrage, Fists of Thunder): one fires as soon as this is down to 0 and adds its own time between attacks, so
+/// Fists of Thunder): one fires as soon as this is down to 0 and adds its own time between attacks, so
 /// switching skills never skips a wait. Counted down by attack speed (AttackRecoverySystem).
 /// </summary>
 public struct AttackRecovery : IComponentData
@@ -245,14 +245,22 @@ public struct FistsOfThunder : IComponentData, IEnableableComponent
     public int PunchCount;
 }
 
+/// <summary>
+/// Barrage, a toggle: BarrageSystem reads its key, so the component stays disabled and Active says whether it's on.
+/// While equipped, every ResourcePerMissile resource the caster spends launches a homing missile up into a cone. On:
+/// missiles go for the strongest enemy; off: the weakest.
+/// </summary>
 public struct Barrage : IComponentData, IEnableableComponent
 {
-    public float AttackSpeed;
+    public float ResourcePerMissile;
+    public float ConeAngle;         // Radians from straight up a missile can leave at
     public float Damage;
     public float ProjectileSpeed;
     public float Radius;
     public float HomingTurnSpeed;
     public float HomingTurnAcceleration;
+    public bool Active;
+    public float Spent;             // Toward the next missile
 }
 
 public struct FireBall : IComponentData, IEnableableComponent

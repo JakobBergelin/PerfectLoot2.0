@@ -1,12 +1,19 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace ActiveSkills
 {
+    /// <summary>
+    /// A toggle. While equipped, every few resource you spend launches a homing missile up into a cone. On: missiles go
+    /// for the strongest enemy; off: the weakest.
+    /// </summary>
     [CreateAssetMenu(fileName = "Barrage", menuName = "Active Skills/Barrage")]
     public class BarrageSkill : ActiveSkill<Barrage>
     {
-        [Tooltip("Seconds between projectiles")]
-        public float AttackSpeed = 0.3f;
+        [Tooltip("Resource spent on skills for each missile")]
+        [Min(1f)] public float ResourcePerMissile = 5f;
+        [Tooltip("Degrees from straight up a missile can leave at")]
+        [Range(0f, 90f)] public float ConeAngle = 45f;
         public float Damage = 3f;
         public float ProjectileSpeed = 7f;
         [Tooltip("Hit radius of each projectile")]
@@ -21,13 +28,15 @@ namespace ActiveSkills
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
             description.Damage.Add(DamageLine(DamageType.Physical, "Damage per missile", stats).Text(Num(Damage)));
+            description.Effects.Add(new SkillLine().Text($"A missile for every {Num(ResourcePerMissile)} resource spent"));
+            description.Effects.Add(new SkillLine().Text("On: homes on the strongest enemy. Off: the weakest"));
             description.Effects.Add(AreaLine("Hit radius", Radius, stats));
-            description.Effects.Add(AttackTimeLine("Time between missiles", AttackSpeed, stats));
         }
 
         protected override Barrage Configure(Barrage component, bool isNew)
         {
-            component.AttackSpeed = AttackSpeed;
+            component.ResourcePerMissile = ResourcePerMissile;
+            component.ConeAngle = math.radians(ConeAngle);
             component.Damage = Damage;
             component.ProjectileSpeed = ProjectileSpeed;
             component.Radius = Radius;

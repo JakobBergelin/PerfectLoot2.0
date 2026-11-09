@@ -70,9 +70,6 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.FistOfThunder:
                 if (SystemAPI.HasComponent<FistsOfThunder>(entity)) SystemAPI.SetComponentEnabled<FistsOfThunder>(entity, enabled);
                 break;
-            case SkillType.Barrage:
-                if (SystemAPI.HasComponent<Barrage>(entity)) SystemAPI.SetComponentEnabled<Barrage>(entity, enabled);
-                break;
             case SkillType.Fireball:
                 if (SystemAPI.HasComponent<FireBall>(entity)) SystemAPI.SetComponentEnabled<FireBall>(entity, enabled);
                 break;
