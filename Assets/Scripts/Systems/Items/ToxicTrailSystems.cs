@@ -52,7 +52,7 @@ public partial struct ToxicTrailSystem : ISystem
             hazards.Add(new Spawn
             {
                 Source = entity, Position = position,
-                Hazard = new Hazard { Type = type, DamagePerSecond = t.DamagePerSecond * s.DamageMultiplier(type), Radius = t.Radius * s.AreaMultiplier, TimeRemaining = t.Lifetime },
+                Hazard = new Hazard { Type = type, DamagePerSecond = t.DamagePerSecond * s.DamageMultiplier(type), Radius = t.Radius * s.AreaMultiplier, TimeRemaining = t.Lifetime, Origin = DamageLabel.ToxicTrail },
             });
         }
 

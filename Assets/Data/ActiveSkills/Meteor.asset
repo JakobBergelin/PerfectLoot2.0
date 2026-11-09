@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34d95b1c6c08f89499075d6eff2cd895, type: 3}
+  m_Name: Meteor
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MeteorSkill
+  Name: Meteor
+  Icon: {fileID: 0}
+  Description: Call a meteor down on the cursor. After a moment it crashes down in a fiery blast and leaves the ground burning.
+  Tags: 131264
+  CritShake: 0
+  AttackSpeed: 1
+  resourceCost: 55
+  Range: 15
+  Delay: 3
+  Damage: 25
+  Radius: 3
+  HazardDamagePerSecond: 3
+  HazardRadius: 3
+  HazardDuration: 4

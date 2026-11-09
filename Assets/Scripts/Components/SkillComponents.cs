@@ -72,6 +72,7 @@ public enum SkillType
     Swipe,
     Upheaval,
     PhantomEdge,
+    Meteor,
 }
 
 /// <summary>
@@ -581,6 +582,38 @@ public struct PhantomEdgeMark : IBufferElementData
 /// <summary>A render part Phantom Edge hid on its caster (it gets DisableRendering back off when the flurry ends).</summary>
 public struct HiddenByFlurry : IComponentData
 {
+}
+
+/// <summary>
+/// Meteor: calls a meteor down on the cursor (at most Range away, clamped to it). Impact seconds later it hits everything
+/// within Radius for Damage fire, then leaves burning ground (a Hazard) for HazardDuration. Repeats while held.
+/// </summary>
+public struct Meteor : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;           // Seconds between casts, before the attack speed stat
+    public float ResourceCost;
+    public float Range;
+    public float Delay;                 // Seconds from the cast to the impact
+    public float Damage;
+    public float Radius;
+    public float HazardDamagePerSecond;
+    public float HazardRadius;
+    public float HazardDuration;
+}
+
+/// <summary>
+/// A falling meteor (with a LocalTransform where it lands and a Source): MeteorStrikeSystem counts Delay down, then it
+/// hits there and leaves its burning ground. The source's damage %, conversion and area of effect apply at the impact.
+/// </summary>
+public struct MeteorStrike : IComponentData
+{
+    public float Delay;                 // Seconds left until the impact
+    public float FallTime;              // The whole delay, for the warning circle
+    public float Damage;
+    public float Radius;
+    public float HazardDamagePerSecond;
+    public float HazardRadius;
+    public float HazardDuration;
 }
 
 /// <summary>

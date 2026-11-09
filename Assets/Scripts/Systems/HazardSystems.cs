@@ -73,7 +73,7 @@ public partial struct HazardSystem : ISystem
 
                 var key = new HitKey { Target = target, Source = source.ValueRO.Entity, Type = hazard.ValueRO.Type };
                 if (hits.TryGetValue(key, out var existing) && existing.DamagePerSecond >= hazard.ValueRO.DamagePerSecond) continue;
-                hits[key] = new HitValue { DamagePerSecond = hazard.ValueRO.DamagePerSecond, Position = transform.ValueRO.Position };
+                hits[key] = new HitValue { DamagePerSecond = hazard.ValueRO.DamagePerSecond, Position = transform.ValueRO.Position, Origin = hazard.ValueRO.Origin };
             }
         }
 
@@ -86,7 +86,7 @@ public partial struct HazardSystem : ISystem
             var targetPosition = SystemAPI.GetComponent<LocalTransform>(key.Target).Position;
             SystemAPI.GetBuffer<DamageInstance>(key.Target).Add(new DamageInstance
             {
-                Damage = damage, Type = key.Type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.ToxicTrail, Source = key.Source, IsCrit = isCrit,
+                Damage = damage, Type = key.Type, Hierarchy = DamageHierarchy.Main, Origin = pair.Value.Origin, Source = key.Source, IsCrit = isCrit,
                 HitDirection = AttackSystem.HitDirection(pair.Value.Position, targetPosition, ref _random),
             });
         }
@@ -106,6 +106,7 @@ public partial struct HazardSystem : ISystem
     {
         public float DamagePerSecond;
         public float3 Position;
+        public DamageLabel Origin;
     }
 }
 

@@ -66,6 +66,7 @@ public enum DamageLabel
     Swipe,
     Upheaval,
     PhantomEdge,
+    Meteor,
 }
 
 public static class SkillDamageLabel
@@ -91,6 +92,7 @@ public static class SkillDamageLabel
         SkillType.Swipe => DamageLabel.Swipe,
         SkillType.Upheaval => DamageLabel.Upheaval,
         SkillType.PhantomEdge => DamageLabel.PhantomEdge,
+        SkillType.Meteor => DamageLabel.Meteor,
         _ => DamageLabel.None,
     };
 }

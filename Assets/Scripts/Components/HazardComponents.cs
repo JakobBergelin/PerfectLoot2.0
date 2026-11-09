@@ -10,4 +10,5 @@ public struct Hazard : IComponentData
     public float DamagePerSecond;   // The source's damage % already applied
     public float Radius;            // The source's area of effect already applied
     public float TimeRemaining;
+    public DamageLabel Origin;      // What its hits count as (damage meter)
 }
