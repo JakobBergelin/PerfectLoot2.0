@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 075534ba82fec364f8f066114c5aabcb, type: 3}
+  m_Name: Immolation
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.ImmolationSkill
+  Name: Immolation
+  Icon: {fileID: 0}
+  Description: Toggle. While on, enemies around you take fire damage that grows with Intelligence. Drains resource while on, and pauses without enough.
+  Tags: 262336
+  CritShake: 0
+  resourceCostPerSecond: 2
+  DamagePerSecond: 2
+  DamagePerIntelligence: 0.1
+  Radius: 4
+  TickRate: 0.5

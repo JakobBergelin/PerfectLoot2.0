@@ -68,6 +68,7 @@ public enum DamageLabel
     PhantomEdge,
     Meteor,
     Execute,        // Obsidian Dagger's finishing blow
+    Immolation,
 }
 
 public static class SkillDamageLabel
@@ -94,6 +95,7 @@ public static class SkillDamageLabel
         SkillType.Upheaval => DamageLabel.Upheaval,
         SkillType.PhantomEdge => DamageLabel.PhantomEdge,
         SkillType.Meteor => DamageLabel.Meteor,
+        SkillType.Immolation => DamageLabel.Immolation,
         _ => DamageLabel.None,
     };
 }

@@ -73,6 +73,7 @@ public enum SkillType
     Upheaval,
     PhantomEdge,
     Meteor,
+    Immolation,
 }
 
 /// <summary>
@@ -102,6 +103,7 @@ public enum SkillTags
     Barrier = 1 << 15,
     Periodic = 1 << 16,     // Damages over time through a PeriodicAttack
     Area = 1 << 17,         // Hits everything in an area (a field, a burst or a moving zone) rather than one target
+    Toggle = 1 << 18,       // Its key switches it on or off; it stays on until pressed again
 }
 
 /// <summary>
@@ -614,6 +616,21 @@ public struct MeteorStrike : IComponentData
     public float HazardDamagePerSecond;
     public float HazardRadius;
     public float HazardDuration;
+}
+
+/// <summary>
+/// Immolation, a toggle: ImmolationSystem reads its key, so the component stays disabled and Active says whether it's on.
+/// While on it drains resource and burns enemies around the caster; without enough resource it stays on but pauses.
+/// </summary>
+public struct Immolation : IComponentData, IEnableableComponent
+{
+    public float DamagePerSecond;           // Fire, before the Intelligence part and the damage %
+    public float DamagePerIntelligence;     // Added to DamagePerSecond for each point of the caster's Intelligence
+    public float Radius;                    // Scaled by area of effect
+    public float TickRate;                  // Seconds between hits
+    public float ResourceCostPerSecond;
+    public bool Active;
+    public float Elapsed;                   // Seconds toward the next hit, only counted while it's burning
 }
 
 /// <summary>
