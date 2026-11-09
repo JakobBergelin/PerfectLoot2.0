@@ -64,6 +64,7 @@ public enum DamageLabel
     // Skills added later (kept at the end so the values above stay put)
     PlagueArrow,
     Swipe,
+    Upheaval,
 }
 
 public static class SkillDamageLabel
@@ -87,6 +88,7 @@ public static class SkillDamageLabel
         SkillType.Whirlwind => DamageLabel.Whirlwind,
         SkillType.PlagueArrow => DamageLabel.PlagueArrow,
         SkillType.Swipe => DamageLabel.Swipe,
+        SkillType.Upheaval => DamageLabel.Upheaval,
         _ => DamageLabel.None,
     };
 }

@@ -70,6 +70,7 @@ public enum SkillType
     MirrorImage,
     PlagueArrow,
     Swipe,
+    Upheaval,
 }
 
 /// <summary>
@@ -537,6 +538,24 @@ public struct Swipe : IComponentData, IEnableableComponent
     public float HitForce;
     public float ResourcePerHit;
     public int SwingCount;              // Even: right to left, odd: left to right
+}
+
+/// <summary>
+/// Upheaval: slams the ground at weapon reach in front of the caster (Slam*), and QuakeDelay seconds later the ground
+/// heaves in a bigger circle around the same spot (Quake*), throwing enemies outward. Both add weapon damage.
+/// </summary>
+public struct Upheaval : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;           // Seconds between slams, before the attack speed stat
+    public float ResourceCost;
+    public float SlamDamage;
+    public float SlamWeaponDamageMultiplier;
+    public float SlamRadius;
+    public float QuakeDelay;
+    public float QuakeDamage;
+    public float QuakeWeaponDamageMultiplier;
+    public float QuakeRadius;
+    public float QuakeHitForce;
 }
 
 /// <summary>

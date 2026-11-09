@@ -84,6 +84,18 @@ public struct SweepingAttack : IComponentData
     public float Elapsed;
 }
 
+/// <summary>
+/// An attack waiting to happen: after Delay seconds this entity gets Attack (with TargetType) for one frame, where it is,
+/// then goes away (DelayedAttackSystem). Needs a LocalTransform and a Source. Its source's area of effect and damage % apply
+/// when it goes off, like any attack (InitializeFromSource). E.g. Upheaval's quake.
+/// </summary>
+public struct DelayedAttack : IComponentData
+{
+    public Attack Attack;
+    public TargetType TargetType;
+    public float Delay;
+}
+
 /// <summary>An attack whose radius already includes its source's area of effect: InitializeFromSourceSystem leaves it (e.g. Swipe counts area twice).</summary>
 public struct OwnAreaScaling : IComponentData
 {

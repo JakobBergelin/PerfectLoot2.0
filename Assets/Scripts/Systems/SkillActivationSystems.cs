@@ -118,6 +118,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Swipe:
                 if (SystemAPI.HasComponent<Swipe>(entity)) SystemAPI.SetComponentEnabled<Swipe>(entity, enabled);
                 break;
+            case SkillType.Upheaval:
+                if (SystemAPI.HasComponent<Upheaval>(entity)) SystemAPI.SetComponentEnabled<Upheaval>(entity, enabled);
+                break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;
