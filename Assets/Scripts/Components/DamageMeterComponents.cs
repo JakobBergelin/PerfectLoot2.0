@@ -65,6 +65,7 @@ public enum DamageLabel
     PlagueArrow,
     Swipe,
     Upheaval,
+    PhantomEdge,
 }
 
 public static class SkillDamageLabel
@@ -89,6 +90,7 @@ public static class SkillDamageLabel
         SkillType.PlagueArrow => DamageLabel.PlagueArrow,
         SkillType.Swipe => DamageLabel.Swipe,
         SkillType.Upheaval => DamageLabel.Upheaval,
+        SkillType.PhantomEdge => DamageLabel.PhantomEdge,
         _ => DamageLabel.None,
     };
 }

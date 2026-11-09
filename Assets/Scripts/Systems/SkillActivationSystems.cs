@@ -121,6 +121,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Upheaval:
                 if (SystemAPI.HasComponent<Upheaval>(entity)) SystemAPI.SetComponentEnabled<Upheaval>(entity, enabled);
                 break;
+            case SkillType.PhantomEdge:
+                if (SystemAPI.HasComponent<PhantomEdge>(entity)) SystemAPI.SetComponentEnabled<PhantomEdge>(entity, enabled);
+                break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;

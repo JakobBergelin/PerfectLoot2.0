@@ -116,7 +116,9 @@ public class UnitBarHUD : MonoBehaviour
                 Vector3 anchor = stick != Entity.Null && entityManager.HasComponent<LocalToWorld>(stick)
                     ? entityManager.GetComponentData<LocalToWorld>(stick).Position
                     : (Vector3)entityManager.GetComponentData<LocalToWorld>(player).Position + Vector3.up * FallbackHeight;
-                bool behindCamera = camera.WorldToViewportPoint(anchor).z < 0f;
+                // Hidden behind the camera, and during a Phantom Edge flurry (the player is unseen)
+                bool unseen = entityManager.HasComponent<PhantomEdgeFlurry>(player) && entityManager.GetComponentData<PhantomEdgeFlurry>(player).Active;
+                bool behindCamera = unseen || camera.WorldToViewportPoint(anchor).z < 0f;
                 group.Root.EnableInClassList(HiddenClass, behindCamera);
                 if (behindCamera) continue;
                 Vector2 panelPosition = RuntimePanelUtils.CameraTransformWorldToPanel(_layer.panel, anchor, camera);

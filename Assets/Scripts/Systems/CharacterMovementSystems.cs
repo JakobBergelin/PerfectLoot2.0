@@ -34,7 +34,8 @@ public partial class CharacterMovementSystem : SystemBase
             var modifiers = SystemAPI.HasComponent<MovementModifiers>(entity) ? SystemAPI.GetComponent<MovementModifiers>(entity) : new MovementModifiers { SpeedMultiplier = 1f };
             bool flying = (SystemAPI.HasComponent<BallLightning>(entity) && SystemAPI.GetComponent<BallLightning>(entity).Flying)
                        || (SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling)
-                       || (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle);
+                       || (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle)
+                       || (SystemAPI.HasComponent<PhantomEdgeFlurry>(entity) && SystemAPI.GetComponent<PhantomEdgeFlurry>(entity).Active);
             // Tesla Coil locks the unit in place; that still counts as standing still
             bool rooted = SystemAPI.HasComponent<TeslaCoil>(entity) && SystemAPI.GetComponent<TeslaCoil>(entity).Channeling;
             if(!modifiers.PreventsActions && !flying && !rooted && (inputs.ValueRO.Move.x != 0.0f || inputs.ValueRO.Move.y != 0.0f))

@@ -71,6 +71,7 @@ public enum SkillType
     PlagueArrow,
     Swipe,
     Upheaval,
+    PhantomEdge,
 }
 
 /// <summary>
@@ -538,6 +539,48 @@ public struct Swipe : IComponentData, IEnableableComponent
     public float HitForce;
     public float ResourcePerHit;
     public int SwingCount;              // Even: right to left, odd: left to right
+}
+
+/// <summary>
+/// Phantom Edge: when off cooldown, marks every living enemy within Radius (nearest first) and starts a flurry
+/// (PhantomEdgeFlurry): the caster, hidden and invulnerable, blinks to each marked enemy in turn and strikes it once for
+/// weapon damage * WeaponDamageMultiplier, StrikeInterval / attack speed seconds apart, then returns to where it cast.
+/// The cooldown starts with the flurry, so it can be ready again before the flurry ends; casting then adds new marks.
+/// </summary>
+public struct PhantomEdge : IComponentData, IEnableableComponent
+{
+    public float Radius;
+    public float StrikeInterval;        // Seconds between strikes at attack speed 1
+    public float WeaponDamageMultiplier;
+    public float StrikeRadius;          // Of each strike's hit circle, around the target
+    public float Cooldown;
+    public float Elapsed;               // Since the last cast, up to the cooldown
+}
+
+/// <summary>
+/// A Phantom Edge flurry in progress on its caster: the marked enemies still to strike (PhantomEdgeMark, in order), when the
+/// next strike comes and where to return to. Added with the skill and kept, so an unequipped skill's flurry still finishes.
+/// </summary>
+public struct PhantomEdgeFlurry : IComponentData
+{
+    public bool Active;
+    public float3 StartPosition;
+    public quaternion StartRotation;
+    public float NextStrike;            // Attack-speed seconds until the next strike
+    public float StrikeInterval;
+    public float WeaponDamageMultiplier;
+    public float StrikeRadius;
+}
+
+/// <summary>An enemy marked by Phantom Edge, waiting for its strike.</summary>
+public struct PhantomEdgeMark : IBufferElementData
+{
+    public Entity Enemy;
+}
+
+/// <summary>A render part Phantom Edge hid on its caster (it gets DisableRendering back off when the flurry ends).</summary>
+public struct HiddenByFlurry : IComponentData
+{
 }
 
 /// <summary>
