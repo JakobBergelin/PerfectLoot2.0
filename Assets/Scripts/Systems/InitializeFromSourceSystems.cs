@@ -31,7 +31,8 @@ public partial class InitializeFromSourceSystem : SystemBase
             // Converted first, so the new element's damage % applies
             attack.ValueRW.Type = stats.ValueRO.Value.ConvertedType(attack.ValueRO.Type);
             attack.ValueRW.Damage *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
-            attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
+            if (!SystemAPI.HasComponent<OwnAreaScaling>(entity))
+                attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
         }
 
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<PeriodicAttack>>().WithPresent<InitializeFromSource>().WithEntityAccess())

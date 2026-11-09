@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2b87742be4879a04798878bd240a51d0, type: 3}
+  m_Name: PlagueArrow
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.PlagueArrowSkill
+  Name: Plague Arrow
+  Icon: {fileID: 0}
+  Description: Loose a slow, festering arrow that poisons everything it passes. It always flies its full distance, so the slower it goes, the longer it poisons.
+  Tags: 66113
+  CritShake: 0
+  AttackSpeed: 1.2
+  resourceCost: 20
+  DamagePerSecond: 1
+  TickRate: 0.5
+  Radius: 1.5
+  Speed: 3
+  Range: 30

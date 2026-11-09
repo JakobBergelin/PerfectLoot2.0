@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8d9118d45c7a8b245b96909397e03a64, type: 3}
+  m_Name: Swipe
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.SwipeSkill
+  Name: Swipe
+  Icon: {fileID: 0}
+  Description: 'A heavy, sweeping swing in front of you: right to left, then back. Every enemy it hits builds resource.'
+  Tags: 8194
+  CritShake: 0
+  AttackSpeed: 0.9
+  Damage: 1
+  WeaponDamageMultiplier: 0.6
+  Radius: 0.8
+  ArcAngle: 70
+  SweepDuration: 0.2
+  HitForce: 2
+  ResourcePerHit: 1

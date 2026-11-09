@@ -60,6 +60,10 @@ public enum DamageLabel
     Consecration,   // Guardian's release: its damage and its heal
     GuardianShare,  // Damage a Guardian takes for an ally
     IronPalm,       // Iron Palm's healing projectiles
+
+    // Skills added later (kept at the end so the values above stay put)
+    PlagueArrow,
+    Swipe,
 }
 
 public static class SkillDamageLabel
@@ -81,6 +85,8 @@ public static class SkillDamageLabel
         SkillType.TeslaCoil => DamageLabel.TeslaCoil,
         SkillType.Tornado => DamageLabel.Tornado,
         SkillType.Whirlwind => DamageLabel.Whirlwind,
+        SkillType.PlagueArrow => DamageLabel.PlagueArrow,
+        SkillType.Swipe => DamageLabel.Swipe,
         _ => DamageLabel.None,
     };
 }

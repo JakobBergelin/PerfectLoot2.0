@@ -67,3 +67,24 @@ public struct Knockback : IComponentData
 {
     public float3 Velocity;
 }
+
+/// <summary>
+/// An attack that sweeps along an arc around Center (a unit), Distance meters out: from StartAngle to EndAngle (degrees
+/// from Forward, positive to the right) in Duration seconds, then goes away (SweepingAttackSystem). Melee swings like
+/// Swipe. Give its Attack a GracePeriod of at least Duration so each target is hit once per sweep.
+/// </summary>
+public struct SweepingAttack : IComponentData
+{
+    public Entity Center;
+    public float3 Forward;      // Flat, normalized
+    public float StartAngle;
+    public float EndAngle;
+    public float Distance;
+    public float Duration;
+    public float Elapsed;
+}
+
+/// <summary>An attack whose radius already includes its source's area of effect: InitializeFromSourceSystem leaves it (e.g. Swipe counts area twice).</summary>
+public struct OwnAreaScaling : IComponentData
+{
+}

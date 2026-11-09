@@ -46,7 +46,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0ee2234a2e20754ade5858c3e11ee538, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillManager
   Slot1: {fileID: 7700000000000000013}
   Slot2: {fileID: 7700000000000000023}
@@ -78,6 +78,8 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 56a082ff60b3b905658462c7e84632d8, type: 2}
   - {fileID: 11400000, guid: 4447ce4d2369bf0a1c23a077272755e2, type: 2}
   - {fileID: 11400000, guid: 2c4eed207b945de955d3e21b48fa80a9, type: 2}
+  - {fileID: 11400000, guid: 5355c61ddade2c84ea7550e09d561fd1, type: 2}
+  - {fileID: 11400000, guid: c85175f272a63904cbcb1e8e0a3875d6, type: 2}
 --- !u!1 &7700000000000000011
 GameObject:
   m_ObjectHideFlags: 0
@@ -120,7 +122,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
   EquippedSkill: {fileID: 0}
   IsPressed: 0
@@ -170,7 +172,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
   EquippedSkill: {fileID: 0}
   IsPressed: 0
@@ -220,7 +222,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
   EquippedSkill: {fileID: 0}
   IsPressed: 0
@@ -270,7 +272,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: fd0af0625595303d406352b84d068a97, type: 3}
-  m_Name:
+  m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkillSlot
   EquippedSkill: {fileID: 0}
   IsPressed: 0

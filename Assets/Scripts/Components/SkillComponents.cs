@@ -68,6 +68,8 @@ public enum SkillType
     Wisp,
     RaiseThrall,
     MirrorImage,
+    PlagueArrow,
+    Swipe,
 }
 
 /// <summary>
@@ -519,6 +521,39 @@ public struct Tornado : IComponentData, IEnableableComponent
 }
 
 /// <summary>Frozen Orb: casts a slow orb that damages around it and spins, firing ice shards out of its front and back.</summary>
+/// <summary>
+/// Swipe: a slow weapon swing in front of the caster, alternating right to left and left to right (SwingCount). Each
+/// swing sweeps an arc of ±ArcAngle degrees (SweepingAttack) and gives ResourcePerHit for every enemy it hits. Its
+/// reach is twice the caster's weapon reach and it counts the area of effect bonus twice.
+/// </summary>
+public struct Swipe : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;           // Seconds between swings, before the attack speed stat
+    public float Damage;
+    public float WeaponDamageMultiplier;
+    public float Radius;                // Of the blade's hit circle, before area of effect
+    public float ArcAngle;              // Degrees to each side of facing
+    public float SweepDuration;         // Seconds one swing takes to cross the arc
+    public float HitForce;
+    public float ResourcePerHit;
+    public int SwingCount;              // Even: right to left, odd: left to right
+}
+
+/// <summary>
+/// Plague Arrow: a slow arrow that poisons everything within Radius along its path and always flies Range meters. The
+/// caster's projectile speed scales its speed, so a slower arrow spends longer on the way and deals more.
+/// </summary>
+public struct PlagueArrow : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;
+    public float ResourceCost;
+    public float DamagePerSecond;
+    public float TickRate;
+    public float Radius;            // Damage radius around the arrow
+    public float Speed;             // Before the caster's projectile speed
+    public float Range;             // Meters it always flies
+}
+
 public struct FrozenOrb : IComponentData, IEnableableComponent
 {
     public float AttackSpeed;
