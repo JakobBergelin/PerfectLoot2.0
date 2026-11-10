@@ -89,6 +89,9 @@ public class DropPopupHUD : MonoBehaviour
         _keepButton.clicked += () => Resolve(takeNew: false);
         _takeButton.clicked += () => Resolve(takeNew: true);
         _okButton.clicked += () => Resolve(takeNew: false);
+        UiNav.Register(_root);
+        var popup = root.Q<VisualElement>("popup");
+        if (popup != null) UiNav.Hint(popup, "A Choose · B Keep current");
         return true;
     }
 
@@ -105,10 +108,10 @@ public class DropPopupHUD : MonoBehaviour
         }
         if (_dirty) Refresh();
 
-        // An open menu panel handles Esc first (it closes); the next Esc resolves the popup. Last frame's state too,
-        // since the panel may already have closed itself this frame.
+        // An open menu panel handles Esc (or B) first (it closes); the next one keeps the current item. Last frame's state
+        // too, since the panel may already have closed itself this frame.
         if (_visible && !MenuPanels.IsPanelOpen && !_panelOpenLastFrame && !MenuPanels.IsTyping &&
-            MenuPanels.EscapePressed)
+            MenuPanels.BackPressed)
             Resolve(takeNew: false);
     }
 
@@ -191,5 +194,9 @@ public class DropPopupHUD : MonoBehaviour
         _visible = visible;
         MenuPanels.SetBlocking(this, visible);
         _root?.EnableInClassList(HiddenClass, !visible);
+        // A controller answers it too: A on Take new (or OK), B keeps the current item
+        if (_root == null) return;
+        var preferred = _takeButton.style.display == DisplayStyle.Flex ? _takeButton : _okButton;
+        UiNav.SetScope(this, _root, visible, preferred);
     }
 }

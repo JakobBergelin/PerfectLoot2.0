@@ -1,12 +1,20 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="GameMenu.uss" />
     <ui:VisualElement name="gameMenuRoot" class="gm-root gm--hidden">
-        <ui:VisualElement class="gm-panel">
+        <ui:VisualElement name="panel" class="gm-panel">
             <ui:Label text="Menu" class="gm-title" />
-            <ui:Button name="resumeButton" text="Resume" class="gm-button gm-button--primary" />
-            <ui:Button name="optionsButton" text="Options" class="gm-button" />
-            <ui:Button name="mainMenuButton" text="Main menu" class="gm-button" />
-            <ui:Button name="exitButton" text="Exit game" class="gm-button" />
+            <ui:VisualElement name="buttons">
+                <ui:Button name="resumeButton" text="Resume" class="gm-button gm-button--primary" />
+                <ui:Button name="leaveDungeonButton" text="Leave dungeon" class="gm-button" />
+                <ui:Button name="optionsButton" text="Options" class="gm-button" />
+                <ui:Button name="mainMenuButton" text="Main menu" class="gm-button" />
+                <ui:Button name="exitButton" text="Exit game" class="gm-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="leaveConfirm" class="gm--hidden">
+                <ui:Label name="leaveQuestion" class="gm-question" />
+                <ui:Button name="confirmLeaveButton" text="Leave" class="gm-button gm-button--primary" />
+                <ui:Button name="stayButton" text="Stay" class="gm-button" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

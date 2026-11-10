@@ -15,7 +15,7 @@
                     <ui:Label text="Controller" class="op-column-heading" />
                     <ui:VisualElement class="op-reset-space" />
                 </ui:VisualElement>
-                <ui:ScrollView name="controlsList" class="op-list" />
+                <ui:VisualElement name="controlsList" class="op-list" />
                 <ui:Label name="controlsHint" class="op-hint" />
             </ui:VisualElement>
 

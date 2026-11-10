@@ -110,13 +110,21 @@ public class MainMenuHUD : MonoBehaviour
         changeName.clicked += () => ShowScreen(Screen.Name);
         characterBack.clicked += () => ShowScreen(Screen.Main);
 
+        // With a controller: what A and B do on each screen
+        UiNav.Register(root);
+        UiNav.Hint(_nameScreen, "A Continue");
+        UiNav.Hint(_mainScreen, "A Select · B Change name");
+        UiNav.Hint(_characterScreen, "A Select · LT/RT Pages · B Back");
+
         UpdateContinueButton();
         return true;
     }
 
     void Update()
     {
-        if (!_bound || !MenuPanels.EscapePressed || OptionsHUD.HandlesEscape) return;
+        if (!_bound || OptionsHUD.HandlesEscape) return;
+        if (_screen == Screen.Characters && MenuPanels.PagePressed != 0) _characterSelect.TurnPage(MenuPanels.PagePressed);
+        if (!MenuPanels.BackPressed) return;
         if (_screen == Screen.Main) ShowScreen(Screen.Name);
         else if (_screen == Screen.Characters && !_characterSelect.Cancel()) ShowScreen(Screen.Main);
     }
@@ -127,8 +135,17 @@ public class MainMenuHUD : MonoBehaviour
         _nameScreen.EnableInClassList(HiddenClass, screen != Screen.Name);
         _mainScreen.EnableInClassList(HiddenClass, screen != Screen.Main);
         _characterScreen.EnableInClassList(HiddenClass, screen != Screen.Characters);
+        var shown = screen == Screen.Name ? _nameScreen : screen == Screen.Main ? _mainScreen : _characterScreen;
+        UiNav.SetScope(this, shown, true);
         if (screen == Screen.Name)
         {
+            // A controller can't type: a ready name to accept with A
+            if (GameInput.UsingGamepad)
+            {
+                if (!AccountManager.IsValidName(_nameField.value)) _nameField.value = "Player";
+                UiNav.Focus(_continueButton);
+                return;
+            }
             // Ready to type (after layout, or the hidden field can't take focus yet)
             _nameField.schedule.Execute(() =>
             {
@@ -143,6 +160,7 @@ public class MainMenuHUD : MonoBehaviour
         {
             var account = AccountManager.Instance;
             _signedIn.text = $"Signed in as {(account != null ? account.AccountName : AccountManager.DefaultAccountName)}";
+            UiNav.Focus(_mainScreen.Q<Button>("characterSelectButton"));
         }
         else _characterSelect.Open();
     }

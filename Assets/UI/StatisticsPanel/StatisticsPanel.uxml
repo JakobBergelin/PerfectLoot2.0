@@ -11,9 +11,9 @@
             <ui:VisualElement name="tabs" class="stats-tabs" />
             <!-- Column headings (click to sort) and one row per stat or subject, created by StatisticsPanelHUD -->
             <ui:VisualElement name="headings" class="stats-row stats-row--headings" />
-            <ui:ScrollView name="rows" class="stats-rows" />
+            <ui:VisualElement name="rows" class="stats-rows" />
             <ui:Label name="empty" text="Nothing yet" class="stats-empty" />
-            <ui:Label text="Press O to close" class="stats-hint" />
+            <ui:Label text="Press O to close" class="stats-hint nav-mouse-only" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

@@ -95,7 +95,7 @@ public class GroundLootHUD : MonoBehaviour
             string text = isNext && key.Length > 0 ? $"{view.Name} ({key})" : view.Name;
             if (view.Label.text != text) view.Label.text = text;
         }
-        if (next != null && !MenuPanels.IsPanelOpen && !MenuPanels.IsTyping && GameInput.Player.Interact.WasPressedThisFrame() && manager.PickUp(next))
+        if (next != null && !MenuPanels.IsPanelOpen && !MenuPanels.IsTyping && !UiNav.HasGamepadInput && GameInput.Player.Interact.WasPressedThisFrame() && manager.PickUp(next))
             return;
 
         var camera = Camera.main;

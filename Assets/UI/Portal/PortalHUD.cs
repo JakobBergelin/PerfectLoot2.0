@@ -117,7 +117,7 @@ public class PortalHUD : MonoBehaviour
             string key = GameInput.Label(GameInput.Player.Interact);
             _enter.text = string.IsNullOrEmpty(key) ? "Enter" : $"Enter ({key})";
         }
-        if (!MenuPanels.IsTyping && GameInput.Player.Interact.WasPressedThisFrame()) Enter();
+        if (!MenuPanels.IsTyping && !UiNav.HasGamepadInput && GameInput.Player.Interact.WasPressedThisFrame()) Enter();
     }
 
     // The nearest portal whose range the player stands in, measured along the ground

@@ -76,3 +76,12 @@
 .gm-button--primary:active {
     background-color: #B88010;
 }
+
+/* Leave dungeon's question, in place of the buttons */
+.gm-question {
+    font-size: 15px;
+    color: var(--text-color);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    margin: 6px 0 0 0;
+}

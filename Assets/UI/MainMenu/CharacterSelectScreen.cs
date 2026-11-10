@@ -19,11 +19,14 @@ public class CharacterSelectScreen
     readonly IReadOnlyList<ResourceDefinition> _resources;
     readonly Action<AccountCharacter> _adventure;
 
-    ScrollView _list;
+    const int CharactersPerPage = 6;
+
+    VisualElement _list;
+    Pager _pager;
     Label _noCharacters, _noSelection;
     VisualElement _detailsView, _createView, _deleteConfirm;
     Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _detailResourceInfo, _deleteQuestion;
-    Button _deleteButton;
+    Button _deleteButton, _adventureButton, _deleteNoButton, _createCharacterButton;
     TextField _nameField;
     Label _nameError, _classDescription, _classInfo, _resourceDescription, _resourceInfo;
     Button _createButton;
@@ -55,7 +58,7 @@ public class CharacterSelectScreen
     /// <summary>Finds the screen's elements under root and hooks them up. False when the UXML is missing some.</summary>
     public bool Bind(VisualElement root)
     {
-        _list = root.Q<ScrollView>("characterList");
+        _list = root.Q<VisualElement>("characterList");
         _noCharacters = root.Q<Label>("noCharacters");
         _noSelection = root.Q<Label>("noSelection");
         _detailsView = root.Q<VisualElement>("detailsView");
@@ -92,6 +95,10 @@ public class CharacterSelectScreen
             deleteNo == null || cancelCreate == null)
             return false;
 
+        _pager = Pager.After(_list);
+        _adventureButton = adventure;
+        _deleteNoButton = deleteNo;
+        _createCharacterButton = createCharacter;
         createCharacter.clicked += OpenCreate;
         adventure.clicked += Adventure;
         _deleteButton.clicked += () => ShowDeleteConfirm(true);
@@ -136,9 +143,12 @@ public class CharacterSelectScreen
         else OpenCreate();
     }
 
+    /// <summary>The next (1) or previous (-1) page of characters (LT/RT).</summary>
+    public void TurnPage(int step) => _pager.Turn(step);
+
     /// <summary>
-    /// Esc: closes the delete question or the create form (back to the selected character). False when there's nothing
-    /// to close, so the menu goes back to the main screen.
+    /// Esc or B: closes the delete question or the create form (back to the selected character). False when there's
+    /// nothing to close, so the menu goes back to the main screen.
     /// </summary>
     public bool Cancel()
     {
@@ -175,10 +185,12 @@ public class CharacterSelectScreen
             row.Add(info);
             string guid = character.Guid;
             row.RegisterCallback<ClickEvent>(_ => Select(guid));
+            UiNav.Clickable(row, () => Select(guid));
             _list.Add(row);
             _rows[guid] = row;
         }
         _noCharacters.EnableInClassList(HiddenClass, characters.Count > 0);
+        _pager.Show(_list.Children(), CharactersPerPage);
     }
 
     AccountCharacter FirstCharacter() => Account != null && Account.Characters.Count > 0 ? Account.Characters[0] : null;
@@ -189,14 +201,15 @@ public class CharacterSelectScreen
         _selectedGuid = character?.Guid;
         foreach (var pair in _rows)
             pair.Value.EnableInClassList(SelectedRowClass, pair.Key == _selectedGuid);
-        if (character != null && _rows.TryGetValue(character.Guid, out var row))
-            _list.schedule.Execute(() => _list.ScrollTo(row));     // After layout, or there's nothing to scroll to yet
+        if (character != null && _rows.TryGetValue(character.Guid, out var row)) _pager.ShowPageOf(row);
 
         if (character == null)
         {
             ShowView(details: false, create: false);
+            UiNav.Focus(_createCharacterButton);
             return;
         }
+        UiNav.Focus(_adventureButton);
         _detailName.text = character.Name;
         _detailClass.text = $"Level {character.Level} {ClassName(character.Class)}";
         _detailResource.text = ResourceName(character.Resource);
@@ -228,8 +241,11 @@ public class CharacterSelectScreen
         var character = Account != null ? Account.FindCharacter(_selectedGuid) : null;
         show &= character != null;
         if (show) _deleteQuestion.text = $"Delete {character.Name}? This can't be undone.";
+        bool was = ConfirmingDelete;
         _deleteConfirm.EnableInClassList(HiddenClass, !show);
         _deleteButton.EnableInClassList(HiddenClass, show);
+        if (show) UiNav.Focus(_deleteNoButton);
+        else if (was) UiNav.Focus(_deleteButton);
     }
 
     void DeleteSelected()
@@ -246,13 +262,31 @@ public class CharacterSelectScreen
     void OpenCreate()
     {
         foreach (var pair in _rows) pair.Value.RemoveFromClassList(SelectedRowClass);
-        _nameField.SetValueWithoutNotify("");
+        // A controller can't type: a free name to keep
+        _nameField.SetValueWithoutNotify(GameInput.UsingGamepad ? FreeName() : "");
         PickClass(ClassType.None);
         PickResource(ResourceType.None);
         ShowView(details: false, create: true);
         UpdateCreateButton();
+        if (GameInput.UsingGamepad)
+        {
+            foreach (var choice in _classChoices.Values)
+            {
+                UiNav.Focus(choice);
+                break;
+            }
+            return;
+        }
         // Ready to type (after layout, or the hidden field can't take focus yet)
         _nameField.schedule.Execute(() => _nameField.Focus());
+    }
+
+    // "Hero", or "Hero2" and on when it's taken (names have no spaces)
+    static string FreeName()
+    {
+        string name = "Hero";
+        for (int number = 2; Account != null && Account.IsCharacterNameTaken(name); number++) name = $"Hero{number}";
+        return name;
     }
 
     void PickClass(ClassType type)

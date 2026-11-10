@@ -18,6 +18,8 @@ public class SkillsPanelHUD : MonoBehaviour
     const string TooltipVisibleClass = "sp-tooltip--visible";
     const string TownHint = "Click a slot to change it · Press K to close";
     const string LookOnlyHint = "Change skills in town · Press K to close";
+    const string GamepadTownHint = "A Change · LB/RB Panels · B Close";
+    const string GamepadLookOnlyHint = "Change skills in town · LB/RB Panels · B Close";
 
     /// <summary>One slot in the panel; active and passive slots only differ in these delegates and their look.</summary>
     class SlotView
@@ -42,7 +44,7 @@ public class SkillsPanelHUD : MonoBehaviour
     int _boundVersion = -1;
     bool _open;
 
-    VisualElement _root;
+    VisualElement _root, _panel;
     Label _hint;
     VisualElement _tooltip;
     Label _tooltipTitle;
@@ -68,10 +70,12 @@ public class SkillsPanelHUD : MonoBehaviour
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         MenuPanels.OpenChanged += OnMenuOpenChanged;
+        MenuPanels.AddTab(this, 1, SetOpen);
     }
 
     void OnDisable()
     {
+        MenuPanels.RemoveTab(this);
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
@@ -98,6 +102,7 @@ public class SkillsPanelHUD : MonoBehaviour
     bool Bind(VisualElement root)
     {
         _root = root.Q<VisualElement>("skillsPanelRoot");
+        _panel = root.Q<VisualElement>("panel");
         var activeContainer = root.Q<VisualElement>("activeSlots");
         var activePicker = root.Q<VisualElement>("activePicker");
         var passiveContainer = root.Q<VisualElement>("passiveSlots");
@@ -106,13 +111,14 @@ public class SkillsPanelHUD : MonoBehaviour
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
         _hint = root.Q<Label>("hint");
-        if (_root == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
+        if (_root == null || _panel == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
             _hint == null)
         {
             Debug.LogError("SkillsPanelHUD: SkillsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
         }
 
+        UiNav.Register(_root);
         _selected = null;
         BuildActiveSlots(activeContainer, activePicker);
         BuildPassiveSlots(passiveContainer, passivePicker);
@@ -121,13 +127,13 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
+        if (MenuPanels.TogglePressed(_toggleAction))
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
-        // Esc closes the picker first, then the panel
-        if (MenuPanels.EscapePressed && !MenuPanels.IsTyping)
+        // Esc or B closes the picker first, then the panel
+        if (MenuPanels.BackPressed && !MenuPanels.IsTyping)
         {
             if (_selected != null) Select(null);
             else SetOpen(false);
@@ -135,7 +141,8 @@ public class SkillsPanelHUD : MonoBehaviour
         }
         // Skills are only changed in town; elsewhere the panel is look-only
         bool town = GameArea.IsTown;
-        _hint.text = town ? TownHint : LookOnlyHint;
+        bool gamepad = GameInput.UsingGamepad;
+        _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _selected != null) Select(null);
 
         // After a rebind or a switch between keyboard and gamepad
@@ -169,6 +176,7 @@ public class SkillsPanelHUD : MonoBehaviour
         _root.EnableInClassList(HiddenClass, !open);
         Select(null);
         HideTooltip();
+        UiNav.SetScope(this, _panel, open);
     }
 
     // ---------- Slots ----------
@@ -265,17 +273,17 @@ public class SkillsPanelHUD : MonoBehaviour
         view.Element.Add(view.Icon);
         view.Element.Add(view.Name);
         view.Element.Add(tag);
-        view.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(view.GetEquipped(), view.Element));
-        view.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+        UiNav.Hover(view.Element, () => ShowTooltip(view.GetEquipped(), view.Element), HideTooltip);
         container.Add(view.Element);
         return view;
     }
 
     void RegisterSlotCallbacks(SlotView view)
     {
-        view.Element.RegisterCallback<ClickEvent>(_ => Select(_selected == view || !GameArea.IsTown ? null : view));
-        view.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(view.GetEquipped(), view.Element));
-        view.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+        Action click = () => Select(_selected == view || !GameArea.IsTown ? null : view);
+        view.Element.RegisterCallback<ClickEvent>(_ => click());
+        UiNav.Clickable(view.Element, click);
+        UiNav.Hover(view.Element, () => ShowTooltip(view.GetEquipped(), view.Element), HideTooltip);
     }
 
     static ActiveSkillSlot ActiveSlot(int index)
@@ -321,6 +329,7 @@ public class SkillsPanelHUD : MonoBehaviour
         {
             _selected.Element.RemoveFromClassList(_selected.SelectedClass);
             _selected.Picker.AddToClassList(PickerHiddenClass);
+            UiNav.SetScope(_selected.Picker, _selected.Picker, false);
         }
         _selected = view;
         if (view == null) return;
@@ -328,6 +337,10 @@ public class SkillsPanelHUD : MonoBehaviour
         view.Element.AddToClassList(view.SelectedClass);
         BuildPicker(view);
         view.Picker.RemoveFromClassList(PickerHiddenClass);
+        // A controller picks in the picker until it closes, starting on the equipped skill
+        UiNav.SetScope(view.Picker, view.Picker, true);
+        var current = view.Picker.Q(className: "sp-option--current");
+        UiNav.FocusFirstOf(current != null ? new[] { current } : view.Picker.Children());
     }
 
     /// <summary>The pool minus skills equipped in the slot's siblings; the slot's own skill is kept and marked.</summary>
@@ -381,14 +394,15 @@ public class SkillsPanelHUD : MonoBehaviour
         option.Add(iconElement);
         option.Add(label);
 
-        option.RegisterCallback<ClickEvent>(_ =>
+        Action pick = () =>
         {
             if (!isCurrent) view.Equip(skill);
             Select(null);
             HideTooltip();
-        });
-        option.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(skill, option));
-        option.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+        };
+        option.RegisterCallback<ClickEvent>(_ => pick());
+        UiNav.Clickable(option, pick);
+        UiNav.Hover(option, () => ShowTooltip(skill, option), HideTooltip);
         return option;
     }
 

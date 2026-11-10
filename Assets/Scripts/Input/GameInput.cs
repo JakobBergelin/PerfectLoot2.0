@@ -13,6 +13,9 @@ public static class GameInput
     public const string Gamepad = "Gamepad";
     const string PrefsKey = "Controls.Bindings";
     const float GamepadSwitchMagnitude = 0.5f;  // How far a controller's stick, trigger or button must be pushed to count as using it
+    const float PointerMoveSquared = 9f;        // The mouse counts as used once it moved more than 3 pixels
+
+    static Vector2 _lastPointer;
 
     static InputSystem_Actions _actions;
     static InputAction[] _skills;
@@ -56,6 +59,7 @@ public static class GameInput
         _actions = null;
         _skills = null;
         _usingGamepad = false;
+        _lastPointer = Vector2.zero;
         Version = 0;
     }
 
@@ -98,6 +102,14 @@ public static class GameInput
         bool gamepad = device is UnityEngine.InputSystem.Gamepad;
         if (!gamepad && device is not Keyboard && device is not Mouse) return;
         if (gamepad && control.EvaluateMagnitude() < GamepadSwitchMagnitude) return;
+        // The pointer only counts when it moved: enabling the map again (Options closing) reports where it already is
+        if (action == _actions.Player.Look)
+        {
+            var pointer = action.ReadValue<Vector2>();
+            bool moved = (pointer - _lastPointer).sqrMagnitude > PointerMoveSquared;
+            _lastPointer = pointer;
+            if (!moved) return;
+        }
         if (gamepad == _usingGamepad) return;
         _usingGamepad = gamepad;
         Version++;
@@ -154,8 +166,9 @@ public static class GameInput
     }
 
     /// <summary>
-    /// Waits for the next button of the binding's group and binds it (Controls window). Esc and Backspace are left out
-    /// so the window can use them to cancel and clear. The action must be disabled (OptionsHUD disables the Player map).
+    /// Waits for the next button of the binding's group and binds it (Controls window). Esc, Start, Backspace and View
+    /// (Select) are left out so the window can use them to cancel and clear. The action must be disabled (OptionsHUD
+    /// disables the Player map).
     /// </summary>
     public static InputActionRebindingExtensions.RebindingOperation Rebind(InputAction action, int index, string group, System.Action done)
     {
@@ -166,6 +179,7 @@ public static class GameInput
             .WithControlsExcluding("<Keyboard>/escape")
             .WithControlsExcluding("<Keyboard>/backspace")
             .WithControlsExcluding("<Gamepad>/start")
+            .WithControlsExcluding("<Gamepad>/select")
             .OnMatchWaitForAnother(0.05f);
         if (group == Gamepad) operation.WithControlsHavingToMatchPath("<Gamepad>");
         else operation.WithControlsHavingToMatchPath("<Keyboard>").WithControlsHavingToMatchPath("<Mouse>");

@@ -25,7 +25,7 @@
             <ui:Label text="Character Select" class="mm-heading" />
             <ui:VisualElement class="cs-columns">
                 <ui:VisualElement class="cs-list-column">
-                    <ui:ScrollView name="characterList" class="cs-list" />
+                    <ui:VisualElement name="characterList" class="cs-list" />
                     <ui:Label name="noCharacters" text="No characters yet" class="mm-hint" />
                     <ui:Button name="createCharacterButton" text="Create new character" class="mm-button" />
                 </ui:VisualElement>

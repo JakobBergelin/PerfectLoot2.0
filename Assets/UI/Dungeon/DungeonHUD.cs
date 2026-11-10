@@ -151,26 +151,38 @@ public class DungeonHUD : MonoBehaviour
         _found.style.display = found > 0 ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
+    /// <summary>True while in a dungeon, so it can be left (also from the in-game menu).</summary>
+    public static bool InDungeon => DungeonManager.Instance != null && DungeonManager.Instance.State != DungeonManager.RunState.None;
+
+    /// <summary>What leaving now would lose, as a question; null when nothing would be, so it can be left at once.</summary>
+    public static string LeaveQuestion()
+    {
+        var manager = DungeonManager.Instance;
+        var groundLoot = GroundLootManager.Instance;
+        if (manager != null && manager.State == DungeonManager.RunState.Running)
+            return "Leave the dungeon? This run is lost, with any items left on the ground; the next one starts fresh.";
+        return groundLoot != null && groundLoot.Items.Count > 0 ? "Leave the dungeon? Items left on the ground are lost." : null;
+    }
+
+    public static void LeaveDungeon()
+    {
+        var manager = DungeonManager.Instance;
+        if (manager != null) manager.Leave();
+    }
+
     // Leaves at once when nothing would be lost
     void OnLeaveClicked()
     {
-        var manager = DungeonManager.Instance;
-        if (manager == null) return;
-        var groundLoot = GroundLootManager.Instance;
-        bool itemsOnGround = groundLoot != null && groundLoot.Items.Count > 0;
-        if (manager.State == DungeonManager.RunState.Running)
-            SetConfirming(true, "Leave the dungeon? This run is lost, with any items left on the ground; the next one starts fresh.");
-        else if (itemsOnGround)
-            SetConfirming(true, "Leave the dungeon? Items left on the ground are lost.");
-        else
-            Leave();
+        if (DungeonManager.Instance == null) return;
+        string question = LeaveQuestion();
+        if (question != null) SetConfirming(true, question);
+        else Leave();
     }
 
     void Leave()
     {
         SetConfirming(false);
-        var manager = DungeonManager.Instance;
-        if (manager != null) manager.Leave();
+        LeaveDungeon();
     }
 
     void SetConfirming(bool confirming, string question = null)

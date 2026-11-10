@@ -70,7 +70,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     bool _open;
     bool _dirty = true;
 
-    VisualElement _root;
+    VisualElement _root, _panel;
     Label _count;
     VisualElement _rowContainer;
     Label _prevPage, _nextPage, _pageLabel;
@@ -108,10 +108,12 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         MenuPanels.OpenChanged += OnMenuOpenChanged;
+        MenuPanels.AddTab(this, 2, SetOpen);
     }
 
     void OnDisable()
     {
+        MenuPanels.RemoveTab(this);
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
@@ -139,6 +141,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     bool Bind(VisualElement root)
     {
         _root = root.Q<VisualElement>("itemDatabaseRoot");
+        _panel = root.Q<VisualElement>("panel");
         _count = root.Q<Label>("count");
         var filters = root.Q<VisualElement>("filters");
         _rowContainer = root.Q<VisualElement>("rows");
@@ -154,18 +157,21 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipSubtitle = root.Q<Label>("tooltipSubtitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
-        if (_root == null || _count == null || filters == null || _rowContainer == null || _prevPage == null ||
+        if (_root == null || _panel == null || _count == null || filters == null || _rowContainer == null || _prevPage == null ||
             _nextPage == null || _pageLabel == null || _detailBody == null || _dropButton == null || _affixPopup == null || _tooltip == null)
         {
             Debug.LogError("ItemDatabasePanelHUD: ItemDatabasePanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
         }
 
+        UiNav.Register(_root);
+        if (_panel.Q(className: "nav-hint") == null) UiNav.Hint(_panel, "A Select · LT/RT Pages · LB/RB Panels · B Close");
         BuildFilters(filters);
         BuildAffixPopup();
         _prevPage.RegisterCallback<ClickEvent>(_ => SetPage(_page - 1));
         _nextPage.RegisterCallback<ClickEvent>(_ => SetPage(_page + 1));
         _dropButton.RegisterCallback<ClickEvent>(_ => DropSelected());
+        UiNav.Clickable(_dropButton, DropSelected);
         // The wheel flips pages
         _rowContainer.RegisterCallback<WheelEvent>(evt => SetPage(_page + (evt.delta.y > 0 ? 1 : -1)));
 
@@ -180,19 +186,20 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     void Update()
     {
         // Typing an "l" into the search field shouldn't close the panel
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
+        if (MenuPanels.TogglePressed(_toggleAction))
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
-        // Esc leaves the search field first, then closes the affix picker, then the panel
-        if (MenuPanels.EscapePressed)
+        // Esc (or B) leaves the search field first, then closes the affix picker, then the panel
+        if (MenuPanels.BackPressed)
         {
             if (MenuPanels.IsTyping) _searchField.Blur();
             else if (_affixPopup.ClassListContains(AffixPopupVisibleClass)) ShowAffixPopup(false);
             else SetOpen(false);
             return;
         }
+        if (MenuPanels.PagePressed != 0) TurnPage(MenuPanels.PagePressed);
 
         Subscribe();
         if (_dirty) Refresh();
@@ -214,6 +221,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _root.EnableInClassList(HiddenClass, !open);
         ShowAffixPopup(false);
         HideTooltip();
+        UiNav.SetScope(this, _panel, open);
         _dirty = true;
     }
 
@@ -317,6 +325,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         var chip = new Label(text);
         chip.AddToClassList(ChipClass);
         chip.RegisterCallback<ClickEvent>(_ => onClick());
+        UiNav.Clickable(chip, onClick);
         row.Add(chip);
         return chip;
     }
@@ -355,8 +364,13 @@ public class ItemDatabasePanelHUD : MonoBehaviour
             _affixPopup.style.left = position.x;
             _affixPopup.style.top = position.y;
         }
+        bool was = _affixPopup.ClassListContains(AffixPopupVisibleClass);
         _affixPopup.EnableInClassList(AffixPopupVisibleClass, show);
         _affixChip?.EnableInClassList(ChipSelectedClass, show || _affix != null);
+        // A controller picks in the popup until it closes, then is back on the Affix chip
+        if (show == was) return;
+        UiNav.SetScope(_affixPopup, _affixPopup, show);
+        if (show) UiNav.FocusFirstOf(_affixPopup.Children());
     }
 
     void PickAffix(Affix? affix)
@@ -405,6 +419,18 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         if (page == _page) return;
         _page = page;
         _dirty = true;
+    }
+
+    // LT/RT: the page before or after; with a controller, focus goes to the new page's first tile
+    void TurnPage(int step)
+    {
+        SetPage(_page + step);
+        Refresh();
+        var shown = new List<VisualElement>();
+        foreach (var row in _rows)
+            if (row.Element.style.display == DisplayStyle.Flex)
+                foreach (var tile in row.Tiles) shown.Add(tile.Element);
+        UiNav.FocusFirstOf(shown);
     }
 
     void Refresh()
@@ -511,9 +537,9 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         tile.Element.style.borderLeftColor = border;
         tile.Element.style.borderRightColor = border;
 
-        tile.Element.RegisterCallback<PointerEnterEvent>(_ => ShowTooltip(tile));
-        tile.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
+        UiNav.Hover(tile.Element, () => ShowTooltip(tile), HideTooltip);
         tile.Element.RegisterCallback<ClickEvent>(_ => Select(tile));
+        UiNav.Clickable(tile.Element, () => Select(tile));
         return tile;
     }
 

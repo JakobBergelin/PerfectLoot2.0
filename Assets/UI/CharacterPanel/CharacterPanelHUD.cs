@@ -29,9 +29,13 @@ public class CharacterPanelHUD : MonoBehaviour
     const string PreviewIdleText = "Hover an item to see how your stats change";
     const string TownHint = "Click a slot to swap · Press I to close";
     const string LookOnlyHint = "Change equipment in town · Press I to close";
+    const string GamepadTownHint = "A Swap · LT/RT Pages · LB/RB Panels · B Close";
+    const string GamepadLookOnlyHint = "Change equipment in town · LT/RT Pages · LB/RB Panels · B Close";
     const float Gap = 8f;
     const float ScreenMargin = 16f;
     const int MaxOptionChanges = 3;
+    const int OptionsPerPage = 8;
+    const int StatRowsPerPage = 30;     // A section counts its rows and title
 
     static readonly Color EmptySlotBorder = new Color32(58, 63, 75, 255);
 
@@ -95,7 +99,8 @@ public class CharacterPanelHUD : MonoBehaviour
     // Swap picker
     VisualElement _picker, _pickerFilters;
     Label _pickerTitle;
-    ScrollView _pickerList;
+    VisualElement _pickerList, _statList;
+    Pager _pickerPager, _statPager;
     VisualElement _previewHeader;
     Label _previewTitle;
     SlotView _pickerSlot;               // The slot the picker is open for; null while it's closed
@@ -126,10 +131,12 @@ public class CharacterPanelHUD : MonoBehaviour
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         MenuPanels.OpenChanged += OnMenuOpenChanged;
+        MenuPanels.AddTab(this, 0, SetOpen);
     }
 
     void OnDisable()
     {
+        MenuPanels.RemoveTab(this);
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
@@ -161,7 +168,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _header = root.Q<Label>("header");
         _hint = root.Q<Label>("hint");
         var slotGrid = root.Q<VisualElement>("slotGrid");
-        var statList = root.Q<ScrollView>("statList");
+        _statList = root.Q<VisualElement>("statList");
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipSubtitle = root.Q<Label>("tooltipSubtitle");
@@ -169,10 +176,10 @@ public class CharacterPanelHUD : MonoBehaviour
         _picker = root.Q<VisualElement>("picker");
         _pickerTitle = root.Q<Label>("pickerTitle");
         _pickerFilters = root.Q<VisualElement>("pickerFilters");
-        _pickerList = root.Q<ScrollView>("pickerList");
+        _pickerList = root.Q<VisualElement>("pickerList");
         _previewHeader = root.Q<VisualElement>("previewHeader");
         _previewTitle = root.Q<Label>("previewTitle");
-        if (_root == null || _panel == null || _header == null || _hint == null || slotGrid == null || statList == null || _tooltip == null ||
+        if (_root == null || _panel == null || _header == null || _hint == null || slotGrid == null || _statList == null || _tooltip == null ||
             _picker == null || _pickerTitle == null || _pickerFilters == null || _pickerList == null ||
             _previewHeader == null || _previewTitle == null)
         {
@@ -184,8 +191,11 @@ public class CharacterPanelHUD : MonoBehaviour
         _picker.RegisterCallback<GeometryChangedEvent>(_ => ClampTop(_picker, _pickerTop));
         _tooltip.RegisterCallback<GeometryChangedEvent>(_ => ClampTop(_tooltip, _tooltipTop));
 
+        UiNav.Register(_root);
+        _pickerPager = Pager.After(_pickerList);
+        _statPager = Pager.After(_statList);
         BuildSlots(slotGrid);
-        BuildStats(statList);
+        BuildStats(_statList);
         _pickerSlot = null;
         ClosePicker();
         _slotsDirty = true;
@@ -194,24 +204,27 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
+        if (MenuPanels.TogglePressed(_toggleAction))
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
-        // Esc closes the picker first, then the panel
-        if (MenuPanels.EscapePressed && !MenuPanels.IsTyping)
+        // Esc or B closes the picker first, then the panel
+        if (MenuPanels.BackPressed && !MenuPanels.IsTyping)
         {
             if (_pickerSlot != null) ClosePicker();
             else SetOpen(false);
             return;
         }
+        // LT/RT: the picker's pages while it's open, else the stats'
+        if (MenuPanels.PagePressed != 0) (_pickerSlot != null ? _pickerPager : _statPager).Turn(MenuPanels.PagePressed);
         // A click anywhere but the picker or a slot closes the picker (slots open their own or close it themselves)
         if (_pickerSlot != null && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !PointerOnPickerOrSlot())
             ClosePicker();
         // Equipment is only changed in town; elsewhere the panel is look-only
         bool town = GameArea.IsTown;
-        _hint.text = town ? TownHint : LookOnlyHint;
+        bool gamepad = GameInput.UsingGamepad;
+        _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _pickerSlot != null) ClosePicker();
 
         Subscribe();
@@ -237,6 +250,7 @@ public class CharacterPanelHUD : MonoBehaviour
             ClosePicker();
             HideTooltip();
         }
+        UiNav.SetScope(this, _panel, open);
         _slotsDirty = true;
     }
 
@@ -298,13 +312,14 @@ public class CharacterPanelHUD : MonoBehaviour
         view.Element.Add(view.Icon);
         view.Element.Add(view.Label);
 
-        view.Element.RegisterCallback<PointerEnterEvent>(_ => ShowSlotTooltip(view));
-        view.Element.RegisterCallback<PointerLeaveEvent>(_ => HideTooltip());
-        view.Element.RegisterCallback<ClickEvent>(_ =>
+        UiNav.Hover(view.Element, () => ShowSlotTooltip(view), HideTooltip);
+        Action click = () =>
         {
             if (_pickerSlot == view) ClosePicker();
             else if (GameArea.IsTown) OpenPicker(view);
-        });
+        };
+        view.Element.RegisterCallback<ClickEvent>(_ => click());
+        UiNav.Clickable(view.Element, click);
 
         grid.Add(view.Element);
         _slots.Add(view);
@@ -385,7 +400,11 @@ public class CharacterPanelHUD : MonoBehaviour
         _pickerSlot = view;
         _rarityFilter = null;
         foreach (var slot in _slots) slot.Element.EnableInClassList(SlotPickingClass, slot == view);
+        _pickerPager.Reset();
         BuildPicker();
+        // A controller moves through the picker until it closes, starting on its first item
+        UiNav.SetScope(_picker, _picker, true);
+        UiNav.FocusFirstOf(_pickerList.Children());
 
         // Left of the panel, level with the slot
         var slotPosition = view.Element.ChangeCoordinatesTo(_root, Vector2.zero);
@@ -402,6 +421,7 @@ public class CharacterPanelHUD : MonoBehaviour
     void ClosePicker()
     {
         _pickerSlot = null;
+        if (_picker != null) UiNav.SetScope(_picker, _picker, false);
         EndPreview();
         HideTooltip();
         _picker?.AddToClassList(PickerHiddenClass);
@@ -458,6 +478,7 @@ public class CharacterPanelHUD : MonoBehaviour
         }
         if (count == 0)
             AddPickerMessage(found.Count == 0 ? "No items found for this slot yet" : $"No {_rarityFilter} items found for this slot");
+        _pickerPager.Show(_pickerList.Children(), OptionsPerPage);
     }
 
     void AddFilterChip(string text, Rarity? rarity)
@@ -465,11 +486,17 @@ public class CharacterPanelHUD : MonoBehaviour
         var chip = new Label(text);
         chip.AddToClassList("cp-chip");
         chip.EnableInClassList(ChipSelectedClass, rarity == _rarityFilter);
-        chip.RegisterCallback<ClickEvent>(_ =>
+        Action pick = () =>
         {
             _rarityFilter = rarity;
+            _pickerPager.Reset();
             BuildPicker();
-        });
+            // The chips are new: keep a controller on the picked one
+            foreach (var shown in _pickerFilters.Children())
+                if (shown.ClassListContains(ChipSelectedClass)) UiNav.Focus(shown);
+        };
+        chip.RegisterCallback<ClickEvent>(_ => pick());
+        UiNav.Clickable(chip, pick);
         _pickerFilters.Add(chip);
     }
 
@@ -514,13 +541,16 @@ public class CharacterPanelHUD : MonoBehaviour
         text.Add(detail);
         option.Add(text);
 
-        option.RegisterCallback<PointerEnterEvent>(_ => HoverOption(slot, item, state, option));
-        option.RegisterCallback<PointerLeaveEvent>(_ =>
+        UiNav.Hover(option, () => HoverOption(slot, item, state, option), () =>
         {
             EndPreview();
             HideTooltip();
         });
-        if (state != OptionState.Elsewhere) option.RegisterCallback<ClickEvent>(_ => PickOption(slot, item, state));
+        if (state != OptionState.Elsewhere)
+        {
+            option.RegisterCallback<ClickEvent>(_ => PickOption(slot, item, state));
+            UiNav.Clickable(option, () => PickOption(slot, item, state));
+        }
         return option;
     }
 
@@ -628,7 +658,7 @@ public class CharacterPanelHUD : MonoBehaviour
 
     // ---------- Stats ----------
 
-    void BuildStats(ScrollView list)
+    void BuildStats(VisualElement list)
     {
         list.Clear();
         _rows.Clear();
@@ -689,6 +719,10 @@ public class CharacterPanelHUD : MonoBehaviour
         section = AddSection(list, "Other");
         AddRow(section, Affix.MovementSpeed, "Movement Speed", s => s.Stats.MovementSpeed, Pct, plus: true);
         AddRow(section, Affix.BuffDuration, "Buff Duration", s => s.Stats.BuffDuration, Pct, plus: true);
+
+        // Pages of whole sections
+        _statPager.Reset();
+        _statPager.Show(list.Children(), StatRowsPerPage, shown => shown.childCount);
     }
 
     static VisualElement AddSection(VisualElement list, string title, bool first = false)

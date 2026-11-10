@@ -1,0 +1,60 @@
+/* Shared by every menu (UiNav.Register adds it to their roots): the controller's focus outline, controller-only hints
+   and the page controls (Pager). nav--gamepad is on a menu's root while a controller is used last. */
+
+.nav--gamepad *:focus {
+    border-color: #E0A020;
+    background-color: rgba(224, 160, 32, 0.25);
+    scale: 1.04 1.04;
+}
+
+/* Only with a controller / only with the mouse and keyboard */
+.nav-hint {
+    display: none;
+    font-size: 12px;
+    color: #A8ADB8;
+    -unity-text-align: middle-center;
+    margin-top: 8px;
+}
+
+.nav--gamepad .nav-hint {
+    display: flex;
+}
+
+.nav--gamepad .nav-mouse-only {
+    display: none;
+}
+
+/* Pages: "‹ 2 / 3 ›" under a list */
+.pager {
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
+    margin-top: 6px;
+    flex-shrink: 0;
+}
+
+.pager__arrow {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: #F2F2F2;
+    padding: 0 10px;
+}
+
+.pager__arrow:hover {
+    color: #E0A020;
+}
+
+.pager__arrow--disabled {
+    color: #4A4F5B;
+}
+
+.pager__arrow--disabled:hover {
+    color: #4A4F5B;
+}
+
+.pager__label {
+    font-size: 13px;
+    color: #A8ADB8;
+    min-width: 50px;
+    -unity-text-align: middle-center;
+}

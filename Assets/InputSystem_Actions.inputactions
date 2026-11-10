@@ -122,6 +122,15 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": false
+                },
+                {
+                    "name": "Panels",
+                    "type": "Button",
+                    "id": "8e5f2a61-7c34-4d9b-b1e8-3f6a0c2d9b57",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -447,11 +456,22 @@
                 {
                     "name": "",
                     "id": "4b12c4a5-9d3a-457c-916e-60de0f5d1c10",
-                    "path": "",
+                    "path": "<Gamepad>/rightStickPress",
                     "interactions": "",
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "DamageMeter",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d71c3e94-2b58-4f0a-9e6d-1a8c5b7f2e40",
+                    "path": "<Gamepad>/select",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "Panels",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

@@ -19,6 +19,7 @@ public class DamageMeterHUD : MonoBehaviour
     const string HiddenBodyClass = "damage-meter__body--hidden";
     const string SelectedHeadingClass = "damage-meter__number--selected";
     const float RefreshInterval = 0.25f;
+    const int RowsPerPage = 8;
 
     class RowView
     {
@@ -39,7 +40,9 @@ public class DamageMeterHUD : MonoBehaviour
     int _boundVersion = -1;
     VisualElement _panel, _body;
     Button _toggle, _view, _recentHeading, _levelHeading;
-    ScrollView _rows;
+    VisualElement _rows;
+    Pager _pager;
+    readonly List<VisualElement> _shownRows = new List<VisualElement>();
     readonly Button[] _tabs = new Button[4];
     readonly List<RowView> _rowViews = new List<RowView>();
     readonly List<RowData> _data = new List<RowData>();
@@ -90,8 +93,9 @@ public class DamageMeterHUD : MonoBehaviour
         _view = root.Q<Button>("view");
         _recentHeading = root.Q<Button>("recentHeading");
         _levelHeading = root.Q<Button>("levelHeading");
-        _rows = root.Q<ScrollView>("rows");
+        _rows = root.Q<VisualElement>("rows");
         _rowViews.Clear();
+        _pager = Pager.After(_rows);
 
         _panel.RegisterCallback<PointerEnterEvent>(_ => MenuPanels.SetBlocking(this, true));
         _panel.RegisterCallback<PointerLeaveEvent>(_ => MenuPanels.SetBlocking(this, false));
@@ -202,11 +206,12 @@ public class DamageMeterHUD : MonoBehaviour
         while (_rowViews.Count < _data.Count) _rowViews.Add(CreateRow());
 
         float highest = _data.Count > 0 ? _data[0].Sorted(_byRecent) : 0f;
+        _shownRows.Clear();
         for (int i = 0; i < _rowViews.Count; i++)
         {
             var view = _rowViews[i];
             bool used = i < _data.Count;
-            view.Root.style.display = used ? DisplayStyle.Flex : DisplayStyle.None;
+            view.Root.style.display = DisplayStyle.None;
             if (!used) continue;
 
             var row = _data[i];
@@ -214,7 +219,10 @@ public class DamageMeterHUD : MonoBehaviour
             view.Recent.text = Format(row.Recent);
             view.Level.text = Format(row.Level);
             view.Bar.style.width = Length.Percent(highest > 0f ? 100f * row.Sorted(_byRecent) / highest : 0f);
+            _shownRows.Add(view.Root);
         }
+        // Pages instead of scrolling (the arrows under the rows)
+        _pager.Show(_shownRows, RowsPerPage);
     }
 
     RowView CreateRow()

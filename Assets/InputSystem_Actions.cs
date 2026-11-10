@@ -221,6 +221,16 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""interactions"": """",
                     ""initialStateCheck"": false,
                     ""priority"": 0
+                },
+                {
+                    ""name"": ""Panels"",
+                    ""type"": ""Button"",
+                    ""id"": ""8e5f2a61-7c34-4d9b-b1e8-3f6a0c2d9b57"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
                 }
             ],
             ""bindings"": [
@@ -546,11 +556,22 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                 {
                     ""name"": """",
                     ""id"": ""4b12c4a5-9d3a-457c-916e-60de0f5d1c10"",
-                    ""path"": """",
+                    ""path"": ""<Gamepad>/rightStickPress"",
                     ""interactions"": """",
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""DamageMeter"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d71c3e94-2b58-4f0a-9e6d-1a8c5b7f2e40"",
+                    ""path"": ""<Gamepad>/select"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""Panels"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 }
@@ -1161,6 +1182,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_ItemDatabase = m_Player.FindAction("ItemDatabase", throwIfNotFound: true);
         m_Player_Statistics = m_Player.FindAction("Statistics", throwIfNotFound: true);
         m_Player_DamageMeter = m_Player.FindAction("DamageMeter", throwIfNotFound: true);
+        m_Player_Panels = m_Player.FindAction("Panels", throwIfNotFound: true);
         // UI
         m_UI = asset.FindActionMap("UI", throwIfNotFound: true);
         m_UI_Navigate = m_UI.FindAction("Navigate", throwIfNotFound: true);
@@ -1267,6 +1289,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_ItemDatabase;
     private readonly InputAction m_Player_Statistics;
     private readonly InputAction m_Player_DamageMeter;
+    private readonly InputAction m_Player_Panels;
     /// <summary>
     /// Provides access to input actions defined in input action map "Player".
     /// </summary>
@@ -1330,6 +1353,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/DamageMeter".
         /// </summary>
         public InputAction @DamageMeter => m_Wrapper.m_Player_DamageMeter;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/Panels".
+        /// </summary>
+        public InputAction @Panels => m_Wrapper.m_Player_Panels;
         /// <summary>
         /// Provides access to the underlying input action map instance.
         /// </summary>
@@ -1395,6 +1422,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @DamageMeter.started += instance.OnDamageMeter;
             @DamageMeter.performed += instance.OnDamageMeter;
             @DamageMeter.canceled += instance.OnDamageMeter;
+            @Panels.started += instance.OnPanels;
+            @Panels.performed += instance.OnPanels;
+            @Panels.canceled += instance.OnPanels;
         }
 
         /// <summary>
@@ -1445,6 +1475,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @DamageMeter.started -= instance.OnDamageMeter;
             @DamageMeter.performed -= instance.OnDamageMeter;
             @DamageMeter.canceled -= instance.OnDamageMeter;
+            @Panels.started -= instance.OnPanels;
+            @Panels.performed -= instance.OnPanels;
+            @Panels.canceled -= instance.OnPanels;
         }
 
         /// <summary>
@@ -1836,6 +1869,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnDamageMeter(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "Panels" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnPanels(InputAction.CallbackContext context);
     }
     /// <summary>
     /// Interface to implement callback methods for all input action callbacks associated with input actions defined by "UI" which allows adding and removing callbacks.

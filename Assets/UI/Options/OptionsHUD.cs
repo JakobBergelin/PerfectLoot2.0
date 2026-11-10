@@ -7,9 +7,9 @@ using UnityEngine.UIElements;
 /// <summary>
 /// The Options window in Options.uxml, opened from the main menu and the in-game menu (Open). One tab for now:
 /// Controls, a row per action with its binding for each device (GameInput's binding groups) and a reset. Click a
-/// binding, then press a key or button to bind it; Esc (or Start) cancels and Backspace clears it. While open, gameplay
-/// input is off (the Player map is disabled, which rebinding needs too) and Esc closes it. Lives all session
-/// (GameBootstrap's Services), above every other panel.
+/// binding (A with a controller), then press a key or button to bind it; Esc or Start cancels, and Backspace or View
+/// clears it. While open, gameplay input is off (the Player map is disabled, which rebinding needs too) and Esc, Start or
+/// B closes it. The rows are in pages (LT/RT). Lives all session (GameBootstrap's Services), above every other panel.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class OptionsHUD : MonoBehaviour
@@ -19,7 +19,9 @@ public class OptionsHUD : MonoBehaviour
     const string ListeningClass = "op-binding--listening";
     const string IdleHint = "Click a binding, then press a key or button. Esc cancels, Backspace clears.";
     const string KeyboardHint = "Press a key or mouse button. Esc cancels, Backspace clears.";
-    const string GamepadHint = "Press a controller button. Esc or Start cancels, Backspace clears.";
+    const string GamepadHint = "Press a controller button. Start cancels, View clears.";
+    const string GamepadIdleHint = "A Change · LT/RT Pages · B Close";
+    const int RowsPerPage = 20;
 
     // A row of the Controls tab. Part is a composite part (Move's keys); a row without a column shows a dash there
     class Row
@@ -42,13 +44,16 @@ public class OptionsHUD : MonoBehaviour
     bool _open;
     int _closedFrame = -1;
     VisualElement _root;
-    ScrollView _list;
+    VisualElement _list;
+    VisualElement _panel;
+    Pager _pager;
     Label _hint;
     readonly List<Row> _rows = MakeRows();
 
     InputActionRebindingExtensions.RebindingOperation _rebinding;
     Row _rebindingRow;
     string _rebindingGroup;
+    Row _pendingRow;            // A controller rebind waits for A (that pressed the binding) to be let go first
 
     /// <summary>True while the window is open, and on the frame it closed: that Esc was the window's.</summary>
     public static bool HandlesEscape => _instance != null && (_instance._open || _instance._closedFrame == Time.frameCount);
@@ -84,6 +89,7 @@ public class OptionsHUD : MonoBehaviour
             new Row { Section = "Interface", Name = "Item Database", Action = () => GameInput.Player.ItemDatabase },
             new Row { Section = "Interface", Name = "Statistics", Action = () => GameInput.Player.Statistics },
             new Row { Section = "Interface", Name = "Damage Meter", Action = () => GameInput.Player.DamageMeter },
+            new Row { Section = "Interface", Name = "Open panels", Action = () => GameInput.Player.Panels, HasKeyboard = false },
         };
     }
 
@@ -138,16 +144,19 @@ public class OptionsHUD : MonoBehaviour
     bool Bind(VisualElement root)
     {
         _root = root.Q<VisualElement>("optionsRoot");
-        _list = root.Q<ScrollView>("controlsList");
+        _list = root.Q<VisualElement>("controlsList");
+        _panel = root.Q<VisualElement>(className: "op-panel");
         _hint = root.Q<Label>("controlsHint");
         var resetAll = root.Q<Button>("resetAllButton");
         var close = root.Q<Button>("closeButton");
-        if (_root == null || _list == null || _hint == null || resetAll == null || close == null)
+        if (_root == null || _list == null || _panel == null || _hint == null || resetAll == null || close == null)
         {
             Debug.LogError("OptionsHUD: Options.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
         }
 
+        UiNav.Register(_root);
+        _pager = Pager.After(_list);
         resetAll.clicked += ResetAll;
         close.clicked += () => SetOpen(false);
         // A mouse button pressed to bind it mustn't also click what is under the pointer
@@ -163,11 +172,25 @@ public class OptionsHUD : MonoBehaviour
     {
         if (!_bound || !_open) return;
 
-        // Esc, Start and Backspace never bind (GameInput.Rebind), so the window can use them
+        // A controller rebind starts once A, which chose the binding, is let go (else it would bind A)
+        if (_pendingRow != null)
+        {
+            var gamepad = Gamepad.current;
+            if (gamepad == null || !gamepad.buttonSouth.isPressed)
+            {
+                var row = _pendingRow;
+                _pendingRow = null;
+                BeginRebind(row, GameInput.Gamepad);
+            }
+            return;
+        }
+
+        // Esc, Start, Backspace and View never bind (GameInput.Rebind), so the window can use them
         if (_rebinding != null)
         {
             var keyboard = Keyboard.current;
-            if (keyboard != null && keyboard.backspaceKey.wasPressedThisFrame)
+            var gamepad = Gamepad.current;
+            if ((keyboard != null && keyboard.backspaceKey.wasPressedThisFrame) || (gamepad != null && gamepad.selectButton.wasPressedThisFrame))
             {
                 var row = _rebindingRow;
                 var group = _rebindingGroup;
@@ -178,7 +201,9 @@ public class OptionsHUD : MonoBehaviour
             return;
         }
 
-        if (MenuPanels.EscapePressed) SetOpen(false);
+        if (MenuPanels.BackPressed) SetOpen(false);
+        else if (MenuPanels.PagePressed != 0) _pager.Turn(MenuPanels.PagePressed);
+        _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
     }
 
     void SetOpen(bool open)
@@ -188,6 +213,8 @@ public class OptionsHUD : MonoBehaviour
             if (!open)
             {
                 _rebinding?.Cancel();
+                _pendingRow = null;
+                UiNav.Suspend(this, false);
                 _closedFrame = Time.frameCount;
             }
             _open = open;
@@ -199,8 +226,9 @@ public class OptionsHUD : MonoBehaviour
 
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
+        UiNav.SetScope(this, _panel, open);
         if (!open) return;
-        _hint.text = IdleHint;
+        _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
         RefreshRows();
     }
 
@@ -233,6 +261,8 @@ public class OptionsHUD : MonoBehaviour
             element.Add(reset);
             _list.Add(element);
         }
+        _pager.Reset();
+        _pager.Show(_list.Children(), RowsPerPage);
     }
 
     Button AddCell(VisualElement element, Row row, bool has, string group)
@@ -272,21 +302,42 @@ public class OptionsHUD : MonoBehaviour
     void StartRebind(Row row, string group)
     {
         _rebinding?.Cancel();
+        // Pressed with A: wait for it to be let go (Update)
+        var gamepad = Gamepad.current;
+        if (group == GameInput.Gamepad && gamepad != null && gamepad.buttonSouth.isPressed)
+        {
+            _pendingRow = row;
+            UiNav.Suspend(this, true);
+            _hint.text = GamepadHint;
+            return;
+        }
+        BeginRebind(row, group);
+    }
+
+    void BeginRebind(Row row, string group)
+    {
         var action = row.Action();
         int index = GameInput.BindingIndex(action, group, row.Part);
-        if (index < 0) return;
+        if (index < 0)
+        {
+            UiNav.Suspend(this, false);
+            return;
+        }
 
         _rebindingRow = row;
         _rebindingGroup = group;
+        // Menu navigation waits, so the button pressed to bind it doesn't also press the focused one
+        UiNav.Suspend(this, true);
         // Unfocused, so the key pressed to bind it doesn't click it again
-        (group == GameInput.Gamepad ? row.GamepadButton : row.KeyboardButton)?.Blur();
+        if (!GameInput.UsingGamepad) (group == GameInput.Gamepad ? row.GamepadButton : row.KeyboardButton)?.Blur();
         _rebinding = GameInput.Rebind(action, index, group, () =>
         {
             _rebinding = null;
             _rebindingRow = null;
             _rebindingGroup = null;
+            UiNav.Suspend(this, false);
             if (!_bound) return;
-            _hint.text = IdleHint;
+            _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
             RefreshRows();
         });
         _hint.text = group == GameInput.Gamepad ? GamepadHint : KeyboardHint;

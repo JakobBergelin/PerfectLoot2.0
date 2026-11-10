@@ -19,7 +19,7 @@
                     <ui:Button name="levelHeading" text="Level" class="damage-meter__number damage-meter__number--heading" />
                 </ui:VisualElement>
                 <!-- Rows are created by DamageMeterHUD -->
-                <ui:ScrollView name="rows" class="damage-meter__rows" />
+                <ui:VisualElement name="rows" class="damage-meter__rows" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

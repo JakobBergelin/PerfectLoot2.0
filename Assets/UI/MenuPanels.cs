@@ -49,6 +49,7 @@ public static class MenuPanels
         {
             if (_open == panel) return;
             _open = panel;
+            if (_tabs.Exists(tab => ReferenceEquals(tab.Panel, panel))) _lastTab = panel;
             _changedFrame = Time.frameCount;
             OpenChanged?.Invoke(_open);
         }
@@ -77,6 +78,78 @@ public static class MenuPanels
         (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
         (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 
+    /// <summary>
+    /// Esc, Start, or B on a gamepad, this frame: closes what is open, one thing per press. Unlike EscapePressed it never
+    /// opens the in-game menu, so B stays free during play.
+    /// </summary>
+    public static bool BackPressed =>
+        EscapePressed || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
+
+    /// <summary>
+    /// A panel's own toggle (Inventory, Skills, ...) pressed this frame. Not while typing, and not from a controller while
+    /// a menu has it: its D-pad (where players may bind panels) moves focus there, and B, View or LB/RB close or switch.
+    /// </summary>
+    public static bool TogglePressed(InputAction action) =>
+        action != null && action.WasPressedThisFrame() && !IsTyping && !(UiNav.HasGamepadInput && action.activeControl?.device is Gamepad);
+
+    /// <summary>-1 for LT, +1 for RT, else 0 this frame: turns the page of the open panel's list.</summary>
+    public static int PagePressed => Gamepad.current == null ? 0
+        : Gamepad.current.leftTrigger.wasPressedThisFrame ? -1 : Gamepad.current.rightTrigger.wasPressedThisFrame ? 1 : 0;
+
+    // ---------- Panel tabs ----------
+
+    // The panels the Panels action (View) opens and LB/RB go through, in order
+    struct Tab
+    {
+        public object Panel;
+        public int Order;
+        public Action<bool> SetOpen;
+    }
+
+    static readonly List<Tab> _tabs = new List<Tab>();
+    static object _lastTab;
+
+    /// <summary>Adds a panel to the ones View opens and LB/RB switch between, at its place in the order.</summary>
+    public static void AddTab(object panel, int order, Action<bool> setOpen)
+    {
+        RemoveTab(panel);
+        int index = _tabs.FindIndex(tab => tab.Order > order);
+        var added = new Tab { Panel = panel, Order = order, SetOpen = setOpen };
+        if (index < 0) _tabs.Add(added);
+        else _tabs.Insert(index, added);
+    }
+
+    public static void RemoveTab(object panel)
+    {
+        _tabs.RemoveAll(tab => ReferenceEquals(tab.Panel, panel));
+        if (ReferenceEquals(_lastTab, panel)) _lastTab = null;
+    }
+
+    /// <summary>
+    /// Run once a frame (UiNavigator): View opens the panel used last (the first one at first) or closes the open one; LB
+    /// and RB open the one before or after it.
+    /// </summary>
+    public static void UpdateTabs()
+    {
+        if (_tabs.Count == 0 || IsTyping) return;
+        int open = _tabs.FindIndex(tab => ReferenceEquals(tab.Panel, _open));
+        if (GameInput.Player.Panels.WasPressedThisFrame())
+        {
+            if (open >= 0) _tabs[open].SetOpen(false);
+            else
+            {
+                int last = _tabs.FindIndex(tab => ReferenceEquals(tab.Panel, _lastTab));
+                _tabs[Mathf.Max(0, last)].SetOpen(true);
+            }
+            return;
+        }
+
+        var gamepad = Gamepad.current;
+        if (open < 0 || gamepad == null) return;
+        int step = gamepad.leftShoulder.wasPressedThisFrame ? -1 : gamepad.rightShoulder.wasPressedThisFrame ? 1 : 0;
+        if (step != 0) _tabs[(open + step + _tabs.Count) % _tabs.Count].SetOpen(true);
+    }
+
     // Statics survive entering Play mode when domain reload is off
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
     static void ResetStatics()
@@ -86,5 +159,7 @@ public static class MenuPanels
         _typing.Clear();
         _changedFrame = -1;
         OpenChanged = null;
+        _tabs.Clear();
+        _lastTab = null;
     }
 }

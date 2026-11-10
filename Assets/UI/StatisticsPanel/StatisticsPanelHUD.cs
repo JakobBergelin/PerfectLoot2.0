@@ -14,6 +14,7 @@ public class StatisticsPanelHUD : MonoBehaviour
 {
     const string HiddenClass = "stats-root--hidden", SelectedClass = "stats-chip--selected";
     const float RefreshInterval = 0.5f;
+    const int RowsPerPage = 10;
 
     // One number column of a tab
     struct Column
@@ -60,8 +61,8 @@ public class StatisticsPanelHUD : MonoBehaviour
     PanelRenderer _panelRenderer;
     bool _bound, _open;
     int _boundVersion = -1;
-    VisualElement _root, _scopes, _tabs, _headings;
-    ScrollView _rows;
+    VisualElement _root, _panel, _scopes, _tabs, _headings, _rows;
+    Pager _pager;
     Label _empty;
     readonly List<Label> _tabChips = new List<Label>();
     Label _accountChip, _characterChip;
@@ -87,10 +88,12 @@ public class StatisticsPanelHUD : MonoBehaviour
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         MenuPanels.OpenChanged += OnMenuOpenChanged;
+        MenuPanels.AddTab(this, 3, SetOpen);
     }
 
     void OnDisable()
     {
+        MenuPanels.RemoveTab(this);
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
@@ -117,18 +120,20 @@ public class StatisticsPanelHUD : MonoBehaviour
     bool Bind(VisualElement root)
     {
         _root = root.Q<VisualElement>("statisticsRoot");
+        _panel = root.Q<VisualElement>("panel");
         _scopes = root.Q<VisualElement>("scopes");
         _tabs = root.Q<VisualElement>("tabs");
         _headings = root.Q<VisualElement>("headings");
-        _rows = root.Q<ScrollView>("rows");
+        _rows = root.Q<VisualElement>("rows");
         _empty = root.Q<Label>("empty");
-        if (_root == null || _scopes == null || _tabs == null || _headings == null || _rows == null || _empty == null)
+        if (_root == null || _panel == null || _scopes == null || _tabs == null || _headings == null || _rows == null || _empty == null)
         {
             Debug.LogError("StatisticsPanelHUD: StatisticsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
         }
-        _rows.verticalScrollerVisibility = ScrollerVisibility.Hidden;
-        _rows.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
+        UiNav.Register(_root);
+        _pager = Pager.After(_rows);
+        if (_panel.Q(className: "nav-hint") == null) UiNav.Hint(_panel, "A Select · LT/RT Pages · LB/RB Panels · B Close");
 
         _scopes.Clear();
         _accountChip = Chip(_scopes, "Account", () => SetScope(false));
@@ -150,21 +155,23 @@ public class StatisticsPanelHUD : MonoBehaviour
         var chip = new Label(text);
         chip.AddToClassList("stats-chip");
         chip.RegisterCallback<ClickEvent>(_ => onClick());
+        UiNav.Clickable(chip, onClick);
         parent.Add(chip);
         return chip;
     }
 
     void Update()
     {
-        if (_toggleAction != null && _toggleAction.WasPressedThisFrame() && !MenuPanels.IsTyping)
+        if (MenuPanels.TogglePressed(_toggleAction))
             SetOpen(!_open);
         if (!_bound || !_open) return;
 
-        if (MenuPanels.EscapePressed)
+        if (MenuPanels.BackPressed)
         {
             SetOpen(false);
             return;
         }
+        if (MenuPanels.PagePressed != 0) _pager.Turn(MenuPanels.PagePressed);
         // Time played and the rest keep counting while it's open
         if (Time.unscaledTime >= _nextRefresh) Refresh();
     }
@@ -180,6 +187,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         MenuPanels.SetOpen(this, open);
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
+        UiNav.SetScope(this, _panel, open);
         if (open) Refresh();
     }
 
@@ -194,7 +202,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         _tab = tab;
         _sortColumn = Tabs[tab].Subject != null ? 1 : 0;
         _sortDescending = true;
-        _rows.scrollOffset = Vector2.zero;
+        _pager.Reset();
         Refresh();
     }
 
@@ -274,6 +282,10 @@ public class StatisticsPanelHUD : MonoBehaviour
         string shown = $"{_tab}/{_sortColumn}/{_sortDescending}";
         if (shown == _shownHeadings) return;
         _shownHeadings = shown;
+        // A controller on a heading stays on the same column's new one
+        int focusedColumn = -1;
+        for (int i = 0; i < _headings.childCount; i++)
+            if (_headings[i].panel?.focusController?.focusedElement == _headings[i]) focusedColumn = i;
         _headings.Clear();
         if (tab.Subject == null)
         {
@@ -283,6 +295,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         _headings.style.display = DisplayStyle.Flex;
         AddHeading(tab.Subject, 0, true);
         for (int i = 0; i < tab.Columns.Length; i++) AddHeading(tab.Columns[i].Heading, i + 1, false);
+        if (focusedColumn >= 0 && focusedColumn < _headings.childCount) UiNav.Focus(_headings[focusedColumn]);
     }
 
     void AddHeading(string text, int column, bool isName)
@@ -294,6 +307,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         if (isName) heading.AddToClassList("stats-cell--name");
         heading.EnableInClassList("stats-cell--sorted", column == _sortColumn);
         heading.RegisterCallback<ClickEvent>(_ => SortBy(column));
+        UiNav.Clickable(heading, () => SortBy(column));
         _headings.Add(heading);
     }
 
@@ -314,6 +328,7 @@ public class StatisticsPanelHUD : MonoBehaviour
             }
             _rows.Add(element);
         }
+        _pager.Show(_rows.Children(), RowsPerPage);
     }
 
     static Label Cell(string text, string extraClass)
