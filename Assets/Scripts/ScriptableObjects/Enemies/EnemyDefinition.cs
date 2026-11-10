@@ -27,6 +27,8 @@ namespace Enemies
         public float Scale = 1f;
         [Tooltip("Heavier units push lighter ones aside")]
         public float Mass = 1f;
+        [Tooltip("The camera zooms out to keep it on screen while a player is near, like a dungeon boss (for big enemies)")]
+        public bool CameraFocus;
 
         [Tooltip("For enemies MovementSpeed is the speed in units per second (for the player it is a bonus)")]
         public StatBlock Stats = new StatBlock

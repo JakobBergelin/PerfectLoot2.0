@@ -32,6 +32,9 @@ public static class EnemyEntitySetup
         // Spacing in crowds
         AddOrSet(entityManager, entity, new Steering { Radius = definition.BodyRadius, BodyType = definition.BodyType });
 
+        // Big enemies the camera zooms out for
+        if (definition.CameraFocus) AddOrSet(entityManager, entity, new CameraFocus { Radius = definition.BodyRadius });
+
         // Without AI (training dummies) it just stands there
         if (definition.HasAI)
         {

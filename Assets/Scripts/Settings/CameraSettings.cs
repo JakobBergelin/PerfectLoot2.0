@@ -28,6 +28,21 @@ public class CameraSettings : ScriptableObject
     [Tooltip("When the player is further than this (meters) from where the camera is heading, it jumps there instead")]
     public float SnapDistance = 20f;
 
+    [Header("Zoom")]
+    [Tooltip("Meters around the camera's center (the middle of the players) that fit on screen without zooming out. " +
+             "When a player or a Camera Focus (bosses) reaches further, the camera moves back")]
+    [Min(1f)] public float ComfortRadius = 7f;
+    [Tooltip("How far back the camera can move at most, as a multiple of Distance; 1 never zooms out")]
+    [Range(1f, 2f)] public float MaxZoomOut = 1.35f;
+    [Tooltip("A Camera Focus (bosses) only counts while a player is within this many meters of it")]
+    [Min(0f)] public float FocusRange = 20f;
+    [Tooltip("Roughly the seconds the camera takes to zoom out")]
+    [Min(0.01f)] public float ZoomOutTime = 0.4f;
+    [Tooltip("Roughly the seconds the camera takes to zoom back in")]
+    [Min(0.01f)] public float ZoomInTime = 1.2f;
+    [Tooltip("Seconds the camera waits before zooming back in, so it doesn't pump in and out")]
+    [Min(0f)] public float ZoomInDelay = 1f;
+
     [Header("Shake")]
     [Tooltip("Meters the camera moves at most when a skill with Crit Shake 1 crits; 0 turns shaking off")]
     [Min(0f)] public float ShakeStrength = 1f;
@@ -39,10 +54,17 @@ public class CameraSettings : ScriptableObject
     public Quaternion Rotation => Quaternion.Euler(Pitch, Yaw, 0f);
     public Vector3 Offset => Vector3.up * LookHeight - Rotation * Vector3.forward * Distance;
 
-    /// <summary>Writes the framing, smoothing and shake into the component; leaves its running state (Velocity, HasTarget, Trauma) alone.</summary>
+    /// <summary>Writes the framing, smoothing, zoom and shake into the component; leaves its running state (Velocity, HasTarget, Zoom, Trauma) alone.</summary>
     public void ApplyTo(ref CameraFollow follow)
     {
         follow.Offset = Offset;
+        follow.LookHeight = LookHeight;
+        follow.ComfortRadius = ComfortRadius;
+        follow.MaxZoomOut = MaxZoomOut;
+        follow.FocusRange = FocusRange;
+        follow.ZoomOutTime = ZoomOutTime;
+        follow.ZoomInTime = ZoomInTime;
+        follow.ZoomInDelay = ZoomInDelay;
         follow.Rotation = Rotation;
         follow.SmoothTime = SmoothTime;
         follow.MaxSpeed = MaxSpeed;

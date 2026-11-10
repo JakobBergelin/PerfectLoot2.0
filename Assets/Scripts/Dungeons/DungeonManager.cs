@@ -280,6 +280,8 @@ public class DungeonManager : MonoBehaviour
             return;
         }
         entityManager.AddComponent<DungeonBoss>(_boss);
+        // The camera zooms out to keep it on screen while a player is near
+        entityManager.AddComponentData(_boss, new CameraFocus { Radius = step.Boss.BodyRadius });
     }
 
     // The nearest built Boss Spawn Point, else BossDistance from the player
