@@ -7,6 +7,7 @@ namespace ActiveSkills
     {
         [SerializeField] float cooldown = 2f;
         [SerializeField] float resourceCost = 5f;
+        [Tooltip("Resource drained per second while flying")]
         [SerializeField] float resourceCostPerSecond = 10f;
         [Tooltip("Meters per second")]
         public float Speed = 12f;
@@ -33,6 +34,7 @@ namespace ActiveSkills
                 .Text($"{Num(Damage)} × (1 + ").Icon(GameIcons.Affix(Equipment.Affix.Resource)).Text($" spent / {Num(SpentToDouble)})"));
             description.Effects.Add(AreaLine("Landing radius", Radius, stats));
             description.Effects.Add(ValueLine(GameIcons.Affix(Equipment.Affix.MovementSpeed), "Flight speed", Speed, null, " m/s"));
+            description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Equipment.Affix.MovementSpeed)).Text("Hold to keep flying"));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Stat(StatIcon.Duration)).Text("Invulnerable while flying"));
         }
 

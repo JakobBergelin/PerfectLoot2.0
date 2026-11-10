@@ -483,8 +483,9 @@ public struct CaptainsShield : IComponentData, IEnableableComponent
 }
 
 /// <summary>
-/// Flies the unit to the clicked spot, lifted over the ground and Invulnerable, draining resource; no other skill,
-/// moving or turning meanwhile. Landing releases a lightning attack that grows with the resource spent.
+/// Flies the unit the way it faced at take-off for as long as the skill is held, lifted over the ground and Invulnerable,
+/// draining resource; no other skill, moving or turning meanwhile. Landing releases a lightning attack that grows with the
+/// resource spent.
 /// </summary>
 public struct BallLightning : IComponentData, IEnableableComponent
 {
@@ -501,7 +502,8 @@ public struct BallLightning : IComponentData, IEnableableComponent
     public float Elapsed;               // Since landing, up to Cooldown
     public bool Flying;
     public float3 Start;
-    public float3 Destination;
+    public float3 Direction;           // Flat, kept from take-off
+    public float FloorY;                // Height of the floor it flies over, where how high it can rise is measured from
     public float Spent;                 // Resource spent on this flight, start cost included
 }
 

@@ -97,7 +97,7 @@ public partial struct TeleportSystem : ISystem
     }
 
     // The cursor (no further than range), else the closest spot back toward the caster with floor where the collider fits.
-    // Also used by Ball Lightning.
+    // Also used by other skills and companions.
     public static bool TryFindLanding(in CollisionWorld world, in PhysicsCollider collider, in LocalTransform transform, Entity self, float3 cursor, float range,
                                float minWalkableNormalY, float stepHeight, uint floorLayers, out float3 landing)
     {
@@ -123,8 +123,9 @@ public partial struct TeleportSystem : ISystem
         return false;
     }
 
-    // Not inside a wall, prop or steep ground there (enemies are fine: UnitMoverSystem pushes them apart)
-    static bool Fits(in CollisionWorld world, in PhysicsCollider collider, float3 position, quaternion rotation, float scale, Entity self, float minWalkableNormalY)
+    // Not inside a wall, prop or steep ground there (enemies are fine: UnitMoverSystem pushes them apart). Also used by
+    // Ball Lightning.
+    public static bool Fits(in CollisionWorld world, in PhysicsCollider collider, float3 position, quaternion rotation, float scale, Entity self, float minWalkableNormalY)
     {
         if (!collider.IsValid) return true;
         var distances = new NativeList<DistanceHit>(8, Allocator.Temp);

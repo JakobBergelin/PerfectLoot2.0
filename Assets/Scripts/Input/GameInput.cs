@@ -180,7 +180,7 @@ public static class GameInput
     }
 
     // A control is bound to one action per group: binding it here unbinds it everywhere else in the Player map. Look
-    // (the pointer, a stick) can't be rebound, so it keeps its bindings
+    // (the mouse pointer) can't be rebound, so it keeps its binding
     static void ClearOthersUsing(InputAction action, int index)
     {
         var bound = action.bindings[index];

@@ -10,7 +10,8 @@ using UnityEngine.UIElements;
 /// <summary>
 /// While the player stands within a Portal's range, shows the portal's name and an Enter button pinned above it on
 /// screen (the nearest portal when several are in range). Enter, or the Interact action (GameInput), loads the portal's
-/// scene with the current character (GameSceneLoader). Hidden while a menu panel is open.
+/// scene with the current character (GameSceneLoader). Hidden while a menu panel is open. Interact goes to the
+/// portal before any loot in reach.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
@@ -19,6 +20,9 @@ public class PortalHUD : MonoBehaviour
 
     [Tooltip("Height above the portal's origin where the card's bottom edge sits, in meters")]
     public float CardHeight = 3f;
+
+    /// <summary>True while the card shows a portal: Interact enters it then (GroundLootHUD leaves the loot alone).</summary>
+    public static bool ShowingPortal { get; private set; }
 
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
@@ -44,6 +48,7 @@ public class PortalHUD : MonoBehaviour
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _boundVersion = -1;
         _card = null;
+        ShowingPortal = false;
         SetHovered(false);
     }
 
@@ -104,6 +109,7 @@ public class PortalHUD : MonoBehaviour
         _card.style.left = panelPosition.x;
         _card.style.top = panelPosition.y;
         _card.RemoveFromClassList(HiddenClass);
+        ShowingPortal = true;
 
         if (_labelVersion != GameInput.Version)
         {
@@ -146,6 +152,7 @@ public class PortalHUD : MonoBehaviour
     void Hide()
     {
         _scene = default;
+        ShowingPortal = false;
         if (_card != null) _card.AddToClassList(HiddenClass);
         SetHovered(false);
     }

@@ -28,6 +28,12 @@
     background-color: var(--label-hover-bg);
 }
 
+/* What Interact picks up: the nearest item in reach */
+.gl-label--next {
+    background-color: var(--label-hover-bg);
+    border-width: 2px;
+}
+
 /* Too far to pick up */
 .gl-label--far {
     opacity: 0.5;

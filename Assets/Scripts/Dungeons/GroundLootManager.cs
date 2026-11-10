@@ -12,8 +12,9 @@ using Random = UnityEngine.Random;
 
 /// <summary>
 /// Items lying on the ground (dungeon kills and completion, DungeonManager). GroundLootHUD shows a label for each;
-/// clicking it within PickupRange picks the item up: it's given to AccountManager right away and waits in its drop queue
-/// for review in town. Items left on the ground are lost when the scene changes (every scene load makes a new world).
+/// clicking it within PickupRange, or Interact for the nearest one, picks the item up: it's given to AccountManager right
+/// away and waits in its drop queue for review in town. Items left on the ground are lost when the scene changes (every
+/// scene load makes a new world).
 /// Kept between scenes (GameBootstrap's rig).
 /// </summary>
 public class GroundLootManager : MonoBehaviour
@@ -129,6 +130,22 @@ public class GroundLootManager : MonoBehaviour
         if (item == null || !TryGetPlayer(out var player)) return false;
         var offset = new Vector2(item.Position.x - player.x, item.Position.z - player.z);
         return offset.sqrMagnitude <= PickupRange * PickupRange;
+    }
+
+    /// <summary>The item in reach nearest the player (what Interact picks up), or null.</summary>
+    public GroundItem NearestInReach()
+    {
+        if (!TryGetPlayer(out var player)) return null;
+        GroundItem nearest = null;
+        float nearestDistance = PickupRange * PickupRange;
+        foreach (var item in _items)
+        {
+            var offset = new Vector2(item.Position.x - player.x, item.Position.z - player.z);
+            if (offset.sqrMagnitude > nearestDistance) continue;
+            nearestDistance = offset.sqrMagnitude;
+            nearest = item;
+        }
+        return nearest;
     }
 
     /// <summary>Picks the item up if it's in reach: it's the account's now (AccountManager.ReceiveDrop). False otherwise.</summary>

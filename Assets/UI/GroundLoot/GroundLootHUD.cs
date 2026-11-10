@@ -5,8 +5,9 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// A small label above every item on the ground (GroundLootManager): its name in its rarity's color. Clicking it picks
-/// the item up when the player is within reach; labels out of reach are dimmed and ignore clicks. Labels that would
-/// overlap on screen are stacked upward.
+/// the item up when the player is within reach; labels out of reach are dimmed and ignore clicks. The Interact action
+/// picks up the nearest item in reach, whose label is marked and shows the key (unless a portal in reach takes Interact,
+/// PortalHUD). Labels that would overlap on screen are stacked upward.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class GroundLootHUD : MonoBehaviour
@@ -14,6 +15,7 @@ public class GroundLootHUD : MonoBehaviour
     const string LabelClass = "gl-label";
     const string FarClass = "gl-label--far";
     const string HiddenClass = "gl-label--hidden";
+    const string NextClass = "gl-label--next";
     const float StackGap = 2f;
 
     [Tooltip("Height above the item where the label's bottom edge sits, in meters")]
@@ -22,6 +24,7 @@ public class GroundLootHUD : MonoBehaviour
     class View
     {
         public GroundLootManager.GroundItem Item;
+        public string Name;
         public Label Label;
         public Rect Rect;           // Where it goes this frame, in panel space
         public bool Visible;
@@ -81,6 +84,19 @@ public class GroundLootHUD : MonoBehaviour
         var manager = GroundLootManager.Instance;
         if (manager != _manager || (manager != null && manager.Version != _itemsVersion)) Rebuild(manager);
         if (manager == null || _views.Count == 0) return;
+
+        // Interact takes the nearest item in reach, unless the portal card has it
+        var next = PortalHUD.ShowingPortal ? null : manager.NearestInReach();
+        string key = GameInput.Label(GameInput.Player.Interact);
+        foreach (var view in _views)
+        {
+            bool isNext = view.Item == next;
+            view.Label.EnableInClassList(NextClass, isNext);
+            string text = isNext && key.Length > 0 ? $"{view.Name} ({key})" : view.Name;
+            if (view.Label.text != text) view.Label.text = text;
+        }
+        if (next != null && !MenuPanels.IsPanelOpen && !MenuPanels.IsTyping && GameInput.Player.Interact.WasPressedThisFrame() && manager.PickUp(next))
+            return;
 
         var camera = Camera.main;
         foreach (var view in _views)
@@ -144,7 +160,8 @@ public class GroundLootHUD : MonoBehaviour
 
         foreach (var item in manager.Items)
         {
-            var label = new Label(item.Item.BaseItem != null ? item.Item.BaseItem.Name : "Item");
+            string name = item.Item.BaseItem != null ? item.Item.BaseItem.Name : "Item";
+            var label = new Label(name);
             label.AddToClassList(LabelClass);
             var color = ItemText.TitleColor(item.Item);
             label.style.color = color;
@@ -160,7 +177,7 @@ public class GroundLootHUD : MonoBehaviour
             label.RegisterCallback<PointerLeaveEvent>(_ => SetHovered(label, false));
 
             _root.Add(label);
-            _views.Add(new View { Item = item, Label = label });
+            _views.Add(new View { Item = item, Name = name, Label = label });
         }
     }
 
