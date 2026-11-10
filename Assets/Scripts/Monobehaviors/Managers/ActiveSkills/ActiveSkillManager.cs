@@ -12,7 +12,17 @@ using UnityEngine;
 /// </summary>
 public class ActiveSkillManager : MonoBehaviour
 {
-    public static ActiveSkillManager Instance;
+    static readonly ActiveSkillManager[] _players = new ActiveSkillManager[GameInput.MaxPlayers];
+
+    /// <summary>Player 1's.</summary>
+    public static ActiveSkillManager Instance => _players[0];
+
+    /// <summary>A local player's (0 is player 1), or null when that player isn't in the game.</summary>
+    public static ActiveSkillManager For(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
+
+    [Tooltip("Which local player's skills these are (CharacterManager.PlayerIndex)")]
+    public int PlayerIndex;
     public ActiveSkillSlot Slot1, Slot2, Slot3, Slot4;
 
     [Header("Every skill that can be equipped")]
@@ -26,8 +36,8 @@ public class ActiveSkillManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (For(PlayerIndex) != null && For(PlayerIndex) != this) { Destroy(gameObject); return; }
+        _players[PlayerIndex] = this;
 
         foreach (var slot in Slots)
             if (slot != null) slot.Changed += OnSlotChanged;
@@ -50,7 +60,7 @@ public class ActiveSkillManager : MonoBehaviour
     // Set directly instead of EquipSkill so Start pushes once instead of once per slot
     void LoadCharacterSkills()
     {
-        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(PlayerIndex) : null;
         if (_character == null) return;
         var slots = Slots;
         for (int i = 0; i < slots.Length && i < _character.ActiveSkills.Count; i++)
@@ -103,7 +113,7 @@ public class ActiveSkillManager : MonoBehaviour
         foreach (var slot in Slots)
             if (slot != null) slot.Changed -= OnSlotChanged;
         CharacterManager.PlayerSpawned -= OnPlayerSpawned;
-        if (Instance == this) Instance = null;
+        if (For(PlayerIndex) == this) _players[PlayerIndex] = null;
     }
 
     void OnSlotChanged(ActiveSkillSlot slot)
@@ -115,6 +125,7 @@ public class ActiveSkillManager : MonoBehaviour
     // New player entity (spawn/respawn): none of the skills are on it yet
     void OnPlayerSpawned(Entity player)
     {
+        if (!TryGetPlayer(out _, out var own) || player != own) return;
         _applied.Clear();
         PushSkills();
     }
@@ -136,28 +147,18 @@ public class ActiveSkillManager : MonoBehaviour
         TryPushSkills();
     }
 
-    // Cached because MirrorState runs every frame
-    World _queryWorld;
-    EntityQuery _playerQuery;
-
+    // This player's entity (CharacterManager with the same PlayerIndex), once it has its Skill buffer
     bool TryGetPlayer(out EntityManager entityManager, out Entity player)
     {
         entityManager = default;
         player = Entity.Null;
         var world = World.DefaultGameObjectInjectionWorld;
-        if (world == null || !world.IsCreated) return false;
+        var characters = CharacterManager.For(PlayerIndex);
+        if (world == null || !world.IsCreated || characters == null) return false;
 
         entityManager = world.EntityManager;
-        if (_queryWorld != world)
-        {
-            _playerQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadWrite<Skill>());
-            _queryWorld = world;
-        }
-        if (_playerQuery.IsEmpty) return false;
-
-        using var players = _playerQuery.ToEntityArray(Allocator.Temp);
-        player = players[0];
-        return true;
+        player = characters.Player;
+        return player != Entity.Null && entityManager.Exists(player) && entityManager.HasBuffer<Skill>(player);
     }
 
     void TryPushSkills()

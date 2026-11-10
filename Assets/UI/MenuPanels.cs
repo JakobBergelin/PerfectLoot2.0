@@ -73,17 +73,21 @@ public static class MenuPanels
     /// </summary>
     public static bool ChangedThisFrame => _changedFrame == Time.frameCount;
 
+    // The menus are player 1's for now: their gamepad and keyboard (any, while they play alone)
+    static Gamepad MenuGamepad => GameInput.Players[0].GamepadDevice;
+    static Keyboard MenuKeyboard => GameInput.Players[0].KeyboardDevice;
+
     /// <summary>Esc, or Start on a gamepad, this frame: they always close what is open or open the in-game menu.</summary>
     public static bool EscapePressed =>
-        (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
-        (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
+        (MenuKeyboard != null && MenuKeyboard.escapeKey.wasPressedThisFrame) ||
+        (MenuGamepad != null && MenuGamepad.startButton.wasPressedThisFrame);
 
     /// <summary>
     /// Esc, Start, or B on a gamepad, this frame: closes what is open, one thing per press. Unlike EscapePressed it never
     /// opens the in-game menu, so B stays free during play.
     /// </summary>
     public static bool BackPressed =>
-        EscapePressed || (Gamepad.current != null && Gamepad.current.buttonEast.wasPressedThisFrame);
+        EscapePressed || (MenuGamepad != null && MenuGamepad.buttonEast.wasPressedThisFrame);
 
     /// <summary>
     /// A panel's own toggle (Inventory, Skills, ...) pressed this frame. Not while typing, and not from a controller while
@@ -93,8 +97,8 @@ public static class MenuPanels
         action != null && action.WasPressedThisFrame() && !IsTyping && !(UiNav.HasGamepadInput && action.activeControl?.device is Gamepad);
 
     /// <summary>-1 for LT, +1 for RT, else 0 this frame: turns the page of the open panel's list.</summary>
-    public static int PagePressed => Gamepad.current == null ? 0
-        : Gamepad.current.leftTrigger.wasPressedThisFrame ? -1 : Gamepad.current.rightTrigger.wasPressedThisFrame ? 1 : 0;
+    public static int PagePressed => MenuGamepad == null ? 0
+        : MenuGamepad.leftTrigger.wasPressedThisFrame ? -1 : MenuGamepad.rightTrigger.wasPressedThisFrame ? 1 : 0;
 
     // ---------- Panel tabs ----------
 
@@ -144,7 +148,7 @@ public static class MenuPanels
             return;
         }
 
-        var gamepad = Gamepad.current;
+        var gamepad = MenuGamepad;
         if (open < 0 || gamepad == null) return;
         int step = gamepad.leftShoulder.wasPressedThisFrame ? -1 : gamepad.rightShoulder.wasPressedThisFrame ? 1 : 0;
         if (step != 0) _tabs[(open + step + _tabs.Count) % _tabs.Count].SetOpen(true);

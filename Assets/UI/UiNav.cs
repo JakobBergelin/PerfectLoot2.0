@@ -217,12 +217,12 @@ public static class UiNav
             var first = top.Remembered != null && IsShown(top.Remembered, top.Root) && top.Remembered != focused ? top.Remembered : FirstFocusable(top.Root);
             first?.Focus();
             // The press that brought focus here (e.g. the first one with a controller) only shows where it is
-            _heldDirection = ReadDirection(Gamepad.current);
+            _heldDirection = ReadDirection(GameInput.Players[0].GamepadDevice);
             _nextRepeat = Time.unscaledTime + RepeatDelay;
             return;
         }
 
-        var gamepadDevice = Gamepad.current;
+        var gamepadDevice = GameInput.Players[0].GamepadDevice;
         if (gamepadDevice == null) return;
         var direction = ReadDirection(gamepadDevice);
         if (direction != Vector2.zero && (direction != _heldDirection || Time.unscaledTime >= _nextRepeat))

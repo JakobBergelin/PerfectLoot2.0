@@ -10,11 +10,22 @@ using Random = UnityEngine.Random;
 
 /// <summary>
 /// Spawns the player from its visual-only prefab (baked by PlayerPrefabAuthoring in a subscene), adds the
-/// gameplay components, applies class/resource/level, and respawns the player after it dies.
+/// gameplay components, applies class/resource/level, and respawns the player after it dies. One per local player
+/// (PlayerIndex; player 2's is made by CoopManager), like InventoryManager, ActiveSkillManager and PassiveSkillManager.
 /// </summary>
 public class CharacterManager : MonoBehaviour
 {
-    public static CharacterManager Instance;
+    static readonly CharacterManager[] _players = new CharacterManager[GameInput.MaxPlayers];
+
+    /// <summary>Player 1's.</summary>
+    public static CharacterManager Instance => _players[0];
+
+    /// <summary>A local player's (0 is player 1), or null when that player isn't in the game.</summary>
+    public static CharacterManager For(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
+
+    [Tooltip("Which local player this is: 0 is player 1 (the rig's own); player 2's is made by CoopManager")]
+    public int PlayerIndex;
 
     /// <summary>Raised after every (re)spawn. Other managers re-push their state to the new player entity.</summary>
     public static event Action<Entity> PlayerSpawned;
@@ -228,8 +239,8 @@ public class CharacterManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (For(PlayerIndex) != null && For(PlayerIndex) != this) { Destroy(gameObject); return; }
+        _players[PlayerIndex] = this;
     }
 
     void OnEnable() => GameSceneLoader.Loading += SaveProgress;
@@ -239,7 +250,7 @@ public class CharacterManager : MonoBehaviour
     void Start()
     {
         // Picked in Character Select; a game scene played without the main menu has no selected character
-        var selected = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        var selected = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(PlayerIndex) : null;
         if (selected != null) UseCharacter(selected);
         else RandomizeEmpty();
     }
@@ -259,7 +270,12 @@ public class CharacterManager : MonoBehaviour
 
     void OnDestroy()
     {
-        if (Instance == this) Instance = null;
+        if (For(PlayerIndex) != this) return;
+        _players[PlayerIndex] = null;
+        // A player leaving takes their entity along (player 1's goes with the scene)
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (PlayerIndex > 0 && world != null && world.IsCreated && world == _playerWorld && world.EntityManager.Exists(_player))
+            world.EntityManager.DestroyEntity(_player);
     }
 
     void Update()
@@ -357,7 +373,7 @@ public class CharacterManager : MonoBehaviour
         spawnTransform.Position = spawnPosition;
         entityManager.SetComponentData(_player, spawnTransform);
 
-        PlayerEntitySetup.AddGameplayComponents(entityManager, _player, baseStats);
+        PlayerEntitySetup.AddGameplayComponents(entityManager, _player, baseStats, PlayerIndex);
 
         // Fresh entity: nothing applied yet
         _appliedResource = null;
@@ -368,6 +384,9 @@ public class CharacterManager : MonoBehaviour
 
         PlayerSpawned?.Invoke(_player);
     }
+
+    // Where player 2 appears, from player 1
+    static readonly Vector3 JoinOffset = new Vector3(2f, 0f, 0f);
 
     // Seconds to keep looking for ground before spawning at the plain position anyway
     const float MaxGroundWait = 2f;
@@ -383,6 +402,10 @@ public class CharacterManager : MonoBehaviour
     {
         position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
+        // Player 2 and on: next to player 1 when they're in the game
+        var first = For(0);
+        if (PlayerIndex > 0 && first != null && first._player != Entity.Null && entityManager.Exists(first._player))
+            position = (Vector3)entityManager.GetComponentData<LocalTransform>(first._player).Position + JoinOffset;
         // Time spent waiting for ground somewhere else doesn't count
         if (position != _groundWaitPosition)
         {

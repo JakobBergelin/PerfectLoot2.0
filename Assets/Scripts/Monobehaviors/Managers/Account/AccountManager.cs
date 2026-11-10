@@ -86,7 +86,7 @@ public class AccountManager : MonoBehaviour
         _charactersLoaded = false;
         _characters.Clear();
         _statistics = null;
-        SelectedCharacter = null;
+        System.Array.Clear(_selected, 0, _selected.Length);
         AccountChanged?.Invoke();
         PendingDropsChanged?.Invoke();
         CharactersChanged?.Invoke();
@@ -109,8 +109,14 @@ public class AccountManager : MonoBehaviour
         }
     }
 
-    /// <summary>The character the game scene plays, or null (e.g. a game scene played without the main menu).</summary>
-    public AccountCharacter SelectedCharacter { get; private set; }
+    readonly AccountCharacter[] _selected = new AccountCharacter[GameInput.MaxPlayers];
+
+    /// <summary>The character player 1 plays in the game scene, or null (e.g. a game scene played without the main menu).</summary>
+    public AccountCharacter SelectedCharacter => _selected[0];
+
+    /// <summary>The character a local player plays (0 is player 1), or null.</summary>
+    public AccountCharacter SelectedCharacterOf(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < _selected.Length ? _selected[playerIndex] : null;
 
     /// <summary>The character the account last went on an adventure with, or null.</summary>
     public AccountCharacter LastPlayedCharacter => FindCharacter(_lastPlayedGuid);
@@ -245,21 +251,34 @@ public class AccountManager : MonoBehaviour
         Statistics.RemoveCharacter(guid);
         SaveStatistics();
         if (_lastPlayedGuid == guid) _lastPlayedGuid = null;
-        if (SelectedCharacter == character) SelectedCharacter = null;
+        for (int i = 0; i < _selected.Length; i++)
+            if (_selected[i] == character) _selected[i] = null;
         SaveCharacters();
         CharactersChanged?.Invoke();
         return true;
     }
 
-    /// <summary>Plays this character in the next game scene and remembers it as last played. False if there's no such character.</summary>
-    public bool SelectCharacter(string guid)
+    /// <summary>
+    /// Plays this character in the next game scene (player 1's remembered as last played). False if there's no such
+    /// character, or the other player has it.
+    /// </summary>
+    public bool SelectCharacter(string guid, int playerIndex = 0)
     {
         var character = FindCharacter(guid);
-        if (character == null) return false;
-        SelectedCharacter = character;
+        if (character == null || playerIndex < 0 || playerIndex >= _selected.Length) return false;
+        for (int i = 0; i < _selected.Length; i++)
+            if (i != playerIndex && _selected[i] == character) return false;
+        _selected[playerIndex] = character;
+        if (playerIndex > 0) return true;
         _lastPlayedGuid = guid;
         SaveCharacters();
         return true;
+    }
+
+    /// <summary>A local player stops playing a character (player 2 leaving).</summary>
+    public void ClearSelection(int playerIndex)
+    {
+        if (playerIndex >= 0 && playerIndex < _selected.Length) _selected[playerIndex] = null;
     }
 
     void EnsureCharactersLoaded()

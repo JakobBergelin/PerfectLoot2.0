@@ -29,20 +29,30 @@ public partial class InputsDataSystem : SystemBase
     {
         var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         var camera = Camera.main;
-        var inputs = GameInput.Actions;
-        bool gamepad = GameInput.UsingGamepad;
 
-        foreach (var (data, entity) in SystemAPI.Query<RefRW<InputsData>>().WithEntityAccess())
+        // Each player entity reads its own player's input (copies like Mirror Image get their owner's afterwards)
+        foreach (var (data, playerIndex, entity) in SystemAPI.Query<RefRW<InputsData>, RefRO<PlayerIndex>>().WithEntityAccess())
         {
+            var controls = GameInput.For(playerIndex.ValueRO.Value);
+            if (controls == null)
+            {
+                data.ValueRW = default;
+                continue;
+            }
+            var inputs = controls.Actions;
+            bool gamepad = controls.UsingGamepad;
+            // The menus are player 1's for now
+            bool menus = controls.Index == 0;
+
             // While typing in a UI text field the movement keys are letters for the text, and while a menu has the
             // controller its stick moves through the menu
-            data.ValueRW.Move = MenuPanels.IsTyping || UiNav.HasGamepadInput ? Vector2.zero : inputs.Player.Move.ReadValue<Vector2>();
+            data.ValueRW.Move = menus && (MenuPanels.IsTyping || UiNav.HasGamepadInput) ? Vector2.zero : inputs.Player.Move.ReadValue<Vector2>();
 
             // While a menu panel is open the mouse is used for the menu, so skills are ignored (movement still works)
-            bool menuOpen = MenuPanels.IsAnyOpen;
+            bool menuOpen = menus && MenuPanels.IsAnyOpen;
             for(int i = 0; i < 4; i++)
             {
-                var skill = GameInput.Skill(i);
+                var skill = controls.Skills[i];
                 data.ValueRW.SkillHeld[i] = !menuOpen && skill.IsPressed();
                 data.ValueRW.SkillPressedThisFrame[i] = !menuOpen && skill.WasPressedThisFrame();
             }

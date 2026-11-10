@@ -7,7 +7,17 @@ using UnityEngine;
 
 public class PassiveSkillManager : MonoBehaviour
 {
-    public static PassiveSkillManager Instance;
+    static readonly PassiveSkillManager[] _players = new PassiveSkillManager[GameInput.MaxPlayers];
+
+    /// <summary>Player 1's.</summary>
+    public static PassiveSkillManager Instance => _players[0];
+
+    /// <summary>A local player's (0 is player 1), or null when that player isn't in the game.</summary>
+    public static PassiveSkillManager For(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
+
+    [Tooltip("Which local player's passives these are (CharacterManager.PlayerIndex)")]
+    public int PlayerIndex;
     public PassiveSkillSlot Slot1, Slot2, Slot3;
 
     [Header("Every passive that can be rolled into an empty slot at start")]
@@ -24,8 +34,8 @@ public class PassiveSkillManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (For(PlayerIndex) != null && For(PlayerIndex) != this) { Destroy(gameObject); return; }
+        _players[PlayerIndex] = this;
 
         foreach (var slot in Slots)
             if (slot != null) slot.Changed += OnSlotChanged;
@@ -48,7 +58,7 @@ public class PassiveSkillManager : MonoBehaviour
     // Set directly instead of EquipPassive so Start pushes once instead of once per slot
     void LoadCharacterPassives()
     {
-        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(PlayerIndex) : null;
         if (_character == null) return;
         var slots = Slots;
         for (int i = 0; i < slots.Length && i < _character.Passives.Count; i++)
@@ -65,6 +75,16 @@ public class PassiveSkillManager : MonoBehaviour
     {
         if (_character == null || AccountManager.Instance == null) return;
         AccountManager.Instance.SetSkills(_character, null, Slots.Select(slot => slot != null && !slot.IsEmpty ? slot.EquippedPassive.Type.ToString() : ""));
+    }
+
+    // This player's entity (CharacterManager with the same PlayerIndex), or Entity.Null
+    Entity OwnPlayer
+    {
+        get
+        {
+            var characters = CharacterManager.For(PlayerIndex);
+            return characters != null ? characters.Player : Entity.Null;
+        }
     }
 
     /// <summary>The passives players can equip.</summary>
@@ -117,7 +137,7 @@ public class PassiveSkillManager : MonoBehaviour
         foreach (var slot in Slots)
             if (slot != null) slot.Changed -= OnSlotChanged;
         CharacterManager.PlayerSpawned -= OnPlayerSpawned;
-        if (Instance == this) Instance = null;
+        if (For(PlayerIndex) == this) _players[PlayerIndex] = null;
     }
 
     void OnSlotChanged(PassiveSkillSlot slot)
@@ -129,6 +149,7 @@ public class PassiveSkillManager : MonoBehaviour
     // New player entity (spawn/respawn): none of the passives are on it yet
     void OnPlayerSpawned(Entity player)
     {
+        if (player != OwnPlayer) return;
         _applied.Clear();
         _dirty = true;
         TryPushPassives();
@@ -174,24 +195,20 @@ public class PassiveSkillManager : MonoBehaviour
         if (world == null || !world.IsCreated) return;
 
         var entityManager = world.EntityManager;
-        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadWrite<Passive>());
-        if (query.IsEmpty) return;
+        var player = OwnPlayer;
+        if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasBuffer<Passive>(player)) return;
 
-        using var players = query.ToEntityArray(Allocator.Temp);
-        foreach (var player in players)
-        {
-            foreach (var passive in _applied)
-                if (!Active.Contains(passive)) passive.Remove(entityManager, player);
+        foreach (var passive in _applied)
+            if (!Active.Contains(passive)) passive.Remove(entityManager, player);
 
-            foreach (var passive in Active)
-                passive.Apply(entityManager, player);
+        foreach (var passive in Active)
+            passive.Apply(entityManager, player);
 
-            // Apply/Remove are structural changes, so fetch the buffer afterwards
-            var buffer = entityManager.GetBuffer<Passive>(player);
-            buffer.Clear();
-            foreach (var passive in Active)
-                buffer.Add(new Passive { Type = passive.Type });
-        }
+        // Apply/Remove are structural changes, so fetch the buffer afterwards
+        var buffer = entityManager.GetBuffer<Passive>(player);
+        buffer.Clear();
+        foreach (var passive in Active)
+            buffer.Add(new Passive { Type = passive.Type });
 
         _applied.Clear();
         _applied.AddRange(Active);

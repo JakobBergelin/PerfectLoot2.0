@@ -44,6 +44,54 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a70058ddc155b6f4ca256773d16f2eab, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::StatisticsRecorder
+--- !u!1 &3821132263087145172
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 8599310997317895977}
+  - component: {fileID: 8226757251276791824}
+  m_Layer: 0
+  m_Name: CoopManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &8599310997317895977
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3821132263087145172}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 2072095192949420212}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &8226757251276791824
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3821132263087145172}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1995702882215ab43bc8ea3bbc9703c8, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CoopManager
+  CharacterPrefab: {fileID: 7600000000000000003, guid: 80b500be4c21ae30c88a63f9b4aa449b, type: 3}
+  InventoryPrefab: {fileID: 5803274383583194612, guid: d17580454d047a14097c96f953aa37c1, type: 3}
+  SkillsPrefab: {fileID: 7700000000000000003, guid: ab33bc0f3f0ba1413db5618206550528, type: 3}
+  PassivesPrefab: {fileID: 6754852419414595249, guid: 5286751245f892b4c9b34a2a54608d61, type: 3}
 --- !u!1 &5281946037712640311
 GameObject:
   m_ObjectHideFlags: 0
@@ -146,6 +194,7 @@ Transform:
   - {fileID: 425762073073341013}
   - {fileID: 4326512508480483071}
   - {fileID: 1573641317763545276}
+  - {fileID: 8599310997317895977}
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &6446939807714861980

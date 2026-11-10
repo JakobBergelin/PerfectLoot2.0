@@ -7,10 +7,12 @@ using static UnitEntitySetup;
 /// </summary>
 public static class PlayerEntitySetup
 {
-    public static void AddGameplayComponents(EntityManager entityManager, Entity entity, StatBlock baseStats)
+    /// <param name="playerIndex">Which local player it is (0 is player 1); also its enemies' flow field slot.</param>
+    public static void AddGameplayComponents(EntityManager entityManager, Entity entity, StatBlock baseStats, int playerIndex)
     {
         AddOrSet(entityManager, entity, new Player());
-        AddOrSet(entityManager, entity, new EnemyTargetable());
+        AddOrSet(entityManager, entity, new PlayerIndex { Value = playerIndex });
+        AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = playerIndex });
         // In the spatial grid, so enemies keep a little distance (capsule radius 0.5)
         AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Physics });
         // Its active buffs and debuffs, for the HUD (EffectDisplaySystem)

@@ -16,7 +16,17 @@ public class InventoryManager : MonoBehaviour
         public Rarity Rarity;
     }
 
-    public static InventoryManager Instance;
+    static readonly InventoryManager[] _players = new InventoryManager[GameInput.MaxPlayers];
+
+    /// <summary>Player 1's.</summary>
+    public static InventoryManager Instance => _players[0];
+
+    /// <summary>A local player's (0 is player 1), or null when that player isn't in the game.</summary>
+    public static InventoryManager For(int playerIndex) =>
+        playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
+
+    [Tooltip("Which local player's equipment this is (CharacterManager.PlayerIndex)")]
+    public int PlayerIndex;
     public InventorySlot WeaponSlot, HeadSlot, BootsSlot, LegsSlot, ChestSlot, BeltSlot,
                          HandsSlot, ShouldersSlot, AmuletSlot, Ring1Slot, Ring2Slot,
                          OffhandSlot;
@@ -62,8 +72,8 @@ public class InventoryManager : MonoBehaviour
 
     void Awake()
     {
-        if (Instance != null && Instance != this) { Destroy(gameObject); return; }
-        Instance = this;
+        if (For(PlayerIndex) != null && For(PlayerIndex) != this) { Destroy(gameObject); return; }
+        _players[PlayerIndex] = this;
 
         foreach (var (_, slot) in NamedSlots)
             if (slot != null) slot.Changed += OnSlotChanged;
@@ -93,7 +103,7 @@ public class InventoryManager : MonoBehaviour
     void LoadCharacterEquipment()
     {
         var account = AccountManager.Instance;
-        _character = account != null ? account.SelectedCharacter : null;
+        _character = account != null ? account.SelectedCharacterOf(PlayerIndex) : null;
         if (_character == null) return;
 
         _loadingEquipment = true;
@@ -144,7 +154,7 @@ public class InventoryManager : MonoBehaviour
             if (slot != null) slot.Changed -= OnSlotChanged;
         CharacterManager.PlayerSpawned -= OnPlayerSpawned;
         if (_database != null) _database.ItemChanged -= OnDatabaseItemChanged;
-        if (Instance == this) Instance = null;
+        if (For(PlayerIndex) == this) _players[PlayerIndex] = null;
     }
 
     void OnSlotChanged(InventorySlot slot)
@@ -211,6 +221,7 @@ public class InventoryManager : MonoBehaviour
     // New player entity (spawn/respawn): it has no equipment stats yet
     void OnPlayerSpawned(Entity player)
     {
+        if (player != OwnPlayer) return;
         _appliedPowers.Clear();
         _equipmentStatsDirty = true;
         TryPushEquipmentStats();
@@ -256,24 +267,28 @@ public class InventoryManager : MonoBehaviour
         if (world == null || !world.IsCreated) return;
 
         var entityManager = world.EntityManager;
-        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadWrite<EquipmentStats>());
-        if (query.IsEmpty) return;
+        var player = OwnPlayer;
+        if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<EquipmentStats>(player)) return;
 
         // Rolled affixes plus fixed per-item stats (weapon reach, weapon damage range)
         var block = Stats.ToStatBlock();
         foreach (var (_, slot) in NamedSlots)
             if (slot != null && !slot.IsEmpty) slot.EquippedItem.BaseItem.AddFixedStats(ref block);
 
-        var equipmentStats = new EquipmentStats { Value = block };
-        using var players = query.ToEntityArray(Allocator.Temp);
-        foreach (var player in players)
-        {
-            entityManager.SetComponentData(player, equipmentStats);
-            SyncLegendaryPowers(entityManager, player);
-            SyncVisuals(entityManager, player);
-        }
-
+        entityManager.SetComponentData(player, new EquipmentStats { Value = block });
+        SyncLegendaryPowers(entityManager, player);
+        SyncVisuals(entityManager, player);
         _equipmentStatsDirty = false;
+    }
+
+    // This player's entity (CharacterManager with the same PlayerIndex), or Entity.Null
+    Entity OwnPlayer
+    {
+        get
+        {
+            var characters = CharacterManager.For(PlayerIndex);
+            return characters != null ? characters.Player : Entity.Null;
+        }
     }
 
     // Powers currently applied to the player entity, so unequipped ones can be removed

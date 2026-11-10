@@ -175,7 +175,7 @@ public class OptionsHUD : MonoBehaviour
         // A controller rebind starts once A, which chose the binding, is let go (else it would bind A)
         if (_pendingRow != null)
         {
-            var gamepad = Gamepad.current;
+            var gamepad = GameInput.Players[0].GamepadDevice;
             if (gamepad == null || !gamepad.buttonSouth.isPressed)
             {
                 var row = _pendingRow;
@@ -188,8 +188,8 @@ public class OptionsHUD : MonoBehaviour
         // Esc, Start, Backspace and View never bind (GameInput.Rebind), so the window can use them
         if (_rebinding != null)
         {
-            var keyboard = Keyboard.current;
-            var gamepad = Gamepad.current;
+            var keyboard = GameInput.Players[0].KeyboardDevice;
+            var gamepad = GameInput.Players[0].GamepadDevice;
             if ((keyboard != null && keyboard.backspaceKey.wasPressedThisFrame) || (gamepad != null && gamepad.selectButton.wasPressedThisFrame))
             {
                 var row = _rebindingRow;
@@ -303,7 +303,7 @@ public class OptionsHUD : MonoBehaviour
     {
         _rebinding?.Cancel();
         // Pressed with A: wait for it to be let go (Update)
-        var gamepad = Gamepad.current;
+        var gamepad = GameInput.Players[0].GamepadDevice;
         if (group == GameInput.Gamepad && gamepad != null && gamepad.buttonSouth.isPressed)
         {
             _pendingRow = row;
