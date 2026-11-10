@@ -10,7 +10,7 @@ using UnityEngine.InputSystem.Utilities;
 /// (keyboard and mouse go together), player 1 the one they used last. The static members without a player (Actions,
 /// Player, Skill, UsingGamepad, Label, ...) are player 1's. Each action has one binding per binding group:
 /// Keyboard&amp;Mouse and Gamepad. Escape and the gamepad's Start button aren't actions: they always open and close menus
-/// (MenuPanels.EscapePressed). Also does the rebinding for the Controls window.
+/// (PlayerMenus.EscapePressed). Also does the rebinding for the Controls window.
 /// </summary>
 public static class GameInput
 {
@@ -93,6 +93,17 @@ public static class GameInput
 
     public static int PlayerCount => Players.Count;
 
+    /// <summary>The index of the player who has the mouse (the one who joined with the keyboard); 0 when nobody has it.</summary>
+    public static int MouseOwner
+    {
+        get
+        {
+            foreach (var player in Players)
+                if (player.Devices.Count == 0 || player.Devices.Contains(Mouse.current)) return player.Index;
+            return 0;
+        }
+    }
+
     // ---------- Player 1 (the static members the single-player game reads) ----------
 
     public static InputSystem_Actions Actions => Players[0].Actions;
@@ -111,6 +122,34 @@ public static class GameInput
     public static int Version { get; private set; }
 
     // ---------- Joining ----------
+
+    static readonly HashSet<object> _joinScreens = new HashSet<object>();
+
+    /// <summary>True while a screen lets another player join (Character Select, the Hub) and there's room for one.</summary>
+    public static bool CanJoin => _joinScreens.Count > 0 && Players.Count < MaxPlayers;
+
+    /// <summary>Set by a screen while another player may join from it.</summary>
+    public static void AllowJoining(object screen, bool allowed)
+    {
+        if (allowed) _joinScreens.Add(screen);
+        else _joinScreens.Remove(screen);
+    }
+
+    /// <summary>
+    /// The free device whose join button (Start, or Enter on a keyboard) went down this frame while joining is allowed,
+    /// else null. The menus ignore that Start (PlayerMenus.EscapePressed).
+    /// </summary>
+    public static InputDevice JoinPressed()
+    {
+        if (!CanJoin) return null;
+        foreach (var device in InputSystem.devices)
+        {
+            if (!IsFree(device)) continue;
+            if (device is UnityEngine.InputSystem.Gamepad gamepad && gamepad.startButton.wasPressedThisFrame) return device;
+            if (device is Keyboard keyboard && (keyboard.enterKey.wasPressedThisFrame || keyboard.numpadEnterKey.wasPressedThisFrame)) return device;
+        }
+        return null;
+    }
 
     /// <summary>
     /// A device nobody uses that could join as another player (a gamepad, or the keyboard), or null. Player 1 alone
@@ -174,6 +213,7 @@ public static class GameInput
         foreach (var player in _players) player.Actions.Dispose();
         _players.Clear();
         Version = 0;
+        _joinScreens.Clear();
     }
 
     // Not earlier: in a build the Input System resets every enabled action when the first scene loads
@@ -283,11 +323,13 @@ public static class GameInput
 
     /// <summary>
     /// Waits for the next button of the binding's group and binds it (Controls window). Esc, Start, Backspace and View
-    /// (Select) are left out so the window can use them to cancel and clear. The action must be disabled (OptionsHUD
-    /// disables the Player map).
+    /// (Select) are left out so the window can use them to cancel and clear. The action (player 1's) is off meanwhile,
+    /// as rebinding needs, and on again afterwards if it was.
     /// </summary>
     public static InputActionRebindingExtensions.RebindingOperation Rebind(InputAction action, int index, string group, System.Action done)
     {
+        bool wasEnabled = action.enabled;
+        action.Disable();
         var binding = action.bindings[index];
         bool stick = !binding.isPartOfComposite && action.expectedControlType == "Vector2";
         var operation = action.PerformInteractiveRebinding(index)
@@ -305,11 +347,13 @@ public static class GameInput
             op.Dispose();
             ClearOthersUsing(action, index);
             Save();
+            if (wasEnabled) action.Enable();
             done?.Invoke();
         });
         operation.OnCancel(op =>
         {
             op.Dispose();
+            if (wasEnabled) action.Enable();
             done?.Invoke();
         });
         return operation.Start();

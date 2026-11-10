@@ -10,7 +10,7 @@ using UnityEngine;
 /// The slots start with the selected character's saved skills (random ones where it has none) and every change is saved
 /// with the character (AccountManager.SetSkills). PassiveSkillManager does the same for passives.
 /// </summary>
-public class ActiveSkillManager : MonoBehaviour
+public class ActiveSkillManager : MonoBehaviour, IPerPlayer
 {
     static readonly ActiveSkillManager[] _players = new ActiveSkillManager[GameInput.MaxPlayers];
 
@@ -21,8 +21,8 @@ public class ActiveSkillManager : MonoBehaviour
     public static ActiveSkillManager For(int playerIndex) =>
         playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
 
-    [Tooltip("Which local player's skills these are (CharacterManager.PlayerIndex)")]
-    public int PlayerIndex;
+    /// <summary>Which local player's this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
     public ActiveSkillSlot Slot1, Slot2, Slot3, Slot4;
 
     [Header("Every skill that can be equipped")]

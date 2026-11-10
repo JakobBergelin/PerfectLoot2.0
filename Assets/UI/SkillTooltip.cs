@@ -15,11 +15,11 @@ public static class SkillTooltip
     const float IconSize = 16f;
     const string MutedColor = "#8A8F99";
 
-    /// <summary>The player's current stats, or null without a player (e.g. in a menu).</summary>
-    public static StatBlock? CurrentStats()
+    /// <summary>A local player's current stats (player 1's by default), or null without them (e.g. in a menu).</summary>
+    public static StatBlock? CurrentStats(int playerIndex = 0)
     {
         var world = World.DefaultGameObjectInjectionWorld;
-        var characterManager = CharacterManager.Instance;
+        var characterManager = CharacterManager.For(playerIndex);
         if (world == null || !world.IsCreated || characterManager == null) return null;
         var entityManager = world.EntityManager;
         var player = characterManager.Player;

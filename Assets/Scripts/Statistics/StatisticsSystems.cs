@@ -9,6 +9,9 @@ public struct StatEvent : IBufferElementData
     public StatType Type;
     public UnityObjectRef<ScriptableObject> Subject;   // The enemy (its EnemyDefinition), or none
     public double Amount;
+    public int Player;      // The local player it counts for (PlayerIndex), or Everyone
+
+    public const int Everyone = -1;
 }
 
 /// <summary>A dead unit whose death was counted (dying units can stay at 0 health for a while).</summary>
@@ -26,7 +29,8 @@ public struct ExperienceCounted : IComponentData
 // StatisticsRecorder reads. Damage dealt per skill isn't here: the recorder reads the Damage Meter's totals instead.
 
 /// <summary>
-/// Counts every enemy that died this frame (and bosses), and every player that died with the enemy that hit it last.
+/// Counts every enemy that died this frame (and bosses), for every player, and every player that died with the enemy
+/// that hit it last, for that player.
 /// Runs just before CheckDeathSystem, which removes dead units.
 /// </summary>
 [BurstCompile]
@@ -52,12 +56,13 @@ public partial struct DeathStatisticsSystem : ISystem
         {
             if (health.ValueRO.CurrentValue > 0f) continue;
             counted.Add(entity);
-            events.Add(new StatEvent { Type = StatType.EnemiesKilled, Subject = info.ValueRO.Source, Amount = 1 });
+            events.Add(new StatEvent { Type = StatType.EnemiesKilled, Subject = info.ValueRO.Source, Amount = 1, Player = StatEvent.Everyone });
             if (bosses.HasComponent(entity))
-                events.Add(new StatEvent { Type = StatType.BossesKilled, Subject = info.ValueRO.Source, Amount = 1 });
+                events.Add(new StatEvent { Type = StatType.BossesKilled, Subject = info.ValueRO.Source, Amount = 1, Player = StatEvent.Everyone });
         }
 
         var lastHits = SystemAPI.GetComponentLookup<LastHit>(true);
+        var playerIndices = SystemAPI.GetComponentLookup<PlayerIndex>(true);
         foreach (var (health, entity) in SystemAPI.Query<RefRO<Health>>().WithAll<Player>().WithNone<DeathCounted>().WithEntityAccess())
         {
             if (health.ValueRO.CurrentValue > 0f) continue;
@@ -65,7 +70,8 @@ public partial struct DeathStatisticsSystem : ISystem
             // The killer can be gone already (e.g. a projectile of an enemy that died): then only the death counts
             var killer = lastHits.HasComponent(entity) ? lastHits[entity].Source : Entity.Null;
             var subject = infos.HasComponent(killer) ? infos[killer].Source : default;
-            events.Add(new StatEvent { Type = StatType.Deaths, Subject = subject, Amount = 1 });
+            int player = playerIndices.HasComponent(entity) ? playerIndices[entity].Value : 0;
+            events.Add(new StatEvent { Type = StatType.Deaths, Subject = subject, Amount = 1, Player = player });
         }
 
         if (!counted.IsEmpty) state.EntityManager.AddComponent<DeathCounted>(counted.AsArray());
@@ -90,11 +96,11 @@ public partial struct ExperienceStatisticsSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var events = SystemAPI.GetSingletonBuffer<StatEvent>();
-        foreach (var (level, seen) in SystemAPI.Query<RefRO<Level>, RefRW<ExperienceCounted>>().WithAll<Player>())
+        foreach (var (level, seen, player) in SystemAPI.Query<RefRO<Level>, RefRW<ExperienceCounted>, RefRO<PlayerIndex>>().WithAll<Player>())
         {
             int total = TotalOf(level.ValueRO);
             if (total > seen.ValueRO.Total)
-                events.Add(new StatEvent { Type = StatType.ExperienceEarned, Amount = total - seen.ValueRO.Total });
+                events.Add(new StatEvent { Type = StatType.ExperienceEarned, Amount = total - seen.ValueRO.Total, Player = player.ValueRO.Value });
             seen.ValueRW.Total = total;
         }
 

@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Coop.uss" />
+    <!-- CoopHUD: player 2's character picker (CoopPicker) on the right, and the join hint bottom-right -->
+    <ui:VisualElement name="coopRoot" class="coop-hub-root" picking-mode="Ignore">
+        <ui:VisualElement name="pickerHolder" class="coop-hub-picker coop--hidden" />
+        <ui:Label name="joinHint" class="coop-join-hint coop--hidden" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>

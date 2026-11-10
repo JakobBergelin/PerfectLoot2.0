@@ -12,7 +12,8 @@ using UnityEngine.UIElements;
 /// (Normal/Magic/Rare side by side; Legendary/Unique have one), filter chips, pages, a hover tooltip and a detail
 /// pane. Found items show their rolls, who uses them and where they drop; items not found yet only show where they
 /// drop. Read-only: equipping happens in the inventory. PanelSettings has no theme, so all controls are plain
-/// elements styled by ItemDatabasePanel.uss.
+/// elements styled by ItemDatabasePanel.uss. One for both players: whoever opens it has it (their buttons, focus and
+/// inventory) until they close it; the other player can't open it meanwhile.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class ItemDatabasePanelHUD : MonoBehaviour
@@ -94,12 +95,16 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     ItemDatabase _subscribedDatabase;
     InventoryManager _subscribedInventory;
 
-    InputAction _toggleAction;
+    // The player who has it open (or had it last)
+    int _owner;
+    readonly System.Action<object>[] _openChanged = new System.Action<object>[GameInput.MaxPlayers];
+
+    PlayerMenus Menus => MenuPanels.For(_owner);
+    PlayerNav Nav => UiNav.For(_owner);
 
     void Awake()
     {
-        _toggleAction = GameInput.Actions.asset.FindAction("Player/ItemDatabase");
-        if (_toggleAction == null)
+        if (GameInput.Actions.asset.FindAction("Player/ItemDatabase") == null)
             Debug.LogWarning("ItemDatabasePanelHUD: no Player/ItemDatabase input action. Reimport InputSystem_Actions.inputactions.", this);
     }
 
@@ -107,14 +112,23 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        MenuPanels.OpenChanged += OnMenuOpenChanged;
-        MenuPanels.AddTab(this, 2, SetOpen);
+        // In every player's tabs; another of the owner's panels opening closes it
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+        {
+            int player = i;
+            _openChanged[i] = openPanel => OnMenuOpenChanged(player, openPanel);
+            MenuPanels.For(i).OpenChanged += _openChanged[i];
+            MenuPanels.For(i).AddTab(this, 2, open => SetOpenBy(player, open));
+        }
     }
 
     void OnDisable()
     {
-        MenuPanels.RemoveTab(this);
-        MenuPanels.OpenChanged -= OnMenuOpenChanged;
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+        {
+            MenuPanels.For(i).RemoveTab(this);
+            MenuPanels.For(i).OpenChanged -= _openChanged[i];
+        }
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
@@ -185,43 +199,53 @@ public class ItemDatabasePanelHUD : MonoBehaviour
 
     void Update()
     {
-        // Typing an "l" into the search field shouldn't close the panel
-        if (MenuPanels.TogglePressed(_toggleAction))
-            SetOpen(!_open);
+        // Any player's toggle (typing an "l" into the search field doesn't count)
+        for (int i = 0; i < GameInput.PlayerCount; i++)
+            if (MenuPanels.For(i).TogglePressed(GameInput.For(i).Actions.asset.FindAction("Player/ItemDatabase")))
+                SetOpenBy(i, !_open);
 
         if (!_bound || !_open) return;
 
         // Esc (or B) leaves the search field first, then closes the affix picker, then the panel
-        if (MenuPanels.BackPressed)
+        if (Menus.BackPressed)
         {
-            if (MenuPanels.IsTyping) _searchField.Blur();
+            if (Menus.IsTyping) _searchField.Blur();
             else if (_affixPopup.ClassListContains(AffixPopupVisibleClass)) ShowAffixPopup(false);
             else SetOpen(false);
             return;
         }
-        if (MenuPanels.PagePressed != 0) TurnPage(MenuPanels.PagePressed);
+        if (Menus.PagePressed != 0) TurnPage(Menus.PagePressed);
 
         Subscribe();
         if (_dirty) Refresh();
     }
 
-    // Another menu panel opened: close this one
-    void OnMenuOpenChanged(object openPanel)
+    // Another of its owner's menu panels opened: close this one
+    void OnMenuOpenChanged(int player, object openPanel)
     {
-        if (_open && openPanel != null && !ReferenceEquals(openPanel, this)) SetOpen(false);
+        if (_open && player == _owner && openPanel != null && !ReferenceEquals(openPanel, this)) SetOpen(false);
+    }
+
+    // A player opens or closes it; while one has it open, the other can't
+    void SetOpenBy(int player, bool open)
+    {
+        if (_open && player != _owner) return;
+        if (open) _owner = player;
+        SetOpen(open);
     }
 
     void SetOpen(bool open)
     {
         _open = open;
-        MenuPanels.SetOpen(this, open);
+        Menus.SetOpen(this, open);
         if (!_bound) return;
         // A hidden field keeps focus (and IsTyping) unless it's blurred
         if (!open) _searchField?.Blur();
         _root.EnableInClassList(HiddenClass, !open);
         ShowAffixPopup(false);
         HideTooltip();
-        UiNav.SetScope(this, _panel, open);
+        if (open) Nav.Register(_root);
+        Nav.SetScope(this, _panel, open);
         _dirty = true;
     }
 
@@ -237,7 +261,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
             _dirty = true;
         }
 
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(_owner);
         if (inventory != _subscribedInventory)
         {
             if (_subscribedInventory != null) _subscribedInventory.StatsChanged -= OnInventoryChanged;
@@ -369,8 +393,8 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _affixChip?.EnableInClassList(ChipSelectedClass, show || _affix != null);
         // A controller picks in the popup until it closes, then is back on the Affix chip
         if (show == was) return;
-        UiNav.SetScope(_affixPopup, _affixPopup, show);
-        if (show) UiNav.FocusFirstOf(_affixPopup.Children());
+        Nav.SetScope(_affixPopup, _affixPopup, show);
+        if (show) Nav.FocusFirstOf(_affixPopup.Children());
     }
 
     void PickAffix(Affix? affix)
@@ -430,7 +454,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         foreach (var row in _rows)
             if (row.Element.style.display == DisplayStyle.Flex)
                 foreach (var tile in row.Tiles) shown.Add(tile.Element);
-        UiNav.FocusFirstOf(shown);
+        Nav.FocusFirstOf(shown);
     }
 
     void Refresh()
@@ -604,14 +628,14 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         _detailBody.text = sb.ToString();
     }
 
-    // A new roll of the selected item next to the player, found or not
+    // A new roll of the selected item next to the player who has the panel, found or not
     void DropSelected()
     {
         var loot = LootGenerationManager.Instance;
         var groundLoot = GroundLootManager.Instance;
         if (_selected == null || loot == null || groundLoot == null) return;
         var key = _selected.Entry.Key;
-        groundLoot.DropNearPlayer(loot.RollItem(key.BaseItem, key.Rarity));
+        groundLoot.DropNearPlayer(loot.RollItem(key.BaseItem, key.Rarity), _owner);
     }
 
     // Only one character for now: the current one

@@ -1,9 +1,17 @@
-/* Shared by every menu (UiNav.Register adds it to their roots): the controller's focus outline, controller-only hints
+/* Shared by every menu (UiNav.Register adds it to their roots): the controller focus outline, controller-only hints
    and the page controls (Pager). nav--gamepad is on a menu's root while a controller is used last. */
 
-.nav--gamepad *:focus {
+/* A player's controller focus (PlayerNav: two classes each, so it wins over a list's own selected style); player 2's
+   is blue */
+.nav-focus-p1.nav--focused-p1 {
     border-color: #E0A020;
     background-color: rgba(224, 160, 32, 0.25);
+    scale: 1.04 1.04;
+}
+
+.nav-focus-p2.nav--focused-p2 {
+    border-color: #40A8F0;
+    background-color: rgba(64, 168, 240, 0.25);
     scale: 1.04 1.04;
 }
 

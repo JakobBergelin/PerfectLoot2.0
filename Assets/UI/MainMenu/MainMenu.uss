@@ -395,3 +395,25 @@
     padding: 0;
     margin: 0;
 }
+
+/* Co-op: player 1's Character Select on the left, player 2's picker (CoopPicker, Coop.uss) on the right */
+.mm-coop-row {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.mm-player2 {
+    margin-left: 24px;
+}
+
+/* "Player 2" or "Ready" on a character row in co-op */
+.cs-character-tag {
+    position: absolute;
+    right: 10px;
+    top: 8px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0;
+}

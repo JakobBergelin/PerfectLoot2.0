@@ -118,24 +118,32 @@ public class GroundLootManager : MonoBehaviour
         Version++;
     }
 
-    /// <summary>Puts the item on the ground near the player, if there is one.</summary>
-    public void DropNearPlayer(Item item)
+    /// <summary>Puts the item on the ground near a local player (player 1 by default), if they're in the level.</summary>
+    public void DropNearPlayer(Item item, int playerIndex = 0)
     {
-        if (TryGetPlayer(out var player)) Drop(item, player);
+        if (TryGetPlayer(playerIndex, out var player)) Drop(item, player);
     }
 
-    /// <summary>True when the player stands within PickupRange of the item.</summary>
-    public bool InReach(GroundItem item)
+    /// <summary>True when any player stands within PickupRange of the item.</summary>
+    public bool InReachOfAnyone(GroundItem item)
     {
-        if (item == null || !TryGetPlayer(out var player)) return false;
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+            if (InReach(item, i)) return true;
+        return false;
+    }
+
+    /// <summary>True when this local player stands within PickupRange of the item.</summary>
+    public bool InReach(GroundItem item, int playerIndex)
+    {
+        if (item == null || !TryGetPlayer(playerIndex, out var player)) return false;
         var offset = new Vector2(item.Position.x - player.x, item.Position.z - player.z);
         return offset.sqrMagnitude <= PickupRange * PickupRange;
     }
 
-    /// <summary>The item in reach nearest the player (what Interact picks up), or null.</summary>
-    public GroundItem NearestInReach()
+    /// <summary>The item in reach nearest this local player (what their Interact picks up), or null.</summary>
+    public GroundItem NearestInReach(int playerIndex)
     {
-        if (!TryGetPlayer(out var player)) return null;
+        if (!TryGetPlayer(playerIndex, out var player)) return null;
         GroundItem nearest = null;
         float nearestDistance = PickupRange * PickupRange;
         foreach (var item in _items)
@@ -148,10 +156,13 @@ public class GroundLootManager : MonoBehaviour
         return nearest;
     }
 
-    /// <summary>Picks the item up if it's in reach: it's the account's now (AccountManager.ReceiveDrop). False otherwise.</summary>
-    public bool PickUp(GroundItem item)
+    /// <summary>
+    /// This local player picks the item up if it's in their reach: it's the account's now (AccountManager.ReceiveDrop),
+    /// shared by both players. False otherwise.
+    /// </summary>
+    public bool PickUp(GroundItem item, int playerIndex)
     {
-        if (!_items.Contains(item) || !InReach(item)) return false;
+        if (!_items.Contains(item) || !InReach(item, playerIndex)) return false;
         var account = AccountManager.Instance;
         if (account == null) return false;
         _items.Remove(item);
@@ -162,10 +173,10 @@ public class GroundLootManager : MonoBehaviour
         return true;
     }
 
-    static bool TryGetPlayer(out float3 position)
+    static bool TryGetPlayer(int playerIndex, out float3 position)
     {
         position = default;
-        var characterManager = CharacterManager.Instance;
+        var characterManager = CharacterManager.For(playerIndex);
         var world = World.DefaultGameObjectInjectionWorld;
         if (characterManager == null || world == null || !world.IsCreated) return false;
         var entityManager = world.EntityManager;

@@ -7,6 +7,7 @@ using UnityEngine.UIElements;
 /// Shows AccountManager's oldest pending drop while the game keeps running. A newly found item is shown with an OK
 /// button (it's already in the database). A drop whose entry already has an item is shown next to it with the
 /// differences, and the player takes the new one or keeps the current one. Esc keeps the current one / closes.
+/// The drops are the account's, so either player answers it (their controller, Esc or B) and both wait while it shows.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class DropPopupHUD : MonoBehaviour
@@ -108,17 +109,25 @@ public class DropPopupHUD : MonoBehaviour
         }
         if (_dirty) Refresh();
 
-        // An open menu panel handles Esc (or B) first (it closes); the next one keeps the current item. Last frame's state
-        // too, since the panel may already have closed itself this frame.
-        if (_visible && !MenuPanels.IsPanelOpen && !_panelOpenLastFrame && !MenuPanels.IsTyping &&
-            MenuPanels.BackPressed)
+        // A player's open menu panel handles their Esc (or B) first (it closes); the next one keeps the current item. Last
+        // frame's state too, since the panel may already have closed itself this frame.
+        if (!_visible) return;
+        for (int i = 0; i < GameInput.PlayerCount; i++)
+        {
+            var menus = MenuPanels.For(i);
+            if (menus.IsPanelOpen || _panelOpenLastFrame[i] || menus.IsTyping || !menus.BackPressed) continue;
             Resolve(takeNew: false);
+            return;
+        }
     }
 
-    bool _panelOpenLastFrame;
+    readonly bool[] _panelOpenLastFrame = new bool[GameInput.MaxPlayers];
     bool _town;
 
-    void LateUpdate() => _panelOpenLastFrame = MenuPanels.IsPanelOpen;
+    void LateUpdate()
+    {
+        for (int i = 0; i < _panelOpenLastFrame.Length; i++) _panelOpenLastFrame[i] = MenuPanels.For(i).IsPanelOpen;
+    }
 
     // AccountManager may not exist yet when this is enabled
     void Subscribe()
@@ -188,15 +197,16 @@ public class DropPopupHUD : MonoBehaviour
         card.style.borderRightColor = border;
     }
 
-    // While visible the mouse is for the buttons, so gameplay ignores skill input (other panels stay open)
+    // While visible the players' buttons (and the mouse) are for it, so gameplay ignores their skill input (other panels
+    // stay open)
     void SetVisible(bool visible)
     {
         _visible = visible;
-        MenuPanels.SetBlocking(this, visible);
+        for (int i = 0; i < GameInput.MaxPlayers; i++) MenuPanels.For(i).SetBlocking(this, visible);
         _root?.EnableInClassList(HiddenClass, !visible);
         // A controller answers it too: A on Take new (or OK), B keeps the current item
         if (_root == null) return;
         var preferred = _takeButton.style.display == DisplayStyle.Flex ? _takeButton : _okButton;
-        UiNav.SetScope(this, _root, visible, preferred);
+        for (int i = 0; i < GameInput.MaxPlayers; i++) UiNav.For(i).SetScope(this, _root, visible && i < GameInput.PlayerCount, preferred);
     }
 }

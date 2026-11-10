@@ -252,7 +252,9 @@ public class DamageMeterHUD : MonoBehaviour
 
     string NameOf(in MeterName name)
     {
-        if (name.Label != DamageLabel.None) return LabelText(name.Label);
+        // In co-op a skill row says whose it is
+        if (name.Label != DamageLabel.None)
+            return name.Player > 0 && GameInput.PlayerCount > 1 ? $"{LabelText(name.Label)} (P{name.Player})" : LabelText(name.Label);
         if (name.Player > 0) return "Player " + name.Player;
 
         var unit = name.Unit.Value;

@@ -38,7 +38,9 @@ public struct EquipmentPartPrefab : IBufferElementData
 /// <summary>
 /// Rebuilds a unit's equipment parts when its EquippedVisual list changes: every registered part of every equipped
 /// visual is instantiated and parented to its socket bone (the parts are modelled around that bone's rest position, so
-/// they sit at its origin and follow its animation). Before transforms are calculated, like the other visual feedback.
+/// they sit at its origin and follow its animation). The parts are in the unit's LinkedEntityGroup too, so they go
+/// with it when it's destroyed (dying, a player leaving). Before transforms are calculated, like the other visual
+/// feedback.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class EquipmentVisualSystem : SystemBase
@@ -59,6 +61,10 @@ public partial class EquipmentVisualSystem : SystemBase
         foreach (var unit in units)
         {
             var old = EntityManager.GetBuffer<EquipmentPartInstance>(unit).ToNativeArray(Allocator.Temp);
+            var oldEntities = new NativeList<Entity>(Allocator.Temp);
+            foreach (var part in old)
+                if (EntityManager.Exists(part.Value)) AddWithGroup(part.Value, oldEntities);
+            RemoveFromGroup(unit, oldEntities);
             foreach (var part in old)
                 if (EntityManager.Exists(part.Value)) EntityManager.DestroyEntity(part.Value);
             EntityManager.GetBuffer<EquipmentPartInstance>(unit).Clear();
@@ -84,7 +90,36 @@ public partial class EquipmentVisualSystem : SystemBase
             }
             var instances = EntityManager.GetBuffer<EquipmentPartInstance>(unit);
             foreach (var part in created) instances.Add(new EquipmentPartInstance { Value = part });
+            AddToGroup(unit, created);
             EntityManager.RemoveComponent<EquipmentVisualsChanged>(unit);
         }
+    }
+
+    // A part and its own linked entities (its children)
+    void AddWithGroup(Entity part, NativeList<Entity> into)
+    {
+        if (!EntityManager.HasBuffer<LinkedEntityGroup>(part))
+        {
+            into.Add(part);
+            return;
+        }
+        foreach (var linked in EntityManager.GetBuffer<LinkedEntityGroup>(part, true)) into.Add(linked.Value);
+    }
+
+    void AddToGroup(Entity unit, NativeList<Entity> parts)
+    {
+        if (!EntityManager.HasBuffer<LinkedEntityGroup>(unit)) return;
+        var entities = new NativeList<Entity>(Allocator.Temp);
+        foreach (var part in parts) AddWithGroup(part, entities);
+        var group = EntityManager.GetBuffer<LinkedEntityGroup>(unit);
+        foreach (var entity in entities) group.Add(entity);
+    }
+
+    void RemoveFromGroup(Entity unit, NativeList<Entity> entities)
+    {
+        if (entities.Length == 0 || !EntityManager.HasBuffer<LinkedEntityGroup>(unit)) return;
+        var group = EntityManager.GetBuffer<LinkedEntityGroup>(unit);
+        for (int i = group.Length - 1; i >= 0; i--)
+            if (entities.Contains(group[i].Value)) group.RemoveAt(i);
     }
 }

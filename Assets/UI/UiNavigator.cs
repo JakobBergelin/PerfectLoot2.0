@@ -1,6 +1,6 @@
 using UnityEngine;
 
-/// <summary>Runs UiNav and MenuPanels' tabs once a frame, for the whole session (made at start, kept between scenes).</summary>
+/// <summary>Runs UiNav, MenuPanels' tabs and PlayerHud once a frame, for the whole session (made at start, kept between scenes).</summary>
 public class UiNavigator : MonoBehaviour
 {
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.AfterSceneLoad)]
@@ -17,5 +17,6 @@ public class UiNavigator : MonoBehaviour
         UiNav.DisableBuiltInNavigation();
         UiNav.Update();
         MenuPanels.UpdateTabs();
+        PlayerHud.Update();
     }
 }

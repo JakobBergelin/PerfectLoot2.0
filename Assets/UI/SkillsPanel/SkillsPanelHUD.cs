@@ -11,8 +11,15 @@ using UnityEngine.UIElements;
 /// a picker with the skills from the manager's pool that aren't in another slot; picking one equips it.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
-public class SkillsPanelHUD : MonoBehaviour
+public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
+    PlayerMenus Menus => MenuPanels.For(PlayerIndex);
+    PlayerNav Nav => UiNav.For(PlayerIndex);
+    GameInput.PlayerControls Controls => GameInput.For(PlayerIndex);
+
     const string HiddenClass = "skills-panel-root--hidden";
     const string PickerHiddenClass = "sp-picker--hidden";
     const string TooltipVisibleClass = "sp-tooltip--visible";
@@ -60,7 +67,7 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void Awake()
     {
-        _toggleAction = GameInput.Actions.asset.FindAction("Player/Skills");
+        _toggleAction = Controls.Actions.asset.FindAction("Player/Skills");
         if (_toggleAction == null)
             Debug.LogWarning("SkillsPanelHUD: no Player/Skills input action. Reimport InputSystem_Actions.inputactions.", this);
     }
@@ -69,14 +76,14 @@ public class SkillsPanelHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        MenuPanels.OpenChanged += OnMenuOpenChanged;
-        MenuPanels.AddTab(this, 1, SetOpen);
+        Menus.OpenChanged += OnMenuOpenChanged;
+        Menus.AddTab(this, 1, SetOpen);
     }
 
     void OnDisable()
     {
-        MenuPanels.RemoveTab(this);
-        MenuPanels.OpenChanged -= OnMenuOpenChanged;
+        Menus.RemoveTab(this);
+        Menus.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _bound = false;
@@ -93,6 +100,8 @@ public class SkillsPanelHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _bound = Bind(root);
         _boundVersion = version;
@@ -118,7 +127,7 @@ public class SkillsPanelHUD : MonoBehaviour
             return false;
         }
 
-        UiNav.Register(_root);
+        Nav.Register(_root);
         _selected = null;
         BuildActiveSlots(activeContainer, activePicker);
         BuildPassiveSlots(passiveContainer, passivePicker);
@@ -127,13 +136,13 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (MenuPanels.TogglePressed(_toggleAction))
+        if (Menus.TogglePressed(_toggleAction))
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
         // Esc or B closes the picker first, then the panel
-        if (MenuPanels.BackPressed && !MenuPanels.IsTyping)
+        if (Menus.BackPressed && !Menus.IsTyping)
         {
             if (_selected != null) Select(null);
             else SetOpen(false);
@@ -141,7 +150,7 @@ public class SkillsPanelHUD : MonoBehaviour
         }
         // Skills are only changed in town; elsewhere the panel is look-only
         bool town = GameArea.IsTown;
-        bool gamepad = GameInput.UsingGamepad;
+        bool gamepad = Nav.UsingGamepad;
         _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _selected != null) Select(null);
 
@@ -171,12 +180,12 @@ public class SkillsPanelHUD : MonoBehaviour
     void SetOpen(bool open)
     {
         _open = open;
-        MenuPanels.SetOpen(this, open);
+        Menus.SetOpen(this, open);
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
         Select(null);
         HideTooltip();
-        UiNav.SetScope(this, _panel, open);
+        Nav.SetScope(this, _panel, open);
     }
 
     // ---------- Slots ----------
@@ -195,7 +204,7 @@ public class SkillsPanelHUD : MonoBehaviour
                 Group = _activeSlots,
                 GetEquipped = () => ActiveSlot(index)?.EquippedSkill,
                 Equip = skill => ActiveSlot(index)?.EquipSkill((ActiveSkill)skill),
-                GetPool = () => ActiveSkillManager.Instance != null ? ActiveSkillManager.Instance.AllSkills : null,
+                GetPool = () => ActiveSkillManager.For(PlayerIndex) != null ? ActiveSkillManager.For(PlayerIndex).AllSkills : null,
                 TypeOf = skill => (int)((ActiveSkill)skill).Type,
             };
 
@@ -234,7 +243,7 @@ public class SkillsPanelHUD : MonoBehaviour
                 Group = _passiveSlots,
                 GetEquipped = () => PassiveSlot(index)?.EquippedPassive,
                 Equip = passive => PassiveSlot(index)?.EquipPassive((PassiveSkill)passive),
-                GetPool = () => PassiveSkillManager.Instance != null ? PassiveSkillManager.Instance.SelectablePassives : null,
+                GetPool = () => PassiveSkillManager.For(PlayerIndex) != null ? PassiveSkillManager.For(PlayerIndex).SelectablePassives : null,
                 TypeOf = passive => (int)((PassiveSkill)passive).Type,
             };
 
@@ -254,8 +263,8 @@ public class SkillsPanelHUD : MonoBehaviour
 
         // The class passive and the resource: shown like passives, tagged, with a tooltip but no picker
         _classPassive = InfoTile(container, "Class",
-            () => CharacterManager.Instance != null && CharacterManager.Instance.Class != null ? CharacterManager.Instance.Class.ClassPassive : null);
-        _resource = InfoTile(container, "Resource", () => CharacterManager.Instance != null ? CharacterManager.Instance.Resource : null);
+            () => CharacterManager.For(PlayerIndex) != null && CharacterManager.For(PlayerIndex).Class != null ? CharacterManager.For(PlayerIndex).Class.ClassPassive : null);
+        _resource = InfoTile(container, "Resource", () => CharacterManager.For(PlayerIndex) != null ? CharacterManager.For(PlayerIndex).Resource : null);
     }
 
     SlotView InfoTile(VisualElement container, string tagText, Func<ScriptableObject> getShown)
@@ -286,23 +295,23 @@ public class SkillsPanelHUD : MonoBehaviour
         UiNav.Hover(view.Element, () => ShowTooltip(view.GetEquipped(), view.Element), HideTooltip);
     }
 
-    static ActiveSkillSlot ActiveSlot(int index)
+    ActiveSkillSlot ActiveSlot(int index)
     {
-        var manager = ActiveSkillManager.Instance;
+        var manager = ActiveSkillManager.For(PlayerIndex);
         if (manager == null) return null;
         return index switch { 0 => manager.Slot1, 1 => manager.Slot2, 2 => manager.Slot3, _ => manager.Slot4 };
     }
 
-    static PassiveSkillSlot PassiveSlot(int index)
+    PassiveSkillSlot PassiveSlot(int index)
     {
-        var manager = PassiveSkillManager.Instance;
+        var manager = PassiveSkillManager.For(PlayerIndex);
         if (manager == null) return null;
         return index switch { 0 => manager.Slot1, 1 => manager.Slot2, _ => manager.Slot3 };
     }
 
     string KeyLabel(int index)
     {
-        var label = GameInput.Label(GameInput.Skill(index));
+        var label = Controls != null ? Controls.Label(Controls.Skills[index]) : "";
         return string.IsNullOrEmpty(label) ? "Unbound" : label;
     }
 
@@ -329,7 +338,7 @@ public class SkillsPanelHUD : MonoBehaviour
         {
             _selected.Element.RemoveFromClassList(_selected.SelectedClass);
             _selected.Picker.AddToClassList(PickerHiddenClass);
-            UiNav.SetScope(_selected.Picker, _selected.Picker, false);
+            Nav.SetScope(_selected.Picker, _selected.Picker, false);
         }
         _selected = view;
         if (view == null) return;
@@ -338,9 +347,9 @@ public class SkillsPanelHUD : MonoBehaviour
         BuildPicker(view);
         view.Picker.RemoveFromClassList(PickerHiddenClass);
         // A controller picks in the picker until it closes, starting on the equipped skill
-        UiNav.SetScope(view.Picker, view.Picker, true);
+        Nav.SetScope(view.Picker, view.Picker, true);
         var current = view.Picker.Q(className: "sp-option--current");
-        UiNav.FocusFirstOf(current != null ? new[] { current } : view.Picker.Children());
+        Nav.FocusFirstOf(current != null ? new[] { current } : view.Picker.Children());
     }
 
     /// <summary>The pool minus skills equipped in the slot's siblings; the slot's own skill is kept and marked.</summary>
@@ -418,7 +427,7 @@ public class SkillsPanelHUD : MonoBehaviour
         // Active skills: tags, cost, cooldown, damage and effects with the player's stats (SkillTooltip); passives: their description
         _tooltipBody.Clear();
         if (skill is ActiveSkill active)
-            SkillTooltip.Fill(_tooltipBody, active, SkillTooltip.CurrentStats());
+            SkillTooltip.Fill(_tooltipBody, active, SkillTooltip.CurrentStats(PlayerIndex));
         else if (!string.IsNullOrEmpty(description))
             _tooltipBody.Add(new Label(description) { pickingMode = PickingMode.Ignore });
         _tooltipBody.style.display = _tooltipBody.childCount > 0 ? DisplayStyle.Flex : DisplayStyle.None;

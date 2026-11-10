@@ -10,8 +10,15 @@ using UnityEngine.UIElements;
 /// clicking a heading. Read-only. Numbers come from AccountManager.Statistics (StatisticsRecorder counts them).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
-public class StatisticsPanelHUD : MonoBehaviour
+public class StatisticsPanelHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
+    PlayerMenus Menus => MenuPanels.For(PlayerIndex);
+    PlayerNav Nav => UiNav.For(PlayerIndex);
+    GameInput.PlayerControls Controls => GameInput.For(PlayerIndex);
+
     const string HiddenClass = "stats-root--hidden", SelectedClass = "stats-chip--selected";
     const float RefreshInterval = 0.5f;
     const int RowsPerPage = 10;
@@ -78,7 +85,7 @@ public class StatisticsPanelHUD : MonoBehaviour
 
     void Awake()
     {
-        _toggleAction = GameInput.Actions.asset.FindAction("Player/Statistics");
+        _toggleAction = Controls.Actions.asset.FindAction("Player/Statistics");
         if (_toggleAction == null)
             Debug.LogWarning("StatisticsPanelHUD: no Player/Statistics input action. Reimport InputSystem_Actions.inputactions.", this);
     }
@@ -87,14 +94,14 @@ public class StatisticsPanelHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        MenuPanels.OpenChanged += OnMenuOpenChanged;
-        MenuPanels.AddTab(this, 3, SetOpen);
+        Menus.OpenChanged += OnMenuOpenChanged;
+        Menus.AddTab(this, 3, SetOpen);
     }
 
     void OnDisable()
     {
-        MenuPanels.RemoveTab(this);
-        MenuPanels.OpenChanged -= OnMenuOpenChanged;
+        Menus.RemoveTab(this);
+        Menus.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _bound = false;
@@ -111,6 +118,8 @@ public class StatisticsPanelHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _bound = Bind(root);
         _boundVersion = version;
@@ -131,7 +140,7 @@ public class StatisticsPanelHUD : MonoBehaviour
             Debug.LogError("StatisticsPanelHUD: StatisticsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
         }
-        UiNav.Register(_root);
+        Nav.Register(_root);
         _pager = Pager.After(_rows);
         if (_panel.Q(className: "nav-hint") == null) UiNav.Hint(_panel, "A Select · LT/RT Pages · LB/RB Panels · B Close");
 
@@ -162,16 +171,16 @@ public class StatisticsPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (MenuPanels.TogglePressed(_toggleAction))
+        if (Menus.TogglePressed(_toggleAction))
             SetOpen(!_open);
         if (!_bound || !_open) return;
 
-        if (MenuPanels.BackPressed)
+        if (Menus.BackPressed)
         {
             SetOpen(false);
             return;
         }
-        if (MenuPanels.PagePressed != 0) _pager.Turn(MenuPanels.PagePressed);
+        if (Menus.PagePressed != 0) _pager.Turn(Menus.PagePressed);
         // Time played and the rest keep counting while it's open
         if (Time.unscaledTime >= _nextRefresh) Refresh();
     }
@@ -184,10 +193,10 @@ public class StatisticsPanelHUD : MonoBehaviour
     void SetOpen(bool open)
     {
         _open = open;
-        MenuPanels.SetOpen(this, open);
+        Menus.SetOpen(this, open);
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
-        UiNav.SetScope(this, _panel, open);
+        Nav.SetScope(this, _panel, open);
         if (open) Refresh();
     }
 
@@ -285,7 +294,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         // A controller on a heading stays on the same column's new one
         int focusedColumn = -1;
         for (int i = 0; i < _headings.childCount; i++)
-            if (_headings[i].panel?.focusController?.focusedElement == _headings[i]) focusedColumn = i;
+            if (Nav.Focused == _headings[i]) focusedColumn = i;
         _headings.Clear();
         if (tab.Subject == null)
         {
@@ -295,7 +304,7 @@ public class StatisticsPanelHUD : MonoBehaviour
         _headings.style.display = DisplayStyle.Flex;
         AddHeading(tab.Subject, 0, true);
         for (int i = 0; i < tab.Columns.Length; i++) AddHeading(tab.Columns[i].Heading, i + 1, false);
-        if (focusedColumn >= 0 && focusedColumn < _headings.childCount) UiNav.Focus(_headings[focusedColumn]);
+        if (focusedColumn >= 0 && focusedColumn < _headings.childCount) Nav.Focus(_headings[focusedColumn]);
     }
 
     void AddHeading(string text, int column, bool isName)

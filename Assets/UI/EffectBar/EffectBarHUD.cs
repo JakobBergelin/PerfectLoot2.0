@@ -9,8 +9,11 @@ using UnityEngine.UIElements;
 /// and a tooltip on hover. Reads the player's EffectDisplay list; names and icons come from the EffectLibrary.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
-public class EffectBarHUD : MonoBehaviour
+public class EffectBarHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
     const string HiddenClass = "effect-tile--hidden";
     const string TooltipVisibleClass = "effect-tooltip--visible";
 
@@ -51,6 +54,8 @@ public class EffectBarHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _root = root.Q<VisualElement>("effectBarRoot");
         _buffs = root.Q<VisualElement>("buffs");
@@ -99,7 +104,7 @@ public class EffectBarHUD : MonoBehaviour
     void GatherEffects()
     {
         var world = World.DefaultGameObjectInjectionWorld;
-        var characterManager = CharacterManager.Instance;
+        var characterManager = CharacterManager.For(PlayerIndex);
         if (world == null || !world.IsCreated || characterManager == null || Library == null) return;
 
         var entityManager = world.EntityManager;

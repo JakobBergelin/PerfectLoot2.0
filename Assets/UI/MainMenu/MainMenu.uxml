@@ -1,5 +1,6 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="MainMenu.uss" />
+    <ui:Style src="../Coop/Coop.uss" />
     <ui:VisualElement name="mainMenuRoot" class="main-menu-root">
         <ui:Label text="PerfectLoot" class="mm-title" />
 
@@ -20,7 +21,9 @@
             <ui:Button name="changeNameButton" text="Change name" class="mm-link" />
         </ui:VisualElement>
 
-        <!-- Character Select (CharacterSelectScreen): the account's characters left, the selected one or the create form right -->
+        <!-- Character Select (CharacterSelectScreen): the account's characters left, the selected one or the create form
+             right. Player 2's picker (CoopPicker) goes in player2Panel beside it while they're joined -->
+        <ui:VisualElement class="mm-coop-row">
         <ui:VisualElement name="characterScreen" class="mm-panel mm-panel--wide mm-screen--hidden">
             <ui:Label text="Character Select" class="mm-heading" />
             <ui:VisualElement class="cs-columns">
@@ -81,6 +84,11 @@
             </ui:VisualElement>
             <ui:Button name="characterBackButton" text="Back" class="mm-link" />
         </ui:VisualElement>
+        <ui:VisualElement name="player2Panel" class="mm-player2 mm-screen--hidden" />
+        </ui:VisualElement>
+
+        <!-- "Player 2: press Start to join" in Character Select while a device is free -->
+        <ui:Label name="joinHint" class="coop-join-hint coop--hidden" />
 
         <!-- A skill icon's tooltip in Character Select -->
         <ui:VisualElement name="skillTooltip" class="cs-tooltip" picking-mode="Ignore">

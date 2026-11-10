@@ -6,7 +6,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-public class InventoryManager : MonoBehaviour
+public class InventoryManager : MonoBehaviour, IPerPlayer
 {
     [Serializable]
     public class EquippedEntry
@@ -25,8 +25,8 @@ public class InventoryManager : MonoBehaviour
     public static InventoryManager For(int playerIndex) =>
         playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
 
-    [Tooltip("Which local player's equipment this is (CharacterManager.PlayerIndex)")]
-    public int PlayerIndex;
+    /// <summary>Which local player's this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
     public InventorySlot WeaponSlot, HeadSlot, BootsSlot, LegsSlot, ChestSlot, BeltSlot,
                          HandsSlot, ShouldersSlot, AmuletSlot, Ring1Slot, Ring2Slot,
                          OffhandSlot;

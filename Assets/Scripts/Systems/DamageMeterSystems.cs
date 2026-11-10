@@ -88,9 +88,11 @@ public struct DamageMeterRecorder
         return _infos.HasComponent(unit) ? new MeterName { Unit = _infos[unit].Source } : default;
     }
 
+    // A player's (or their companion's) skill keeps whose it is, so each player's damage per skill can be told apart
     MeterName SourceName(DamageLabel label, Entity unit)
     {
-        if (label != DamageLabel.None) return new MeterName { Label = label };
+        int player = IsTracked(unit) && _targetables.HasComponent(unit) ? _targetables[unit].FieldSlot + 1 : 0;
+        if (label != DamageLabel.None) return new MeterName { Label = label, Player = player };
         return _players.HasComponent(unit) ? new MeterName { Label = DamageLabel.Other } : UnitName(unit);
     }
 }

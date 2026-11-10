@@ -92,7 +92,8 @@ public class UnitPanelHUD : MonoBehaviour
         if (!_bound) return;
 
         var world = World.DefaultGameObjectInjectionWorld;
-        var characterManager = CharacterManager.Instance;
+        // The player who has the mouse: the hovered unit is theirs
+        var characterManager = CharacterManager.For(GameInput.MouseOwner);
         if (world == null || !world.IsCreated || characterManager == null || Library == null) return;
 
         var entityManager = world.EntityManager;

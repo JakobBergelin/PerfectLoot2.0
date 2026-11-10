@@ -7,7 +7,9 @@ using UnityEngine.UIElements;
 /// <summary>
 /// The main menu's Character Select screen, run by MainMenuHUD: the account's characters on the left with Create new
 /// character, and on the right the selected character (its skills, Adventure, Delete) or the form that creates one.
-/// Opens on the character played last; an account without characters opens the form.
+/// Opens on the character played last; an account without characters opens the form. While player 2 is joined,
+/// Adventure becomes Ready (AccountManager.SelectCharacter; MainMenuHUD starts once both are), and the character player 2
+/// is ready with is tagged and can't be picked.
 /// </summary>
 public class CharacterSelectScreen
 {
@@ -34,6 +36,7 @@ public class CharacterSelectScreen
     Button _createButton;
 
     readonly Dictionary<string, VisualElement> _rows = new Dictionary<string, VisualElement>();
+    readonly Dictionary<string, Label> _rowTags = new Dictionary<string, Label>();
     readonly Dictionary<ClassType, Button> _classChoices = new Dictionary<ClassType, Button>();
     readonly Dictionary<ResourceType, Button> _resourceChoices = new Dictionary<ResourceType, Button>();
 
@@ -42,6 +45,11 @@ public class CharacterSelectScreen
     ResourceType _resource;
 
     static AccountManager Account => AccountManager.Instance;
+
+    static bool Coop => GameInput.PlayerCount > 1;
+    // What the Adventure button and the row tags show (Update)
+    AccountCharacter _shownReady, _shownPlayer2, _shownSelected;
+    bool _shownCoop;
 
     bool Creating => !_createView.ClassListContains(HiddenClass);
     bool ConfirmingDelete => !_deleteConfirm.ClassListContains(HiddenClass);
@@ -161,6 +169,11 @@ public class CharacterSelectScreen
     /// </summary>
     public bool Cancel()
     {
+        if (Coop && Account != null && Account.SelectedCharacterOf(0) != null)
+        {
+            Account.ClearSelection(0);
+            return true;
+        }
         if (ConfirmingDelete)
         {
             ShowDeleteConfirm(false);
@@ -175,12 +188,48 @@ public class CharacterSelectScreen
         return false;
     }
 
+    /// <summary>
+    /// Every frame while shown: Adventure says Ready (or Waiting for Player 2) while player 2 is joined, and the
+    /// character player 2 is ready with is tagged and can't be played.
+    /// </summary>
+    public void Update()
+    {
+        var ready = Coop && Account != null ? Account.SelectedCharacterOf(0) : null;
+        var player2 = Coop && Account != null ? Account.SelectedCharacterOf(1) : null;
+        var selected = Account != null ? Account.FindCharacter(_selectedGuid) : null;
+        if (Coop == _shownCoop && ready == _shownReady && player2 == _shownPlayer2 && selected == _shownSelected) return;
+        _shownCoop = Coop;
+        _shownReady = ready;
+        _shownPlayer2 = player2;
+        _shownSelected = selected;
+        RefreshCoop();
+    }
+
+    void RefreshCoop()
+    {
+        var ready = _shownReady;
+        var player2 = _shownPlayer2;
+        _adventureButton.text = !_shownCoop ? "Adventure" : ready != null ? "Waiting for Player 2" : "Ready";
+        _adventureButton.SetEnabled(_shownSelected == null || _shownSelected != player2);
+        foreach (var pair in _rowTags)
+        {
+            string tag = player2 != null && pair.Key == player2.Guid ? "Player 2" : ready != null && pair.Key == ready.Guid ? "Ready" : "";
+            pair.Value.text = tag;
+            pair.Value.EnableInClassList(HiddenClass, tag.Length == 0);
+        }
+    }
+
+    /// <summary>"Level 12 Mage · Mana": the line under a character's name.</summary>
+    public string Describe(AccountCharacter character) =>
+        $"Level {character.Level} {ClassName(character.Class)} · {ResourceName(character.Resource)}";
+
     // ---------- List ----------
 
     void RebuildList()
     {
         _list.Clear();
         _rows.Clear();
+        _rowTags.Clear();
         var characters = Account != null ? Account.Characters : Array.Empty<AccountCharacter>();
         foreach (var character in characters)
         {
@@ -188,16 +237,23 @@ public class CharacterSelectScreen
             row.AddToClassList("cs-character");
             var name = new Label(character.Name);
             name.AddToClassList("cs-character-name");
-            var info = new Label($"Level {character.Level} {ClassName(character.Class)} · {ResourceName(character.Resource)}");
+            var info = new Label(Describe(character));
             info.AddToClassList("cs-character-info");
+            // Who else plays it in co-op (RefreshCoop)
+            var tag = new Label { pickingMode = PickingMode.Ignore };
+            tag.AddToClassList("cs-character-tag");
+            tag.AddToClassList(HiddenClass);
             row.Add(name);
             row.Add(info);
+            row.Add(tag);
             string guid = character.Guid;
             row.RegisterCallback<ClickEvent>(_ => Select(guid));
             UiNav.Clickable(row, () => Select(guid));
             _list.Add(row);
             _rows[guid] = row;
+            _rowTags[guid] = tag;
         }
+        RefreshCoop();
         _noCharacters.EnableInClassList(HiddenClass, characters.Count > 0);
         _pager.Show(_list.Children(), CharactersPerPage);
     }
@@ -207,6 +263,9 @@ public class CharacterSelectScreen
     void Select(string guid)
     {
         var character = Account != null ? Account.FindCharacter(guid) : null;
+        // Ready with another one: picking this one isn't ready anymore
+        var ready = Account != null ? Account.SelectedCharacterOf(0) : null;
+        if (Coop && ready != null && ready != character) Account.ClearSelection(0);
         _selectedGuid = character?.Guid;
         foreach (var pair in _rows)
             pair.Value.EnableInClassList(SelectedRowClass, pair.Key == _selectedGuid);
@@ -243,20 +302,29 @@ public class CharacterSelectScreen
 
     // Its 4 active skills and 3 passives as icons (empty frames until it was first played), with a tooltip on hover or
     // controller focus. The skill assets come from the game rig's managers (GameBootstrap.RigPrefab).
+    /// <summary>The skill asset a character saved by type (the game rig's skill list), or null.</summary>
+    public static ActiveSkills.ActiveSkill FindSkill(string type)
+    {
+        var rig = GameBootstrap.RigPrefab;
+        var manager = rig != null && !string.IsNullOrEmpty(type) ? rig.GetComponentInChildren<ActiveSkillManager>(true) : null;
+        return manager != null ? manager.AllSkills.Find(candidate => candidate != null && candidate.Type.ToString() == type) : null;
+    }
+
+    /// <summary>The passive asset a character saved by type (the game rig's passive list), or null.</summary>
+    public static Passives.PassiveSkill FindPassive(string type)
+    {
+        var rig = GameBootstrap.RigPrefab;
+        var manager = rig != null && !string.IsNullOrEmpty(type) ? rig.GetComponentInChildren<PassiveSkillManager>(true) : null;
+        return manager != null ? manager.AllPassives.Find(candidate => candidate != null && candidate.Type.ToString() == type) : null;
+    }
+
     void ShowSkills(AccountCharacter character)
     {
         HideSkillTooltip();
-        var rig = GameBootstrap.RigPrefab;
-        var skillManager = rig != null ? rig.GetComponentInChildren<ActiveSkillManager>(true) : null;
-        var passiveManager = rig != null ? rig.GetComponentInChildren<PassiveSkillManager>(true) : null;
-
         _detailSkills.Clear();
         for (int i = 0; i < 4; i++)
         {
-            string type = i < character.ActiveSkills.Count ? character.ActiveSkills[i] : "";
-            var skill = skillManager != null && !string.IsNullOrEmpty(type)
-                ? skillManager.AllSkills.Find(candidate => candidate != null && candidate.Type.ToString() == type)
-                : null;
+            var skill = FindSkill(i < character.ActiveSkills.Count ? character.ActiveSkills[i] : null);
             if (skill == null)
             {
                 AddSkillIcon(_detailSkills, null, null, passive: false, null);
@@ -273,11 +341,7 @@ public class CharacterSelectScreen
         _detailPassives.Clear();
         for (int i = 0; i < 3; i++)
         {
-            string type = i < character.Passives.Count ? character.Passives[i] : "";
-            Passives.PassiveSkill passive = null;
-            if (passiveManager != null && !string.IsNullOrEmpty(type))
-                foreach (var candidate in passiveManager.AllPassives)
-                    if (candidate != null && candidate.Type.ToString() == type) passive = candidate;
+            var passive = FindPassive(i < character.Passives.Count ? character.Passives[i] : null);
             if (passive == null)
             {
                 AddSkillIcon(_detailPassives, null, null, passive: true, null);

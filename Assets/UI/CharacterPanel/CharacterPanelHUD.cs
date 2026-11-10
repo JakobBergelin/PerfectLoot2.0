@@ -14,8 +14,15 @@ using UnityEngine.UIElements;
 /// Equipment comes from InventoryManager, stats from the player entity while the panel is open.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
-public class CharacterPanelHUD : MonoBehaviour
+public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
+    PlayerMenus Menus => MenuPanels.For(PlayerIndex);
+    PlayerNav Nav => UiNav.For(PlayerIndex);
+    GameInput.PlayerControls Controls => GameInput.For(PlayerIndex);
+
     const string HiddenClass = "character-panel-root--hidden";
     const string TooltipVisibleClass = "cp-tooltip--visible";
     const string PickerHiddenClass = "cp-picker--hidden";
@@ -121,7 +128,7 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void Awake()
     {
-        _toggleAction = GameInput.Actions.asset.FindAction("Player/Inventory");
+        _toggleAction = Controls.Actions.asset.FindAction("Player/Inventory");
         if (_toggleAction == null)
             Debug.LogWarning("CharacterPanelHUD: no Player/Inventory input action. Reimport InputSystem_Actions.inputactions.", this);
     }
@@ -130,14 +137,14 @@ public class CharacterPanelHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        MenuPanels.OpenChanged += OnMenuOpenChanged;
-        MenuPanels.AddTab(this, 0, SetOpen);
+        Menus.OpenChanged += OnMenuOpenChanged;
+        Menus.AddTab(this, 0, SetOpen);
     }
 
     void OnDisable()
     {
-        MenuPanels.RemoveTab(this);
-        MenuPanels.OpenChanged -= OnMenuOpenChanged;
+        Menus.RemoveTab(this);
+        Menus.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
@@ -155,6 +162,8 @@ public class CharacterPanelHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _bound = Bind(root);
         _boundVersion = version;
@@ -191,7 +200,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _picker.RegisterCallback<GeometryChangedEvent>(_ => ClampTop(_picker, _pickerTop));
         _tooltip.RegisterCallback<GeometryChangedEvent>(_ => ClampTop(_tooltip, _tooltipTop));
 
-        UiNav.Register(_root);
+        Nav.Register(_root);
         _pickerPager = Pager.After(_pickerList);
         _statPager = Pager.After(_statList);
         BuildSlots(slotGrid);
@@ -204,26 +213,26 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void Update()
     {
-        if (MenuPanels.TogglePressed(_toggleAction))
+        if (Menus.TogglePressed(_toggleAction))
             SetOpen(!_open);
 
         if (!_bound || !_open) return;
 
         // Esc or B closes the picker first, then the panel
-        if (MenuPanels.BackPressed && !MenuPanels.IsTyping)
+        if (Menus.BackPressed && !Menus.IsTyping)
         {
             if (_pickerSlot != null) ClosePicker();
             else SetOpen(false);
             return;
         }
         // LT/RT: the picker's pages while it's open, else the stats'
-        if (MenuPanels.PagePressed != 0) (_pickerSlot != null ? _pickerPager : _statPager).Turn(MenuPanels.PagePressed);
+        if (Menus.PagePressed != 0) (_pickerSlot != null ? _pickerPager : _statPager).Turn(Menus.PagePressed);
         // A click anywhere but the picker or a slot closes the picker (slots open their own or close it themselves)
         if (_pickerSlot != null && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !PointerOnPickerOrSlot())
             ClosePicker();
         // Equipment is only changed in town; elsewhere the panel is look-only
         bool town = GameArea.IsTown;
-        bool gamepad = GameInput.UsingGamepad;
+        bool gamepad = Nav.UsingGamepad;
         _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _pickerSlot != null) ClosePicker();
 
@@ -242,7 +251,7 @@ public class CharacterPanelHUD : MonoBehaviour
     void SetOpen(bool open)
     {
         _open = open;
-        MenuPanels.SetOpen(this, open);
+        Menus.SetOpen(this, open);
         if (!_bound) return;
         _root.EnableInClassList(HiddenClass, !open);
         if (!open)
@@ -250,14 +259,14 @@ public class CharacterPanelHUD : MonoBehaviour
             ClosePicker();
             HideTooltip();
         }
-        UiNav.SetScope(this, _panel, open);
+        Nav.SetScope(this, _panel, open);
         _slotsDirty = true;
     }
 
     // InventoryManager may not exist yet when this is enabled, so subscribe once it does
     void Subscribe()
     {
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         if (inventory == _subscribedInventory) return;
         Unsubscribe();
         if (inventory == null) return;
@@ -328,7 +337,7 @@ public class CharacterPanelHUD : MonoBehaviour
     void RefreshSlots()
     {
         _slotsDirty = false;
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         foreach (var view in _slots)
         {
             var slot = inventory != null ? view.GetSlot(inventory) : null;
@@ -403,8 +412,8 @@ public class CharacterPanelHUD : MonoBehaviour
         _pickerPager.Reset();
         BuildPicker();
         // A controller moves through the picker until it closes, starting on its first item
-        UiNav.SetScope(_picker, _picker, true);
-        UiNav.FocusFirstOf(_pickerList.Children());
+        Nav.SetScope(_picker, _picker, true);
+        Nav.FocusFirstOf(_pickerList.Children());
 
         // Left of the panel, level with the slot
         var slotPosition = view.Element.ChangeCoordinatesTo(_root, Vector2.zero);
@@ -421,7 +430,7 @@ public class CharacterPanelHUD : MonoBehaviour
     void ClosePicker()
     {
         _pickerSlot = null;
-        if (_picker != null) UiNav.SetScope(_picker, _picker, false);
+        if (_picker != null) Nav.SetScope(_picker, _picker, false);
         EndPreview();
         HideTooltip();
         _picker?.AddToClassList(PickerHiddenClass);
@@ -451,7 +460,7 @@ public class CharacterPanelHUD : MonoBehaviour
         _pickerList.Clear();
         _pickerTitle.text = $"Swap {_pickerSlot.Name}";
 
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         var slot = inventory != null ? _pickerSlot.GetSlot(inventory) : null;
         var database = AccountManager.Instance != null ? AccountManager.Instance.Items : null;
         if (slot == null || database == null)
@@ -493,7 +502,7 @@ public class CharacterPanelHUD : MonoBehaviour
             BuildPicker();
             // The chips are new: keep a controller on the picked one
             foreach (var shown in _pickerFilters.Children())
-                if (shown.ClassListContains(ChipSelectedClass)) UiNav.Focus(shown);
+                if (shown.ClassListContains(ChipSelectedClass)) Nav.Focus(shown);
         };
         chip.RegisterCallback<ClickEvent>(_ => pick());
         UiNav.Clickable(chip, pick);
@@ -571,7 +580,7 @@ public class CharacterPanelHUD : MonoBehaviour
             return;
         }
 
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         if (inventory == null) return;
         var before = SwapPreview.ItemsWith(inventory, slot, slot.EquippedItem).ToList();
         var after = SwapPreview.ItemsWith(inventory, slot, item).ToList();
@@ -592,7 +601,7 @@ public class CharacterPanelHUD : MonoBehaviour
 
     void PickOption(InventorySlot slot, Item item, OptionState state)
     {
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         if (inventory != null)
         {
             if (state == OptionState.Unequip) inventory.Unequip(slot);
@@ -604,7 +613,7 @@ public class CharacterPanelHUD : MonoBehaviour
     // The biggest stat changes (relative to the larger of the two values), then legendary powers gained and lost
     string ChangeSummary(InventorySlot slot, Item item)
     {
-        var inventory = InventoryManager.Instance;
+        var inventory = InventoryManager.For(PlayerIndex);
         if (inventory == null) return "";
         var before = SwapPreview.ItemsWith(inventory, slot, slot.EquippedItem).ToList();
         var after = SwapPreview.ItemsWith(inventory, slot, item).ToList();
@@ -832,7 +841,7 @@ public class CharacterPanelHUD : MonoBehaviour
     {
         _snapshot.HasPlayer = false;
         var world = World.DefaultGameObjectInjectionWorld;
-        var characterManager = CharacterManager.Instance;
+        var characterManager = CharacterManager.For(PlayerIndex);
         if (world == null || !world.IsCreated || characterManager == null) return;
 
         var entityManager = world.EntityManager;

@@ -6,6 +6,9 @@
             <ui:VisualElement name="buttons">
                 <ui:Button name="resumeButton" text="Resume" class="gm-button gm-button--primary" />
                 <ui:Button name="leaveDungeonButton" text="Leave dungeon" class="gm-button" />
+                <!-- Player 2's, in the Hub (CoopHUD) -->
+                <ui:Button name="changeCharacterButton" text="Change character" class="gm-button" />
+                <ui:Button name="leaveCoopButton" text="Leave co-op" class="gm-button" />
                 <ui:Button name="optionsButton" text="Options" class="gm-button" />
                 <ui:Button name="mainMenuButton" text="Main menu" class="gm-button" />
                 <ui:Button name="exitButton" text="Exit game" class="gm-button" />

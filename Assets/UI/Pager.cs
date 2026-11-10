@@ -69,14 +69,14 @@ public sealed class Pager
         Apply();
     }
 
-    /// <summary>The next (1) or previous (-1) page; with a controller, focus moves to its first item. False at an end.</summary>
+    /// <summary>The next (1) or previous (-1) page; with a controller, the menu's player's focus moves to its first item. False at an end.</summary>
     public bool Turn(int step)
     {
         int page = Math.Clamp(Page + step, 0, PageCount - 1);
         if (page == Page) return false;
         Page = page;
         Apply();
-        if (GameInput.UsingGamepad) UiNav.FocusFirstOf(ItemsOnPage());
+        UiNav.Of(Element)?.FocusFirstOf(ItemsOnPage());
         return true;
     }
 

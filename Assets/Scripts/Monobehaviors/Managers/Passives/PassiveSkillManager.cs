@@ -5,7 +5,7 @@ using Unity.Collections;
 using Unity.Entities;
 using UnityEngine;
 
-public class PassiveSkillManager : MonoBehaviour
+public class PassiveSkillManager : MonoBehaviour, IPerPlayer
 {
     static readonly PassiveSkillManager[] _players = new PassiveSkillManager[GameInput.MaxPlayers];
 
@@ -16,8 +16,8 @@ public class PassiveSkillManager : MonoBehaviour
     public static PassiveSkillManager For(int playerIndex) =>
         playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
 
-    [Tooltip("Which local player's passives these are (CharacterManager.PlayerIndex)")]
-    public int PlayerIndex;
+    /// <summary>Which local player's this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
     public PassiveSkillSlot Slot1, Slot2, Slot3;
 
     [Header("Every passive that can be rolled into an empty slot at start")]

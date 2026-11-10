@@ -362,9 +362,11 @@ public class DungeonManager : MonoBehaviour
         OpenReturnPortal(entityManager);
         Experience.GiveAllPlayers(entityManager, _dungeon.CompletionExperience);
 
+        // Finished for every player's character
         var account = AccountManager.Instance;
-        if (account != null && account.SelectedCharacter != null && !string.IsNullOrEmpty(_dungeon.Id))
-            account.RecordDungeonCompleted(account.SelectedCharacter, _dungeon.Id);
+        if (account != null && !string.IsNullOrEmpty(_dungeon.Id))
+            for (int i = 0; i < GameInput.PlayerCount; i++)
+                if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), _dungeon.Id);
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete.", this);
     }
 
@@ -385,7 +387,7 @@ public class DungeonManager : MonoBehaviour
             spawner.Triggered = true;
             entityManager.SetComponentData(entity, spawner);
         }
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} failed: the player died in a Survive step.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} failed: a player died in a Survive step.", this);
     }
 
     // ReturnPortalDistance from the player (on the side away from the camera), leading to ReturnScene. After a finish
@@ -439,15 +441,19 @@ public class DungeonManager : MonoBehaviour
 
     // ---------- Helpers ----------
 
+    // Player 1, or player 2 while player 1 is dead
     bool TryGetPlayer(EntityManager entityManager, out float3 position)
     {
         position = default;
-        var characterManager = CharacterManager.Instance;
-        if (characterManager == null) return false;
-        var player = characterManager.Player;
-        if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<LocalTransform>(player)) return false;
-        position = entityManager.GetComponentData<LocalTransform>(player).Position;
-        return true;
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+        {
+            var characterManager = CharacterManager.For(i);
+            var player = characterManager != null ? characterManager.Player : Entity.Null;
+            if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<LocalTransform>(player)) continue;
+            position = entityManager.GetComponentData<LocalTransform>(player).Position;
+            return true;
+        }
+        return false;
     }
 
     // A point on the ground distance meters from the player: first in the start direction (radians around Y from +X;

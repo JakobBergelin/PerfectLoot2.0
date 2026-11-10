@@ -41,15 +41,15 @@ public partial class InputsDataSystem : SystemBase
             }
             var inputs = controls.Actions;
             bool gamepad = controls.UsingGamepad;
-            // The menus are player 1's for now
-            bool menus = controls.Index == 0;
+            var menus = MenuPanels.For(controls.Index);
+            var nav = UiNav.For(controls.Index);
 
             // While typing in a UI text field the movement keys are letters for the text, and while a menu has the
             // controller its stick moves through the menu
-            data.ValueRW.Move = menus && (MenuPanels.IsTyping || UiNav.HasGamepadInput) ? Vector2.zero : inputs.Player.Move.ReadValue<Vector2>();
+            data.ValueRW.Move = menus.IsTyping || nav.HasGamepadInput ? Vector2.zero : inputs.Player.Move.ReadValue<Vector2>();
 
-            // While a menu panel is open the mouse is used for the menu, so skills are ignored (movement still works)
-            bool menuOpen = menus && MenuPanels.IsAnyOpen;
+            // While one of their menus is open it has their buttons (or the mouse), so skills are ignored (movement still works)
+            bool menuOpen = menus.IsAnyOpen;
             for(int i = 0; i < 4; i++)
             {
                 var skill = controls.Skills[i];

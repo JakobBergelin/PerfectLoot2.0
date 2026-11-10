@@ -37,6 +37,15 @@
     margin: 0 0 8px 0;
 }
 
+/* Who is ready, in co-op (PortalHUD) */
+.portal-status {
+    font-size: 13px;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: -4px 0 8px 0;
+}
+
 .portal-button {
     min-width: 120px;
     height: 34px;

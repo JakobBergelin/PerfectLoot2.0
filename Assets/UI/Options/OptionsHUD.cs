@@ -10,6 +10,8 @@ using UnityEngine.UIElements;
 /// binding (A with a controller), then press a key or button to bind it; Esc or Start cancels, and Backspace or View
 /// clears it. While open, gameplay input is off (the Player map is disabled, which rebinding needs too) and Esc, Start or
 /// B closes it. The rows are in pages (LT/RT). Lives all session (GameBootstrap's Services), above every other panel.
+/// One for both players: whoever opens it has it (their buttons and focus) and only their gameplay stops; the bindings
+/// are everyone's.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class OptionsHUD : MonoBehaviour
@@ -38,6 +40,12 @@ public class OptionsHUD : MonoBehaviour
 
     static OptionsHUD _instance;
 
+    // The player who has it open (or had it last)
+    int _owner;
+    PlayerMenus Menus => MenuPanels.For(_owner);
+    PlayerNav Nav => UiNav.For(_owner);
+    GameInput.PlayerControls Controls => GameInput.For(_owner) ?? GameInput.Players[0];
+
     PanelRenderer _panelRenderer;
     bool _bound;
     int _boundVersion = -1;
@@ -55,16 +63,23 @@ public class OptionsHUD : MonoBehaviour
     string _rebindingGroup;
     Row _pendingRow;            // A controller rebind waits for A (that pressed the binding) to be let go first
 
-    /// <summary>True while the window is open, and on the frame it closed: that Esc was the window's.</summary>
-    public static bool HandlesEscape => _instance != null && (_instance._open || _instance._closedFrame == Time.frameCount);
+    /// <summary>True while player 1 has the window open, and on the frame it closed: that Esc was the window's.</summary>
+    public static bool HandlesEscape => HandlesEscapeFor(0);
 
-    public static void Open()
+    /// <summary>True while this player has the window open, and on the frame it closed: that Esc was the window's.</summary>
+    public static bool HandlesEscapeFor(int playerIndex) =>
+        _instance != null && _instance._owner == playerIndex && (_instance._open || _instance._closedFrame == Time.frameCount);
+
+    /// <summary>Opens it for this player (player 1 by default), unless the other player has it open.</summary>
+    public static void Open(int playerIndex = 0)
     {
         if (_instance == null)
         {
             Debug.LogWarning("OptionsHUD: there is no Options window. Is it in GameBootstrap's Services?");
             return;
         }
+        if (_instance._open) return;
+        _instance._owner = playerIndex;
         _instance.SetOpen(true);
     }
 
@@ -175,7 +190,7 @@ public class OptionsHUD : MonoBehaviour
         // A controller rebind starts once A, which chose the binding, is let go (else it would bind A)
         if (_pendingRow != null)
         {
-            var gamepad = GameInput.Players[0].GamepadDevice;
+            var gamepad = Controls.GamepadDevice;
             if (gamepad == null || !gamepad.buttonSouth.isPressed)
             {
                 var row = _pendingRow;
@@ -188,8 +203,8 @@ public class OptionsHUD : MonoBehaviour
         // Esc, Start, Backspace and View never bind (GameInput.Rebind), so the window can use them
         if (_rebinding != null)
         {
-            var keyboard = GameInput.Players[0].KeyboardDevice;
-            var gamepad = GameInput.Players[0].GamepadDevice;
+            var keyboard = Controls.KeyboardDevice;
+            var gamepad = Controls.GamepadDevice;
             if ((keyboard != null && keyboard.backspaceKey.wasPressedThisFrame) || (gamepad != null && gamepad.selectButton.wasPressedThisFrame))
             {
                 var row = _rebindingRow;
@@ -197,13 +212,13 @@ public class OptionsHUD : MonoBehaviour
                 _rebinding.Cancel();
                 Clear(row, group);
             }
-            else if (MenuPanels.EscapePressed) _rebinding.Cancel();
+            else if (Menus.EscapePressed) _rebinding.Cancel();
             return;
         }
 
-        if (MenuPanels.BackPressed) SetOpen(false);
-        else if (MenuPanels.PagePressed != 0) _pager.Turn(MenuPanels.PagePressed);
-        _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
+        if (Menus.BackPressed) SetOpen(false);
+        else if (Menus.PagePressed != 0) _pager.Turn(Menus.PagePressed);
+        _hint.text = Controls.UsingGamepad ? GamepadIdleHint : IdleHint;
     }
 
     void SetOpen(bool open)
@@ -214,21 +229,23 @@ public class OptionsHUD : MonoBehaviour
             {
                 _rebinding?.Cancel();
                 _pendingRow = null;
-                UiNav.Suspend(this, false);
+                Nav.Suspend(this, false);
                 _closedFrame = Time.frameCount;
             }
             _open = open;
-            // Gameplay ignores input while it's open; the Player map is off so a key pressed to bind it does nothing else
-            MenuPanels.SetBlocking(this, open);
-            if (open) GameInput.Player.Disable();
-            else GameInput.Player.Enable();
+            // The owner's gameplay ignores input while it's open; their Player map is off so a key pressed to bind it does
+            // nothing else
+            Menus.SetBlocking(this, open);
+            if (open) Controls.Actions.Player.Disable();
+            else Controls.Actions.Player.Enable();
         }
 
         if (!_bound) return;
+        if (open) Nav.Register(_root);
         _root.EnableInClassList(HiddenClass, !open);
-        UiNav.SetScope(this, _panel, open);
+        Nav.SetScope(this, _panel, open);
         if (!open) return;
-        _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
+        _hint.text = Controls.UsingGamepad ? GamepadIdleHint : IdleHint;
         RefreshRows();
     }
 
@@ -303,11 +320,11 @@ public class OptionsHUD : MonoBehaviour
     {
         _rebinding?.Cancel();
         // Pressed with A: wait for it to be let go (Update)
-        var gamepad = GameInput.Players[0].GamepadDevice;
+        var gamepad = Controls.GamepadDevice;
         if (group == GameInput.Gamepad && gamepad != null && gamepad.buttonSouth.isPressed)
         {
             _pendingRow = row;
-            UiNav.Suspend(this, true);
+            Nav.Suspend(this, true);
             _hint.text = GamepadHint;
             return;
         }
@@ -320,24 +337,24 @@ public class OptionsHUD : MonoBehaviour
         int index = GameInput.BindingIndex(action, group, row.Part);
         if (index < 0)
         {
-            UiNav.Suspend(this, false);
+            Nav.Suspend(this, false);
             return;
         }
 
         _rebindingRow = row;
         _rebindingGroup = group;
         // Menu navigation waits, so the button pressed to bind it doesn't also press the focused one
-        UiNav.Suspend(this, true);
+        Nav.Suspend(this, true);
         // Unfocused, so the key pressed to bind it doesn't click it again
-        if (!GameInput.UsingGamepad) (group == GameInput.Gamepad ? row.GamepadButton : row.KeyboardButton)?.Blur();
+        if (!Controls.UsingGamepad) (group == GameInput.Gamepad ? row.GamepadButton : row.KeyboardButton)?.Blur();
         _rebinding = GameInput.Rebind(action, index, group, () =>
         {
             _rebinding = null;
             _rebindingRow = null;
             _rebindingGroup = null;
-            UiNav.Suspend(this, false);
+            Nav.Suspend(this, false);
             if (!_bound) return;
-            _hint.text = GameInput.UsingGamepad ? GamepadIdleHint : IdleHint;
+            _hint.text = Controls.UsingGamepad ? GamepadIdleHint : IdleHint;
             RefreshRows();
         });
         _hint.text = group == GameInput.Gamepad ? GamepadHint : KeyboardHint;

@@ -5,9 +5,10 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// A small label above every item on the ground (GroundLootManager): its name in its rarity's color. Clicking it picks
-/// the item up when the player is within reach; labels out of reach are dimmed and ignore clicks. The Interact action
-/// picks up the nearest item in reach, whose label is marked and shows the key (unless a portal in reach takes Interact,
-/// PortalHUD). Labels that would overlap on screen are stacked upward.
+/// the item up when the mouse's player is within reach; labels out of everyone's reach are dimmed. Each player's
+/// Interact action picks up the item in reach nearest them, whose label is marked and shows their key (unless a portal
+/// in reach takes their Interact, PortalHUD). Picked-up items are the account's, so both players share them. Labels that
+/// would overlap on screen are stacked upward.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class GroundLootHUD : MonoBehaviour
@@ -38,6 +39,9 @@ public class GroundLootHUD : MonoBehaviour
     readonly List<View> _views = new List<View>();
     readonly List<View> _placed = new List<View>();
     readonly HashSet<Label> _hovered = new HashSet<Label>();
+    // Per player: the item their Interact picks up, and their Interact key
+    readonly GroundLootManager.GroundItem[] _next = new GroundLootManager.GroundItem[GameInput.MaxPlayers];
+    readonly string[] _keys = new string[GameInput.MaxPlayers];
 
     void OnEnable()
     {
@@ -85,18 +89,27 @@ public class GroundLootHUD : MonoBehaviour
         if (manager != _manager || (manager != null && manager.Version != _itemsVersion)) Rebuild(manager);
         if (manager == null || _views.Count == 0) return;
 
-        // Interact takes the nearest item in reach, unless the portal card has it
-        var next = PortalHUD.ShowingPortal ? null : manager.NearestInReach();
-        string key = GameInput.Label(GameInput.Player.Interact);
+        // Each player's Interact takes the item in reach nearest them, unless they're at a portal (PortalHUD)
+        for (int i = 0; i < _next.Length; i++)
+        {
+            var controls = GameInput.For(i);
+            _next[i] = controls != null && !PortalHUD.AtPortal(i) ? manager.NearestInReach(i) : null;
+            _keys[i] = controls != null ? controls.Label(controls.Actions.Player.Interact) : "";
+        }
         foreach (var view in _views)
         {
-            bool isNext = view.Item == next;
-            view.Label.EnableInClassList(NextClass, isNext);
-            string text = isNext && key.Length > 0 ? $"{view.Name} ({key})" : view.Name;
+            int player = System.Array.IndexOf(_next, view.Item);
+            view.Label.EnableInClassList(NextClass, player >= 0);
+            string text = player >= 0 && _keys[player].Length > 0 ? $"{view.Name} ({_keys[player]})" : view.Name;
             if (view.Label.text != text) view.Label.text = text;
         }
-        if (next != null && !MenuPanels.IsPanelOpen && !MenuPanels.IsTyping && !UiNav.HasGamepadInput && GameInput.Player.Interact.WasPressedThisFrame() && manager.PickUp(next))
-            return;
+        for (int i = 0; i < _next.Length; i++)
+        {
+            var controls = GameInput.For(i);
+            var menus = MenuPanels.For(i);
+            if (_next[i] == null || menus.IsPanelOpen || menus.IsTyping || UiNav.For(i).HasGamepadInput) continue;
+            if (controls.Actions.Player.Interact.WasPressedThisFrame() && manager.PickUp(_next[i], i)) return;
+        }
 
         var camera = Camera.main;
         foreach (var view in _views)
@@ -111,7 +124,7 @@ public class GroundLootHUD : MonoBehaviour
             float width = float.IsNaN(view.Label.resolvedStyle.width) ? 0f : view.Label.resolvedStyle.width;
             float height = float.IsNaN(view.Label.resolvedStyle.height) ? 0f : view.Label.resolvedStyle.height;
             view.Rect = new Rect(point.x - width * 0.5f, point.y - height, width, height);
-            view.Label.EnableInClassList(FarClass, !manager.InReach(view.Item));
+            view.Label.EnableInClassList(FarClass, !manager.InReachOfAnyone(view.Item));
         }
 
         Stack();
@@ -171,7 +184,7 @@ public class GroundLootHUD : MonoBehaviour
             label.style.borderRightColor = color;
 
             var groundItem = item;
-            label.RegisterCallback<ClickEvent>(_ => manager.PickUp(groundItem));
+            label.RegisterCallback<ClickEvent>(_ => manager.PickUp(groundItem, GameInput.MouseOwner));
             // While over a label the click is for it, not a skill
             label.RegisterCallback<PointerEnterEvent>(_ => SetHovered(label, true));
             label.RegisterCallback<PointerLeaveEvent>(_ => SetHovered(label, false));

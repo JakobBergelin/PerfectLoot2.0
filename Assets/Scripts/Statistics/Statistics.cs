@@ -95,4 +95,13 @@ public class AccountStatistics
         Account.Add(type, amount, subject, name);
         if (character != null) Character(character.Guid).Add(type, amount, subject, name);
     }
+
+    /// <summary>Counts once on the account and on each of the characters (co-op: what both players share, like kills).</summary>
+    public void Add(IEnumerable<AccountCharacter> characters, StatType type, double amount, string subject = null, string name = null)
+    {
+        if (amount == 0.0) return;
+        Account.Add(type, amount, subject, name);
+        foreach (var character in characters)
+            if (character != null) Character(character.Guid).Add(type, amount, subject, name);
+    }
 }

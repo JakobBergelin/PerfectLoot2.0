@@ -1,0 +1,150 @@
+/* Couch co-op: player 2's character picker (CoopPicker) and the join hint, in Character Select and the Hub (CoopHUD).
+   Colours are set here, not inherited, so the picker looks the same on both panels. */
+
+.coop--hidden {
+    display: none;
+}
+
+/* Player 2's picker */
+.coop-panel {
+    width: 360px;
+    padding: 20px;
+    background-color: rgba(20, 22, 28, 0.95);
+    border-width: 2px;
+    border-color: #3A3F4B;
+    border-radius: 8px;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.coop-title {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: #F2F2F2;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 14px 0;
+}
+
+.coop-row {
+    flex-direction: row;
+    align-items: center;
+    padding: 8px 10px;
+    margin: 0 0 6px 0;
+    background-color: rgba(10, 11, 14, 0.9);
+    border-width: 2px;
+    border-color: #3A3F4B;
+    border-radius: 6px;
+}
+
+.coop-row--highlighted {
+    border-color: #E0A020;
+    background-color: rgba(40, 44, 54, 0.95);
+}
+
+/* Player 1's character: shown, not pickable */
+.coop-row--taken {
+    opacity: 0.45;
+}
+
+.coop-row--leave {
+    margin-top: 6px;
+}
+
+.coop-row__text {
+    flex-grow: 1;
+}
+
+.coop-row__name {
+    font-size: 16px;
+    -unity-font-style: bold;
+    color: #F2F2F2;
+    padding: 0;
+    margin: 0;
+}
+
+.coop-row__info {
+    font-size: 12px;
+    color: #A8ADB8;
+    padding: 0;
+    margin: 2px 0 0 0;
+}
+
+.coop-row__tag {
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: #E0A020;
+    padding: 0;
+    margin: 0 0 0 8px;
+}
+
+/* The highlighted character, in Character Select */
+.coop-details {
+    margin: 12px 0 0 0;
+    padding: 12px 0 0 0;
+    border-top-width: 1px;
+    border-color: #3A3F4B;
+}
+
+.coop-detail-name {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: #E0A020;
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.coop-detail-info {
+    font-size: 14px;
+    color: #F2F2F2;
+    padding: 0;
+    margin: 0 0 10px 0;
+}
+
+.coop-status {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: #E0A020;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    padding: 0;
+    margin: 12px 0 0 0;
+}
+
+.coop-hint {
+    font-size: 12px;
+    color: #A8ADB8;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+/* "Player 2: press Start to join", bottom-right above the Damage Meter */
+.coop-join-hint {
+    position: absolute;
+    right: 24px;
+    bottom: 64px;
+    font-size: 15px;
+    color: #F2F2F2;
+    background-color: rgba(10, 11, 14, 0.85);
+    border-width: 1px;
+    border-color: #3A3F4B;
+    border-radius: 4px;
+    padding: 6px 12px;
+    margin: 0;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+/* The Hub's picker, on the right of the screen */
+.coop-hub-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+}
+
+.coop-hub-picker {
+    position: absolute;
+    right: 40px;
+    top: 22%;
+}

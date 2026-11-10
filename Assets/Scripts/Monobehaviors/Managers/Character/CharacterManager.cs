@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 /// gameplay components, applies class/resource/level, and respawns the player after it dies. One per local player
 /// (PlayerIndex; player 2's is made by CoopManager), like InventoryManager, ActiveSkillManager and PassiveSkillManager.
 /// </summary>
-public class CharacterManager : MonoBehaviour
+public class CharacterManager : MonoBehaviour, IPerPlayer
 {
     static readonly CharacterManager[] _players = new CharacterManager[GameInput.MaxPlayers];
 
@@ -24,8 +24,8 @@ public class CharacterManager : MonoBehaviour
     public static CharacterManager For(int playerIndex) =>
         playerIndex >= 0 && playerIndex < _players.Length ? _players[playerIndex] : null;
 
-    [Tooltip("Which local player this is: 0 is player 1 (the rig's own); player 2's is made by CoopManager")]
-    public int PlayerIndex;
+    /// <summary>Which local player's this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
 
     /// <summary>Raised after every (re)spawn. Other managers re-push their state to the new player entity.</summary>
     public static event Action<Entity> PlayerSpawned;
@@ -272,7 +272,8 @@ public class CharacterManager : MonoBehaviour
     {
         if (For(PlayerIndex) != this) return;
         _players[PlayerIndex] = null;
-        // A player leaving takes their entity along (player 1's goes with the scene)
+        // A player leaving saves their progress and takes their entity along (player 1's goes with the scene)
+        if (PlayerIndex > 0) SaveProgress();
         var world = World.DefaultGameObjectInjectionWorld;
         if (PlayerIndex > 0 && world != null && world.IsCreated && world == _playerWorld && world.EntityManager.Exists(_player))
             world.EntityManager.DestroyEntity(_player);
@@ -385,7 +386,7 @@ public class CharacterManager : MonoBehaviour
         PlayerSpawned?.Invoke(_player);
     }
 
-    // Where player 2 appears, from player 1
+    // Where player 2 appears from player 1 (and player 1 from player 2, the other way)
     static readonly Vector3 JoinOffset = new Vector3(2f, 0f, 0f);
 
     // Seconds to keep looking for ground before spawning at the plain position anyway
@@ -394,18 +395,23 @@ public class CharacterManager : MonoBehaviour
     Vector3 _groundWaitPosition;
 
     /// <summary>
-    /// The level's player start (or this object's position without a level), standing on the ground below it. False while the ground
-    /// isn't in the physics world yet (e.g. the frame the level appears); after MaxGroundWait at the same position it gives up and
-    /// uses the plain position, with the player's feet at its height.
+    /// The level's player start (or this object's position without a level), or in co-op next to the other player,
+    /// standing on the ground below it. False while the ground isn't in the physics world yet (e.g. the frame the level
+    /// appears); after MaxGroundWait at the same position it gives up and uses the plain position, with the player's feet
+    /// at its height.
     /// </summary>
     bool TryFindSpawnPosition(EntityManager entityManager, Entity prefab, out Vector3 position)
     {
         position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
-        // Player 2 and on: next to player 1 when they're in the game
-        var first = For(0);
-        if (PlayerIndex > 0 && first != null && first._player != Entity.Null && entityManager.Exists(first._player))
-            position = (Vector3)entityManager.GetComponentData<LocalTransform>(first._player).Position + JoinOffset;
+        // In co-op: next to the other player while they're in the level (player 2 joining, anyone respawning)
+        for (int i = 0; i < _players.Length; i++)
+        {
+            var other = _players[i];
+            if (i == PlayerIndex || other == null || other._player == Entity.Null || !entityManager.Exists(other._player)) continue;
+            position = (Vector3)entityManager.GetComponentData<LocalTransform>(other._player).Position + (PlayerIndex > i ? JoinOffset : -JoinOffset);
+            break;
+        }
         // Time spent waiting for ground somewhere else doesn't count
         if (position != _groundWaitPosition)
         {

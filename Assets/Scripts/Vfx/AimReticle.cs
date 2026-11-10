@@ -2,13 +2,17 @@ using Unity.Entities;
 using UnityEngine;
 
 /// <summary>
-/// A flat ring on the ground at the local player's aim point (InputsData.MousePosition) while a controller is used, so
-/// the stick's aim can be seen; the mouse cursor shows it otherwise. Hidden without a player or while a menu panel is
-/// open. Cosmetic only. On the rig, with a LineRenderer whose material it keeps.
+/// A flat ring on the ground at its player's aim point (InputsData.MousePosition) while they use a controller, so the
+/// stick's aim can be seen; the mouse cursor shows it otherwise. Hidden without the player or while one of their menu
+/// panels is open. Cosmetic only. On the rig, with a LineRenderer whose material it keeps; player 2's copy (CoopManager)
+/// is drawn in their color.
 /// </summary>
 [RequireComponent(typeof(LineRenderer))]
-public class AimReticle : MonoBehaviour
+public class AimReticle : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose aim this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
     [Tooltip("Meters from the aim point to the ring")]
     public float Radius = 0.6f;
     [Tooltip("Meters wide the ring's line is")]
@@ -16,6 +20,8 @@ public class AimReticle : MonoBehaviour
     [Tooltip("Meters the aim point sits above the ground (InputsDataSystem's AimHeight); the ring is drawn this much lower")]
     public float AimHeight = 0.5f;
     public Color Color = new Color(1f, 1f, 1f, 0.75f);
+    [Tooltip("Player 2's ring")]
+    public Color Player2Color = new Color(0.25f, 0.66f, 0.94f, 0.85f);
     [Range(8, 64)] public int Segments = 32;
 
     LineRenderer _line;
@@ -34,7 +40,8 @@ public class AimReticle : MonoBehaviour
     void LateUpdate()
     {
         Vector3 point = default;
-        bool show = GameInput.UsingGamepad && !MenuPanels.IsPanelOpen && TryGetAimPoint(out point);
+        var controls = GameInput.For(PlayerIndex);
+        bool show = controls != null && controls.UsingGamepad && !MenuPanels.For(PlayerIndex).IsPanelOpen && TryGetAimPoint(out point);
         _line.enabled = show;
         if (!show) return;
 
@@ -48,14 +55,14 @@ public class AimReticle : MonoBehaviour
         _line.positionCount = Segments;
         _line.SetPositions(_points);
         _line.widthMultiplier = Width;
-        _line.startColor = _line.endColor = Color;
+        _line.startColor = _line.endColor = PlayerIndex > 0 ? Player2Color : Color;
     }
 
-    static bool TryGetAimPoint(out Vector3 point)
+    bool TryGetAimPoint(out Vector3 point)
     {
         point = default;
         var world = World.DefaultGameObjectInjectionWorld;
-        var characters = CharacterManager.Instance;
+        var characters = CharacterManager.For(PlayerIndex);
         if (world == null || !world.IsCreated || characters == null) return false;
         var entityManager = world.EntityManager;
         var player = characters.Player;

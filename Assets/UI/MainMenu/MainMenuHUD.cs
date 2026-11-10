@@ -8,7 +8,9 @@ using UnityEngine.UIElements;
 /// The main menu the game starts in. First the player gives a name, which stands in for an account (AccountManager);
 /// a new name starts a new play-through. Then Character Select (CharacterSelectScreen: pick or create a character and
 /// go on an adventure in the game scene), Options (OptionsHUD), Exit, and Change name back to the name screen. Esc goes
-/// back a step.
+/// back a step. In Character Select a second player can join (Start on a free controller, Enter on a free keyboard)
+/// and picks one of the account's characters on the right (CoopPicker); the game starts once both are ready.
+/// Changing the name makes player 2 leave.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class MainMenuHUD : MonoBehaviour
@@ -32,10 +34,18 @@ public class MainMenuHUD : MonoBehaviour
     Label _signedIn;
     CharacterSelectScreen _characterSelect;
 
-    // Back from a game scene (the in-game menu's Main menu): still signed in, so the main screen
+    // Co-op: player 2's side of Character Select and the join hint
+    VisualElement _player2Panel;
+    Label _joinHint;
+    CoopPicker _player2;
+    bool _player2Shown, _starting;
+
+    // Back from a game scene (the in-game menu's Main menu): still signed in, so the main screen, or Character Select
+    // when player 2 came back too
     void Awake()
     {
-        if (GameSceneLoader.PreviousScene != null && AccountManager.Instance != null) _screen = Screen.Main;
+        if (GameSceneLoader.PreviousScene != null && AccountManager.Instance != null)
+            _screen = GameInput.PlayerCount > 1 ? Screen.Characters : Screen.Main;
     }
 
     void OnEnable()
@@ -49,6 +59,8 @@ public class MainMenuHUD : MonoBehaviour
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _bound = false;
         _boundVersion = -1;
+        _player2Shown = false;
+        GameInput.AllowJoining(this, false);
     }
 
     void OnUIReload(PanelRenderer panelRenderer, VisualElement root, int version)
@@ -80,10 +92,12 @@ public class MainMenuHUD : MonoBehaviour
         var exit = root.Q<Button>("exitButton");
         var changeName = root.Q<Button>("changeNameButton");
         var characterBack = root.Q<Button>("characterBackButton");
+        _player2Panel = root.Q<VisualElement>("player2Panel");
+        _joinHint = root.Q<Label>("joinHint");
         _characterSelect = new CharacterSelectScreen(AllClasses, AllResources, Adventure);
         if (_nameScreen == null || _mainScreen == null || _characterScreen == null || _nameField == null || _continueButton == null ||
             _signedIn == null || characterSelect == null || options == null || exit == null || changeName == null ||
-            characterBack == null || !_characterSelect.Bind(root))
+            characterBack == null || _player2Panel == null || _joinHint == null || !_characterSelect.Bind(root))
         {
             Debug.LogError("MainMenuHUD: MainMenu.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -105,7 +119,7 @@ public class MainMenuHUD : MonoBehaviour
         _continueButton.clicked += Continue;
 
         characterSelect.clicked += () => ShowScreen(Screen.Characters);
-        options.clicked += OptionsHUD.Open;
+        options.clicked += () => OptionsHUD.Open();
         exit.clicked += Exit;
         changeName.clicked += () => ShowScreen(Screen.Name);
         characterBack.clicked += () => ShowScreen(Screen.Main);
@@ -116,22 +130,91 @@ public class MainMenuHUD : MonoBehaviour
         UiNav.Hint(_mainScreen, "A Select · B Change name");
         UiNav.Hint(_characterScreen, "A Select · LT/RT Pages · B Back");
 
+        _player2 = new CoopPicker(detailed: true, _characterSelect.Describe);
+        _player2.Picked = Player2Picked;
+        _player2.Back = Player2Back;
+        _player2Panel.Clear();
+        _player2Panel.Add(_player2.Element);
+
         UpdateContinueButton();
         return true;
     }
 
     void Update()
     {
-        if (!_bound || OptionsHUD.HandlesEscape) return;
+        if (!_bound) return;
+        UpdateCoop();
+        if (OptionsHUD.HandlesEscape) return;
         if (_screen == Screen.Characters && MenuPanels.PagePressed != 0) _characterSelect.TurnPage(MenuPanels.PagePressed);
         if (!MenuPanels.BackPressed) return;
         if (_screen == Screen.Main) ShowScreen(Screen.Name);
         else if (_screen == Screen.Characters && !_characterSelect.Cancel()) ShowScreen(Screen.Main);
     }
 
+    // ---------- Co-op ----------
+
+    // Joining, player 2's picker beside Character Select, and the start once both are ready. Player 2 keeps going while
+    // player 1 is in Options.
+    void UpdateCoop()
+    {
+        bool characters = _screen == Screen.Characters;
+        GameInput.AllowJoining(this, characters);
+        var device = characters ? GameInput.JoinPressed() : null;
+        if (device != null) CoopManager.Join(device);
+
+        string hint = characters ? CoopManager.JoinHint() : null;
+        _joinHint.text = hint ?? "";
+        _joinHint.EnableInClassList("coop--hidden", hint == null);
+
+        var player2 = GameInput.For(1);
+        bool show = characters && player2 != null;
+        if (show != _player2Shown)
+        {
+            _player2Shown = show;
+            _player2Panel.EnableInClassList(HiddenClass, !show);
+            if (show) _player2.Open(null, showLeave: false);
+        }
+        if (!characters) return;
+        _characterSelect.Update();
+        if (!show) return;
+
+        var account = AccountManager.Instance;
+        var ready1 = account != null ? account.SelectedCharacterOf(0) : null;
+        var ready2 = account != null ? account.SelectedCharacterOf(1) : null;
+        _player2.SetOwnTag("Ready");
+        _player2.SetActions(ready2 != null && ready2 == _player2.Highlighted ? "Not ready" : "Ready", ready2 != null ? "Not ready" : "Leave");
+        _player2.SetStatus(ready2 == null ? "" : ready1 == null ? "Waiting for Player 1" : "");
+        _player2.Update();
+        if (ready1 != null && ready2 != null) StartAdventure();
+    }
+
+    // Ready with this character, or not ready when it already is
+    void Player2Picked(AccountCharacter character)
+    {
+        var account = AccountManager.Instance;
+        if (account == null) return;
+        if (account.SelectedCharacterOf(1) == character) account.ClearSelection(1);
+        else account.SelectCharacter(character.Guid, 1);
+    }
+
+    // Not ready, else leaves
+    void Player2Back()
+    {
+        var account = AccountManager.Instance;
+        if (account != null && account.SelectedCharacterOf(1) != null) account.ClearSelection(1);
+        else CoopManager.Leave(1);
+    }
+
     void ShowScreen(Screen screen)
     {
         _screen = screen;
+        // A new name can be another account: player 2 leaves. Character Select starts with nobody ready
+        if (screen == Screen.Name) CoopManager.Leave(1);
+        if (screen == Screen.Characters && AccountManager.Instance != null)
+        {
+            AccountManager.Instance.ClearSelection(0);
+            AccountManager.Instance.ClearSelection(1);
+        }
         _nameScreen.EnableInClassList(HiddenClass, screen != Screen.Name);
         _mainScreen.EnableInClassList(HiddenClass, screen != Screen.Main);
         _characterScreen.EnableInClassList(HiddenClass, screen != Screen.Characters);
@@ -180,17 +263,31 @@ public class MainMenuHUD : MonoBehaviour
         ShowScreen(Screen.Main);
     }
 
-    // Plays the character in the town (GameBootstrap)
+    // Plays the character in the town (GameBootstrap). In co-op it's Ready instead (again: not ready), and the game
+    // starts once player 2 is ready too (UpdateCoop)
     void Adventure(AccountCharacter character)
     {
+        var account = AccountManager.Instance;
+        if (account == null) return;
+        if (GameInput.PlayerCount > 1)
+        {
+            if (account.SelectedCharacterOf(0) == character) account.ClearSelection(0);
+            else account.SelectCharacter(character.Guid);
+            return;
+        }
+        if (account.SelectCharacter(character.Guid)) StartAdventure();
+    }
+
+    void StartAdventure()
+    {
+        if (_starting) return;
         string town = GameBootstrap.TownScene;
         if (!Application.CanStreamedLevelBeLoaded(town))
         {
             Debug.LogError($"MainMenuHUD: scene '{town}' isn't in Build Settings.", this);
             return;
         }
-        if (AccountManager.Instance == null || !AccountManager.Instance.SelectCharacter(character.Guid)) return;
-        GameSceneLoader.Load(town);
+        _starting = GameSceneLoader.Load(town);
     }
 
     static void Exit()

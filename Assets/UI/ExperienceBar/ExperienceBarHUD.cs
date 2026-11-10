@@ -4,11 +4,14 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// The player's experience bar and level between the skill bar and the buff row (ExperienceBar.uxml), with the numbers
-/// while the pointer is over the bar and a "Level up!" flash. Shows CharacterManager's player. Read-only: never changes ECS.
+/// while the pointer is over the bar and a "Level up!" flash. Shows its player (CharacterManager). Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
-public class ExperienceBarHUD : MonoBehaviour
+public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
     const string HoveredClass = "experience-bar--hovered", LevelUpClass = "experience-row--level-up";
     const float LevelUpSeconds = 1.8f;  // How long "Level up!" shows
 
@@ -45,6 +48,8 @@ public class ExperienceBarHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _row = root.Q<VisualElement>("experienceRow");
         var bar = root.Q<VisualElement>("bar");
@@ -68,7 +73,8 @@ public class ExperienceBarHUD : MonoBehaviour
     {
         if (_row == null) return;
         var world = World.DefaultGameObjectInjectionWorld;
-        var player = CharacterManager.Instance != null ? CharacterManager.Instance.Player : Entity.Null;
+        var characters = CharacterManager.For(PlayerIndex);
+        var player = characters != null ? characters.Player : Entity.Null;
         bool hasPlayer = world != null && world.IsCreated && player != Entity.Null && world.EntityManager.HasComponent<Level>(player);
         _row.style.display = hasPlayer ? DisplayStyle.Flex : DisplayStyle.None;
         if (!hasPlayer) return;

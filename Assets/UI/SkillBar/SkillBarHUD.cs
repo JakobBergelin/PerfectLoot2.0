@@ -3,14 +3,17 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Shows ActiveSkillManager's four slots in SkillBar.uxml: icon, key (for the device used last, GameInput), cooldown sweep and countdown,
+/// Shows its player's four skill slots (ActiveSkillManager) in SkillBar.uxml: icon, key (for their device used last), cooldown sweep and countdown,
 /// pressed/active highlight and "not enough resource" tint. Hovering a slot shows its skill's tooltip (SkillTooltip,
 /// which reads the player's stats). Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 [DefaultExecutionOrder(100)]  // After ActiveSkillManager.LateUpdate has mirrored this frame's state into the slots
-public class SkillBarHUD : MonoBehaviour
+public class SkillBarHUD : MonoBehaviour, IPerPlayer
 {
+    /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
+    public int PlayerIndex { get; set; }
+
     const string EmptyClass = "skill-slot--empty";
     const string PressedClass = "skill-slot--pressed";
     const string ActiveClass = "skill-slot--active";
@@ -70,6 +73,8 @@ public class SkillBarHUD : MonoBehaviour
         root.style.top = 0;
         root.style.right = 0;
         root.style.bottom = 0;
+        // The player's half of the screen in co-op
+        PlayerHud.Register(root, PlayerIndex);
 
         _bound = Bind(root);
         _boundVersion = version;
@@ -94,9 +99,9 @@ public class SkillBarHUD : MonoBehaviour
         if (hoveredSkill != _tooltipSkill) ShowTooltip(_hovered);
     }
 
-    static ActiveSkillSlot SlotAt(int index)
+    ActiveSkillSlot SlotAt(int index)
     {
-        var manager = ActiveSkillManager.Instance;
+        var manager = ActiveSkillManager.For(PlayerIndex);
         if (manager == null) return null;
         return index switch { 0 => manager.Slot1, 1 => manager.Slot2, 2 => manager.Slot3, 3 => manager.Slot4, _ => null };
     }
@@ -115,7 +120,7 @@ public class SkillBarHUD : MonoBehaviour
         }
 
         _tooltipTitle.text = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
-        SkillTooltip.Fill(_tooltipBody, skill, SkillTooltip.CurrentStats());
+        SkillTooltip.Fill(_tooltipBody, skill, SkillTooltip.CurrentStats(PlayerIndex));
 
         var slot = _views[index].Slot;
         var position = slot.ChangeCoordinatesTo(_barRoot, Vector2.zero);
@@ -170,10 +175,11 @@ public class SkillBarHUD : MonoBehaviour
         return true;
     }
 
-    static void UpdateKey(SlotView view, int index)
+    void UpdateKey(SlotView view, int index)
     {
         if (view.Key == null) return;
-        string key = GameInput.Label(GameInput.Skill(index));
+        var controls = GameInput.For(PlayerIndex);
+        string key = controls != null ? controls.Label(controls.Skills[index]) : "";
         view.Key.text = key;
         view.Key.style.visibility = string.IsNullOrEmpty(key) ? Visibility.Hidden : Visibility.Visible;
     }
