@@ -12,6 +12,7 @@ public static class GameInput
     public const string KeyboardMouse = "Keyboard&Mouse";
     public const string Gamepad = "Gamepad";
     const string PrefsKey = "Controls.Bindings";
+    const float GamepadSwitchMagnitude = 0.5f;  // How far a controller's stick, trigger or button must be pushed to count as using it
 
     static InputSystem_Actions _actions;
     static InputAction[] _skills;
@@ -84,14 +85,19 @@ public static class GameInput
         }
     }
 
-    // The device used last decides which keys the labels show
+    // The device used last decides which keys the labels show. Only the game's own actions count (the UI's Navigate
+    // reacts to an idle controller's stick noise), and a controller only once something is pushed at least halfway, so
+    // a resting controller never takes over from the keyboard
     static void OnActionChange(object target, InputActionChange change)
     {
         if (change != InputActionChange.ActionPerformed || target is not InputAction action) return;
-        var device = action.activeControl?.device;
+        if (_actions == null || action.actionMap?.asset != _actions.asset) return;
+        var control = action.activeControl;
+        var device = control?.device;
         if (device == null) return;
         bool gamepad = device is UnityEngine.InputSystem.Gamepad;
         if (!gamepad && device is not Keyboard && device is not Mouse) return;
+        if (gamepad && control.EvaluateMagnitude() < GamepadSwitchMagnitude) return;
         if (gamepad == _usingGamepad) return;
         _usingGamepad = gamepad;
         Version++;
