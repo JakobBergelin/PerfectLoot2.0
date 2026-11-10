@@ -29,5 +29,9 @@ public class AccountCharacter
     public int Level = 1;
     public int Experience;      // Toward the next level
     public List<EquippedItem> Equipped = new List<EquippedItem>();
+    // The equipped skills by slot as SkillType / PassiveType names, "" for an empty slot. Empty lists until the character
+    // was first played (ActiveSkillManager and PassiveSkillManager fill and save them then).
+    public List<string> ActiveSkills = new List<string>();
+    public List<string> Passives = new List<string>();
     public List<CompletedDungeon> CompletedDungeons = new List<CompletedDungeon>();
 }

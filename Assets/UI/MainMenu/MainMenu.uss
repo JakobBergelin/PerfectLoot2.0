@@ -324,3 +324,74 @@
     padding: 0;
     margin: 12px 0 0 0;
 }
+
+/* The selected character's skills: icons in a row (active skills square, passives round), a tooltip on hover */
+.cs-skills {
+    flex-direction: row;
+    margin: 0 0 6px 0;
+}
+
+.cs-skill {
+    width: 44px;
+    height: 44px;
+    margin: 0 6px 0 0;
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 4px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.cs-skill--passive {
+    border-radius: 22px;
+}
+
+.cs-skill--empty {
+    opacity: 0.5;
+}
+
+.cs-skill:hover {
+    border-color: var(--accent);
+}
+
+.cs-tooltip {
+    position: absolute;
+    display: none;
+    max-width: 280px;
+    padding: 8px 10px;
+    background-color: #08090C;
+    border-width: 1px;
+    border-color: var(--panel-border);
+    border-radius: 4px;
+}
+
+.cs-tooltip--visible {
+    display: flex;
+}
+
+.cs-tooltip__title {
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.cs-tooltip__body {
+    font-size: 13px;
+    color: var(--text-color);
+    white-space: normal;
+    padding: 0;
+    margin: 0;
+}
+
+/* A skill without an icon: its name in the frame */
+.cs-skill__name {
+    flex-grow: 1;
+    font-size: 9px;
+    color: var(--text-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+}

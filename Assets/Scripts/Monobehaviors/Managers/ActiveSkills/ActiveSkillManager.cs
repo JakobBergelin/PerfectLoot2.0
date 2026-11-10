@@ -7,6 +7,8 @@ using UnityEngine;
 /// <summary>
 /// Pushes the skills in Slot1..Slot4 to the player (Skill buffer + skill components) and mirrors each
 /// skill's SkillState back into its slot every frame for UI. Activation itself is SkillActivationSystem.
+/// The slots start with the selected character's saved skills (random ones where it has none) and every change is saved
+/// with the character (AccountManager.SetSkills). PassiveSkillManager does the same for passives.
 /// </summary>
 public class ActiveSkillManager : MonoBehaviour
 {
@@ -32,10 +34,41 @@ public class ActiveSkillManager : MonoBehaviour
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
+    // The character picked in Character Select, whose skills the slots show and save; null when the scene was played
+    // without the main menu (the rig's own slots, not saved)
+    AccountCharacter _character;
+
+    // The character's saved skills, then random ones in the slots still empty (saved too, so they stay)
     void Start()
     {
+        LoadCharacterSkills();
         RandomizeEmptySlots();
+        SaveCharacterSkills();
         PushSkills();
+    }
+
+    // Set directly instead of EquipSkill so Start pushes once instead of once per slot
+    void LoadCharacterSkills()
+    {
+        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        if (_character == null) return;
+        var slots = Slots;
+        for (int i = 0; i < slots.Length && i < _character.ActiveSkills.Count; i++)
+        {
+            string type = _character.ActiveSkills[i];
+            if (slots[i] == null || string.IsNullOrEmpty(type)) continue;
+            var skill = AllSkills.Find(candidate => candidate != null && candidate.Type.ToString() == type);
+            if (skill == null) Debug.LogWarning($"{_character.Name}'s skill '{type}' doesn't exist anymore, so the slot is filled at random.", this);
+            slots[i].EquippedSkill = skill;
+        }
+    }
+
+    void SaveCharacterSkills()
+    {
+        if (_character == null || AccountManager.Instance == null) return;
+        var types = new List<string>();
+        foreach (var slot in Slots) types.Add(slot != null && !slot.IsEmpty ? slot.EquippedSkill.Type.ToString() : "");
+        AccountManager.Instance.SetSkills(_character, types, null);
     }
 
     /// <summary>Fills empty slots with random skills from AllSkills, never repeating a SkillType.</summary>
@@ -73,7 +106,11 @@ public class ActiveSkillManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnSlotChanged(ActiveSkillSlot slot) => PushSkills();
+    void OnSlotChanged(ActiveSkillSlot slot)
+    {
+        PushSkills();
+        SaveCharacterSkills();
+    }
 
     // New player entity (spawn/respawn): none of the skills are on it yet
     void OnPlayerSpawned(Entity player)

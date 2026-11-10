@@ -165,6 +165,18 @@ public class AccountManager : MonoBehaviour
         SaveCharacters();
     }
 
+    /// <summary>
+    /// Replaces the character's equipped active skills or passives (SkillType / PassiveType names by slot, "" for empty)
+    /// and saves (ActiveSkillManager, PassiveSkillManager). Null leaves that list as it is.
+    /// </summary>
+    public void SetSkills(AccountCharacter character, IEnumerable<string> activeSkills, IEnumerable<string> passives)
+    {
+        if (character == null || !_characters.Contains(character)) return;
+        if (activeSkills != null) character.ActiveSkills = new List<string>(activeSkills);
+        if (passives != null) character.Passives = new List<string>(passives);
+        SaveCharacters();
+    }
+
     /// <summary>Counts a finished dungeon on the character and saves (DungeonManager).</summary>
     public void RecordDungeonCompleted(AccountCharacter character, string dungeonId)
     {

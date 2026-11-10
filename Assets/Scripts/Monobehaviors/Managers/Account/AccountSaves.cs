@@ -40,6 +40,8 @@ public static class AccountSaves
         public int Level;
         public int Experience;
         public List<EquippedData> Equipped = new List<EquippedData>();
+        public List<string> ActiveSkills = new List<string>();     // SkillType names by slot, "" for empty
+        public List<string> Passives = new List<string>();         // PassiveType names by slot, "" for empty
         public List<CompletedDungeonData> CompletedDungeons = new List<CompletedDungeonData>();
     }
 
@@ -182,6 +184,8 @@ public static class AccountSaves
             };
             foreach (var equipped in character.Equipped)
                 saved.Equipped.Add(new EquippedData { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = equipped.Rarity.ToString() });
+            saved.ActiveSkills.AddRange(character.ActiveSkills);
+            saved.Passives.AddRange(character.Passives);
             foreach (var completed in character.CompletedDungeons)
                 saved.CompletedDungeons.Add(new CompletedDungeonData { DungeonId = completed.DungeonId, Count = completed.Count });
             data.Characters.Add(saved);
@@ -247,6 +251,9 @@ public static class AccountSaves
                 }
                 character.Equipped.Add(new AccountCharacter.EquippedItem { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = rarity });
             }
+            // Saves from before skills were saved have none; unknown names are skipped when they're equipped
+            if (saved.ActiveSkills != null) character.ActiveSkills.AddRange(saved.ActiveSkills);
+            if (saved.Passives != null) character.Passives.AddRange(saved.Passives);
             // Saves from before dungeons have none
             foreach (var completed in saved.CompletedDungeons ?? new List<CompletedDungeonData>())
             {

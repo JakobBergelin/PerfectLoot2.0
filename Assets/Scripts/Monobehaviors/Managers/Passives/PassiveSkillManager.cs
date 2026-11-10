@@ -32,10 +32,39 @@ public class PassiveSkillManager : MonoBehaviour
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
     }
 
+    // The character picked in Character Select, whose passives the slots show and save; null when the scene was played
+    // without the main menu (the rig's own slots, not saved)
+    AccountCharacter _character;
+
+    // The character's saved passives, then random ones in the slots still empty (saved too, so they stay)
     void Start()
     {
+        LoadCharacterPassives();
         RandomizeEmptySlots();
+        SaveCharacterPassives();
         RebuildPassives();
+    }
+
+    // Set directly instead of EquipPassive so Start pushes once instead of once per slot
+    void LoadCharacterPassives()
+    {
+        _character = AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacter : null;
+        if (_character == null) return;
+        var slots = Slots;
+        for (int i = 0; i < slots.Length && i < _character.Passives.Count; i++)
+        {
+            string type = _character.Passives[i];
+            if (slots[i] == null || string.IsNullOrEmpty(type)) continue;
+            var passive = SelectablePassives.FirstOrDefault(candidate => candidate.Type.ToString() == type);
+            if (passive == null) Debug.LogWarning($"{_character.Name}'s passive '{type}' can't be equipped anymore, so the slot is filled at random.", this);
+            slots[i].EquippedPassive = passive;
+        }
+    }
+
+    void SaveCharacterPassives()
+    {
+        if (_character == null || AccountManager.Instance == null) return;
+        AccountManager.Instance.SetSkills(_character, null, Slots.Select(slot => slot != null && !slot.IsEmpty ? slot.EquippedPassive.Type.ToString() : ""));
     }
 
     /// <summary>The passives players can equip.</summary>
@@ -91,7 +120,11 @@ public class PassiveSkillManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnSlotChanged(PassiveSkillSlot slot) => RebuildPassives();
+    void OnSlotChanged(PassiveSkillSlot slot)
+    {
+        RebuildPassives();
+        SaveCharacterPassives();
+    }
 
     // New player entity (spawn/respawn): none of the passives are on it yet
     void OnPlayerSpawned(Entity player)

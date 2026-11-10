@@ -6,8 +6,8 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// The main menu's Character Select screen, run by MainMenuHUD: the account's characters on the left with Create new
-/// character, and on the right the selected character (Adventure, Delete) or the form that creates one. Opens on the
-/// character played last; an account without characters opens the form.
+/// character, and on the right the selected character (its skills, Adventure, Delete) or the form that creates one.
+/// Opens on the character played last; an account without characters opens the form.
 /// </summary>
 public class CharacterSelectScreen
 {
@@ -27,6 +27,8 @@ public class CharacterSelectScreen
     VisualElement _detailsView, _createView, _deleteConfirm;
     Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _detailResourceInfo, _deleteQuestion;
     Button _deleteButton, _adventureButton, _deleteNoButton, _createCharacterButton;
+    VisualElement _detailSkills, _detailPassives, _skillTooltip, _skillTooltipBody;
+    Label _skillTooltipTitle;
     TextField _nameField;
     Label _nameError, _classDescription, _classInfo, _resourceDescription, _resourceInfo;
     Button _createButton;
@@ -86,6 +88,13 @@ public class CharacterSelectScreen
         var deleteYes = root.Q<Button>("deleteYesButton");
         var deleteNo = root.Q<Button>("deleteNoButton");
         var cancelCreate = root.Q<Button>("cancelCreateButton");
+        _detailSkills = root.Q<VisualElement>("detailSkills");
+        _detailPassives = root.Q<VisualElement>("detailPassives");
+        _skillTooltip = root.Q<VisualElement>("skillTooltip");
+        _skillTooltipTitle = root.Q<Label>("skillTooltipTitle");
+        _skillTooltipBody = root.Q<VisualElement>("skillTooltipBody");
+        if (_detailSkills == null || _detailPassives == null || _skillTooltip == null || _skillTooltipTitle == null || _skillTooltipBody == null)
+            return false;
         if (_list == null || _noCharacters == null || _noSelection == null || _detailsView == null || _createView == null ||
             _deleteConfirm == null || _detailName == null || _detailClass == null || _detailResource == null ||
             _detailDescription == null || _detailClassInfo == null || _detailResourceInfo == null || _deleteQuestion == null ||
@@ -216,6 +225,7 @@ public class CharacterSelectScreen
         SetDescription(_detailDescription, ClassAsset(character.Class)?.Description);
         SetDescription(_detailClassInfo, ClassInfo(ClassAsset(character.Class)));
         SetDescription(_detailResourceInfo, ResourceInfo(ResourceAsset(character.Resource), withDescription: true));
+        ShowSkills(character);
         ShowView(details: true, create: false);
     }
 
@@ -225,10 +235,98 @@ public class CharacterSelectScreen
         _detailsView.EnableInClassList(HiddenClass, !details);
         _createView.EnableInClassList(HiddenClass, !create);
         _noSelection.EnableInClassList(HiddenClass, details || create);
+        HideSkillTooltip();
         ShowDeleteConfirm(false);
     }
 
     // ---------- Selected character ----------
+
+    // Its 4 active skills and 3 passives as icons (empty frames until it was first played), with a tooltip on hover or
+    // controller focus. The skill assets come from the game rig's managers (GameBootstrap.RigPrefab).
+    void ShowSkills(AccountCharacter character)
+    {
+        HideSkillTooltip();
+        var rig = GameBootstrap.RigPrefab;
+        var skillManager = rig != null ? rig.GetComponentInChildren<ActiveSkillManager>(true) : null;
+        var passiveManager = rig != null ? rig.GetComponentInChildren<PassiveSkillManager>(true) : null;
+
+        _detailSkills.Clear();
+        for (int i = 0; i < 4; i++)
+        {
+            string type = i < character.ActiveSkills.Count ? character.ActiveSkills[i] : "";
+            var skill = skillManager != null && !string.IsNullOrEmpty(type)
+                ? skillManager.AllSkills.Find(candidate => candidate != null && candidate.Type.ToString() == type)
+                : null;
+            if (skill == null)
+            {
+                AddSkillIcon(_detailSkills, null, null, passive: false, null);
+                continue;
+            }
+            string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
+            AddSkillIcon(_detailSkills, skill.Icon, name, passive: false, () =>
+            {
+                _skillTooltipTitle.text = name;
+                SkillTooltip.Fill(_skillTooltipBody, skill, null);
+            });
+        }
+
+        _detailPassives.Clear();
+        for (int i = 0; i < 3; i++)
+        {
+            string type = i < character.Passives.Count ? character.Passives[i] : "";
+            Passives.PassiveSkill passive = null;
+            if (passiveManager != null && !string.IsNullOrEmpty(type))
+                foreach (var candidate in passiveManager.AllPassives)
+                    if (candidate != null && candidate.Type.ToString() == type) passive = candidate;
+            if (passive == null)
+            {
+                AddSkillIcon(_detailPassives, null, null, passive: true, null);
+                continue;
+            }
+            string name = string.IsNullOrEmpty(passive.Name) ? passive.name : passive.Name;
+            AddSkillIcon(_detailPassives, passive.Icon, name, passive: true, () =>
+            {
+                _skillTooltipTitle.text = name;
+                _skillTooltipBody.Clear();
+                if (!string.IsNullOrEmpty(passive.Description))
+                    _skillTooltipBody.Add(new Label(passive.Description) { pickingMode = PickingMode.Ignore });
+            });
+        }
+    }
+
+    // fill writes the tooltip's title and body; null for an empty slot (no tooltip). A skill without an icon shows its name.
+    void AddSkillIcon(VisualElement row, Sprite icon, string name, bool passive, Action fill)
+    {
+        var element = new VisualElement();
+        element.AddToClassList("cs-skill");
+        if (passive) element.AddToClassList("cs-skill--passive");
+        if (fill == null) element.AddToClassList("cs-skill--empty");
+        if (icon != null) element.style.backgroundImage = new StyleBackground(icon);
+        else if (!string.IsNullOrEmpty(name))
+        {
+            var label = new Label(name) { pickingMode = PickingMode.Ignore };
+            label.AddToClassList("cs-skill__name");
+            element.Add(label);
+        }
+        if (fill != null)
+            UiNav.Hover(element, () =>
+            {
+                fill();
+                ShowSkillTooltip(element);
+            }, HideSkillTooltip);
+        row.Add(element);
+    }
+
+    // Right of the icon, in the tooltip's parent's coordinates
+    void ShowSkillTooltip(VisualElement anchor)
+    {
+        var position = anchor.ChangeCoordinatesTo(_skillTooltip.parent, new Vector2(anchor.layout.width + 8f, 0f));
+        _skillTooltip.style.left = position.x;
+        _skillTooltip.style.top = position.y;
+        _skillTooltip.AddToClassList("cs-tooltip--visible");
+    }
+
+    void HideSkillTooltip() => _skillTooltip?.RemoveFromClassList("cs-tooltip--visible");
 
     void Adventure()
     {

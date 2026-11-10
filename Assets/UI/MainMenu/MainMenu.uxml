@@ -42,6 +42,10 @@
                         <ui:Label name="detailDescription" class="cs-description" />
                         <ui:Label name="detailClassInfo" class="cs-class-info" />
                         <ui:Label name="detailResourceInfo" class="cs-class-info" />
+                        <ui:Label text="Skills" class="cs-label" />
+                        <!-- Icons made by CharacterSelectScreen: the 4 active skills, then the 3 passives; empty until first played -->
+                        <ui:VisualElement name="detailSkills" class="cs-skills" />
+                        <ui:VisualElement name="detailPassives" class="cs-skills" />
                         <ui:VisualElement class="cs-spacer" />
                         <ui:Button name="adventureButton" text="Adventure" class="mm-button mm-button--primary" />
                         <ui:Button name="deleteButton" text="Delete character" class="mm-link mm-link--danger" />
@@ -76,6 +80,12 @@
                 </ui:VisualElement>
             </ui:VisualElement>
             <ui:Button name="characterBackButton" text="Back" class="mm-link" />
+        </ui:VisualElement>
+
+        <!-- A skill icon's tooltip in Character Select -->
+        <ui:VisualElement name="skillTooltip" class="cs-tooltip" picking-mode="Ignore">
+            <ui:Label name="skillTooltipTitle" class="cs-tooltip__title" picking-mode="Ignore" />
+            <ui:VisualElement name="skillTooltipBody" class="cs-tooltip__body" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

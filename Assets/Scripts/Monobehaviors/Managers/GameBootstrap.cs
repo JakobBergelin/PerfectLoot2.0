@@ -35,6 +35,9 @@ public class GameBootstrap : ScriptableObject
     /// <summary>The main menu: the first of MenuScenes.</summary>
     public static string MainMenuScene => _settings != null && _settings.MenuScenes.Count > 0 ? _settings.MenuScenes[0] : "MainMenu";
 
+    /// <summary>The Rig prefab itself (not the one made in game scenes), e.g. for its skill lists in Character Select; null without settings.</summary>
+    public static GameObject RigPrefab => _settings != null ? _settings.Rig : null;
+
     /// <summary>True for scenes without the rig (the main menu).</summary>
     public static bool IsMenuScene(string sceneName) => _settings != null && _settings.MenuScenes.Contains(sceneName);
 
