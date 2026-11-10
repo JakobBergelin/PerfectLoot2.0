@@ -7,7 +7,7 @@ using UnityEngine.UIElements;
 /// <summary>
 /// The main menu the game starts in. First the player gives a name, which stands in for an account (AccountManager);
 /// a new name starts a new play-through. Then Character Select (CharacterSelectScreen: pick or create a character and
-/// go on an adventure in the game scene), Options (not yet), Exit, and Change name back to the name screen. Esc goes
+/// go on an adventure in the game scene), Options (OptionsHUD), Exit, and Change name back to the name screen. Esc goes
 /// back a step.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
@@ -31,6 +31,12 @@ public class MainMenuHUD : MonoBehaviour
     Button _continueButton;
     Label _signedIn;
     CharacterSelectScreen _characterSelect;
+
+    // Back from a game scene (the in-game menu's Main menu): still signed in, so the main screen
+    void Awake()
+    {
+        if (GameSceneLoader.PreviousScene != null && AccountManager.Instance != null) _screen = Screen.Main;
+    }
 
     void OnEnable()
     {
@@ -99,7 +105,7 @@ public class MainMenuHUD : MonoBehaviour
         _continueButton.clicked += Continue;
 
         characterSelect.clicked += () => ShowScreen(Screen.Characters);
-        options.SetEnabled(false);      // Hooked up later
+        options.clicked += OptionsHUD.Open;
         exit.clicked += Exit;
         changeName.clicked += () => ShowScreen(Screen.Name);
         characterBack.clicked += () => ShowScreen(Screen.Main);
@@ -110,7 +116,7 @@ public class MainMenuHUD : MonoBehaviour
 
     void Update()
     {
-        if (!_bound || Keyboard.current == null || !Keyboard.current.escapeKey.wasPressedThisFrame) return;
+        if (!_bound || !MenuPanels.EscapePressed || OptionsHUD.HandlesEscape) return;
         if (_screen == Screen.Main) ShowScreen(Screen.Name);
         else if (_screen == Screen.Characters && !_characterSelect.Cancel()) ShowScreen(Screen.Main);
     }

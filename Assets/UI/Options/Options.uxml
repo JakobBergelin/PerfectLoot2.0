@@ -1,0 +1,28 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="Options.uss" />
+    <ui:VisualElement name="optionsRoot" class="op-root op--hidden">
+        <ui:VisualElement class="op-panel">
+            <ui:Label text="Options" class="op-title" />
+            <ui:VisualElement class="op-tabs">
+                <ui:Button name="controlsTab" text="Controls" class="op-tab op-tab--selected" />
+            </ui:VisualElement>
+
+            <!-- Controls: one row per action, a binding per device and a reset; rows are made in OptionsHUD -->
+            <ui:VisualElement name="controlsPage" class="op-page">
+                <ui:VisualElement class="op-row op-row--header">
+                    <ui:Label text="Action" class="op-action" />
+                    <ui:Label text="Keyboard &amp; Mouse" class="op-column-heading" />
+                    <ui:Label text="Controller" class="op-column-heading" />
+                    <ui:VisualElement class="op-reset-space" />
+                </ui:VisualElement>
+                <ui:ScrollView name="controlsList" class="op-list" />
+                <ui:Label name="controlsHint" class="op-hint" />
+            </ui:VisualElement>
+
+            <ui:VisualElement class="op-footer">
+                <ui:Button name="resetAllButton" text="Reset all" class="op-button" />
+                <ui:Button name="closeButton" text="Close" class="op-button op-button--primary" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+    </ui:VisualElement>
+</ui:UXML>

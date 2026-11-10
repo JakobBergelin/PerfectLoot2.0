@@ -110,29 +110,21 @@ public class CharacterPanelHUD : MonoBehaviour
     InventoryManager _subscribedInventory;
     Snapshot _snapshot;
 
-    InputSystem_Actions _actions;
     InputAction _toggleAction;
 
     bool CanPreview => _snapshot.HasPlayer && _snapshot.HasCombatConfig;
 
     void Awake()
     {
-        _actions = new InputSystem_Actions();
-        _toggleAction = _actions.asset.FindAction("Player/Inventory");
+        _toggleAction = GameInput.Actions.asset.FindAction("Player/Inventory");
         if (_toggleAction == null)
             Debug.LogWarning("CharacterPanelHUD: no Player/Inventory input action. Reimport InputSystem_Actions.inputactions.", this);
-    }
-
-    void OnDestroy()
-    {
-        _actions?.Dispose();
     }
 
     void OnEnable()
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        _toggleAction?.Enable();
         MenuPanels.OpenChanged += OnMenuOpenChanged;
     }
 
@@ -140,7 +132,6 @@ public class CharacterPanelHUD : MonoBehaviour
     {
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
-        _toggleAction?.Disable();
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
         _bound = false;
@@ -209,7 +200,7 @@ public class CharacterPanelHUD : MonoBehaviour
         if (!_bound || !_open) return;
 
         // Esc closes the picker first, then the panel
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && !MenuPanels.IsTyping)
+        if (MenuPanels.EscapePressed && !MenuPanels.IsTyping)
         {
             if (_pickerSlot != null) ClosePicker();
             else SetOpen(false);

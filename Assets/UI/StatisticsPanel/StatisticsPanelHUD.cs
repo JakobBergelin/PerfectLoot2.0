@@ -73,24 +73,19 @@ public class StatisticsPanelHUD : MonoBehaviour
     float _nextRefresh;
     string _shownHeadings;
 
-    InputSystem_Actions _actions;
     InputAction _toggleAction;
 
     void Awake()
     {
-        _actions = new InputSystem_Actions();
-        _toggleAction = _actions.asset.FindAction("Player/Statistics");
+        _toggleAction = GameInput.Actions.asset.FindAction("Player/Statistics");
         if (_toggleAction == null)
             Debug.LogWarning("StatisticsPanelHUD: no Player/Statistics input action. Reimport InputSystem_Actions.inputactions.", this);
     }
-
-    void OnDestroy() => _actions?.Dispose();
 
     void OnEnable()
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        _toggleAction?.Enable();
         MenuPanels.OpenChanged += OnMenuOpenChanged;
     }
 
@@ -98,7 +93,6 @@ public class StatisticsPanelHUD : MonoBehaviour
     {
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
-        _toggleAction?.Disable();
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _bound = false;
         _boundVersion = -1;
@@ -166,7 +160,7 @@ public class StatisticsPanelHUD : MonoBehaviour
             SetOpen(!_open);
         if (!_bound || !_open) return;
 
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (MenuPanels.EscapePressed)
         {
             SetOpen(false);
             return;

@@ -1,0 +1,78 @@
+/* Variables and font on the menu's own root so everything inherits them. PanelSettings has no theme, so buttons are
+   fully styled here. The root dims the screen (the game keeps running) and takes the clicks meant for it. */
+.gm-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.45);
+    --panel-bg: #14161C;
+    --panel-border: #3A3F4B;
+    --card-bg: rgba(10, 11, 14, 0.9);
+    --card-bg-hover: rgba(40, 44, 54, 0.95);
+    --card-border: #3A3F4B;
+    --text-color: #F2F2F2;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.gm--hidden {
+    display: none;
+}
+
+.gm-panel {
+    width: 300px;
+    padding: 20px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.gm-title {
+    font-size: 22px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 6px 0;
+}
+
+.gm-button {
+    height: 42px;
+    margin: 10px 0 0 0;
+    padding: 0;
+    font-size: 17px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.gm-button:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.gm-button:active {
+    background-color: rgba(5, 6, 8, 0.95);
+}
+
+.gm-button--primary {
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-color: #F0C050;
+}
+
+.gm-button--primary:hover {
+    background-color: #F0B030;
+}
+
+.gm-button--primary:active {
+    background-color: #B88010;
+}

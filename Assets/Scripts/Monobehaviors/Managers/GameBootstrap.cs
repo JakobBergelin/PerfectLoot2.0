@@ -32,6 +32,9 @@ public class GameBootstrap : ScriptableObject
     /// <summary>The town scene (Town in Resources/GameBootstrap).</summary>
     public static string TownScene => _settings != null && !string.IsNullOrEmpty(_settings.Town) ? _settings.Town : "SampleScene";
 
+    /// <summary>The main menu: the first of MenuScenes.</summary>
+    public static string MainMenuScene => _settings != null && _settings.MenuScenes.Count > 0 ? _settings.MenuScenes[0] : "MainMenu";
+
     /// <summary>True for scenes without the rig (the main menu).</summary>
     public static bool IsMenuScene(string sceneName) => _settings != null && _settings.MenuScenes.Contains(sceneName);
 

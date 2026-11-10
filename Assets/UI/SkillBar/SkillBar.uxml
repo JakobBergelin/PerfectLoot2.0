@@ -9,7 +9,7 @@
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
                     <ui:Label name="cooldownText" class="skill-slot__cooldown-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:Label name="key" text="1" class="skill-slot__key" picking-mode="Ignore" />
+                <ui:Label name="key" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
                 <ui:VisualElement name="slot2" class="skill-slot skill-slot--empty">
@@ -18,7 +18,7 @@
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
                     <ui:Label name="cooldownText" class="skill-slot__cooldown-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:Label name="key" text="2" class="skill-slot__key" picking-mode="Ignore" />
+                <ui:Label name="key" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
                 <ui:VisualElement name="slot3" class="skill-slot skill-slot--empty">
@@ -27,7 +27,7 @@
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
                     <ui:Label name="cooldownText" class="skill-slot__cooldown-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:Label name="key" text="3" class="skill-slot__key" picking-mode="Ignore" />
+                <ui:Label name="key" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:VisualElement class="skill-slot-column" picking-mode="Ignore">
                 <ui:VisualElement name="slot4" class="skill-slot skill-slot--empty">
@@ -36,7 +36,7 @@
                     <CooldownSweep name="cooldownSweep" class="skill-slot__cooldown-sweep" picking-mode="Ignore" />
                     <ui:Label name="cooldownText" class="skill-slot__cooldown-text" picking-mode="Ignore" />
                 </ui:VisualElement>
-                <ui:Label name="key" text="4" class="skill-slot__key" picking-mode="Ignore" />
+                <ui:Label name="key" class="skill-slot__key" picking-mode="Ignore" />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="tooltip" class="skill-tooltip" picking-mode="Ignore">

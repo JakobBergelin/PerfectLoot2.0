@@ -94,27 +94,19 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     ItemDatabase _subscribedDatabase;
     InventoryManager _subscribedInventory;
 
-    InputSystem_Actions _actions;
     InputAction _toggleAction;
 
     void Awake()
     {
-        _actions = new InputSystem_Actions();
-        _toggleAction = _actions.asset.FindAction("Player/ItemDatabase");
+        _toggleAction = GameInput.Actions.asset.FindAction("Player/ItemDatabase");
         if (_toggleAction == null)
             Debug.LogWarning("ItemDatabasePanelHUD: no Player/ItemDatabase input action. Reimport InputSystem_Actions.inputactions.", this);
-    }
-
-    void OnDestroy()
-    {
-        _actions?.Dispose();
     }
 
     void OnEnable()
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        _toggleAction?.Enable();
         MenuPanels.OpenChanged += OnMenuOpenChanged;
     }
 
@@ -122,7 +114,6 @@ public class ItemDatabasePanelHUD : MonoBehaviour
     {
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
-        _toggleAction?.Disable();
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
         _bound = false;
@@ -195,7 +186,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         if (!_bound || !_open) return;
 
         // Esc leaves the search field first, then closes the affix picker, then the panel
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+        if (MenuPanels.EscapePressed)
         {
             if (MenuPanels.IsTyping) _searchField.Blur();
             else if (_affixPopup.ClassListContains(AffixPopupVisibleClass)) ShowAffixPopup(false);

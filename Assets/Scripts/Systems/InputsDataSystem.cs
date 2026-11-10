@@ -7,36 +7,17 @@ using Unity.Transforms;
 using Unity.Mathematics;
 
 /// <summary>
-/// Reads the Input System and writes it to InputsData. Polls the actions every frame instead of using
-/// callbacks, so there is no state to keep in sync and nothing to unsubscribe.
+/// Reads the Input System (GameInput's shared actions, with the player's bindings) and writes it to InputsData. Polls
+/// the actions every frame instead of using callbacks, so there is no state to keep in sync and nothing to unsubscribe.
 /// </summary>
 [UpdateInGroup(typeof(InputSystemGroup))]
 public partial class InputsDataSystem : SystemBase
 {
-    private InputSystem_Actions inputs;
-    private InputAction[] skillActions;
-
-    // Not in OnCreate: the world is created before the first scene loads, and in a build the Input System resets every
-    // enabled action right then (InputActionState.InitializeGlobalActionState), so actions enabled earlier read nothing
-    protected override void OnStartRunning()
-    {
-        if (inputs != null) return;
-        inputs = new InputSystem_Actions();
-        inputs.Enable();
-        skillActions = new[] { inputs.Player.Skill1, inputs.Player.Skill2, inputs.Player.Skill3, inputs.Player.Skill4 };
-    }
-
-    protected override void OnDestroy()
-    {
-        if (inputs == null) return;
-        inputs.Disable();
-        inputs.Dispose();
-    }
-
     protected override void OnUpdate()
     {
         var physicsWorldSingleton = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         var camera = Camera.main;
+        var inputs = GameInput.Actions;
 
         foreach (RefRW<InputsData> data in SystemAPI.Query<RefRW<InputsData>>())
         {
@@ -45,10 +26,11 @@ public partial class InputsDataSystem : SystemBase
 
             // While a menu panel is open the mouse is used for the menu, so skills are ignored (movement still works)
             bool menuOpen = MenuPanels.IsAnyOpen;
-            for(int i = 0; i < skillActions.Length; i++)
+            for(int i = 0; i < 4; i++)
             {
-                data.ValueRW.SkillHeld[i] = !menuOpen && skillActions[i].IsPressed();
-                data.ValueRW.SkillPressedThisFrame[i] = !menuOpen && skillActions[i].WasPressedThisFrame();
+                var skill = GameInput.Skill(i);
+                data.ValueRW.SkillHeld[i] = !menuOpen && skill.IsPressed();
+                data.ValueRW.SkillPressedThisFrame[i] = !menuOpen && skill.WasPressedThisFrame();
             }
 
             if(camera == null)

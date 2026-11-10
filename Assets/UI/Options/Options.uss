@@ -1,0 +1,244 @@
+/* Variables and font on the window's own root so everything inherits them. PanelSettings has no theme, so every
+   control is fully styled here. The root dims the screen and takes the clicks meant for what is under it. */
+.op-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(0, 0, 0, 0.6);
+    --panel-bg: #14161C;
+    --panel-border: #3A3F4B;
+    --card-bg: rgba(10, 11, 14, 0.9);
+    --card-bg-hover: rgba(40, 44, 54, 0.95);
+    --card-border: #3A3F4B;
+    --text-color: #F2F2F2;
+    --text-muted: #A8ADB8;
+    --accent: #E0A020;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.op--hidden {
+    display: none;
+}
+
+.op-panel {
+    width: 680px;
+    max-height: 90%;
+    padding: 20px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.op-title {
+    font-size: 24px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 0 12px 0;
+}
+
+/* Tabs */
+.op-tabs {
+    flex-direction: row;
+    border-bottom-width: 1px;
+    border-color: var(--panel-border);
+    margin-bottom: 10px;
+}
+
+.op-tab {
+    height: 32px;
+    margin: 0 6px -1px 0;
+    padding: 0 16px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0 0 2px 0;
+    border-color: rgba(0, 0, 0, 0);
+    border-radius: 0;
+}
+
+.op-tab:hover {
+    color: var(--text-color);
+}
+
+.op-tab--selected {
+    color: var(--text-color);
+    border-color: var(--accent);
+}
+
+.op-page {
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+/* Rows */
+.op-list {
+    flex-shrink: 1;
+    min-height: 0;
+}
+
+.op-row {
+    flex-direction: row;
+    align-items: center;
+    height: 34px;
+    margin-bottom: 4px;
+}
+
+.op-row--header {
+    height: 22px;
+    margin-bottom: 6px;
+}
+
+.op-section {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 10px 0 6px 0;
+}
+
+.op-section--first {
+    margin-top: 0;
+}
+
+.op-action {
+    width: 190px;
+    font-size: 14px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.op-row--header .op-action {
+    font-size: 12px;
+    color: var(--text-muted);
+}
+
+.op-column-heading {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 4px;
+    padding: 0;
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+}
+
+/* A binding: click to rebind */
+.op-binding {
+    flex-grow: 1;
+    flex-basis: 0;
+    height: 30px;
+    margin: 0 4px;
+    padding: 0;
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 4px;
+}
+
+.op-binding:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.op-binding--unbound {
+    color: var(--text-muted);
+    -unity-font-style: normal;
+}
+
+.op-binding--listening {
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-color: #F0C050;
+}
+
+.op-binding--listening:hover {
+    background-color: var(--accent);
+}
+
+/* No binding for this device (Move's keys on a controller, the stick on a keyboard) */
+.op-binding--none {
+    flex-grow: 1;
+    flex-basis: 0;
+    margin: 0 4px;
+    padding: 0;
+    font-size: 14px;
+    color: #5A5F6B;
+    -unity-text-align: middle-center;
+}
+
+.op-reset {
+    width: 60px;
+    height: 30px;
+    margin: 0 0 0 4px;
+    padding: 0;
+    font-size: 12px;
+    -unity-text-align: middle-center;
+    color: var(--text-muted);
+    background-color: rgba(0, 0, 0, 0);
+    border-width: 0;
+}
+
+.op-reset:hover {
+    color: var(--accent);
+}
+
+.op-reset-space {
+    width: 64px;
+}
+
+.op-hint {
+    font-size: 12px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    white-space: normal;
+    padding: 0;
+    margin: 10px 0 0 0;
+}
+
+/* Footer */
+.op-footer {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 14px;
+}
+
+.op-button {
+    width: 120px;
+    height: 38px;
+    margin: 0 0 0 10px;
+    padding: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.op-button:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.op-button--primary {
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-color: #F0C050;
+}
+
+.op-button--primary:hover {
+    background-color: #F0B030;
+}

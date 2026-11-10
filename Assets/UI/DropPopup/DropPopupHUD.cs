@@ -108,7 +108,7 @@ public class DropPopupHUD : MonoBehaviour
         // An open menu panel handles Esc first (it closes); the next Esc resolves the popup. Last frame's state too,
         // since the panel may already have closed itself this frame.
         if (_visible && !MenuPanels.IsPanelOpen && !_panelOpenLastFrame && !MenuPanels.IsTyping &&
-            Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame)
+            MenuPanels.EscapePressed)
             Resolve(takeNew: false);
     }
 

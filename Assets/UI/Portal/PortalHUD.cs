@@ -9,16 +9,14 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// While the player stands within a Portal's range, shows the portal's name and an Enter button pinned above it on
-/// screen (the nearest portal when several are in range). Enter, or EnterKey, loads the portal's scene with the current
-/// character (GameSceneLoader). Hidden while a menu panel is open.
+/// screen (the nearest portal when several are in range). Enter, or the Interact action (GameInput), loads the portal's
+/// scene with the current character (GameSceneLoader). Hidden while a menu panel is open.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
 {
     const string HiddenClass = "portal-card--hidden";
 
-    [Tooltip("Also enters the portal in range")]
-    public Key EnterKey = Key.F;
     [Tooltip("Height above the portal's origin where the card's bottom edge sits, in meters")]
     public float CardHeight = 3f;
 
@@ -31,6 +29,7 @@ public class PortalHUD : MonoBehaviour
     bool _hovered;
     bool _entering;
     FixedString64Bytes _scene;      // Of the portal the card shows; empty while hidden
+    int _labelVersion = -1;         // GameInput.Version the Enter button's key label is from
 
     void OnEnable()
     {
@@ -74,8 +73,8 @@ public class PortalHUD : MonoBehaviour
             return;
         }
 
-        _enter.text = $"Enter ({EnterKey})";
         _enter.clicked += Enter;
+        _labelVersion = -1;
         // Clicking the button mustn't also use a skill
         _card.RegisterCallback<PointerEnterEvent>(_ => SetHovered(true));
         _card.RegisterCallback<PointerLeaveEvent>(_ => SetHovered(false));
@@ -106,8 +105,13 @@ public class PortalHUD : MonoBehaviour
         _card.style.top = panelPosition.y;
         _card.RemoveFromClassList(HiddenClass);
 
-        var keyboard = Keyboard.current;
-        if (keyboard != null && !MenuPanels.IsTyping && keyboard[EnterKey].wasPressedThisFrame) Enter();
+        if (_labelVersion != GameInput.Version)
+        {
+            _labelVersion = GameInput.Version;
+            string key = GameInput.Label(GameInput.Player.Interact);
+            _enter.text = string.IsNullOrEmpty(key) ? "Enter" : $"Enter ({key})";
+        }
+        if (!MenuPanels.IsTyping && GameInput.Player.Interact.WasPressedThisFrame()) Enter();
     }
 
     // The nearest portal whose range the player stands in, measured along the ground

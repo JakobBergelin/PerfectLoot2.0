@@ -25,6 +25,7 @@ public class SkillsPanelHUD : MonoBehaviour
         public VisualElement Element;
         public VisualElement Icon;
         public Label Name;
+        public Label Key;                               // Active slots: the key that uses it
         public string SelectedClass;
         public VisualElement Picker;
         public Func<ScriptableObject> GetEquipped;
@@ -52,30 +53,20 @@ public class SkillsPanelHUD : MonoBehaviour
     SlotView _resource;         // The character's resource and how it works, beside the class passive
     SlotView _selected;
 
-    InputSystem_Actions _actions;
     InputAction _toggleAction;
-    InputAction[] _skillActions;
+    int _keyVersion = -1;           // GameInput.Version the key labels are from
 
     void Awake()
     {
-        _actions = new InputSystem_Actions();
-        _toggleAction = _actions.asset.FindAction("Player/Skills");
+        _toggleAction = GameInput.Actions.asset.FindAction("Player/Skills");
         if (_toggleAction == null)
             Debug.LogWarning("SkillsPanelHUD: no Player/Skills input action. Reimport InputSystem_Actions.inputactions.", this);
-        // Only used for the key labels
-        _skillActions = new[] { _actions.Player.Skill1, _actions.Player.Skill2, _actions.Player.Skill3, _actions.Player.Skill4 };
-    }
-
-    void OnDestroy()
-    {
-        _actions?.Dispose();
     }
 
     void OnEnable()
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
-        _toggleAction?.Enable();
         MenuPanels.OpenChanged += OnMenuOpenChanged;
     }
 
@@ -83,7 +74,6 @@ public class SkillsPanelHUD : MonoBehaviour
     {
         MenuPanels.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
-        _toggleAction?.Disable();
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         _bound = false;
         _boundVersion = -1;
@@ -137,7 +127,7 @@ public class SkillsPanelHUD : MonoBehaviour
         if (!_bound || !_open) return;
 
         // Esc closes the picker first, then the panel
-        if (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame && !MenuPanels.IsTyping)
+        if (MenuPanels.EscapePressed && !MenuPanels.IsTyping)
         {
             if (_selected != null) Select(null);
             else SetOpen(false);
@@ -148,6 +138,12 @@ public class SkillsPanelHUD : MonoBehaviour
         _hint.text = town ? TownHint : LookOnlyHint;
         if (!town && _selected != null) Select(null);
 
+        // After a rebind or a switch between keyboard and gamepad
+        if (_keyVersion != GameInput.Version)
+        {
+            _keyVersion = GameInput.Version;
+            for (int i = 0; i < _activeSlots.Count; i++) _activeSlots[i].Key.text = KeyLabel(i);
+        }
         foreach (var view in _activeSlots) RefreshSlot(view);
         foreach (var view in _passiveSlots) RefreshSlot(view);
         RefreshSlot(_classPassive);
@@ -203,10 +199,10 @@ public class SkillsPanelHUD : MonoBehaviour
             text.AddToClassList("sp-card__text");
             view.Name = new Label { pickingMode = PickingMode.Ignore };
             view.Name.AddToClassList("sp-card__name");
-            var key = new Label(KeyLabel(index)) { pickingMode = PickingMode.Ignore };
-            key.AddToClassList("sp-card__key");
+            view.Key = new Label(KeyLabel(index)) { pickingMode = PickingMode.Ignore };
+            view.Key.AddToClassList("sp-card__key");
             text.Add(view.Name);
-            text.Add(key);
+            text.Add(view.Key);
             view.Element.Add(view.Icon);
             view.Element.Add(text);
 
@@ -298,8 +294,8 @@ public class SkillsPanelHUD : MonoBehaviour
 
     string KeyLabel(int index)
     {
-        var label = _skillActions[index].GetBindingDisplayString(InputBinding.MaskByGroup("Keyboard&Mouse"));
-        return string.IsNullOrEmpty(label) ? (index + 1).ToString() : label;
+        var label = GameInput.Label(GameInput.Skill(index));
+        return string.IsNullOrEmpty(label) ? "Unbound" : label;
     }
 
     void RefreshSlot(SlotView view)

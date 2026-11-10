@@ -3,7 +3,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Shows ActiveSkillManager's four slots in SkillBar.uxml: icon, key, cooldown sweep and countdown,
+/// Shows ActiveSkillManager's four slots in SkillBar.uxml: icon, key (for the device used last, GameInput), cooldown sweep and countdown,
 /// pressed/active highlight and "not enough resource" tint. Hovering a slot shows its skill's tooltip (SkillTooltip,
 /// which reads the player's stats). Read-only: never changes ECS.
 /// </summary>
@@ -24,6 +24,7 @@ public class SkillBarHUD : MonoBehaviour
         public Label Fallback;
         public Label CooldownText;
         public CooldownSweep Sweep;
+        public Label Key;
 
         // Last shown values, so the UI is only touched when something changes
         public ActiveSkill ShownSkill;
@@ -41,6 +42,7 @@ public class SkillBarHUD : MonoBehaviour
     int _hovered = -1;              // Slot index under the pointer, -1 for none
     ActiveSkill _tooltipSkill;      // The skill the tooltip shows
     readonly SlotView[] _views = new SlotView[4];
+    int _labelVersion = -1;         // GameInput.Version the key labels are from
 
     void OnEnable()
     {
@@ -76,6 +78,13 @@ public class SkillBarHUD : MonoBehaviour
     void LateUpdate()
     {
         if (!_bound) return;
+
+        // The keys of the device used last, after a rebind or a switch between keyboard and gamepad
+        if (_labelVersion != GameInput.Version)
+        {
+            _labelVersion = GameInput.Version;
+            for (int i = 0; i < _views.Length; i++) UpdateKey(_views[i], i);
+        }
 
         for (int i = 0; i < _views.Length; i++)
             UpdateSlot(_views[i], SlotAt(i));
@@ -139,6 +148,7 @@ public class SkillBarHUD : MonoBehaviour
                 Fallback = slot.Q<Label>("fallback"),
                 CooldownText = slot.Q<Label>("cooldownText"),
                 Sweep = slot.Q<CooldownSweep>("cooldownSweep"),
+                Key = slot.parent.Q<Label>("key"),
             };
             int index = i;
             slot.RegisterCallback<PointerEnterEvent>(_ => { _hovered = index; ShowTooltip(index); });
@@ -156,7 +166,16 @@ public class SkillBarHUD : MonoBehaviour
         }
         _hovered = -1;
         _tooltipSkill = null;
+        _labelVersion = -1;
         return true;
+    }
+
+    static void UpdateKey(SlotView view, int index)
+    {
+        if (view.Key == null) return;
+        string key = GameInput.Label(GameInput.Skill(index));
+        view.Key.text = key;
+        view.Key.style.visibility = string.IsNullOrEmpty(key) ? Visibility.Hidden : Visibility.Visible;
     }
 
     static void UpdateSlot(SlotView view, ActiveSkillSlot slot)

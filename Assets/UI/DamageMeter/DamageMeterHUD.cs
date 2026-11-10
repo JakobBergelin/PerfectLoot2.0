@@ -9,7 +9,7 @@ using UnityEngine.UIElements;
 /// <summary>
 /// Shows the DamageMeter in DamageMeter.uxml: a stat per tab, by unit or by skill, each row as per second over the last 10
 /// seconds and since the level started. Clicking a column's heading sorts and sizes the bars by it (the level rate at first).
-/// ToggleKey or the title bar's button minimizes it, and
+/// The Damage Meter action (GameInput) or the title bar's button minimizes it, and
 /// gameplay input is ignored while the pointer is over it. Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
@@ -33,8 +33,6 @@ public class DamageMeterHUD : MonoBehaviour
 
         public float Sorted(bool byRecent) => byRecent ? Recent : Level;
     }
-
-    public Key ToggleKey = Key.M;
 
     PanelRenderer _panelRenderer;
     bool _bound;
@@ -141,8 +139,7 @@ public class DamageMeterHUD : MonoBehaviour
     {
         if (!_bound) return;
 
-        var keyboard = Keyboard.current;
-        if (keyboard != null && !MenuPanels.IsTyping && keyboard[ToggleKey].wasPressedThisFrame) SetMinimized(!_minimized);
+        if (!MenuPanels.IsTyping && GameInput.Player.DamageMeter.WasPressedThisFrame()) SetMinimized(!_minimized);
 
         if (_minimized || Time.unscaledTime < _nextRefresh) return;
         Refresh();

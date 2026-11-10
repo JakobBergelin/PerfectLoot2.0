@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
@@ -14,6 +15,7 @@ public static class MenuPanels
     static readonly HashSet<object> _blockers = new HashSet<object>();
 
     static readonly HashSet<object> _typing = new HashSet<object>();
+    static int _changedFrame = -1;
 
     /// <summary>True while a menu panel is open, a popup blocks gameplay input, or a text field has keyboard focus.</summary>
     public static bool IsAnyOpen => _open != null || _blockers.Count > 0 || _typing.Count > 0;
@@ -23,8 +25,7 @@ public static class MenuPanels
 
     public static void SetTyping(object owner, bool typing)
     {
-        if (typing) _typing.Add(owner);
-        else _typing.Remove(owner);
+        if (typing ? _typing.Add(owner) : _typing.Remove(owner)) _changedFrame = Time.frameCount;
     }
 
     /// <summary>Sets IsTyping while this field has keyboard focus.</summary>
@@ -48,11 +49,13 @@ public static class MenuPanels
         {
             if (_open == panel) return;
             _open = panel;
+            _changedFrame = Time.frameCount;
             OpenChanged?.Invoke(_open);
         }
         else if (_open == panel)
         {
             _open = null;
+            _changedFrame = Time.frameCount;
             OpenChanged?.Invoke(null);
         }
     }
@@ -60,9 +63,19 @@ public static class MenuPanels
     /// <summary>Blocks gameplay input while set, without counting as an open panel (other panels stay open).</summary>
     public static void SetBlocking(object owner, bool blocking)
     {
-        if (blocking) _blockers.Add(owner);
-        else _blockers.Remove(owner);
+        if (blocking ? _blockers.Add(owner) : _blockers.Remove(owner)) _changedFrame = Time.frameCount;
     }
+
+    /// <summary>
+    /// True on a frame where a panel opened or closed, a popup started or stopped blocking, or typing started or stopped.
+    /// Esc closes one thing per press: what reacts to Esc after something else (the in-game menu) checks this first.
+    /// </summary>
+    public static bool ChangedThisFrame => _changedFrame == Time.frameCount;
+
+    /// <summary>Esc, or Start on a gamepad, this frame: they always close what is open or open the in-game menu.</summary>
+    public static bool EscapePressed =>
+        (Keyboard.current != null && Keyboard.current.escapeKey.wasPressedThisFrame) ||
+        (Gamepad.current != null && Gamepad.current.startButton.wasPressedThisFrame);
 
     // Statics survive entering Play mode when domain reload is off
     [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
@@ -71,6 +84,7 @@ public static class MenuPanels
         _open = null;
         _blockers.Clear();
         _typing.Clear();
+        _changedFrame = -1;
         OpenChanged = null;
     }
 }
