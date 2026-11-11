@@ -102,6 +102,31 @@ public enum PassiveType
     ShadowPriest,
     Ambidextrous,
     MomentumOfMind,
+    RaiseDead,
+    FrostAura,
+}
+
+/// <summary>
+/// Raise Dead: a unit on the wearer's side (players too) that dies within Radius gets back up at full health instead,
+/// sinking into the ground and rising over RiseDuration, invulnerable and unable to act meanwhile (no experience, loot,
+/// kill or player death for that death). It's then Risen for RisenDuration and can't be raised again until that runs
+/// out. Units with Raise Dead aren't raised.
+/// </summary>
+public struct RaiseDead : IComponentData
+{
+    public float Radius;
+    public float RiseDuration;
+    public float RiseDepth;
+    public float RisenDuration;
+}
+
+/// <summary>Frost Aura: every TickRate seconds, units on the other side within Radius get ChillPerTick chill stacks.</summary>
+public struct FrostAura : IComponentData
+{
+    public float Radius;
+    public int ChillPerTick;
+    public float TickRate;
+    public float Elapsed;
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset

@@ -24,8 +24,9 @@ public partial class SkillActivationSystem : SystemBase
             int activeSlot = int.MaxValue;
             int bestPriority = int.MinValue;
             double bestPressed = double.MinValue;
-            // Frozen and similar: no skill can be used (all of them get disabled below)
-            bool preventsActions = SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
+            // Frozen and similar, or rising out of the ground (raised by Raise Dead): no skill can be used (all of them get disabled below)
+            bool preventsActions = (SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions)
+                                   || SystemAPI.HasComponent<SpawnRise>(entity);
             // Ball Lightning in flight: no skills either, nor casts requested by effects
             if (SystemAPI.HasComponent<BallLightning>(entity) && SystemAPI.GetComponent<BallLightning>(entity).Flying)
             {

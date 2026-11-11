@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 80f3c0330fc1424f809848ea23d9f06c, type: 3}
+  m_Name: RaiseDead
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.RaiseDeadPassive
+  Name: Raise Dead
+  Icon: {fileID: 0}
+  Description: Allies that die within 8 m of it rise again at full health, then can't be raised again for 3 minutes.
+  PlayerSelectable: 0
+  Radius: 8
+  RiseDuration: 1.5
+  RiseDepth: 2
+  RisenDuration: 180

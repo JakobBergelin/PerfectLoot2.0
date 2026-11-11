@@ -1,0 +1,83 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be91b521b825c8b2afba6fb6d8827fc6, type: 3}
+  m_Name: WhiteWalker
+  m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
+  Name: White Walker
+  Prefab: {fileID: 4713609444164311729, guid: 46c23ec26b827a344a00fc35afec323d, type: 3}
+  OverrideColor: 1
+  Tint: {r: 0.6, g: 0.85, b: 1, a: 1}
+  BodyType: 0
+  Scale: 1.3
+  Mass: 1
+  Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 1
+    Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
+    Health: 40
+    HealthRegeneration: 1
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceOnHit: 0
+    LifeOnHit: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 0
+    ArmorPierce: 0
+    MovementSpeed: 3.5
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0
+    CriticalChance: 0.2
+    CriticalDamage: 1
+    BlockChance: 0.05
+    DodgeChance: 0
+  Experience: 40
+  HasAI: 1
+  DetectionRadius: 15
+  ProximityRadius: 4
+  AlertRadius: 10
+  NearMissMargin: 2
+  ForgetTime: 5
+  AttackRadius: 3
+  TurnSpeed: 2
+  TurnAcceleration: 1
+  DesiredDistance: 9
+  DistanceTolerance: 1.5
+  Skills:
+  - {fileID: 11400000, guid: 7023fd99053d4902b9e4818fc58f6a0b, type: 2}
+  Passives:
+  - {fileID: 11400000, guid: 5750396bb14c10de4be027aec09644ed, type: 2}
+  - {fileID: 11400000, guid: 5b68fd589abd4c3d97a44ed08d2083b7, type: 2}
+  - {fileID: 11400000, guid: a753f9652817464b8916a76626b47a8d, type: 2}
+  MeleeDamage: 0.5
+  SecondsBetweenAttacks: 1
+  AttackTurnSpeed: 360
+  AttackFacingAngle: 60

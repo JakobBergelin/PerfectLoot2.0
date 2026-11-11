@@ -35,6 +35,7 @@ public enum EffectType
     StolenSouls,
     FrostLance,
     BloodRite,
+    Risen,
 }
 
 public enum EffectKind
@@ -151,6 +152,15 @@ public struct AsceticBuff : IComponentData, IEnableableComponent
 public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
 {
     public float DamageBonus;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Raised by Raise Dead not long ago: it can't be raised again until this runs out (RaiseDeadSystem).</summary>
+public struct Risen : IComponentData, IEnableableComponent, ITimedEffect
+{
     public float TimeRemaining;
     public float Duration;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
