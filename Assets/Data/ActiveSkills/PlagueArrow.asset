@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: PlagueArrow
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.PlagueArrowSkill
   Name: Plague Arrow
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3bc18730ce254f1bb256d28143883da2, type: 3}
   Description: Loose a slow, festering arrow that poisons everything it passes. It always flies its full distance, so the slower it goes, the longer it poisons.
   Tags: 66113
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 4
   IntelligenceRequirement: 2

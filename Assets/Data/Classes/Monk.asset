@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Monk
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Monk
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: 539e11ba8ea043ec890bff732163aa50, type: 3}
+  Description: A balanced fighter who grows a little in every attribute. Iron Palm turns dodges and blocks into healing orbs for the whole group.
   Type: 4
   StrengthPerLevel: 1
   AgilityPerLevel: 1

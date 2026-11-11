@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 22
   Name: Thrall Mark
-  Icon: {fileID: 0}
-  Description: 'Rises as a Thrall if it dies with this mark.'
+  Icon: {fileID: 21300000, guid: 403fa5a222f94eacb0f5b411fd56e810, type: 3}
+  Description: Rises as a Thrall if it dies with this mark.
   Kind: 1

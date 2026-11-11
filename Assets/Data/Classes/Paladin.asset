@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Paladin
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Paladin
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: e1dddacfb58d4a67afdff1f2b876975b, type: 3}
+  Description: A protector who grows in Strength and some Intelligence. Guardian takes part of the damage meant for nearby allies and answers with Consecration.
   Type: 6
   StrengthPerLevel: 2
   AgilityPerLevel: 0

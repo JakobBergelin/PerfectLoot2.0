@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Swipe
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.SwipeSkill
   Name: Swipe
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 342eae545b30474aa140447df2a9e804, type: 3}
   Description: 'A heavy, sweeping swing in front of you: right to left, then back. Every enemy it hits builds resource.'
   Tags: 8194
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 2
   AgilityRequirement: 0
   IntelligenceRequirement: 0

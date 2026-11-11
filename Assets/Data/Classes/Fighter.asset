@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Fighter
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Fighter
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: da9031c5b31343d18df78a4339e211d6, type: 3}
+  Description: A soldier who grows in Strength and some Agility. Brace raises your block chance each time you attack in melee.
   Type: 5
   StrengthPerLevel: 2
   AgilityPerLevel: 1

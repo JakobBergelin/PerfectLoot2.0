@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Immolation
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.ImmolationSkill
   Name: Immolation
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3145b8d359ab446ab9fbb8a6236acdda, type: 3}
   Description: Toggle. While on, enemies around you take fire damage based on your max health, and you lose health every second. Pauses when it would leave you under 1 health.
   Tags: 262336
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 6
   AgilityRequirement: 0
   IntelligenceRequirement: 2

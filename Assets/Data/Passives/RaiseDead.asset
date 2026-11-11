@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: RaiseDead
   m_EditorClassIdentifier: Assembly-CSharp::Passives.RaiseDeadPassive
   Name: Raise Dead
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 4821afc711734088af95efa3f6e9ec38, type: 3}
   Description: Allies that die within 8 m of it rise again at full health, then can't be raised again for 3 minutes.
   PlayerSelectable: 0
   Radius: 8

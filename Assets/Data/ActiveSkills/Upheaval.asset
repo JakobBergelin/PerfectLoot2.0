@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Upheaval
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.UpheavalSkill
   Name: Upheaval
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 16dfba625dbb4a40abeadf36d9afcb29, type: 3}
   Description: Slam the ground in front of you. A moment later the ground heaves around the impact, throwing enemies away.
   Tags: 2
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 5
   AgilityRequirement: 0
   IntelligenceRequirement: 0

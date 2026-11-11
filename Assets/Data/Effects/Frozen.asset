@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 8
   Name: Frozen
-  Icon: {fileID: 0}
-  Description: 'Cannot move, turn or use skills.'
+  Icon: {fileID: 21300000, guid: c4aec724f0d44e6d98d14ef6d958eda6, type: 3}
+  Description: Cannot move, turn or use skills.
   Kind: 1

@@ -23,7 +23,7 @@ public static class IconRegistry
 
     static List<IconEntry> Matching(string pattern)
     {
-        if (All.Count == 0) { SkillIcons.Register(); PassiveIcons.Register(); ItemIcons.Register(); PowerIcons.Register(); RedrawnIcons.Register(); }
+        if (All.Count == 0) { SkillIcons.Register(); PassiveIcons.Register(); ItemIcons.Register(); PowerIcons.Register(); RedrawnIcons.Register(); VisualPassIcons.Register(); }
         var regex = new Regex("^(" + pattern + ")$", RegexOptions.IgnoreCase);
         return All.FindAll(e => regex.IsMatch(e.Name) || regex.IsMatch(e.Folder));
     }

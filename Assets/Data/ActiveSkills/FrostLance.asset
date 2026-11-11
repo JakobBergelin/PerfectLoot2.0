@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: FrostLance
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.FrostLanceSkill
   Name: Frost Lance
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 9adccedd07264e06abb6839c1b83ba66, type: 3}
   Description: Thrust a thin lance of cold from your weapon, piercing everything in a line. Each thrust builds resource and briefly hardens you against projectiles.
   Tags: 8514
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 2
   AgilityRequirement: 0
   IntelligenceRequirement: 1

@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Savant
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Savant
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: d27fece7d26e4a40af9d0db21016a667, type: 3}
+  Description: An opportunist who grows in Agility and some Intelligence. Exploit deals more damage for each different status effect on the target.
   Type: 10
   StrengthPerLevel: 0
   AgilityPerLevel: 2

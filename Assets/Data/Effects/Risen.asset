@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 27
   Name: Risen
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 4821afc711734088af95efa3f6e9ec38, type: 3}
   Description: Raised from the dead not long ago. Can't be raised again until this runs out.
   Kind: 1

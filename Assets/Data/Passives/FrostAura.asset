@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: FrostAura
   m_EditorClassIdentifier: Assembly-CSharp::Passives.FrostAuraPassive
   Name: Frost Aura
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 19798c5ef4654ec9881ffb2174dfa577, type: 3}
   Description: Chills everyone on the other side within 6 m of it every second. Standing in it long enough freezes.
   PlayerSelectable: 0
   Radius: 6

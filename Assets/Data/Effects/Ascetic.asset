@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 16
   Name: Ascetic
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 399b1c31bb23476bb06b970e08793867, type: 3}
   Description: '{Magnitude:+0%;-0%} damage, from the last skill you used.'
   Kind: 0

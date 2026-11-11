@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 4
   Name: Bleeding
-  Icon: {fileID: 0}
-  Description: 'Loses part of its current health every second.'
+  Icon: {fileID: 21300000, guid: e5802d42f2aa48d79f4cc25e52d02705, type: 3}
+  Description: Loses part of its current health every second.
   Kind: 1

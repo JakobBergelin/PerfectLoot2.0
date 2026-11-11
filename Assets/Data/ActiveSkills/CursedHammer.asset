@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: CursedHammer
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.CursedHammerSkill
   Name: Cursed Hammer
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 395f0cee46eb4fcf99d7289bfa98c266, type: 3}
   Description: Throw a tumbling hammer that starts slow and keeps speeding up. It bursts with lightning where it hits an enemy or a wall.
   Tags: 1089
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 20
   AgilityRequirement: 0
   IntelligenceRequirement: 5

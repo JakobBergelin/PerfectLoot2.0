@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Rogue
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Rogue
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: 89dcb710a43e4864af11f4827cdd517d, type: 3}
+  Description: A hunter in the shadows who grows only in Agility. Vanish makes enemies lose track of you after every Mobility skill.
   Type: 3
   StrengthPerLevel: 0
   AgilityPerLevel: 3

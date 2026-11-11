@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: ShadowPriest
   m_EditorClassIdentifier: Assembly-CSharp::Passives.ShadowPriestPassive
   Name: Shadow Priest
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 98a8e0df9dd64bbda7a9b3d25e02f5b9, type: 3}
   Description: Your damage is lowered by your share of Intelligence in Strength + Intelligence (Int / (Str + Int)). That same share of the damage you deal heals you and allies within 12 m, split between you, as dark orbs flying back from your enemies.
   PlayerSelectable: 1
   Range: 12

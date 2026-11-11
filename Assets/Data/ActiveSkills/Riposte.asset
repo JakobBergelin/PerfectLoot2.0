@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Riposte
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.RiposteSkill
   Name: Riposte
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: b8deecb500014f2190cb2452a5c3c32a, type: 3}
   Description: A quick strike that throws enemies in front of you far back. For a moment after, enemy projectiles in front of you are turned around and sent the way you aim.
   Tags: 4130
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 12
   AgilityRequirement: 10
   IntelligenceRequirement: 0

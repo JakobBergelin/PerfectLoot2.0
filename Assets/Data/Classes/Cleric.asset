@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Cleric
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Cleric
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: 694cf997934c45d092b9108e5207f4b9, type: 3}
+  Description: A healer who grows in Intelligence and some Strength. Overflow turns healing beyond full health into barriers on you and your allies.
   Type: 8
   StrengthPerLevel: 1
   AgilityPerLevel: 0

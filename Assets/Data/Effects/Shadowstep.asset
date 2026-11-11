@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 10
   Name: Shadowstep
-  Icon: {fileID: 0}
-  Description: '+{Magnitude:P0} attack speed. Melee skills jump you in front of the enemy you aim at.'
+  Icon: {fileID: 21300000, guid: 740368fef1e948ddb206d15b774b605b, type: 3}
+  Description: +{Magnitude:P0} attack speed. Melee skills jump you in front of the enemy you aim at.
   Kind: 0

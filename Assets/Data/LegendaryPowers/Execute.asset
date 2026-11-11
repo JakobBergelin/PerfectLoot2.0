@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: Execute
   m_EditorClassIdentifier: Assembly-CSharp::Equipment.ExecutePower
   Name: Execute
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: e19b17f25036438aa99135a18ff37788, type: 3}
   Description: Your melee hits finish off enemies they leave below {HealthThreshold} health.
   HealthThreshold: 3

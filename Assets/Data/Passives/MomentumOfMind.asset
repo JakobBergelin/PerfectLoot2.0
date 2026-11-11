@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: MomentumOfMind
   m_EditorClassIdentifier: Assembly-CSharp::Passives.MomentumOfMindPassive
   Name: Momentum of Mind
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: cdb9369d599f4a70afbaf9820374306a, type: 3}
   Description: +2 Intelligence for each of your skills on cooldown.
   PlayerSelectable: 1
   IntelligencePerCooldown: 2

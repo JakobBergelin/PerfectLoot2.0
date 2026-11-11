@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Mage
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Mage
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: 06ec249442ca4a0e8ae4c57e82b67490, type: 3}
+  Description: A scholar of spells who grows only in Intelligence. Recall rewards you for using every skill in quick succession.
   Type: 2
   StrengthPerLevel: 0
   AgilityPerLevel: 0

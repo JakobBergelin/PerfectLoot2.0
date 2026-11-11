@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Ambidextrous
   m_EditorClassIdentifier: Assembly-CSharp::Passives.AmbidextrousPassive
   Name: Ambidextrous
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 539c7c44fda34661a60a07ad50493c4e, type: 3}
   Description: Half of your Agility also counts toward the Strength that skills need.
   PlayerSelectable: 1
   AgilityForStrength: 0.5

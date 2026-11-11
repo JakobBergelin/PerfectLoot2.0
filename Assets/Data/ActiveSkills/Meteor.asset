@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Meteor
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MeteorSkill
   Name: Meteor
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 42b01c11b91d4a858c53a7b6128f376c, type: 3}
   Description: Call a meteor down on the cursor. After a moment it crashes down in a fiery blast and leaves the ground burning.
   Tags: 131264
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 0
   IntelligenceRequirement: 26

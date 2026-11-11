@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Stances
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.StancesSkill
   Name: Stances
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3ed3adc832e645b5a1119ed4a3e14a5f, type: 3}
   Description: 'Shift between three stances: Strength, Agility and Intelligence. Each press moves to the next, and the stance strengthens its attribute.'
   Tags: 2048
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 2
   AgilityRequirement: 2
   IntelligenceRequirement: 5

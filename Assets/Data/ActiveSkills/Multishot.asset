@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: Multishot
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MultishotSkill
   Name: Multishot
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3bb6a1ccd67a462c8aa3bf658984d804, type: 3}
   Description: Loose a fan of arrows toward the cursor. Each arrow strikes with your weapon, so up close several can hit the same enemy.
   Tags: 1
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 7
   IntelligenceRequirement: 0

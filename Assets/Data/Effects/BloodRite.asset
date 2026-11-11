@@ -14,6 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Effects.EffectDefinition
   Type: 26
   Name: Blood Rite
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 888d6dbb64cd4f3e9dcdf0a5b7ceec56, type: 3}
   Description: +{Magnitude} Strength and Agility.
   Kind: 0

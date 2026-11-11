@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Warrior
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Warrior
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: c30e1958b519481e83e2b409a69724db, type: 3}
+  Description: A juggernaut who grows only in Strength. Unstoppable keeps you on your feet in the middle of a crowd.
   Type: 1
   StrengthPerLevel: 3
   AgilityPerLevel: 0

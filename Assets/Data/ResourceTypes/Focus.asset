@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Focus
   m_EditorClassIdentifier: Assembly-CSharp::Characters.FocusResource
   Name: Focus
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 8cb93d7d6e1642549e3317146f0d9203, type: 3}
   Description: A deep, calm reserve that only refills from your gear and passives, fastest when you hold still or channel.
   MaxResource: 75
   Regeneration: 0

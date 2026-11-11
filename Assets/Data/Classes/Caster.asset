@@ -13,8 +13,8 @@ MonoBehaviour:
   m_Name: Caster
   m_EditorClassIdentifier: Assembly-CSharp::Characters.CharacterClass
   Name: Caster
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: 9cf20c84632d46b882aa66e7ab056549, type: 3}
+  Description: A spell slinger who grows in Intelligence and some Agility. Desperation speeds up your cooldowns as your health runs low.
   Type: 7
   StrengthPerLevel: 0
   AgilityPerLevel: 1

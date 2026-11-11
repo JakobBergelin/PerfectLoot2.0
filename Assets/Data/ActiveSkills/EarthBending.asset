@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: EarthBending
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.EarthBendingSkill
   Name: Earth Bending
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: 3cce350e27ba4ff1bb0d2009f32c0f49, type: 3}
   Description: Raise a stone wall at the cursor. It blocks enemies and takes their attacks and projectiles until it breaks, while yours pass through. Casting it again replaces the wall.
   Tags: 135200
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 10
   AgilityRequirement: 0
   IntelligenceRequirement: 6

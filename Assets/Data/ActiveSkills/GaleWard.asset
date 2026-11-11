@@ -13,10 +13,11 @@ MonoBehaviour:
   m_Name: GaleWard
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.GaleWardSkill
   Name: Gale Ward
-  Icon: {fileID: 0}
-  Description: 
+  Icon: {fileID: 21300000, guid: d601f31c87094f369697b80c398ec9b1, type: 3}
+  Description: Toggle. A band of wind circles you, bending every projectile that flies through it, yours and the enemies', and chilling enemies caught in it. Press again to turn the wind the other way, and a third time to stop. Drains resource while on.
   Tags: 397568
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 12
   IntelligenceRequirement: 8

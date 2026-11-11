@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Arcane
   m_EditorClassIdentifier: Assembly-CSharp::Characters.ArcaneResource
   Name: Arcane
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: c8a8ea5bbff04b72ac3e6c99409120f0, type: 3}
   Description: The largest pool of all, but it refills slowly. Plan your big moments.
   MaxResource: 100
   Regeneration: 1
