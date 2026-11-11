@@ -18,8 +18,8 @@ MonoBehaviour:
   Tags: 397568
   CritShake: 0
   StrengthRequirement: 0
-  AgilityRequirement: 10
-  IntelligenceRequirement: 10
+  AgilityRequirement: 12
+  IntelligenceRequirement: 8
   resourceCostPerSecond: 3
   InnerRadius: 6
   OuterRadius: 9

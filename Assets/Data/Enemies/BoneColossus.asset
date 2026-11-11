@@ -1,0 +1,86 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be91b521b825c8b2afba6fb6d8827fc6, type: 3}
+  m_Name: BoneColossus
+  m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
+  Name: Bone Colossus
+  Prefab: {fileID: 8744139525223715212, guid: a3c250101e2d9534b9a2dbf0d4008007, type: 3}
+  OverrideColor: 1
+  Tint: {r: 0.75, g: 0.7, b: 0.55, a: 1}
+  BodyType: 0
+  Scale: 1.6
+  Mass: 5
+  CameraFocus: 1
+  Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 1
+    Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
+    Health: 500
+    HealthRegeneration: 1
+    Resource: 100
+    ResourceRegeneration: 5
+    ResourceCostReduction: 0
+    ResourceOnHit: 0
+    LifeOnHit: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 150
+    ArmorPierce: 0
+    MovementSpeed: 1.6
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    ColdResistance: 20
+    FireResistance: 20
+    PoisonResistance: 20
+    LightningResistance: 20
+    AllResistance: 0
+    CriticalChance: 0.2
+    CriticalDamage: 1
+    BlockChance: 0.05
+    DodgeChance: 0
+    ProjectileDamageReduction: 0
+    MeleeDamageReduction: 0
+    AgilityForStrength: 0
+  Experience: 150
+  HasAI: 1
+  DetectionRadius: 15
+  ProximityRadius: 4
+  AlertRadius: 10
+  NearMissMargin: 2
+  ForgetTime: 5
+  AttackRadius: 3
+  TurnSpeed: 1.6
+  TurnAcceleration: 1
+  DesiredDistance: 0
+  DistanceTolerance: 1.5
+  Skills:
+  - {fileID: 11400000, guid: 88dd14aba3944f1b8938db7dba45d30a, type: 2}
+  - {fileID: 11400000, guid: ed5e7303c12f44c98783630ccb4b632f, type: 2}
+  - {fileID: 11400000, guid: 61b885377f064e7ab7936b88284f9dda, type: 2}
+  Passives: []
+  MeleeDamage: 2.4
+  SecondsBetweenAttacks: 1.6
+  AttackTurnSpeed: 360
+  AttackFacingAngle: 60

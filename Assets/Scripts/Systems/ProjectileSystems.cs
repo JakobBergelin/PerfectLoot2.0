@@ -30,6 +30,12 @@ partial struct HomingProjectileSystem : ISystem
             CollidesWith = (uint)CollisionLayerHelper.AnyEnemy,
             GroupIndex = 0,
         };
+        var playerFilter = new CollisionFilter
+        {
+            BelongsTo = ~0u,
+            CollidesWith = (uint)CollisionLayerHelper.Player,
+            GroupIndex = 0,
+        };
 
         foreach (var (homing, localTransform, entity) in SystemAPI.Query<RefRW<HomingProjectile>, RefRW<LocalTransform>>().WithEntityAccess())
         {
@@ -37,7 +43,9 @@ partial struct HomingProjectileSystem : ISystem
             if(target == Entity.Null)
             {
                 //TODO player range
-                physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, combatConfig.HomingTargetRange, ref outHits, collisionFilter);
+                // An enemy's missile looks for the player side instead
+                bool huntsPlayers = SystemAPI.HasComponent<AttackTarget>(entity) && SystemAPI.GetComponentRO<AttackTarget>(entity).ValueRO.TargetType == TargetType.Player;
+                physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, combatConfig.HomingTargetRange, ref outHits, huntsPlayers ? playerFilter : collisionFilter);
                 if(!outHits.IsEmpty)
                 {
                     Entity bestEntity = Entity.Null;

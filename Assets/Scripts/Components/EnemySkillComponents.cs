@@ -9,6 +9,9 @@ public enum EnemySkillType
     Melee,
     Projectile,
     SelfDestruct,
+    GroundSlam,
+    Beam,
+    HomingVolley,
 }
 
 public enum TargetMotion
@@ -123,6 +126,41 @@ public struct EnemySelfDestruct : IComponentData
     public float Damage;
     public DamageType Type;
     public float Radius;
+    public float HitForce;
+}
+
+/// <summary>Ground Slam: when it goes off, Damage to everything within Radius of the spot its target stood on when the cast began.</summary>
+public struct EnemyGroundSlam : IComponentData
+{
+    public float Damage;
+    public DamageType Type;
+    public float Radius;        // Its Circle telegraph's size, so the hit matches the marker
+    public float HitForce;
+}
+
+/// <summary>Beam: when it goes off, Damage to everything in a Length by Width rectangle from the unit toward its target.</summary>
+public struct EnemyBeam : IComponentData
+{
+    public float Damage;
+    public DamageType Type;
+    public float Length;        // Its Line telegraph's size and width, so the hit matches the marker
+    public float Width;
+    public float Height;        // How high it reaches, to catch units of any size
+    public float HitForce;
+}
+
+/// <summary>Homing Volley: Count missiles fanned over Spread degrees that home in on the unit's target.</summary>
+public struct EnemyHomingVolley : IComponentData
+{
+    public int Count;
+    public float Spread;        // Degrees from one side of the fan to the other
+    public float Damage;
+    public DamageType Type;
+    public float ProjectileSpeed;
+    public float Radius;
+    public float TurnSpeed;     // Radians per second, growing by TurnAcceleration
+    public float TurnAcceleration;
+    public float MaxDistance;
     public float HitForce;
 }
 

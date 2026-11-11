@@ -20,7 +20,7 @@ MonoBehaviour:
   Steps:
   - Kind: 1
     KillPercent: 90
-    Boss: {fileID: 11400000, guid: eba4b1eebcb8ae94990b9ac374e442c9, type: 2}
+    Boss: {fileID: 11400000, guid: b90a4fa296ef4d52bde448776e2c7c19, type: 2}
     SurviveSeconds: 60
     WaveInterval: 8
     Waves: []
