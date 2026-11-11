@@ -134,14 +134,20 @@ public partial class VfxSystem : SystemBase
                     bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
                     bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
                     bool cold = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Cold;
+                    bool attack = EntityManager.HasComponent<Attack>(e);
                     var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e)
                         ? (EntityManager.GetComponentData<HealOnArrival>(e).Label == DamageLabel.ShadowPriest ? (VfxType.DarkHealOrb, VfxType.DarkHealBurst) : (VfxType.HealOrb, VfxType.HealBurst))
                         : homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
                         : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
                         : poison ? (VfxType.PoisonDart, VfxType.None)
-                        : cold ? (VfxType.IceShard, VfxType.IceShardImpact) : (VfxType.None, VfxType.None);
-                    bindings.Add((e, Bind(vfx, type, impact, t)));
+                        : cold ? (VfxType.IceShard, VfxType.IceShardImpact)
+                        // Everything else that hits (arrows, thrown weapons, lightning) gets a dart tinted by its damage type
+                        : attack ? (VfxType.ProjectileStreak, EntityManager.GetComponentData<Attack>(e).Type == DamageType.Lightning ? VfxType.LightningHit : VfxType.SlingshotSpark)
+                        : (VfxType.None, VfxType.None);
+                    var bound = Bind(vfx, type, impact, t);
+                    if (type == VfxType.ProjectileStreak) vfx.Tint(bound.Handle, StrikeColor(EntityManager.GetComponentData<Attack>(e).Type));
+                    bindings.Add((e, bound));
                 }
             using (var entities = _newPeriodic.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)

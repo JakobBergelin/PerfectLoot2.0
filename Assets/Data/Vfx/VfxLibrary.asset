@@ -175,3 +175,6 @@ MonoBehaviour:
   - Type: 54
     Prefab: {fileID: 8632709367335381054, guid: be18875dc830e2e47834e5b263a7e6a5, type: 3}
     Prewarm: 4
+  - Type: 55
+    Prefab: {fileID: 8354031284724986827, guid: d025d9052d3c6a64c8a2cac732cad90c, type: 3}
+    Prewarm: 4

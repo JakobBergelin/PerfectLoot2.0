@@ -17,6 +17,7 @@ public static partial class VfxBuilder
         yield return (VfxType.StrikeSlash, StrikeSlash(strike));
         yield return (VfxType.StrikeShock, StrikeShock(strike));
         yield return (VfxType.StrikeThrust, StrikeThrust(strike));
+        yield return (VfxType.ProjectileStreak, ProjectileStreak(strike));
     }
 
     // A crescent sweeping across the front, with sparks flying off its edge
@@ -112,6 +113,27 @@ public static partial class VfxBuilder
             shape.scale = new Vector3(0.15f, 0.1f, 2f); shape.position = new Vector3(0f, -0.45f, 0f);
             Fade(ps, Hex("#FFFFFF"), Hex("#FFFFFF", 0.8f), Hex("#FFFFFF", 0f));
             Stretch(ps, 2f);
+        });
+        return Save(root);
+    }
+
+    // A bright dart with a fading trail, for physical and lightning projectiles (arrows, thrown weapons); tinted by damage type
+    static GameObject ProjectileStreak(Material strike)
+    {
+        var root = Root_("VFX_ProjectileStreak", 0.35f, out _);
+        var streak = Streak("VFX_StrikeStreak");
+        Ps(root, "Core", strike, ps =>
+        {
+            Main(ps, 0.06f, 0f, 0.55f, Color.white, rate: 50f, local: true);
+            MeshParticle(ps, streak);
+            var main = ps.main; main.maxParticles = 8;
+        });
+        Ps(root, "Trail", _additive, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.12f, 0.22f), 0f, new ParticleSystem.MinMaxCurve(0.1f, 0.18f), Color.white, rate: 0f);
+            var e = ps.emission; e.rateOverDistance = 14f;
+            Fade(ps, Hex("#FFFFFF", 0.8f), Hex("#FFFFFF", 0.4f), Hex("#FFFFFF", 0f));
+            Shrink(ps);
         });
         return Save(root);
     }

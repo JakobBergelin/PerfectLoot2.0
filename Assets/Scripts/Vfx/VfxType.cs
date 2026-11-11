@@ -56,4 +56,5 @@ public enum VfxType
     StrikeSlash = 52,
     StrikeShock = 53,
     StrikeThrust = 54,
+    ProjectileStreak = 55,
 }
