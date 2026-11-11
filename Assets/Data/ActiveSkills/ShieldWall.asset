@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f296a0adb4d64115ac4c6254e612629a, type: 3}
+  m_Name: ShieldWall
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.ShieldWallSkill
+  Name: Shield Wall
+  Icon: {fileID: 0}
+  Description: Hold to raise your shield. You move slowly, but enemy projectiles in front of you are stopped, and each one builds resource.
+  Tags: 12296
+  CritShake: 0
+  StrengthRequirement: 12
+  AgilityRequirement: 0
+  IntelligenceRequirement: 0
+  Reach: 2.5
+  HalfAngle: 60
+  Slow: 0.5
+  ResourcePerBlock: 2

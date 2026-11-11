@@ -301,6 +301,22 @@ public static class ProjectileUtil
         CollidesWith = (uint)CollisionLayerHelper.Ground,
         GroupIndex = 0,
     };
+
+    /// <summary>
+    /// The projectile becomes caster's (Tesla Coil, Riposte): it hits enemies now, crits with the caster's stats and is
+    /// credited to label, keeping the damage it was fired with, and gets its full range again. Turning it is up to the caller.
+    /// </summary>
+    public static void TakeOver(ref Attack attack, ref Source source, ref AttackTarget target, ref ProjectileRange range, bool hasRange,
+                                float3 position, Entity caster, DamageLabel label)
+    {
+        target.TargetType = TargetType.Enemy;
+        source.Entity = caster;
+        attack.Origin = label;
+        attack.CriticalChanceBonus = 0f;
+        if (!hasRange) return;
+        range.Traveled = 0f;
+        range.LastPosition = position;
+    }
 }
 
 [UpdateInGroup(typeof(DamageSystemGroup))]

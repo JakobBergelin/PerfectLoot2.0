@@ -82,6 +82,11 @@ public enum SkillType
     FrostLance,
     Stances,
     BloodRite,
+    ShieldWall,
+    Riposte,
+    EarthBending,
+    GaleWard,
+    Multishot,
 }
 
 /// <summary>
@@ -638,15 +643,14 @@ public struct MeteorStrike : IComponentData
 
 /// <summary>
 /// Immolation, a toggle: ImmolationSystem reads its key, so the component stays disabled and Active says whether it's on.
-/// While on it drains resource and burns enemies around the caster; without enough resource it stays on but pauses.
+/// While on it costs health and burns enemies around the caster; when paying would leave under 1 health it stays on but pauses.
 /// </summary>
 public struct Immolation : IComponentData, IEnableableComponent
 {
-    public float DamagePerSecond;           // Fire, before the Intelligence part and the damage %
-    public float DamagePerIntelligence;     // Added to DamagePerSecond for each point of the caster's Intelligence
+    public float DamagePerMaxHealth;        // Fire damage per second as a share of the caster's max health (0.1 = 10%), before the damage %
     public float Radius;                    // Scaled by area of effect
     public float TickRate;                  // Seconds between hits
-    public float ResourceCostPerSecond;
+    public float HealthCostPerSecond;       // Share of the caster's max health lost per second while burning (0.02 = 2%)
     public bool Active;
     public float Elapsed;                   // Seconds toward the next hit, only counted while it's burning
 }
@@ -882,4 +886,94 @@ public struct BloodRite : IComponentData, IEnableableComponent
     public float StrengthBonus;
     public float AgilityBonus;
     public float Elapsed;       // Seconds since the last use
+}
+
+/// <summary>
+/// Shield Wall while held: the caster turns toward the cursor, is slowed by Slow, and every enemy projectile inside a cone
+/// in front of it (Reach meters, HalfAngle degrees to each side, any height) is destroyed. Each one blocked builds
+/// ResourcePerBlock. Free, with no cooldown.
+/// </summary>
+public struct ShieldWall : IComponentData, IEnableableComponent
+{
+    public float Reach;                 // Meters, scaled by area of effect
+    public float HalfAngle;             // Degrees to each side of where the caster faces
+    public float Slow;                  // Movement speed taken off while raised (0.5 = 50%)
+    public float ResourcePerBlock;
+    public bool Raised;                 // Held and not prevented this frame (ShieldWallSlowSystem slows from it)
+}
+
+/// <summary>
+/// Riposte: when off cooldown, a short physical hit in a cone in front of the caster (weapon reach, scaled by area of
+/// effect) that knocks enemies far back. For Window seconds after, enemy projectiles entering the same cone become the
+/// caster's and fly the way the caster aims; homing ones stop homing.
+/// </summary>
+public struct Riposte : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float WeaponDamageMultiplier;
+    public float HalfAngle;             // Degrees to each side of the aim
+    public float HitForce;
+    public float Window;                // Seconds projectiles are deflected after the hit
+    public float WindowRemaining;
+    public float Elapsed;               // Since the last use, up to Cooldown
+}
+
+/// <summary>
+/// EarthBending: raises a stone wall at the cursor (no further than Range), facing the caster, replacing the caster's old
+/// one. The wall has HealthShare of the caster's max health; enemy attacks and projectiles wear it down. It blocks every
+/// unit's movement, and enemies may go after it (Threat, negative so they prefer players). The player's own attacks pass
+/// through it.
+/// </summary>
+public struct EarthBending : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float ResourceCost;
+    public float Range;
+    public float HealthShare;           // Of the caster's max health: 0.5 = 50%
+    public float Threat;                // Meters closer enemies treat it as (negative: further)
+    public float Elapsed;               // Since the last cast, up to Cooldown
+    public Entity Prefab;               // The wall to copy, made by EarthBendingSkill
+}
+
+/// <summary>On a raised EarthBending wall: whose it is (one per caster).</summary>
+public struct EarthWall : IComponentData
+{
+    public Entity Owner;
+}
+
+/// <summary>
+/// Gale Ward: its key cycles off, clockwise and counter-clockwise (the skill's SkillState.Variant: 0, 1, 2). While on and
+/// the caster can pay ResourceCostPerSecond, a band of wind circles the caster from InnerRadius to OuterRadius. Every
+/// projectile in it, anyone's, turns toward the wind's direction at TurnSpeed degrees per second (homing ones keep
+/// steering against it), and enemies in it are chilled by ChillPerTick every TickRate seconds. Without enough resource
+/// it stays on but pauses.
+/// </summary>
+public struct GaleWard : IComponentData, IEnableableComponent
+{
+    public float ResourceCostPerSecond;
+    public float InnerRadius;           // Both radii scaled by area of effect
+    public float OuterRadius;
+    public float TurnSpeed;             // Degrees per second
+    public int ChillPerTick;
+    public float TickRate;
+    public float Elapsed;               // Seconds toward the next chill
+    public float Direction;             // This frame's: 1 clockwise, -1 counter-clockwise, 0 off or paused (GaleWardBendSystem reads it)
+}
+
+/// <summary>
+/// Multishot: a volley of ArrowCount arrows spread evenly over a cone toward the cursor (HalfAngle degrees to each side).
+/// Each arrow is its own physical hit for weapon damage * WeaponDamageMultiplier and flies Range meters. Costs
+/// ResourceCost per volley; repeats while held, AttackSpeed apart.
+/// </summary>
+public struct Multishot : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;               // Seconds between volleys, before the attack speed stat
+    public float ResourceCost;
+    public int ArrowCount;
+    public float HalfAngle;                 // Degrees to each side of the aim
+    public float WeaponDamageMultiplier;    // Per arrow
+    public float ProjectileSpeed;
+    public float Range;                     // Meters each arrow flies
+    public float Radius;                    // Hit radius of each arrow
+    public float HitForce;
 }

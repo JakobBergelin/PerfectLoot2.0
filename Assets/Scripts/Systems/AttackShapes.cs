@@ -48,6 +48,23 @@ public static class AttackShapes
         return new float3(direction.x, 0f, direction.y);
     }
 
+    /// <summary>
+    /// Whether a point (e.g. a projectile) is inside the shape: a sphere of radius, a rectangle's box, or a cone's flat
+    /// wedge at any height.
+    /// </summary>
+    public static bool Contains(in LocalTransform transform, float radius, bool hasShape, in AttackShape shape, float3 point)
+    {
+        var offset = point - transform.Position;
+        if (!hasShape) return math.lengthsq(offset) <= radius * radius;
+        if (shape.Kind == AttackShapeKind.Rectangle)
+            return math.all(math.abs(math.mul(math.inverse(transform.Rotation), offset)) <= shape.HalfExtents);
+
+        float2 flat = offset.xz;
+        if (math.lengthsq(flat) > radius * radius) return false;
+        if (math.lengthsq(flat) < 1e-6f) return true;
+        return math.dot(math.normalize(flat), Forward(transform)) >= math.cos(math.radians(math.clamp(shape.HalfAngle, 0f, 180f)));
+    }
+
     /// <summary>How far from its position the attack reaches at most (e.g. for enemies noticing a near miss).</summary>
     public static float OuterRadius(float radius, bool hasShape, in AttackShape shape) =>
         hasShape && shape.Kind == AttackShapeKind.Rectangle ? math.length(shape.HalfExtents) : radius;

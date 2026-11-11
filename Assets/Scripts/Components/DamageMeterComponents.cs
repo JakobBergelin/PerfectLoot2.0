@@ -72,6 +72,8 @@ public enum DamageLabel
     CursedHammer,
     FrostLance,
     ShadowPriest,   // Shadow Priest's healing orbs
+    Riposte,        // Riposte's hit and the projectiles it turns
+    Multishot,
 }
 
 public static class SkillDamageLabel
@@ -101,6 +103,8 @@ public static class SkillDamageLabel
         SkillType.Immolation => DamageLabel.Immolation,
         SkillType.CursedHammer => DamageLabel.CursedHammer,
         SkillType.FrostLance => DamageLabel.FrostLance,
+        SkillType.Riposte => DamageLabel.Riposte,
+        SkillType.Multishot => DamageLabel.Multishot,
         _ => DamageLabel.None,
     };
 }

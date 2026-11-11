@@ -14,14 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.ImmolationSkill
   Name: Immolation
   Icon: {fileID: 0}
-  Description: Toggle. While on, enemies around you take fire damage that grows with Intelligence. Drains resource while on, and pauses without enough.
+  Description: Toggle. While on, enemies around you take fire damage based on your max health, and you lose health every second. Pauses when it would leave you under 1 health.
   Tags: 262336
   CritShake: 0
   StrengthRequirement: 3
   AgilityRequirement: 0
   IntelligenceRequirement: 1
-  resourceCostPerSecond: 2
-  DamagePerSecond: 2
-  DamagePerIntelligence: 0.1
+  DamagePerMaxHealth: 0.1
+  HealthCostPerSecond: 0.02
   Radius: 4
   TickRate: 0.5

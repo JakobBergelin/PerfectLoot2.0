@@ -159,6 +159,18 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.BloodRite:
                 if (SystemAPI.HasComponent<BloodRite>(entity)) SystemAPI.SetComponentEnabled<BloodRite>(entity, enabled);
                 break;
+            case SkillType.ShieldWall:
+                if (SystemAPI.HasComponent<ShieldWall>(entity)) SystemAPI.SetComponentEnabled<ShieldWall>(entity, enabled);
+                break;
+            case SkillType.Riposte:
+                if (SystemAPI.HasComponent<Riposte>(entity)) SystemAPI.SetComponentEnabled<Riposte>(entity, enabled);
+                break;
+            case SkillType.EarthBending:
+                if (SystemAPI.HasComponent<EarthBending>(entity)) SystemAPI.SetComponentEnabled<EarthBending>(entity, enabled);
+                break;
+            case SkillType.Multishot:
+                if (SystemAPI.HasComponent<Multishot>(entity)) SystemAPI.SetComponentEnabled<Multishot>(entity, enabled);
+                break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;

@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a2500b654e164889bb43adc2f92e5fa5, type: 3}
+  m_Name: Multishot
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.MultishotSkill
+  Name: Multishot
+  Icon: {fileID: 0}
+  Description: Loose a fan of arrows toward the cursor. Each arrow strikes with your weapon, so up close several can hit the same enemy.
+  Tags: 1
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 7
+  IntelligenceRequirement: 0
+  AttackSpeed: 0.6
+  resourceCost: 8
+  ArrowCount: 6
+  HalfAngle: 30
+  WeaponDamageMultiplier: 0.4
+  ProjectileSpeed: 20
+  Range: 18
+  Radius: 0.25
+  HitForce: 1

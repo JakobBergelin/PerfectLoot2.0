@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f190ae36bbf741a58f2abcaca22d4b12, type: 3}
+  m_Name: Riposte
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.RiposteSkill
+  Name: Riposte
+  Icon: {fileID: 0}
+  Description: A quick strike that throws enemies in front of you far back. For a moment after, enemy projectiles in front of you are turned around and sent the way you aim.
+  Tags: 4130
+  CritShake: 0
+  StrengthRequirement: 12
+  AgilityRequirement: 10
+  IntelligenceRequirement: 0
+  cooldown: 3
+  WeaponDamageMultiplier: 0.3
+  HalfAngle: 60
+  HitForce: 12
+  Window: 0.25

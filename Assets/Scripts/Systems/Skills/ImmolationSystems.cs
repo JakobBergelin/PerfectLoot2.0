@@ -8,9 +8,10 @@ using UnityEngine;
 
 /// <summary>
 /// Immolation: pressing its key switches it on or off, even while another skill is held, and its slot stays lit while
-/// it's on. While on and the caster can pay ResourceCostPerSecond, every TickRate seconds each enemy within Radius takes
-/// (DamagePerSecond + Intelligence * DamagePerIntelligence) * TickRate as a normal main fire hit: damage %, element
-/// conversion, crits and burning apply. Without enough resource it stays on but neither drains nor burns.
+/// it's on. While on, the caster loses HealthCostPerSecond of their max health every second (health loss, not damage:
+/// nothing reduces it), and every TickRate seconds each enemy within Radius takes max health * DamagePerMaxHealth *
+/// TickRate as a normal main fire hit: damage %, element conversion, crits and burning apply. When paying would leave the
+/// caster under 1 health it stays on but neither costs nor burns.
 /// </summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [BurstCompile]
@@ -30,14 +31,13 @@ public partial struct ImmolationSystem : ISystem
     {
         var physicsWorld = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         float deltaTime = SystemAPI.Time.DeltaTime;
-        var resourceChanges = SystemAPI.GetBufferLookup<ResourceChanger>();
         var hits = new NativeList<DistanceHit>(Allocator.Temp);
         var filter = new CollisionFilter { BelongsTo = ~0u, CollidesWith = (uint)CollisionLayerHelper.AnyEnemy, GroupIndex = 0 };
         state.CompleteDependency();  // Lookups and the EntityManager (crits) are used here on the main thread
 
         // Never enabled: the key is read here, so that a skill in a lower slot can't hold it back
-        foreach (var (immolation, inputs, modifiers, skills, resource, stats, transform, entity) in
-                 SystemAPI.Query<RefRW<Immolation>, RefRO<InputsData>, RefRO<MovementModifiers>, DynamicBuffer<Skill>, RefRO<Resource>, RefRO<CalculatedStats>, RefRO<LocalTransform>>()
+        foreach (var (immolation, inputs, modifiers, skills, health, stats, transform, entity) in
+                 SystemAPI.Query<RefRW<Immolation>, RefRO<InputsData>, RefRO<MovementModifiers>, DynamicBuffer<Skill>, RefRW<Health>, RefRO<CalculatedStats>, RefRO<LocalTransform>>()
                      .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
         {
             int index = -1;
@@ -60,17 +60,18 @@ public partial struct ImmolationSystem : ISystem
             skills.ElementAt(index).State.IsActive = immolation.ValueRO.Active;
 
             var statBlock = stats.ValueRO.Value;
-            float drain = SkillUtil.Cost(immolation.ValueRO.ResourceCostPerSecond, statBlock) * deltaTime;
-            if (!immolation.ValueRO.Active || resource.ValueRO.CurrentValue < drain) continue;
+            float maxHealth = health.ValueRO.MaxValue;
+            float cost = maxHealth * immolation.ValueRO.HealthCostPerSecond * deltaTime;
+            if (!immolation.ValueRO.Active || health.ValueRO.CurrentValue - cost < 1f) continue;
 
-            if (resourceChanges.HasBuffer(entity)) resourceChanges[entity].Add(new ResourceChanger { Value = -drain });
+            health.ValueRW.CurrentValue -= cost;
             immolation.ValueRW.Elapsed += deltaTime;
             var im = immolation.ValueRO;
             if (im.Elapsed < im.TickRate) continue;
             immolation.ValueRW.Elapsed -= im.TickRate;
 
             var type = statBlock.ConvertedType(DamageType.Fire);
-            float baseDamage = (im.DamagePerSecond + statBlock.Intelligence * im.DamagePerIntelligence) * im.TickRate * statBlock.DamageMultiplier(type);
+            float baseDamage = maxHealth * im.DamagePerMaxHealth * im.TickRate * statBlock.DamageMultiplier(type);
             var position = transform.ValueRO.Position;
 
             hits.Clear();

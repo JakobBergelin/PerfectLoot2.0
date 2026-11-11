@@ -160,23 +160,16 @@ public partial struct TeslaCoilFieldSystem : ISystem
         if (into < 0f) projectile.Direction -= 2f * into * normal;
         transform.Rotation = quaternion.LookRotationSafe(projectile.Direction, math.up());
 
-        target.TargetType = TargetType.Enemy;
-        source.Entity = caster;
-        attack.Origin = DamageLabel.TeslaCoil;
-        attack.CriticalChanceBonus = 0f;
+        bool hasRange = SystemAPI.HasComponent<ProjectileRange>(entity);
+        var range = hasRange ? SystemAPI.GetComponent<ProjectileRange>(entity) : default;
+        ProjectileUtil.TakeOver(ref attack, ref source, ref target, ref range, hasRange, transform.Position, caster, DamageLabel.TeslaCoil);
+        if (hasRange) SystemAPI.SetComponent(entity, range);
 
         if (SystemAPI.HasComponent<HomingProjectile>(entity))
         {
             var homing = SystemAPI.GetComponent<HomingProjectile>(entity);
             homing.Target = shooter;
             SystemAPI.SetComponent(entity, homing);
-        }
-        if (SystemAPI.HasComponent<ProjectileRange>(entity))
-        {
-            var range = SystemAPI.GetComponent<ProjectileRange>(entity);
-            range.Traveled = 0f;
-            range.LastPosition = transform.Position;
-            SystemAPI.SetComponent(entity, range);
         }
     }
 }

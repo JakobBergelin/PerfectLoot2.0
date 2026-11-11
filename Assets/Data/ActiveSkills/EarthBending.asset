@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7fd3e2b5080e4df58a6616d418a02834, type: 3}
+  m_Name: EarthBending
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.EarthBendingSkill
+  Name: Earth Bending
+  Icon: {fileID: 0}
+  Description: Raise a stone wall at the cursor. It blocks enemies and takes their attacks and projectiles until it breaks, while yours pass through. Casting it again replaces the wall.
+  Tags: 135200
+  CritShake: 0
+  StrengthRequirement: 10
+  AgilityRequirement: 0
+  IntelligenceRequirement: 6
+  cooldown: 8
+  resourceCost: 15
+  Range: 12
+  HealthShare: 0.5
+  Threat: -6
+  Width: 6
+  Height: 3
+  Thickness: 1
