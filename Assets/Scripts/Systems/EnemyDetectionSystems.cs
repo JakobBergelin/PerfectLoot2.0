@@ -344,14 +344,18 @@ public partial struct EnemyNearMissSystem : ISystem
         {
             if (!targetables.HasComponent(source.ValueRO.Entity)) continue;
             if (SystemAPI.HasComponent<AttackTarget>(entity) && SystemAPI.GetComponent<AttackTarget>(entity).TargetType == TargetType.Player) continue;
-            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Unit = source.ValueRO.Entity, NearMiss = true });
+            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = OuterRadius(ref state, entity, attack.ValueRO.Radius), Unit = source.ValueRO.Entity, NearMiss = true });
         }
-        foreach (var (attack, transform, source) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>, RefRO<Source>>())
+        foreach (var (attack, transform, source, entity) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>, RefRO<Source>>().WithEntityAccess())
         {
             if (!targetables.HasComponent(source.ValueRO.Entity)) continue;
-            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = attack.ValueRO.Radius, Unit = source.ValueRO.Entity, NearMiss = true });
+            pending.Enqueue(new EnemyAlert { Position = transform.ValueRO.Position, Radius = OuterRadius(ref state, entity, attack.ValueRO.Radius), Unit = source.ValueRO.Entity, NearMiss = true });
         }
     }
+
+    // How far the attack reaches: its radius, or its AttackShape's outer radius
+    float OuterRadius(ref SystemState state, Entity entity, float radius) =>
+        SystemAPI.HasComponent<AttackShape>(entity) ? AttackShapes.OuterRadius(radius, true, SystemAPI.GetComponent<AttackShape>(entity)) : radius;
 }
 
 /// <summary>

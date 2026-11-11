@@ -27,15 +27,24 @@ partial struct AttackUISystem : ISystem
     [BurstCompile]
     public void OnUpdate(ref SystemState state)
     {
-        foreach (var (attack, localTransform) in SystemAPI.Query<RefRO<Attack>, RefRO<LocalTransform>>())
-        {
-            ProgrammerArt.DrawSphere(localTransform.ValueRO.Position, attack.ValueRO.Radius, Color.darkRed);
-        }
+        foreach (var (attack, localTransform, entity) in SystemAPI.Query<RefRO<Attack>, RefRO<LocalTransform>>().WithEntityAccess())
+            Draw(ref state, entity, localTransform.ValueRO, attack.ValueRO.Radius, Color.darkRed);
 
-        foreach (var (periodicAttack, localTransform) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>>())
+        foreach (var (periodicAttack, localTransform, entity) in SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>>().WithEntityAccess())
+            Draw(ref state, entity, localTransform.ValueRO, periodicAttack.ValueRO.Radius, Color.indianRed);
+    }
+
+    // A sphere of the radius, or the attack's AttackShape
+    void Draw(ref SystemState state, Entity entity, in LocalTransform transform, float radius, Color color)
+    {
+        if (!SystemAPI.HasComponent<AttackShape>(entity))
         {
-            ProgrammerArt.DrawSphere(localTransform.ValueRO.Position, periodicAttack.ValueRO.Radius, Color.indianRed);
+            ProgrammerArt.DrawSphere(transform.Position, radius, color);
+            return;
         }
+        var shape = SystemAPI.GetComponent<AttackShape>(entity);
+        if (shape.Kind == AttackShapeKind.Rectangle) ProgrammerArt.DrawBox(transform.Position, transform.Rotation, shape.HalfExtents * 2f, color);
+        else ProgrammerArt.DrawCone(transform.Position, transform.Rotation, radius, shape.HalfAngle, color);
     }
 }
 

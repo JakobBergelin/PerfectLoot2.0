@@ -36,6 +36,20 @@ public class ProgrammerArt
         Debug.DrawLine(backLeftLower, forwardLeftLower, color, duration);
     }
 
+    /// <summary>A flat cone from apex, forward along the rotation's +Z: its two edges and the arc at its reach.</summary>
+    public static void DrawCone(float3 apex, quaternion rotation, float reach, float halfAngleDegrees, Color color, int segments = 12, float duration = 0f)
+    {
+        float3 previous = default;
+        for (int i = 0; i <= segments; i++)
+        {
+            float angle = math.radians(math.lerp(-halfAngleDegrees, halfAngleDegrees, i / (float)segments));
+            float3 point = apex + math.mul(rotation, new float3(math.sin(angle), 0f, math.cos(angle))) * reach;
+            if (i == 0 || i == segments) Debug.DrawLine(apex, point, color, duration);
+            if (i > 0) Debug.DrawLine(previous, point, color, duration);
+            previous = point;
+        }
+    }
+
     public static void DrawSphere(
         Vector3 center,
         float radius,

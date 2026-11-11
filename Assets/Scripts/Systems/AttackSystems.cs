@@ -43,7 +43,10 @@ public partial class AttackSystem : SystemBase
         return health.MaxValue > 0.0f && health.CurrentValue >= health.MaxValue * entityManager.GetComponentData<Ambush>(source).HealthThreshold;
     }
 
-    /// <summary>The direction a hit pushes in: horizontally away from the attack. Random if the target is on its center.</summary>
+    /// <summary>
+    /// The direction a hit pushes in: horizontally away from the attack. Random if the target is on its center. For
+    /// attacks with an AttackShape, AttackShapes.HitDirection pushes away from the shape's centre line instead.
+    /// </summary>
     public static float3 HitDirection(float3 attackPosition, float3 targetPosition, ref Unity.Mathematics.Random random)
     {
         var away = targetPosition - attackPosition;
@@ -69,8 +72,10 @@ public partial class AttackSystem : SystemBase
         // IgnoreEntity buffers are added up front by AddIgnoreEntityBufferSystem, so every hit this frame is recorded
         foreach (var (attack, localTransform, source, ignoreBuffer, entity) in SystemAPI.Query<RefRW<Attack>, RefRO<LocalTransform>, RefRO<Source>, DynamicBuffer<IgnoreEntity>>().WithEntityAccess())
         {
-            outHits.Clear();
-            physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, attack.ValueRO.Radius, ref outHits, collisionFilter);
+            // A sphere of Radius, or its AttackShape
+            bool hasShape = SystemAPI.HasComponent<AttackShape>(entity);
+            var shape = hasShape ? SystemAPI.GetComponent<AttackShape>(entity) : default;
+            AttackShapes.Overlap(ref physicsWorldSingleton, localTransform.ValueRO, attack.ValueRO.Radius, hasShape, shape, ref outHits, collisionFilter);
             // The hit target closest to the attack's center, marked IsCenterTarget once all hits are in
             var centerTarget = Entity.Null;
             int centerIndex = -1;
@@ -127,7 +132,7 @@ public partial class AttackSystem : SystemBase
 
                             // Written directly (not via ECB) so CalculateDamageSystem handles it this frame
                             var targetPosition = SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position;
-                            var hitDirection = HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
+                            var hitDirection = AttackShapes.HitDirection(localTransform.ValueRO, hasShape, targetPosition, ref _random);
                             var damageBuffer = SystemAPI.GetBuffer<DamageInstance>(hit.Entity);
                             damageBuffer.Add(new DamageInstance{Origin = attack.ValueRO.Origin, Damage = damage, Type = attack.ValueRO.Type, Hierarchy = attack.ValueRO.DamageHierarchy, Source = source.ValueRO.Entity, IsCrit = isCrit, HitDirection = hitDirection, HitForce = attack.ValueRO.HitForce, Attack = entity});
 
@@ -233,8 +238,10 @@ public partial class PeriodicAttackSystem : SystemBase
 
         foreach (var (localTransform, periodicAttack, source, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<PeriodicAttack>, RefRO<Source>>().WithEntityAccess())
         {
-            outHits.Clear();
-            physicsWorldSingleton.OverlapSphere(localTransform.ValueRO.Position, periodicAttack.ValueRO.Radius, ref outHits, collisionFilter);
+            // A sphere of Radius, or its AttackShape
+            bool hasShape = SystemAPI.HasComponent<AttackShape>(entity);
+            var shape = hasShape ? SystemAPI.GetComponent<AttackShape>(entity) : default;
+            AttackShapes.Overlap(ref physicsWorldSingleton, localTransform.ValueRO, periodicAttack.ValueRO.Radius, hasShape, shape, ref outHits, collisionFilter);
             // The target closest to the attack's center this frame; its accumulating damage is marked IsCenterTarget
             var centerTarget = Entity.Null;
             float centerDistanceSq = float.MaxValue;
@@ -275,7 +282,7 @@ public partial class PeriodicAttackSystem : SystemBase
                             float damage = periodicAttack.ValueRO.DamagePerSecond * SystemAPI.Time.DeltaTime;
                             // Away from where the attack is now; the tick uses the latest one
                             var targetPosition = SystemAPI.GetComponentRO<LocalTransform>(hit.Entity).ValueRO.Position;
-                            var hitDirection = AttackSystem.HitDirection(localTransform.ValueRO.Position, targetPosition, ref _random);
+                            var hitDirection = AttackShapes.HitDirection(localTransform.ValueRO, hasShape, targetPosition, ref _random);
                             float distanceSq = math.distancesq(localTransform.ValueRO.Position, targetPosition);
                             if(distanceSq < centerDistanceSq)
                             {

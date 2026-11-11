@@ -32,7 +32,10 @@ public partial class InitializeFromSourceSystem : SystemBase
             attack.ValueRW.Type = stats.ValueRO.Value.ConvertedType(attack.ValueRO.Type);
             attack.ValueRW.Damage *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
             if (!SystemAPI.HasComponent<OwnAreaScaling>(entity))
+            {
                 attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
+                ScaleShape(entity, stats.ValueRO.Value.AreaMultiplier);
+            }
         }
 
         foreach (var (source, attack, entity) in SystemAPI.Query<RefRO<Source>, RefRW<PeriodicAttack>>().WithPresent<InitializeFromSource>().WithEntityAccess())
@@ -44,7 +47,10 @@ public partial class InitializeFromSourceSystem : SystemBase
             attack.ValueRW.DamagePerSecond *= stats.ValueRO.Value.DamageMultiplier(attack.ValueRO.Type);
             // Growing flames scale their own start and end radius (FlamethrowerSystem)
             if (!SystemAPI.HasComponent<GrowingFlame>(entity))
+            {
                 attack.ValueRW.Radius *= stats.ValueRO.Value.AreaMultiplier;
+                ScaleShape(entity, stats.ValueRO.Value.AreaMultiplier);
+            }
         }
 
         foreach (var (source, heal) in SystemAPI.Query<RefRO<Source>, RefRW<Heal>>().WithPresent<InitializeFromSource>())
@@ -69,5 +75,14 @@ public partial class InitializeFromSourceSystem : SystemBase
 
         // TODO remove at end of frame
         commandBuffer.RemoveComponent<InitializeFromSource>(SystemAPI.QueryBuilder().WithPresent<InitializeFromSource>().Build(), EntityQueryCaptureMode.AtPlayback);
+    }
+
+    // An attack with an AttackShape: the whole shape grows with area of effect, like its radius
+    void ScaleShape(Entity entity, float areaMultiplier)
+    {
+        if (!SystemAPI.HasComponent<AttackShape>(entity)) return;
+        var shape = SystemAPI.GetComponent<AttackShape>(entity);
+        AttackShapes.Scale(ref shape, areaMultiplier);
+        SystemAPI.SetComponent(entity, shape);
     }
 }

@@ -96,6 +96,26 @@ public struct DelayedAttack : IComponentData
     public float Delay;
 }
 
+public enum AttackShapeKind
+{
+    Rectangle,
+    Cone,
+}
+
+/// <summary>
+/// On an Attack or PeriodicAttack that isn't a sphere (without it, it's a sphere of Radius). Turned with the attack's
+/// LocalTransform, forward along +Z, and it reaches as high as its height. Rectangle: a box of HalfExtents around the
+/// attack's position (Radius isn't used). Cone: from the attack's position forward, Radius long, HalfAngle degrees to
+/// each side, flat (any height). Area of effect scales the whole shape. Hits push away from its centre line, the
+/// forward line through its position (AttackShapes).
+/// </summary>
+public struct AttackShape : IComponentData
+{
+    public AttackShapeKind Kind;
+    public float3 HalfExtents;      // Rectangle: half its width (x), height (y) and length (z)
+    public float HalfAngle;         // Cone: degrees to each side of forward
+}
+
 /// <summary>An attack whose radius already includes its source's area of effect: InitializeFromSourceSystem leaves it (e.g. Swipe counts area twice).</summary>
 public struct OwnAreaScaling : IComponentData
 {
