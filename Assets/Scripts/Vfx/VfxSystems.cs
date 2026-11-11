@@ -133,7 +133,8 @@ public partial class VfxSystem : SystemBase
                     bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
                     bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
                     bool cold = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Cold;
-                    var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e) ? (VfxType.HealOrb, VfxType.HealBurst)
+                    var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e)
+                        ? (EntityManager.GetComponentData<HealOnArrival>(e).Label == DamageLabel.ShadowPriest ? (VfxType.DarkHealOrb, VfxType.DarkHealBurst) : (VfxType.HealOrb, VfxType.HealBurst))
                         : homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
                         : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)

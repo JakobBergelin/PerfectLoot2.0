@@ -167,6 +167,16 @@ public partial class CalculateDamageSystem : SystemBase
                     break;
                 }
 
+                // Projectile and melee damage reduction, after armor and resistances: a projectile's hit, or an enemy's
+                // melee hit (no cap: 100% or more takes nothing)
+                if(instance.Attack != Entity.Null)
+                {
+                    if(SystemAPI.HasComponent<Projectile>(instance.Attack))
+                        calculatedDamage *= math.max(0.0f, 1.0f - stats.ProjectileDamageReduction);
+                    else if(SystemAPI.HasComponent<EnemyMeleeHit>(instance.Attack))
+                        calculatedDamage *= math.max(0.0f, 1.0f - stats.MeleeDamageReduction);
+                }
+
                 // Vanguard: main physical hits lose a flat amount after armor, down to 0 (before Refraction, so a hit
                 // Vanguard cancels doesn't use up a stack, and before block)
                 if(instance.Type == DamageType.Physical && instance.Hierarchy == DamageHierarchy.Main && SystemAPI.HasComponent<Vanguard>(entity))

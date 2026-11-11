@@ -85,8 +85,9 @@ public partial struct IronPalmSystem : ISystem
 }
 
 /// <summary>
-/// Healing orbs: one that reaches its target (within ArriveDistance, flat, once ArmedIn has run out) heals it and goes
-/// away; one whose target is gone goes away too (its homing would otherwise pick an enemy).
+/// Healing orbs (Iron Palm's, Shadow Priest's): one that reaches its target (within ArriveDistance, flat, once ArmedIn has
+/// run out) heals it by HealShare of its max health plus Amount, and goes away; one whose target is gone goes away too
+/// (its homing would otherwise pick an enemy).
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(ProjectileSystem))]
@@ -127,7 +128,7 @@ public partial struct HealOnArrivalSystem : ISystem
             }
             if (math.distance(transforms[target].Position.xz, transform.ValueRO.Position.xz) > ArriveDistance) continue;
 
-            healing[target].Add(new HealingInstance { Value = healths[target].MaxValue * heal.ValueRO.HealShare, Source = source.ValueRO.Entity, Label = heal.ValueRO.Label });
+            healing[target].Add(new HealingInstance { Value = healths[target].MaxValue * heal.ValueRO.HealShare + heal.ValueRO.Amount, Source = source.ValueRO.Entity, Label = heal.ValueRO.Label });
             commandBuffer.AddComponent(entity, new DestroyWithChildren());
         }
     }

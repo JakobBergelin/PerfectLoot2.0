@@ -153,6 +153,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.CursedHammer:
                 if (SystemAPI.HasComponent<CursedHammer>(entity)) SystemAPI.SetComponentEnabled<CursedHammer>(entity, enabled);
                 break;
+            case SkillType.FrostLance:
+                if (SystemAPI.HasComponent<FrostLance>(entity)) SystemAPI.SetComponentEnabled<FrostLance>(entity, enabled);
+                break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
                 break;

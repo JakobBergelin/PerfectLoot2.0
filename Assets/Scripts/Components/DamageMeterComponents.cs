@@ -70,6 +70,8 @@ public enum DamageLabel
     Execute,        // Obsidian Dagger's finishing blow
     Immolation,
     CursedHammer,
+    FrostLance,
+    ShadowPriest,   // Shadow Priest's healing orbs
 }
 
 public static class SkillDamageLabel
@@ -98,6 +100,7 @@ public static class SkillDamageLabel
         SkillType.Meteor => DamageLabel.Meteor,
         SkillType.Immolation => DamageLabel.Immolation,
         SkillType.CursedHammer => DamageLabel.CursedHammer,
+        SkillType.FrostLance => DamageLabel.FrostLance,
         _ => DamageLabel.None,
     };
 }

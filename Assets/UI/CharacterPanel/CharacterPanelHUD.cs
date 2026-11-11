@@ -713,6 +713,8 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         AddRow(section, Affix.Armor, "Armor", s => s.Armor.Value, Flat, s => WithMitigation(s.Armor.Value, ArmorMitigation(s)));
         AddRow(section, Affix.BlockChance, "Block Chance", s => s.Stats.BlockChance, Pct);
         AddRow(section, Affix.DodgeChance, "Dodge Chance", s => s.Stats.DodgeChance, Pct);
+        AddRow(section, Affix.ProjectileDamageReduction, "Projectile Damage Reduction", s => s.Stats.ProjectileDamageReduction, Pct);
+        AddRow(section, Affix.MeleeDamageReduction, "Melee Damage Reduction", s => s.Stats.MeleeDamageReduction, Pct);
 
         section = AddSection(list, "Resistances");
         AddRow(section, Affix.FireResistance, "Fire", s => s.Stats.FireResistance + s.Stats.AllResistance, Flat,

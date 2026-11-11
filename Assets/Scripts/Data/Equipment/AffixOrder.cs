@@ -22,7 +22,7 @@ namespace Equipment
             Affix.ResourceCostReduction, Affix.LifeOnHit, Affix.ResourceOnHit, Affix.ProjectilePierces, Affix.ProjectileBounces,
             Affix.ProjectileSpeed,
             // Defense
-            Affix.Armor, Affix.BlockChance, Affix.DodgeChance,
+            Affix.Armor, Affix.BlockChance, Affix.DodgeChance, Affix.ProjectileDamageReduction, Affix.MeleeDamageReduction,
             // Resistances
             Affix.AllResistance, Affix.FireResistance, Affix.ColdResistance, Affix.LightningResistance, Affix.PoisonResistance,
             // Other

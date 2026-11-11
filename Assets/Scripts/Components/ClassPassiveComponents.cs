@@ -109,13 +109,15 @@ public struct IronPalm : IComponentData
 }
 
 /// <summary>
-/// A projectile that heals Target by HealShare of its max health when it gets there, then goes away; also goes away if the
-/// target is gone (HealOnArrivalSystem). Iron Palm's healing orbs. Homes with HomingProjectile; has no Attack, so it hits nothing.
+/// A projectile that heals Target by HealShare of its max health plus Amount when it gets there, then goes away; also goes
+/// away if the target is gone (HealOnArrivalSystem). Iron Palm's and Shadow Priest's healing orbs. Homes with
+/// HomingProjectile; has no Attack, so it hits nothing.
 /// </summary>
 public struct HealOnArrival : IComponentData
 {
     public Entity Target;
     public float HealShare;
+    public float Amount;    // Flat healing, added to HealShare of the target's max health
     public DamageLabel Label;
     public float ArmedIn;   // Seconds before it can land, so it is seen flying (and the wearer's own makes its detour)
 }

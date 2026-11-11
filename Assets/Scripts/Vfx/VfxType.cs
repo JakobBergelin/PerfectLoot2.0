@@ -51,4 +51,6 @@ public enum VfxType
     HealOrb = 47,
     HealBurst = 48,
     Consecration = 49,
+    DarkHealOrb = 50,
+    DarkHealBurst = 51,
 }

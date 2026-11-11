@@ -18,6 +18,8 @@ namespace Equipment
                 case Affix.CooldownReduction: block.CooldownReduction += value; break;
                 case Affix.ResourceCostReduction: block.ResourceCostReduction += value; break;
                 case Affix.DodgeChance: block.DodgeChance += value; break;
+                case Affix.ProjectileDamageReduction: block.ProjectileDamageReduction += value; break;
+                case Affix.MeleeDamageReduction: block.MeleeDamageReduction += value; break;
                 case Affix.AttackSpeed: block.AttackSpeed += value; break;
                 case Affix.WeaponDamage: block.WeaponDamage += value; break;
                 case Affix.WeaponDamageRange: block.WeaponDamageRange += value; break;

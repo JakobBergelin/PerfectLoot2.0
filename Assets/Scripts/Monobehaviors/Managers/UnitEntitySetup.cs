@@ -44,6 +44,7 @@ public static class UnitEntitySetup
         AddDisabled(entityManager, entity, new Refraction());
         AddDisabled(entityManager, entity, new Invulnerable());
         AddDisabled(entityManager, entity, new ShadowstepBuff());
+        AddDisabled(entityManager, entity, new FrostLanceBuff());
         AddDisabled(entityManager, entity, new BloodrushBuff());
         AddDisabled(entityManager, entity, new PrismBuff());
         AddDisabled(entityManager, entity, new AnchorBuff());

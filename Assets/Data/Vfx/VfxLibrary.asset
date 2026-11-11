@@ -157,6 +157,12 @@ MonoBehaviour:
   - Type: 48
     Prefab: {fileID: 8001498544410574132, guid: 8a1f4eba6dac72d4e8635e72b312b036, type: 3}
     Prewarm: 4
+  - Type: 50
+    Prefab: {fileID: 2104359942158765411, guid: a1abfcd9d74d2684c81a4354f8b5b3ae, type: 3}
+    Prewarm: 4
+  - Type: 51
+    Prefab: {fileID: 8606081610688769071, guid: f582f52382c07704da6ee5cf1d823cea, type: 3}
+    Prewarm: 4
   - Type: 49
     Prefab: {fileID: 396116259790553491, guid: c9b28cc791032374fbd91a92f246455d, type: 3}
     Prewarm: 4

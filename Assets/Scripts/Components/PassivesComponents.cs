@@ -1,4 +1,5 @@
 using Unity.Entities;
+using Unity.Mathematics;
 
 /// <summary>A player's level and its experience toward the next one (ExperienceSystem levels it up).</summary>
 public struct Level : IComponentData
@@ -96,6 +97,9 @@ public enum PassiveType
     Overflow,
     Guardian,
     IronPalm,
+
+    // Added later (kept at the end so the values above stay put)
+    ShadowPriest,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -226,6 +230,25 @@ public struct Brawler : IComponentData
 public struct Brittle : IComponentData
 {
     public float DamageBonus;           // 0.3 = +30%
+}
+
+/// <summary>
+/// Shadow Priest: the wearer's share of Intelligence in Strength + Intelligence (Int / (Str + Int), 0 without either)
+/// lowers all their damage by that share, and the same share of the damage they deal (after the reduction; not their
+/// companions') heals them and every ally within Range, split evenly, as dark healing orbs flying back from the enemy
+/// hit hardest. Healing is merged: the first damage sends at once, and the rest gathers for SendInterval (ShadowPriestSystem).
+/// </summary>
+public struct ShadowPriest : IComponentData
+{
+    public float Range;             // Meters around the wearer an ally can be
+    public float SendInterval;      // Seconds healing gathers before the next orbs fly
+    public float ProjectileSpeed;
+
+    // Running state
+    public float Pending;           // Healing gathered, not sent yet
+    public float Wait;              // Seconds until orbs can fly again
+    public float3 Origin;           // Where they fly from: the enemy that gave the most healing since the last orbs
+    public float OriginHeal;
 }
 
 public struct Meditation : IComponentData

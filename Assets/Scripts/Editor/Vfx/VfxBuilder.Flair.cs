@@ -502,7 +502,7 @@ public static partial class VfxBuilder
         yield return (VfxType.IceBlock, Save(block));
     }
 
-    // Class passives: Iron Palm's healing orb and the burst where it lands, and Guardian's Consecration
+    // Class passives: Iron Palm's healing orb and the burst where it lands (and Shadow Priest's dark ones), and Guardian's Consecration
     static IEnumerable<(VfxType, GameObject)> ClassPassiveEffects()
     {
         const string Life = "#9CF5B0", Gold = "#FFD86A";
@@ -532,6 +532,33 @@ public static partial class VfxBuilder
             Shrink(ps);
         });
         yield return (VfxType.HealBurst, Save(burst));
+
+        // Shadow Priest's: the same orb and burst in shadow violet, with a darker trail
+        const string Shadow = "#9A6BFF", Void = "#3A1466";
+        var darkOrb = Root_("VFX_DarkHealOrb", 0.6f, out var darkOrbInstance);
+        var darkCore = MeshPart(darkOrb, "Core", Ico("VFX_Ico"), ComicGlow("VFX_DarkHealCore", Shadow, Void, 1.6f, 0.5f), Vector3.zero, Vector3.one * 0.36f);
+        darkOrbInstance.HideOnRelease = new Renderer[] { darkCore };
+        Ps(darkOrb, "Glow", _additive, ps => Main(ps, 0.3f, 0f, 1.1f, Hex(Shadow, 0.35f), local: true, rate: 10f));
+        Ps(darkOrb, "Trail", _alpha, ps =>
+        {
+            Main(ps, 0.4f, 0f, new ParticleSystem.MinMaxCurve(0.12f, 0.2f), Color.white);
+            var e = ps.emission; e.rateOverDistance = 12f;
+            Fade(ps, Hex(Shadow, 0.8f), Hex(Void, 0.6f), Hex(Void, 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.DarkHealOrb, Save(darkOrb));
+
+        var darkBurst = Root_("VFX_DarkHealBurst", 0.8f, out _);
+        Ps(darkBurst, "Flash", _additive, ps => Main(ps, 0.15f, 0f, 1.4f, Hex(Shadow, 0.5f), burst: 1));
+        Ps(darkBurst, "Motes", _alpha, ps =>
+        {
+            Main(ps, new ParticleSystem.MinMaxCurve(0.5f, 0.8f), new ParticleSystem.MinMaxCurve(0.5f, 1.5f), new ParticleSystem.MinMaxCurve(0.1f, 0.18f), Color.white, burst: 14);
+            var m = ps.main; m.gravityModifier = -0.5f;
+            Shape(ps, ParticleSystemShapeType.Sphere, 0.4f);
+            Fade(ps, Hex(Shadow), Hex(Void), Hex(Void, 0f));
+            Shrink(ps);
+        });
+        yield return (VfxType.DarkHealBurst, Save(darkBurst));
 
         // Like Cold Snap's nova in gold: drawn at radius 1, VfxSystem scales it to the radius
         var nova = Root_("VFX_Consecration", 1f, out _);

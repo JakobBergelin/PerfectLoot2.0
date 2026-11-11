@@ -78,6 +78,7 @@ public enum SkillType
     Meteor,
     Immolation,
     CursedHammer,
+    FrostLance,
 }
 
 /// <summary>
@@ -835,3 +836,22 @@ public struct HookshotSlash : IComponentData, IEnableableComponent
 
 /// <summary>The attack that travels with a Hookshot Slash pull (its Source); removed when the pull ends.</summary>
 public struct HookshotSlashAttack : IComponentData {}
+
+/// <summary>
+/// Frost Lance: a thin line of cold thrust from the weapon's reach, Length meters toward the cursor, hitting everything
+/// on it for weapon damage * WeaponDamageMultiplier. Repeats while held, AttackSpeed apart; each thrust builds
+/// ResourcePerAttack and grants the Frost Lance buff (FrostLanceBuff: less damage from projectiles) for BuffDuration.
+/// Area of effect makes the line longer and wider, still starting at the weapon's reach.
+/// </summary>
+public struct FrostLance : IComponentData, IEnableableComponent
+{
+    public float AttackSpeed;               // Seconds between thrusts, before the attack speed stat
+    public float WeaponDamageMultiplier;
+    public float Length;                    // Meters from the weapon's reach outward, before area of effect
+    public float Width;                     // Before area of effect
+    public float Height;                    // How high the line reaches, to catch units of any size
+    public float HitForce;                  // Knockback, sideways out of the line
+    public float ResourcePerAttack;
+    public float ProjectileDamageReduction; // The buff's: 0.2 = -20%
+    public float BuffDuration;              // Seconds, scaled by the buff duration stat
+}

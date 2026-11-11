@@ -33,6 +33,7 @@ public enum EffectType
     ThrallMark,
     DelayedDamage,
     StolenSouls,
+    FrostLance,
 }
 
 public enum EffectKind
@@ -149,6 +150,16 @@ public struct AsceticBuff : IComponentData, IEnableableComponent
 public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
 {
     public float DamageBonus;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Frost Lance skill's buff: less damage from projectiles' hits (FrostLanceBuffStatsSystem).</summary>
+public struct FrostLanceBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float ProjectileDamageReduction;
     public float TimeRemaining;
     public float Duration;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }

@@ -44,5 +44,7 @@ namespace Equipment
         ColdDamage = 35,
         LightningDamage = 36,
         PoisonDamage = 37,
+        ProjectileDamageReduction = 38,
+        MeleeDamageReduction = 39,
     }
 }
