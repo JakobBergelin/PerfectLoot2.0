@@ -228,6 +228,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         Label = SkillDamageLabel.Of(skill.Type),
         CritShake = skill.CritShake,
         Requirements = skill.Requirements,
+        Priority = skill.Priority,
         State = new SkillState
         {
             ResourceCost = skill.ResourceCost,
@@ -255,8 +256,8 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
             {
                 if (skill.SlotIndex != i) continue;
                 slots[i].SetState(skill.State);
-                // The asset's requirements were edited (e.g. in Play mode): push them again
-                if (!slots[i].IsEmpty && !skill.Requirements.Equals(slots[i].EquippedSkill.Requirements)) _dirty = true;
+                // The asset's requirements or priority were edited (e.g. in Play mode): push them again
+                if (!slots[i].IsEmpty && (!skill.Requirements.Equals(slots[i].EquippedSkill.Requirements) || skill.Priority != slots[i].EquippedSkill.Priority)) _dirty = true;
                 found = true;
                 break;
             }

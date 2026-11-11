@@ -19,6 +19,8 @@ public struct Skill : IBufferElementData
     public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
     public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
     public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
+    public int Priority;            // With several keys held, the highest is cast (ActiveSkill.Priority)
+    public double LastPressed;      // When its key was last pressed: between equal priorities the latest press wins
 
     public struct Triggers
     {

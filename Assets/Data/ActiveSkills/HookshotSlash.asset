@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: Fire a hook toward the cursor. It latches there or on the first wall and pulls you in, slashing every enemy you pass.
   Tags: 6
   CritShake: 0.25
+  Priority: 1
   StrengthRequirement: 12
   AgilityRequirement: 6
   IntelligenceRequirement: 0

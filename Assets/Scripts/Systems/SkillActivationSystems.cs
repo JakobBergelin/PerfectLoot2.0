@@ -2,8 +2,8 @@ using Unity.Entities;
 using Unity.Mathematics;
 
 /// <summary>
-/// Enables the skill component of the pressed slot (same frame, no command buffer: enabling isn't a
-/// structural change) and fills in the input/resource parts of each Skill's SkillState. In a dungeon a skill whose
+/// Enables the skill component of one held slot: the highest Priority, and between equal ones the latest pressed (same
+/// frame, no command buffer: enabling isn't a structural change), and fills in the input/resource parts of each Skill's SkillState. In a dungeon a skill whose
 /// requirements (Skill.Requirements) the unit's attributes don't meet isn't usable: it can't be pressed, effects can't cast
 /// it, and toggles stay off (their systems check SkillState.Usable). The Hub and other areas ignore requirements.
 /// Skill components themselves are added/removed by ActiveSkillManager.
@@ -20,9 +20,10 @@ public partial class SkillActivationSystem : SystemBase
 
         foreach (var (inputs, skills, entity) in SystemAPI.Query<RefRO<InputsData>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
-            // Only one skill at a time: the lowest held slot wins
-            // TODO, replace with prio order, dash pressed should have prio over fireball etc.
+            // Only one skill at a time: of the held ones, the highest Priority; between equal ones, the latest pressed
             int activeSlot = int.MaxValue;
+            int bestPriority = int.MinValue;
+            double bestPressed = double.MinValue;
             // Frozen and similar: no skill can be used (all of them get disabled below)
             bool preventsActions = SystemAPI.HasComponent<MovementModifiers>(entity) && SystemAPI.GetComponent<MovementModifiers>(entity).PreventsActions;
             // Ball Lightning in flight: no skills either, nor casts requested by effects
@@ -40,10 +41,19 @@ public partial class SkillActivationSystem : SystemBase
             // Hookshot Slash out or pulling: no skills (its own system carries on without being held)
             if (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle)
                 preventsActions = true;
-            foreach (var skill in skills)
+            double now = SystemAPI.Time.ElapsedTime;
+            for (int i = 0; i < skills.Length; i++)
             {
-                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.State.Usable && skill.SlotIndex < activeSlot && (!rolling || skill.Type == SkillType.SonicBall))
-                    activeSlot = skill.SlotIndex;
+                ref var skill = ref skills.ElementAt(i);
+                if (IsPressed(inputs.ValueRO, skill.SlotIndex)) skill.LastPressed = now;
+                if (preventsActions || !IsHeld(inputs.ValueRO, skill.SlotIndex) || !skill.State.Usable || (rolling && skill.Type != SkillType.SonicBall)) continue;
+                bool better = skill.Priority > bestPriority
+                              || (skill.Priority == bestPriority && skill.LastPressed > bestPressed)
+                              || (skill.Priority == bestPriority && skill.LastPressed == bestPressed && skill.SlotIndex < activeSlot);
+                if (!better) continue;
+                activeSlot = skill.SlotIndex;
+                bestPriority = skill.Priority;
+                bestPressed = skill.LastPressed;
             }
 
             float resource = SystemAPI.HasComponent<Resource>(entity) ? SystemAPI.GetComponent<Resource>(entity).CurrentValue : float.MaxValue;
@@ -88,6 +98,8 @@ public partial class SkillActivationSystem : SystemBase
     }
 
     static bool IsHeld(in InputsData inputs, int slotIndex) => slotIndex >= 0 && slotIndex < 4 && inputs.SkillHeld[slotIndex];
+
+    static bool IsPressed(in InputsData inputs, int slotIndex) => slotIndex >= 0 && slotIndex < 4 && inputs.SkillPressedThisFrame[slotIndex];
 
     void SetSkillEnabled(Entity entity, SkillType type, bool enabled)
     {

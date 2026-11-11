@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: A short pause, then you appear at the cursor. Walls are no obstacle.
   Tags: 36
   CritShake: 0
+  Priority: 1
   StrengthRequirement: 0
   AgilityRequirement: 0
   IntelligenceRequirement: 4

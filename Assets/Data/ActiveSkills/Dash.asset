@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: A quick dash toward the cursor, straight through enemies and over water, but not through walls. The more Agility you have, the sooner you can go again.
   Tags: 36
   CritShake: 0
+  Priority: 1
   StrengthRequirement: 0
   AgilityRequirement: 4
   IntelligenceRequirement: 0
