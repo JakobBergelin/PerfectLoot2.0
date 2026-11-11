@@ -555,7 +555,7 @@ public struct Swipe : IComponentData, IEnableableComponent
     public float SweepDuration;         // Seconds one swing takes to cross the arc
     public float HitForce;
     public float ResourcePerHit;
-    public int SwingCount;              // Even: right to left, odd: left to right
+    public int SwingCount;              // Even: right to left, odd: left to right; kept when let go, so attacks resume from the other side
 }
 
 /// <summary>

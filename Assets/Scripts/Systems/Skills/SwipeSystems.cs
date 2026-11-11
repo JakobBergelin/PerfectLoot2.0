@@ -6,8 +6,8 @@ using UnityEngine;
 
 /// <summary>
 /// Swipe: once the caster faces the cursor and has recovered, it swings: a hit circle that sweeps an arc in front of it
-/// (SweepingAttack), right to left, then left to right on the next swing. Letting go starts the next one from the right
-/// again. Damage is Damage + weapon damage * WeaponDamageMultiplier. The arc is twice the weapon reach out, and the hit
+/// (SweepingAttack), right to left, then left to right on the next swing. Letting go keeps the side: the next attack
+/// swings back from where the last one ended. Damage is Damage + weapon damage * WeaponDamageMultiplier. The arc is twice the weapon reach out, and the hit
 /// circle counts the area of effect bonus twice (so it's marked OwnAreaScaling). Each swing is a Melee use.
 /// </summary>
 [BurstCompile]
@@ -31,10 +31,6 @@ public partial class SwipeSystem : SystemBase
         // SkillState: no cooldown to report (the time between swings is the shared AttackRecovery)
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
-
-        // Released: the next swing starts from the right again
-        foreach (var (swipe, entity) in SystemAPI.Query<RefRW<Swipe>>().WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-            if (!SystemAPI.IsComponentEnabled<Swipe>(entity)) swipe.ValueRW.SwingCount = 0;
 
         foreach (var (swipe, localTransform, desiredDirection, stats, recovery, entity) in
                  SystemAPI.Query<RefRW<Swipe>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<CalculatedStats>, RefRW<AttackRecovery>>().WithEntityAccess())
