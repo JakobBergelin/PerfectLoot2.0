@@ -8,6 +8,7 @@ public enum EnemySkillType
 {
     Melee,
     Projectile,
+    SelfDestruct,
 }
 
 public enum TargetMotion
@@ -49,6 +50,8 @@ public struct EnemyTelegraph
     public float Size;
     [Tooltip("Line: width in meters. Cone: full angle in degrees. Circle: unused.")]
     public float Width;
+    [Tooltip("Circle: around the enemy itself instead of its target (e.g. an explosion)")]
+    public bool OnSelf;
 }
 
 /// <summary>One skill of an enemy, in priority order, from its EnemySkill asset. EnemySkillCastSystem picks and starts them.</summary>
@@ -112,6 +115,15 @@ public struct EnemyProjectile : IComponentData
     public float Radius;
     public float HitForce;
     public float MaxDistance;
+}
+
+/// <summary>Self Destruct: when it goes off, Damage to everything on the other side within Radius of the unit, then the unit dies.</summary>
+public struct EnemySelfDestruct : IComponentData
+{
+    public float Damage;
+    public DamageType Type;
+    public float Radius;
+    public float HitForce;
 }
 
 /// <summary>Singleton: the marker to copy for a telegraph. Made at runtime by TelegraphPrefabSystem.</summary>

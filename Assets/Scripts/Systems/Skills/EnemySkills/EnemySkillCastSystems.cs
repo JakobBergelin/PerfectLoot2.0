@@ -113,7 +113,7 @@ public partial struct EnemySkillCastSystem : ISystem
                 npc.ValueRW.IsCasting = true;
                 if (hasMarker)
                 {
-                    var origin = slot.Telegraph.Shape == TelegraphShape.Circle ? unitPosition : position;
+                    var origin = slot.Telegraph.Shape == TelegraphShape.Circle && !slot.Telegraph.OnSelf ? unitPosition : position;
                     TelegraphUtil.Spawn(commandBuffer, markerPrefab.Value, slot.Telegraph, entity, cast.CastId, TelegraphUtil.OnGround(physics, origin), direction);
                 }
                 break;
