@@ -111,7 +111,8 @@ public partial struct EnemySkillCastSystem : ISystem
                 cast.Position = unitPosition;
                 cast.Direction = direction;
                 npc.ValueRW.IsCasting = true;
-                if (hasMarker)
+                // Companions' telegraphs aren't shown: they're only a warning for players
+                if (hasMarker && !companions.HasComponent(entity))
                 {
                     var origin = slot.Telegraph.Shape == TelegraphShape.Circle && !slot.Telegraph.OnSelf ? unitPosition : position;
                     TelegraphUtil.Spawn(commandBuffer, markerPrefab.Value, slot.Telegraph, entity, cast.CastId, TelegraphUtil.OnGround(physics, origin), direction);
