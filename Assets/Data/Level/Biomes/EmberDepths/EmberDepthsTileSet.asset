@@ -1,0 +1,232 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe30406a494f41ab8506bedf6606eacf, type: 3}
+  m_Name: EmberDepthsTileSet
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.WfcTileSet
+  Tiles:
+  - Name: Tile_FFFF
+    Prefab: {fileID: 2003068579927061547, guid: b324701af2e0284478dc45dc6749426b, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 115.2
+    AllowRotations: 1
+  - Name: Tile_FFFF_Alt
+    Prefab: {fileID: 9183678828049825946, guid: 833ac8bfae48aa449a6936788d8ed236, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 89.6
+    AllowRotations: 1
+  - Name: Tile_FFFF_Var
+    Prefab: {fileID: 3113955190989807916, guid: d881375836eaf7c4bacc7786a3a4a17a, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 51.2
+    AllowRotations: 1
+  - Name: Tile_WFFF
+    Prefab: {fileID: 3013662777634737427, guid: 4e0a17a10f976f743bbe0b42f81556d1, type: 3}
+    SouthWest: 1
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 64
+    AllowRotations: 1
+  - Name: Tile_LFFF
+    Prefab: {fileID: 2016568952330994578, guid: b2d2770241fc2b54a86497a309c7ecd3, type: 3}
+    SouthWest: 2
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 48
+    AllowRotations: 1
+  - Name: Tile_WWFF
+    Prefab: {fileID: 5335513294364905224, guid: 193032eae4786a54190831edcdb17595, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 16
+    AllowRotations: 1
+  - Name: Tile_LWFF
+    Prefab: {fileID: 4824738563651210258, guid: 48cfcc77b4884ef43b6b653a1b2a7726, type: 3}
+    SouthWest: 2
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 12
+    AllowRotations: 1
+  - Name: Tile_WLFF
+    Prefab: {fileID: 3234882023748567210, guid: 8d807a453a156bd47a2236187a99fba2, type: 3}
+    SouthWest: 1
+    SouthEast: 2
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 12
+    AllowRotations: 1
+  - Name: Tile_LLFF
+    Prefab: {fileID: 6813272783294611332, guid: 889d819e9ee973b42aadea9e69547134, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 0
+    NorthWest: 0
+    Weight: 9
+    AllowRotations: 1
+  - Name: Tile_WFWF
+    Prefab: {fileID: 4084001785532129478, guid: a1b24b71b4ff4334f9bf8a8113721571, type: 3}
+    SouthWest: 1
+    SouthEast: 0
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 16
+    AllowRotations: 1
+  - Name: Tile_LFWF
+    Prefab: {fileID: 5970398520802161144, guid: 3457fb072d28fbf449f2e9238c4c2633, type: 3}
+    SouthWest: 2
+    SouthEast: 0
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 12
+    AllowRotations: 1
+  - Name: Tile_WWWF
+    Prefab: {fileID: 8844915252943883892, guid: b1be35862a0ce494594663d3a2b2264f, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 4
+    AllowRotations: 1
+  - Name: Tile_LWWF
+    Prefab: {fileID: 873421399146011780, guid: b2aa42ce7242eea4ba43b889fc4943bc, type: 3}
+    SouthWest: 2
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 3
+    AllowRotations: 1
+  - Name: Tile_WLWF
+    Prefab: {fileID: 429759089818367970, guid: b56467dd5d8c1324e9285dcaa1a78565, type: 3}
+    SouthWest: 1
+    SouthEast: 2
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 3
+    AllowRotations: 1
+  - Name: Tile_LLWF
+    Prefab: {fileID: 4145584262251108215, guid: 5412627c38e34b741b2fcc0c5c490739, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 1
+    NorthWest: 0
+    Weight: 2.25
+    AllowRotations: 1
+  - Name: Tile_LFLF
+    Prefab: {fileID: 990694784243746069, guid: 06b34cc0babcfe440a1d50365b0f20ba, type: 3}
+    SouthWest: 2
+    SouthEast: 0
+    NorthEast: 2
+    NorthWest: 0
+    Weight: 9
+    AllowRotations: 1
+  - Name: Tile_WWLF
+    Prefab: {fileID: 2894889411559204918, guid: 98416820e058cd54a8de2ddf591bdba6, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 2
+    NorthWest: 0
+    Weight: 3
+    AllowRotations: 1
+  - Name: Tile_LWLF
+    Prefab: {fileID: 8909677189287312720, guid: db8d6a981fb502f4cb81a66f1af5100a, type: 3}
+    SouthWest: 2
+    SouthEast: 1
+    NorthEast: 2
+    NorthWest: 0
+    Weight: 2.25
+    AllowRotations: 1
+  - Name: Tile_WLLF
+    Prefab: {fileID: 8600099614928986512, guid: f0ffc9f93223f6047989e46814fff008, type: 3}
+    SouthWest: 1
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 0
+    Weight: 2.25
+    AllowRotations: 1
+  - Name: Tile_LLLF
+    Prefab: {fileID: 2952118223937438198, guid: b16f47d0b4648d7458d0ebf6e086f562, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 0
+    Weight: 1.6875
+    AllowRotations: 1
+  - Name: Tile_WWWW
+    Prefab: {fileID: 1684035986215133389, guid: 426110dab74b4b74f9b4a57e466b2734, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    Weight: 0.5
+    AllowRotations: 1
+  - Name: Tile_WWWW_Var
+    Prefab: {fileID: 668202868815354934, guid: 0b3450f0a4c2e9842aab4905f2c3bb75, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    Weight: 0.5
+    AllowRotations: 1
+  - Name: Tile_LWWW
+    Prefab: {fileID: 4348169632201321547, guid: 32a5c984bca7671459ed81b92a9326af, type: 3}
+    SouthWest: 2
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    Weight: 0.75
+    AllowRotations: 1
+  - Name: Tile_LLWW
+    Prefab: {fileID: 7767028765378415704, guid: eb438bf70235e7d4ab70ed5f418112cc, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 1
+    NorthWest: 1
+    Weight: 0.5625
+    AllowRotations: 1
+  - Name: Tile_LWLW
+    Prefab: {fileID: 8874553378896415755, guid: c08b32fef59ece84e96d3cc7c42f77f4, type: 3}
+    SouthWest: 2
+    SouthEast: 1
+    NorthEast: 2
+    NorthWest: 1
+    Weight: 0.5625
+    AllowRotations: 1
+  - Name: Tile_LLLW
+    Prefab: {fileID: 5902015717689866609, guid: e62e32b2214e8b34daeef89067d140ce, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 1
+    Weight: 0.421875
+    AllowRotations: 1
+  - Name: Tile_LLLL
+    Prefab: {fileID: 5505495372743436101, guid: d747e37a1ada7204b955e84c055bb850, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 2
+    Weight: 0.31640625
+    AllowRotations: 1
+  Pieces: []

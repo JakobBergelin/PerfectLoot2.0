@@ -153,9 +153,9 @@ MonoBehaviour:
   Width: 9
   Height: 40
   TileSize: 5
-  TileSet: {fileID: 11400000, guid: 34c0833752aa3234bb1a3174860e26c0, type: 2}
+  TileSet: {fileID: 11400000, guid: 5efb2fcd02f9ebd4da8185f7d276c97f, type: 2}
   Placements: {fileID: 0}
-  Border: 2
+  Border: 3
   Mode: 0
   RandomSeedEachPlay: 1
   Seed: 3

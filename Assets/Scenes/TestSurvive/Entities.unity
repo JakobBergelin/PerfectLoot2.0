@@ -153,7 +153,7 @@ MonoBehaviour:
   Width: 11
   Height: 11
   TileSize: 5
-  TileSet: {fileID: 11400000, guid: 34c0833752aa3234bb1a3174860e26c0, type: 2}
+  TileSet: {fileID: 11400000, guid: 30fe3803f8130374c919b72b0ffec804, type: 2}
   Placements: {fileID: 0}
   Border: 2
   Mode: 0
