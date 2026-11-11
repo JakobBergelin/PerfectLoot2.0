@@ -42,6 +42,13 @@ public partial struct ImmolationSystem : ISystem
         {
             int index = -1;
             if (!SkillUtil.FindSkill(skills, SkillType.Immolation, ref index)) continue;
+            // Requirements not met in a dungeon: off, and nothing happens
+            if (!skills[index].State.Usable)
+            {
+                immolation.ValueRW.Active = false;
+                skills.ElementAt(index).State.IsActive = false;
+                continue;
+            }
 
             int slot = skills[index].SlotIndex;
             if (slot >= 0 && slot < 4 && inputs.ValueRO.SkillPressedThisFrame[slot] && !modifiers.ValueRO.PreventsActions)

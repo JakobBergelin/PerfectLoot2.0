@@ -30,6 +30,13 @@ public partial struct RaiseThrallSystem : ISystem
         {
             int index = -1;
             if (!SkillUtil.FindSkill(skills, SkillType.RaiseThrall, ref index)) continue;
+            // Requirements not met in a dungeon: off, and nothing happens
+            if (!skills[index].State.Usable)
+            {
+                raise.ValueRW.Active = false;
+                skills.ElementAt(index).State.IsActive = false;
+                continue;
+            }
 
             int slot = skills[index].SlotIndex;
             if (slot >= 0 && slot < 4 && inputs.ValueRO.SkillPressedThisFrame[slot] && !modifiers.ValueRO.PreventsActions)

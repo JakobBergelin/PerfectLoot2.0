@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Send out a crackling storm tornado that wanders where it likes, shocking everything it passes over.
   Tags: 197696
   CritShake: 0.3
+  StrengthRequirement: 0
+  AgilityRequirement: 4
+  IntelligenceRequirement: 12
   AttackSpeed: 0.9
   resourceCost: 15
   Radius: 2

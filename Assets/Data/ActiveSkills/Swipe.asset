@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: 'A heavy, sweeping swing in front of you: right to left, then back. Every enemy it hits builds resource.'
   Tags: 8194
   CritShake: 0
+  StrengthRequirement: 2
+  AgilityRequirement: 0
+  IntelligenceRequirement: 0
   AttackSpeed: 0.9
   Damage: 1
   WeaponDamageMultiplier: 0.6

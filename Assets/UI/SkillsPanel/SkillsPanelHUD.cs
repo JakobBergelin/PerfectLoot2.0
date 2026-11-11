@@ -4,11 +4,14 @@ using ActiveSkills;
 using Passives;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using Unity.Mathematics;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Skills panel toggled with the Skills action (K): the equipped active and passive skills. Clicking a slot opens
-/// a picker with the skills from the manager's pool that aren't in another slot; picking one equips it.
+/// Skills panel toggled with the Skills action (K): the equipped active and passive skills. Clicking an active slot
+/// shows the skill wheel instead of the slots (ActiveSkillPicker: every skill by its requirements, the highlighted
+/// one's details); picking one equips it, swapping with the slot that had it. Clicking a passive slot opens a list
+/// of the passives that aren't in another slot. Skills are changed in town only.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
@@ -27,6 +30,9 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
     const string LookOnlyHint = "Change skills in town · Press K to close";
     const string GamepadTownHint = "A Change · LB/RB Panels · B Close";
     const string GamepadLookOnlyHint = "Change skills in town · LB/RB Panels · B Close";
+    const string WheelHint = "Click a skill to equip it · Esc to go back";
+    const string GamepadWheelHint = "A Equip · LT/RT Spokes · B Back";
+    const string WideClass = "skills-panel--wide";
 
     /// <summary>One slot in the panel; active and passive slots only differ in these delegates and their look.</summary>
     class SlotView
@@ -52,6 +58,9 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
     bool _open;
 
     VisualElement _root, _panel;
+    VisualElement _slotsPage, _wheelPage;
+    Label _wheelTitle;
+    ActiveSkillPicker _wheel;      // Made in Bind: UI elements can't be made while the component is constructed
     Label _hint;
     VisualElement _tooltip;
     Label _tooltipTitle;
@@ -113,15 +122,18 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
         _root = root.Q<VisualElement>("skillsPanelRoot");
         _panel = root.Q<VisualElement>("panel");
         var activeContainer = root.Q<VisualElement>("activeSlots");
-        var activePicker = root.Q<VisualElement>("activePicker");
         var passiveContainer = root.Q<VisualElement>("passiveSlots");
         var passivePicker = root.Q<VisualElement>("passivePicker");
+        _slotsPage = root.Q<VisualElement>("slotsPage");
+        _wheelPage = root.Q<VisualElement>("wheelPage");
+        _wheelTitle = root.Q<Label>("wheelTitle");
+        var wheelHolder = root.Q<VisualElement>("wheelHolder");
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
         _hint = root.Q<Label>("hint");
-        if (_root == null || _panel == null || activeContainer == null || activePicker == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
-            _hint == null)
+        if (_root == null || _panel == null || activeContainer == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
+            _hint == null || _slotsPage == null || _wheelPage == null || _wheelTitle == null || wheelHolder == null)
         {
             Debug.LogError("SkillsPanelHUD: SkillsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -129,7 +141,11 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
 
         Nav.Register(_root);
         _selected = null;
-        BuildActiveSlots(activeContainer, activePicker);
+        if (_wheel == null) _wheel = new ActiveSkillPicker();
+        wheelHolder.Clear();
+        wheelHolder.Add(_wheel.Element);
+        _wheel.Picked = PickActive;
+        BuildActiveSlots(activeContainer, _wheelPage);
         BuildPassiveSlots(passiveContainer, passivePicker);
         return true;
     }
@@ -151,8 +167,16 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
         // Skills are only changed in town; elsewhere the panel is look-only
         bool town = GameArea.IsTown;
         bool gamepad = Nav.UsingGamepad;
-        _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
+        bool wheel = _selected != null && _selected.Group == _activeSlots;
+        _hint.text = wheel ? (gamepad ? GamepadWheelHint : WheelHint)
+                   : town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _selected != null) Select(null);
+        // LT/RT: the wheel's next spoke
+        if (wheel && Menus.PagePressed != 0)
+        {
+            var node = _wheel.TurnSpoke(Menus.PagePressed);
+            if (node != null) Nav.Focus(node);
+        }
 
         // After a rebind or a switch between keyboard and gamepad
         if (_keyVersion != GameInput.Version)
@@ -340,6 +364,10 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
             _selected.Picker.AddToClassList(PickerHiddenClass);
             Nav.SetScope(_selected.Picker, _selected.Picker, false);
         }
+        // An active slot's wheel takes the place of the slots, in a wider panel
+        bool wheel = view != null && view.Group == _activeSlots;
+        _slotsPage.EnableInClassList(PickerHiddenClass, wheel);
+        _panel.EnableInClassList(WideClass, wheel);
         _selected = view;
         if (view == null) return;
 
@@ -348,13 +376,26 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
         view.Picker.RemoveFromClassList(PickerHiddenClass);
         // A controller picks in the picker until it closes, starting on the equipped skill
         Nav.SetScope(view.Picker, view.Picker, true);
+        if (wheel)
+        {
+            Nav.Focus(_wheel.StartNode);
+            return;
+        }
         var current = view.Picker.Q(className: "sp-option--current");
         Nav.FocusFirstOf(current != null ? new[] { current } : view.Picker.Children());
     }
 
-    /// <summary>The pool minus skills equipped in the slot's siblings; the slot's own skill is kept and marked.</summary>
+    /// <summary>
+    /// The wheel for an active slot; for a passive slot, the pool minus passives equipped in the other slots (the
+    /// slot's own is kept and marked).
+    /// </summary>
     void BuildPicker(SlotView view)
     {
+        if (view.Group == _activeSlots)
+        {
+            BuildWheel(view);
+            return;
+        }
         var picker = view.Picker;
         picker.Clear();
         HideTooltip();
@@ -386,6 +427,57 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
             empty.AddToClassList("sp-picker__empty");
             picker.Add(empty);
         }
+    }
+
+    // ---------- Skill wheel (active slots) ----------
+
+    // Every skill, lit when the character's attributes meet its requirements now; the ones in other slots show their key
+    void BuildWheel(SlotView view)
+    {
+        HideTooltip();
+        int index = _activeSlots.IndexOf(view);
+        _wheelTitle.text = $"Choose a skill for {KeyLabel(index)}";
+        var manager = ActiveSkillManager.For(PlayerIndex);
+        var characters = CharacterManager.For(PlayerIndex);
+        var stats = SkillTooltip.CurrentStats(PlayerIndex);
+        _wheel.Open(manager != null ? manager.AllSkills : null, ActiveSlot(index)?.EquippedSkill, skill => KeyOfOtherSlot(skill, index),
+                    stats is StatBlock s ? new float3(s.Strength, s.Agility, s.Intelligence) : ClassAttributes(characters),
+                    characters != null ? characters.Class : null, stats);
+    }
+
+    // Without a player entity (yet): what the class has at the character's level
+    static float3 ClassAttributes(CharacterManager characters)
+    {
+        if (characters == null || characters.Class == null) return float3.zero;
+        var characterClass = characters.Class;
+        return new float3(characterClass.StrengthPerLevel, characterClass.AgilityPerLevel, characterClass.IntelligencePerLevel) * characters.StartingLevel;
+    }
+
+    string KeyOfOtherSlot(ActiveSkill skill, int index)
+    {
+        for (int i = 0; i < _activeSlots.Count; i++)
+            if (i != index && ActiveSlot(i)?.EquippedSkill == skill) return KeyLabel(i);
+        return null;
+    }
+
+    // Equips it in the chosen slot; a skill from another slot swaps places with the chosen slot's
+    void PickActive(ActiveSkill skill)
+    {
+        if (_selected == null || _selected.Group != _activeSlots || !GameArea.IsTown) return;
+        int index = _activeSlots.IndexOf(_selected);
+        var slot = ActiveSlot(index);
+        var current = slot != null ? slot.EquippedSkill : null;
+        if (slot != null && skill != current)
+        {
+            ActiveSkillSlot other = null;
+            for (int i = 0; i < _activeSlots.Count; i++)
+                if (i != index && ActiveSlot(i)?.EquippedSkill == skill) other = ActiveSlot(i);
+            if (other != null) other.UnequipSkill();
+            slot.EquipSkill(skill);
+            if (other != null && current != null) other.EquipSkill(current);
+        }
+        Select(null);
+        HideTooltip();
     }
 
     VisualElement CreateOption(SlotView view, ScriptableObject skill, bool isCurrent)

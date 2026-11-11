@@ -5,15 +5,22 @@
             <ui:Label text="Skills" class="sp-title" />
 
             <!-- Slots and picker options are created by SkillsPanelHUD -->
-            <ui:Label text="Active Skills" class="sp-section-title" />
-            <ui:VisualElement name="activeSlots" class="sp-active-slots" />
-            <ui:VisualElement name="activePicker" class="sp-picker sp-picker--hidden" />
+            <ui:VisualElement name="slotsPage">
+                <ui:Label text="Active Skills" class="sp-section-title" />
+                <ui:VisualElement name="activeSlots" class="sp-active-slots" />
 
-            <ui:VisualElement class="sp-divider" />
+                <ui:VisualElement class="sp-divider" />
 
-            <ui:Label text="Passive Skills" class="sp-section-title" />
-            <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
-            <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
+                <ui:Label text="Passive Skills" class="sp-section-title" />
+                <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
+                <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
+            </ui:VisualElement>
+
+            <!-- An active slot's skill wheel (ActiveSkillPicker), in place of the slots while it's open -->
+            <ui:VisualElement name="wheelPage" class="sp-picker--hidden">
+                <ui:Label name="wheelTitle" class="sp-section-title" />
+                <ui:VisualElement name="wheelHolder" />
+            </ui:VisualElement>
 
             <ui:Label name="hint" text="Click a slot to change it · Press K to close" class="sp-hint" />
         </ui:VisualElement>

@@ -70,6 +70,9 @@
                         <ui:VisualElement name="classGrid" class="cs-grid" />
                         <ui:Label name="classDescription" class="cs-description" />
                         <ui:Label name="classInfo" class="cs-class-info" />
+                        <!-- The class's starting skills (CharacterSelectScreen), also while moving over the classes -->
+                        <ui:Label name="startingSkillsLabel" text="Starting skills" class="cs-label mm-screen--hidden" />
+                        <ui:VisualElement name="startingSkills" class="cs-skills mm-screen--hidden" />
                         <ui:Label text="Resource" class="cs-label" />
                         <ui:VisualElement name="resourceGrid" class="cs-grid" />
                         <ui:Label name="resourceDescription" class="cs-description" />

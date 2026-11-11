@@ -127,6 +127,15 @@
     display: flex;
 }
 
+/* Requirements not met (ActiveSkillSlot.MeetsRequirements): greyed out; after cooldown so it wins */
+.skill-slot--locked > .skill-slot__icon {
+    -unity-background-image-tint-color: #4A4A4A;
+}
+
+.skill-slot--locked {
+    opacity: 0.6;
+}
+
 .skill-slot--empty {
     opacity: 0.45;
 }

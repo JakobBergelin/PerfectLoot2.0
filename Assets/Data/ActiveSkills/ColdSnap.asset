@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: A burst of cold around you that damages enemies and chills them to the edge of freezing.
   Tags: 131424
   CritShake: 0.5
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 5
   cooldown: 12
   Damage: 5
   Radius: 5

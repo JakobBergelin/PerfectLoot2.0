@@ -274,3 +274,216 @@
     padding: 0;
     margin: 0;
 }
+
+/* An active slot's picker (ActiveSkillPicker): the skill wheel, then the highlighted skill's card and its spoke */
+.skills-panel--wide {
+    width: 780px;
+}
+
+.sw-picker {
+    flex-direction: row;
+    align-items: flex-start;
+}
+
+.sw-wheel {
+    flex-shrink: 0;
+}
+
+.sw-attribute {
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}
+
+.sw-ring-label {
+    font-size: 10px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0;
+}
+
+/* A skill on the wheel: its icon; left/top are set from code */
+.sw-node {
+    position: absolute;
+    width: 30px;
+    height: 30px;
+    border-width: 2px;
+    border-radius: 6px;
+    border-color: var(--card-border);
+    background-color: var(--card-bg);
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.sw-node--usable {
+    border-color: #1D9E75;
+}
+
+.sw-node--locked {
+    -unity-background-image-tint-color: #5A5A5A;
+    opacity: 0.55;
+}
+
+.sw-node--current {
+    border-color: var(--accent);
+}
+
+.sw-node--highlighted {
+    border-color: #F0C050;
+    scale: 1.2 1.2;
+}
+
+.sw-node:hover {
+    border-color: #F0C050;
+}
+
+.sw-node__name {
+    flex-grow: 1;
+    font-size: 8px;
+    color: var(--text-muted);
+    white-space: normal;
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0;
+}
+
+/* The key of another slot the skill is in */
+.sw-node__badge {
+    position: absolute;
+    right: -8px;
+    bottom: -8px;
+    font-size: 9px;
+    -unity-font-style: bold;
+    color: #1A1A1A;
+    background-color: var(--accent);
+    border-radius: 3px;
+    padding: 0 3px;
+    margin: 0;
+}
+
+.sw-side {
+    flex-grow: 1;
+    margin-left: 12px;
+}
+
+.sw-card {
+    padding: 10px 12px;
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.sw-card__name {
+    font-size: 18px;
+    -unity-font-style: bold;
+    color: var(--accent);
+    padding: 0;
+    margin: 0;
+}
+
+.sw-card__spoke {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
+.sw-card__unlock {
+    font-size: 12px;
+    color: var(--text-muted);
+    white-space: normal;
+    padding: 0;
+    margin: 6px 0 0 0;
+}
+
+.sw-card__body {
+    font-size: 12px;
+    color: var(--text-color);
+    margin-top: 8px;
+    padding-top: 8px;
+    border-top-width: 1px;
+    border-color: var(--divider);
+}
+
+.sw-bar {
+    margin-bottom: 4px;
+}
+
+.sw-bar__text {
+    flex-direction: row;
+    justify-content: space-between;
+}
+
+.sw-bar__label, .sw-bar__have {
+    font-size: 12px;
+    padding: 0;
+    margin: 0;
+}
+
+.sw-bar--met .sw-bar__label, .sw-bar--met .sw-bar__have {
+    color: #7FD07F;
+}
+
+.sw-bar--short .sw-bar__label, .sw-bar--short .sw-bar__have {
+    color: #E05050;
+}
+
+.sw-bar__track {
+    height: 5px;
+    margin-top: 2px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+.sw-bar__fill {
+    height: 5px;
+    border-radius: 3px;
+    background-color: #1D9E75;
+}
+
+.sw-bar--short .sw-bar__fill {
+    background-color: #D85A30;
+}
+
+.sw-list {
+    margin-top: 8px;
+}
+
+.sw-list__title {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 0 4px 0;
+}
+
+.sw-row {
+    flex-direction: row;
+    justify-content: space-between;
+    padding: 3px 8px;
+    margin-bottom: 3px;
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 4px;
+    background-color: var(--card-bg);
+}
+
+.sw-row:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.sw-row--locked {
+    opacity: 0.6;
+}
+
+.sw-row--highlighted {
+    border-color: #F0C050;
+}
+
+.sw-row__name, .sw-row__requirements {
+    font-size: 12px;
+    color: var(--text-color);
+    padding: 0;
+    margin: 0;
+}

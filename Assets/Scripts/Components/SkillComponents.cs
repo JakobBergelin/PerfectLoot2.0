@@ -18,6 +18,7 @@ public struct Skill : IBufferElementData
 
     public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
     public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
+    public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
 
     public struct Triggers
     {
@@ -39,6 +40,8 @@ public struct SkillState
     public float ResourceCost;          // Static, from the ActiveSkill asset
     public float ResourceCostPerSecond;
     public bool HasEnoughResource;      // Set by SkillActivationSystem
+    public bool MeetsRequirements;      // The unit's attributes cover Skill.Requirements (SkillActivationSystem)
+    public bool Usable;                 // MeetsRequirements, or anywhere but a dungeon: else it can't be used (SkillActivationSystem)
 }
 
 public enum SkillType

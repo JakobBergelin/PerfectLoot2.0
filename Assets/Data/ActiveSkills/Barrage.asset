@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: 'Toggle. While equipped, every 5 resource you spend launches a homing missile into the air. On: they chase the strongest enemy. Off: the weakest.'
   Tags: 262145
   CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 12
+  IntelligenceRequirement: 0
   ResourcePerMissile: 5
   ConeAngle: 45
   Damage: 3

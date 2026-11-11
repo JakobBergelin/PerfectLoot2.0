@@ -6,7 +6,7 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// An active skill's tooltip body, shared by the skills panel and the skill bar: tag chips, cost and cooldown after
+/// An active skill's tooltip body, shared by the skills panel and the skill bar: tag chips, requirements, cost and cooldown after
 /// the caster's reductions (base greyed), damage lines and other effects (ActiveSkill.Describe), then the description.
 /// Text takes its font, size and color from the container's style.
 /// </summary>
@@ -39,6 +39,21 @@ public static class SkillTooltip
             if (tag != SkillTags.None && (skill.Tags & tag) != 0) chips.Add(Chip(ItemText.SplitWords(tag.ToString())));
         if (chips.childCount > 0) container.Add(chips);
 
+        // Requirements (SkillRequirements), each green or red by the caster's attributes when there's a caster
+        var requirements = skill.Requirements;
+        if (SkillRequirements.Total(requirements) > 0)
+        {
+            var parts = new System.Collections.Generic.List<string>();
+            for (int i = 0; i < 3; i++)
+            {
+                if (requirements[i] <= 0) continue;
+                string part = $"{SkillRequirements.Short[i]} {requirements[i]}";
+                if (stats is StatBlock s) part = $"<color={(Attribute(s, i) >= requirements[i] ? "#7FD07F" : "#E05050")}>{part}</color>";
+                parts.Add(part);
+            }
+            container.Add(Text("Requires " + string.Join(" · ", parts)));
+        }
+
         // Cost and cooldown, after the caster's reductions
         var resourceIcon = GameIcons.Affix(Affix.Resource);
         if (skill.ResourceCost > 0f)
@@ -63,6 +78,9 @@ public static class SkillTooltip
             container.Add(text);
         }
     }
+
+    // Strength (0), Agility (1) or Intelligence (2)
+    static float Attribute(in StatBlock stats, int index) => index == 0 ? stats.Strength : index == 1 ? stats.Agility : stats.Intelligence;
 
     // "7.5 (10)": the value after reductions, base greyed when they differ
     static SkillLine Reduced(SkillLine line, float baseValue, float? current, string unit)

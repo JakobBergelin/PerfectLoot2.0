@@ -48,11 +48,11 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
     // without the main menu (the rig's own slots, not saved)
     AccountCharacter _character;
 
-    // The character's saved skills, then random ones in the slots still empty (saved too, so they stay)
+    // The character's saved skills, then the class's first ones in the slots still empty (saved too, so they stay)
     void Start()
     {
         LoadCharacterSkills();
-        RandomizeEmptySlots();
+        FillEmptySlots();
         SaveCharacterSkills();
         PushSkills();
     }
@@ -81,15 +81,19 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         AccountManager.Instance.SetSkills(_character, types, null);
     }
 
-    /// <summary>Fills empty slots with random skills from AllSkills, never repeating a SkillType.</summary>
-    void RandomizeEmptySlots()
+    /// <summary>
+    /// Fills empty slots from AllSkills, never repeating a SkillType: the first skills the character's class reaches
+    /// (SkillRequirements.InUnlockOrder), or random ones without a class (a scene played without the main menu).
+    /// </summary>
+    void FillEmptySlots()
     {
         var taken = new HashSet<SkillType>();
         foreach (var slot in Slots)
             if (slot != null && !slot.IsEmpty) taken.Add(slot.EquippedSkill.Type);
 
+        var characterClass = CharacterClass();
         var pool = new List<ActiveSkill>();
-        foreach (var skill in AllSkills)
+        foreach (var skill in characterClass != null ? SkillRequirements.InUnlockOrder(AllSkills, characterClass) : AllSkills)
             if (skill != null && taken.Add(skill.Type)) pool.Add(skill);
 
         foreach (var slot in Slots)
@@ -101,11 +105,20 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
                 return;
             }
 
-            int index = Random.Range(0, pool.Count);
+            int index = characterClass != null ? 0 : Random.Range(0, pool.Count);
             // Set directly instead of EquipSkill so Start pushes once instead of once per slot
             slot.EquippedSkill = pool[index];
             pool.RemoveAt(index);
         }
+    }
+
+    // The played character's class asset (CharacterManager's list), or the rig's own class without a character
+    Characters.CharacterClass CharacterClass()
+    {
+        var characters = CharacterManager.For(PlayerIndex);
+        if (characters == null) return null;
+        if (_character == null) return characters.Class;
+        return characters.AllClasses.Find(candidate => candidate != null && candidate.Type == _character.Class);
     }
 
     void OnDestroy()
@@ -209,6 +222,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         Tags = skill.Tags,
         Label = SkillDamageLabel.Of(skill.Type),
         CritShake = skill.CritShake,
+        Requirements = skill.Requirements,
         State = new SkillState
         {
             ResourceCost = skill.ResourceCost,
@@ -236,6 +250,8 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
             {
                 if (skill.SlotIndex != i) continue;
                 slots[i].SetState(skill.State);
+                // The asset's requirements were edited (e.g. in Play mode): push them again
+                if (!slots[i].IsEmpty && !skill.Requirements.Equals(slots[i].EquippedSkill.Requirements)) _dirty = true;
                 found = true;
                 break;
             }

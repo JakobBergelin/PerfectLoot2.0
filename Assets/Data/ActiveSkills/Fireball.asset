@@ -16,8 +16,13 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: f9f65470b6cd45a099490a580c258a46, type: 3}
   Description: Hurl a ball of fire where you aim. An old favorite for a reason.
   Tags: 193
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 2
   AttackSpeed: 0.5
   resourceCost: 2
   Damage: 2
   ProjectileSpeed: 15
   Radius: 0.25
+  HitForce: 2

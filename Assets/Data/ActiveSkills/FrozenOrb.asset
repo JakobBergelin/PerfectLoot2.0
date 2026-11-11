@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Fires a slow, spinning orb of ice that damages enemies around it and sprays ice shards out of its front and back.
   Tags: 65857
   CritShake: 0.3
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 9
   AttackSpeed: 1
   resourceCost: 25
   DamagePerSecond: 2

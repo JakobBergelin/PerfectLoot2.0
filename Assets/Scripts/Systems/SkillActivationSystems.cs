@@ -1,8 +1,11 @@
 using Unity.Entities;
+using Unity.Mathematics;
 
 /// <summary>
 /// Enables the skill component of the pressed slot (same frame, no command buffer: enabling isn't a
-/// structural change) and fills in the input/resource parts of each Skill's SkillState.
+/// structural change) and fills in the input/resource parts of each Skill's SkillState. In a dungeon a skill whose
+/// requirements (Skill.Requirements) the unit's attributes don't meet isn't usable: it can't be pressed, effects can't cast
+/// it, and toggles stay off (their systems check SkillState.Usable). The Hub and other areas ignore requirements.
 /// Skill components themselves are added/removed by ActiveSkillManager.
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -13,6 +16,7 @@ public partial class SkillActivationSystem : SystemBase
     protected override void OnUpdate()
     {
         float deltaTime = SystemAPI.Time.DeltaTime;
+        bool enforceRequirements = SystemAPI.TryGetSingleton<LevelArea>(out var area) && area.Kind == AreaKind.Dungeon;
 
         foreach (var (inputs, skills, entity) in SystemAPI.Query<RefRO<InputsData>, DynamicBuffer<Skill>>().WithEntityAccess())
         {
@@ -28,19 +32,21 @@ public partial class SkillActivationSystem : SystemBase
                 if (SystemAPI.HasBuffer<SkillCastRequest>(entity)) SystemAPI.GetBuffer<SkillCastRequest>(entity).Clear();
             }
             // Sonic Ball rolling: only Sonic Ball itself stays usable (held keeps it rolling)
+            var calculatedStats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity) : default;
+            var stats = calculatedStats.Value;
+            UpdateUsable(entity, skills, new float3(stats.Strength, stats.Agility, stats.Intelligence), enforceRequirements);
+
             bool rolling = SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling;
             // Hookshot Slash out or pulling: no skills (its own system carries on without being held)
             if (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle)
                 preventsActions = true;
             foreach (var skill in skills)
             {
-                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.SlotIndex < activeSlot && (!rolling || skill.Type == SkillType.SonicBall))
+                if (!preventsActions && IsHeld(inputs.ValueRO, skill.SlotIndex) && skill.State.Usable && skill.SlotIndex < activeSlot && (!rolling || skill.Type == SkillType.SonicBall))
                     activeSlot = skill.SlotIndex;
             }
 
             float resource = SystemAPI.HasComponent<Resource>(entity) ? SystemAPI.GetComponent<Resource>(entity).CurrentValue : float.MaxValue;
-            var calculatedStats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity) : default;
-            var stats = calculatedStats.Value;
 
             for (int i = 0; i < skills.Length; i++)
             {
@@ -59,6 +65,26 @@ public partial class SkillActivationSystem : SystemBase
                                              && resource >= SkillUtil.Cost(skill.State.ResourceCostPerSecond, stats, skill.Tags) * deltaTime;
             }
         }
+    }
+
+    // Whether each skill's requirements are met and it can be used; casts effects requested for one that can't are dropped
+    void UpdateUsable(Entity entity, DynamicBuffer<Skill> skills, float3 attributes, bool enforceRequirements)
+    {
+        for (int i = 0; i < skills.Length; i++)
+        {
+            ref var skill = ref skills.ElementAt(i);
+            skill.State.MeetsRequirements = math.all(attributes >= skill.Requirements);
+            skill.State.Usable = skill.State.MeetsRequirements || !enforceRequirements;
+        }
+        if (!SystemAPI.HasBuffer<SkillCastRequest>(entity)) return;
+        var requests = SystemAPI.GetBuffer<SkillCastRequest>(entity);
+        for (int r = requests.Length - 1; r >= 0; r--)
+            foreach (var skill in skills)
+                if (skill.Type == requests[r].Type && !skill.State.Usable)
+                {
+                    requests.RemoveAt(r);
+                    break;
+                }
     }
 
     static bool IsHeld(in InputsData inputs, int slotIndex) => slotIndex >= 0 && slotIndex < 4 && inputs.SkillHeld[slotIndex];

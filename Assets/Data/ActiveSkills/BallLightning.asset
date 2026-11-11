@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Fly in a straight line as a ball of lightning for as long as you hold the skill, over walls and out of harm's way. The more resource the flight burns, the harder you land.
   Tags: 1124
   CritShake: 0.35
+  StrengthRequirement: 0
+  AgilityRequirement: 8
+  IntelligenceRequirement: 16
   cooldown: 2
   resourceCost: 10
   resourceCostPerSecond: 10

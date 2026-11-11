@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Toggle. While on, enemies around you take fire damage that grows with Intelligence. Drains resource while on, and pauses without enough.
   Tags: 262336
   CritShake: 0
+  StrengthRequirement: 3
+  AgilityRequirement: 0
+  IntelligenceRequirement: 1
   resourceCostPerSecond: 2
   DamagePerSecond: 2
   DamagePerIntelligence: 0.1

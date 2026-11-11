@@ -33,6 +33,8 @@ public class CharacterSelectScreen
     Label _skillTooltipTitle;
     TextField _nameField;
     Label _nameError, _classDescription, _classInfo, _resourceDescription, _resourceInfo;
+    VisualElement _startingSkills;
+    Label _startingSkillsLabel;
     Button _createButton;
 
     readonly Dictionary<string, VisualElement> _rows = new Dictionary<string, VisualElement>();
@@ -86,6 +88,8 @@ public class CharacterSelectScreen
         _nameError = root.Q<Label>("nameError");
         _classDescription = root.Q<Label>("classDescription");
         _classInfo = root.Q<Label>("classInfo");
+        _startingSkills = root.Q<VisualElement>("startingSkills");
+        _startingSkillsLabel = root.Q<Label>("startingSkillsLabel");
         _resourceDescription = root.Q<Label>("resourceDescription");
         _resourceInfo = root.Q<Label>("resourceInfo");
         _createButton = root.Q<Button>("createButton");
@@ -101,7 +105,8 @@ public class CharacterSelectScreen
         _skillTooltip = root.Q<VisualElement>("skillTooltip");
         _skillTooltipTitle = root.Q<Label>("skillTooltipTitle");
         _skillTooltipBody = root.Q<VisualElement>("skillTooltipBody");
-        if (_detailSkills == null || _detailPassives == null || _skillTooltip == null || _skillTooltipTitle == null || _skillTooltipBody == null)
+        if (_detailSkills == null || _detailPassives == null || _skillTooltip == null || _skillTooltipTitle == null || _skillTooltipBody == null ||
+            _startingSkills == null || _startingSkillsLabel == null)
             return false;
         if (_list == null || _noCharacters == null || _noSelection == null || _detailsView == null || _createView == null ||
             _deleteConfirm == null || _detailName == null || _detailClass == null || _detailResource == null ||
@@ -140,7 +145,13 @@ public class CharacterSelectScreen
         _classChoices.Clear();
         classGrid.Clear();
         foreach (ClassType type in Enum.GetValues(typeof(ClassType)))
-            if (type != ClassType.None) _classChoices[type] = AddChoice(classGrid, ClassName(type), () => PickClass(type));
+        {
+            if (type == ClassType.None) continue;
+            var choice = AddChoice(classGrid, ClassName(type), () => PickClass(type));
+            // Moving over the classes previews their starting skills
+            UiNav.Hover(choice, () => ShowStartingSkills(type), () => ShowStartingSkills(_class));
+            _classChoices[type] = choice;
+        }
 
         _resourceChoices.Clear();
         resourceGrid.Clear();
@@ -302,6 +313,14 @@ public class CharacterSelectScreen
 
     // Its 4 active skills and 3 passives as icons (empty frames until it was first played), with a tooltip on hover or
     // controller focus. The skill assets come from the game rig's managers (GameBootstrap.RigPrefab).
+    /// <summary>Every active skill (the game rig's skill list); empty without the rig.</summary>
+    public static IReadOnlyList<ActiveSkills.ActiveSkill> AllActiveSkills()
+    {
+        var rig = GameBootstrap.RigPrefab;
+        var manager = rig != null ? rig.GetComponentInChildren<ActiveSkillManager>(true) : null;
+        return manager != null ? manager.AllSkills : (IReadOnlyList<ActiveSkills.ActiveSkill>)Array.Empty<ActiveSkills.ActiveSkill>();
+    }
+
     /// <summary>The skill asset a character saved by type (the game rig's skill list), or null.</summary>
     public static ActiveSkills.ActiveSkill FindSkill(string type)
     {
@@ -324,18 +343,7 @@ public class CharacterSelectScreen
         _detailSkills.Clear();
         for (int i = 0; i < 4; i++)
         {
-            var skill = FindSkill(i < character.ActiveSkills.Count ? character.ActiveSkills[i] : null);
-            if (skill == null)
-            {
-                AddSkillIcon(_detailSkills, null, null, passive: false, null);
-                continue;
-            }
-            string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
-            AddSkillIcon(_detailSkills, skill.Icon, name, passive: false, () =>
-            {
-                _skillTooltipTitle.text = name;
-                SkillTooltip.Fill(_skillTooltipBody, skill, null);
-            });
+            AddActiveIcon(_detailSkills, FindSkill(i < character.ActiveSkills.Count ? character.ActiveSkills[i] : null));
         }
 
         _detailPassives.Clear();
@@ -356,6 +364,22 @@ public class CharacterSelectScreen
                     _skillTooltipBody.Add(new Label(passive.Description) { pickingMode = PickingMode.Ignore });
             });
         }
+    }
+
+    // An active skill's icon with its tooltip (requirements, numbers and description); an empty frame for none
+    void AddActiveIcon(VisualElement row, ActiveSkills.ActiveSkill skill)
+    {
+        if (skill == null)
+        {
+            AddSkillIcon(row, null, null, passive: false, null);
+            return;
+        }
+        string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
+        AddSkillIcon(row, skill.Icon, name, passive: false, () =>
+        {
+            _skillTooltipTitle.text = name;
+            SkillTooltip.Fill(_skillTooltipBody, skill, null);
+        });
     }
 
     // fill writes the tooltip's title and body; null for an empty slot (no tooltip). A skill without an icon shows its name.
@@ -457,7 +481,22 @@ public class CharacterSelectScreen
         foreach (var pair in _classChoices) pair.Value.EnableInClassList(SelectedChoiceClass, pair.Key == type);
         SetDescription(_classDescription, ClassAsset(type)?.Description);
         SetDescription(_classInfo, ClassInfo(ClassAsset(type)));
+        ShowStartingSkills(type);
         UpdateCreateButton();
+    }
+
+    // The skills a new character of this class starts with (SkillRequirements.StartingSkills); hidden without a class.
+    // Shown for the picked class, and for the one under the pointer or controller focus while choosing
+    void ShowStartingSkills(ClassType type)
+    {
+        HideSkillTooltip();
+        _startingSkills.Clear();
+        var classAsset = ClassAsset(type);
+        _startingSkills.EnableInClassList(HiddenClass, classAsset == null);
+        _startingSkillsLabel.EnableInClassList(HiddenClass, classAsset == null);
+        if (classAsset == null) return;
+        foreach (var skill in ActiveSkills.SkillRequirements.StartingSkills(AllActiveSkills(), classAsset))
+            AddActiveIcon(_startingSkills, skill);
     }
 
     void PickResource(ResourceType type)
@@ -491,6 +530,9 @@ public class CharacterSelectScreen
             UpdateCreateButton();
             return;
         }
+        // The first skills its class reaches: equipped from the start
+        if (classAsset != null)
+            Account.SetSkills(character, ActiveSkills.SkillRequirements.StartingSkills(AllActiveSkills(), classAsset).ConvertAll(skill => skill.Type.ToString()), null);
         _nameField.Blur();
         RebuildList();
         Select(character.Guid);

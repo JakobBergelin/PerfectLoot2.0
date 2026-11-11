@@ -16,6 +16,10 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 4d434a99e9044ce494c63ce09fb33896, type: 3}
   Description: Hold to spray growing flames toward the cursor. You're slowed while you spray, and flames that overlap add up.
   Tags: 65736
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 12
   resourceCost: 3
   resourceCostPerSecond: 12
   FlamesPerSecond: 15

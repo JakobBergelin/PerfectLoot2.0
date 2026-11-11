@@ -11,8 +11,9 @@ using UnityEngine.UIElements;
 /// (the nearest portal in range, player 1's first). Enter, or a player's Interact, loads the portal's scene with the
 /// current characters (GameSceneLoader). In co-op every living player has to choose it: each one's Interact (or the
 /// mouse's player's click) makes them ready for the portal they stand at, until they walk away, and the card says who
-/// is ready and who it waits for. Hidden while player 1 has a menu panel open. Interact goes to the portal before any
-/// loot in reach (AtPortal).
+/// is ready and who it waits for. Going into a dungeon it also warns about equipped skills whose requirements aren't
+/// met (they can't be used there). Hidden while player 1 has a menu panel open. Interact goes to the portal before
+/// any loot in reach (AtPortal).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
@@ -196,7 +197,7 @@ public class PortalHUD : MonoBehaviour
         return GameInput.For(playerIndex) != null && characters != null && characters.Player != Entity.Null;
     }
 
-    // "Player 1 ready · waiting for Player 2" in co-op; nothing alone
+    // "Player 1 ready · waiting for Player 2" in co-op, then the requirement warnings
     void ShowStatus()
     {
         string text = "";
@@ -210,8 +211,40 @@ public class PortalHUD : MonoBehaviour
                 text += ready ? $"Player {i + 1} ready" : $"waiting for Player {i + 1}";
             }
         }
+        string warnings = RequirementWarnings();
+        if (warnings.Length > 0) text += (text.Length > 0 ? "\n" : "") + warnings;
         if (_status.text != text) _status.text = text;
         _status.EnableInClassList(HiddenClass, text.Length == 0);
+    }
+
+    // Leaving the Hub: "Fireball needs 2 Int" for each equipped skill whose requirements aren't met, since it can't be
+    // used there (ActiveSkillSlot.MeetsRequirements; entering still works). In co-op each player's own, named
+    string RequirementWarnings()
+    {
+        if (_scene.IsEmpty || _scene.ToString() == GameBootstrap.TownScene) return "";
+        var lines = new System.Collections.Generic.List<string>();
+        for (int i = 0; i < GameInput.PlayerCount; i++)
+        {
+            var manager = ActiveSkillManager.For(i);
+            if (!InLevel(i) || manager == null) continue;
+            var stats = SkillTooltip.CurrentStats(i);
+            foreach (var slot in new[] { manager.Slot1, manager.Slot2, manager.Slot3, manager.Slot4 })
+            {
+                if (slot == null || slot.IsEmpty || slot.MeetsRequirements) continue;
+                var skill = slot.EquippedSkill;
+                var requirements = skill.Requirements;
+                var missing = new System.Collections.Generic.List<string>();
+                for (int k = 0; k < 3; k++)
+                {
+                    float have = stats is StatBlock s ? (k == 0 ? s.Strength : k == 1 ? s.Agility : s.Intelligence) : 0f;
+                    if (requirements[k] > have) missing.Add($"{requirements[k]} {ActiveSkills.SkillRequirements.Short[k]}");
+                }
+                string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
+                string who = GameInput.PlayerCount > 1 ? $"Player {i + 1}: " : "";
+                lines.Add($"<color=#E05050>{who}{name} needs {string.Join(" and ", missing)}</color>");
+            }
+        }
+        return string.Join("\n", lines);
     }
 
     void Hide()

@@ -1,5 +1,6 @@
 using Equipment;
 using Unity.Entities;
+using Unity.Mathematics;
 using UnityEngine;
 
 namespace ActiveSkills
@@ -14,6 +15,14 @@ namespace ActiveSkills
         public SkillTags Tags;
         [Tooltip("How hard the camera shakes when one of this skill's hits crits: 0 = not at all, 1 = CameraSettings' full Shake Strength")]
         [Range(0f, 1f)] public float CritShake;
+
+        [Header("Requirements: the attributes a character needs to use it (in dungeons; the Hub ignores them)")]
+        [Min(0)] public int StrengthRequirement;
+        [Min(0)] public int AgilityRequirement;
+        [Min(0)] public int IntelligenceRequirement;
+
+        /// <summary>Strength, Agility and Intelligence it needs (SkillRequirements).</summary>
+        public int3 Requirements => new int3(StrengthRequirement, AgilityRequirement, IntelligenceRequirement);
 
         public abstract SkillType Type { get; }
 

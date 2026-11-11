@@ -17,6 +17,8 @@ public class ActiveSkillSlot : MonoBehaviour
     public bool IsPressed;
     public bool IsActive;
     public bool HasEnoughResource;
+    public bool MeetsRequirements = true;   // The player's attributes cover the skill's requirements
+    public bool Usable = true;              // MeetsRequirements, or outside a dungeon
     public float CooldownRemaining;
     public float CooldownDuration;
 
@@ -43,6 +45,8 @@ public class ActiveSkillSlot : MonoBehaviour
         IsPressed = state.IsPressed;
         IsActive = state.IsActive;
         HasEnoughResource = state.HasEnoughResource;
+        MeetsRequirements = state.MeetsRequirements;
+        Usable = state.Usable;
         CooldownRemaining = state.CooldownRemaining;
         CooldownDuration = state.CooldownDuration;
     }
@@ -50,7 +54,7 @@ public class ActiveSkillSlot : MonoBehaviour
     internal void ClearState()
     {
         IsPressed = IsActive = false;
-        HasEnoughResource = true;
+        HasEnoughResource = MeetsRequirements = Usable = true;
         CooldownRemaining = CooldownDuration = 0f;
     }
 

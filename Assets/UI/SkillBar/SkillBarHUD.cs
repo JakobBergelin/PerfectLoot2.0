@@ -19,6 +19,7 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
     const string ActiveClass = "skill-slot--active";
     const string CooldownClass = "skill-slot--cooldown";
     const string NoResourceClass = "skill-slot--no-resource";
+    const string LockedClass = "skill-slot--locked";
 
     class SlotView
     {
@@ -205,6 +206,8 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
         view.Slot.EnableInClassList(PressedClass, !empty && slot.IsPressed);
         view.Slot.EnableInClassList(ActiveClass, !empty && slot.IsActive);
         view.Slot.EnableInClassList(NoResourceClass, !empty && !slot.HasEnoughResource);
+        // Requirements not met: greyed out (still usable outside dungeons)
+        view.Slot.EnableInClassList(LockedClass, !empty && !slot.MeetsRequirements);
         view.Slot.EnableInClassList(CooldownClass, onCooldown);
 
         view.Sweep.Fraction = onCooldown ? slot.CooldownFraction : 0f;

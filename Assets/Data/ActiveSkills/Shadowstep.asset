@@ -16,6 +16,10 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 740368fef1e948ddb206d15b774b605b, type: 3}
   Description: For 20 seconds, gain attack speed and your melee skills jump you in front of the enemy you aim at.
   Tags: 2080
+  CritShake: 0
+  StrengthRequirement: 6
+  AgilityRequirement: 12
+  IntelligenceRequirement: 0
   cooldown: 60
   Duration: 20
   AttackSpeedBonus: 0.15

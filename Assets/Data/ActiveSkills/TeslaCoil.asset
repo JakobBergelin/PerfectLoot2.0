@@ -16,6 +16,10 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: a246431a1735436c8cbb31462acf300c, type: 3}
   Description: Root yourself and charge the air around you. Enemies inside take lightning damage and enemy projectiles can't get in, but the cost climbs for every second you hold it.
   Tags: 70760
+  CritShake: 0
+  StrengthRequirement: 4
+  AgilityRequirement: 0
+  IntelligenceRequirement: 12
   cooldown: 10
   resourceCostPerSecond: 8
   resourceCostIncrease: 6

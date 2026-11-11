@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Mark every enemy around you, then vanish and strike each of them in turn, unseen and untouchable. The cooldown starts as the strikes begin.
   Tags: 54
   CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 28
+  IntelligenceRequirement: 0
   Radius: 10
   StrikeInterval: 0.3
   WeaponDamageMultiplier: 1.3

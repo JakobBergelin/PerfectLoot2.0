@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Loose a slow, festering arrow that poisons everything it passes. It always flies its full distance, so the slower it goes, the longer it poisons.
   Tags: 66113
   CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 12
+  IntelligenceRequirement: 4
   AttackSpeed: 1.1
   resourceCost: 20
   DamagePerSecond: 4

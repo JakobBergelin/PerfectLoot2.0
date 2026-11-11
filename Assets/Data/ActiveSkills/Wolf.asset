@@ -16,6 +16,10 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: b66fb373b8094bb882ca447cfc559613, type: 3}
   Description: Summons a fast Wolf that roams around you. Allies near it have +10% critical chance. The cooldown starts when it dies.
   Tags: 18432
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 15
+  IntelligenceRequirement: 0
   cooldown: 20
   resourceCost: 20
   Body: {fileID: 7900000000000000001, guid: 4fa12f947369b1165fa7995a1d95e332, type: 3}
@@ -23,9 +27,45 @@ MonoBehaviour:
   Mass: 1
   Tint: {r: 0.45, g: 0.3, b: 0.18, a: 1}
   Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 0
+    Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
     Health: 20
     HealthRegeneration: 1
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceOnHit: 0
+    LifeOnHit: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 0
+    ArmorPierce: 0
     MovementSpeed: 0.5
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0
+    CriticalChance: 0
+    CriticalDamage: 0
+    BlockChance: 0
+    DodgeChance: 0
   Threat: 3
   SightRadius: 12
   Movement:
@@ -34,6 +74,7 @@ MonoBehaviour:
     Spread: 3
     Leash: 10
     AttackDistance: 1.5
+    FleeDistance: 0
     CatchUpMultiplier: 1.5
     TeleportDistance: 20
   Skills:

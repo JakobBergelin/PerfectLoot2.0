@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Call a meteor down on the cursor. After a moment it crashes down in a fiery blast and leaves the ground burning.
   Tags: 131264
   CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 26
   AttackSpeed: 1
   resourceCost: 55
   Range: 15

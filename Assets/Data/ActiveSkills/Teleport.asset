@@ -16,6 +16,10 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 73beb9ace14644a98512bc67b5c787af, type: 3}
   Description: A short pause, then you appear at the cursor. Walls are no obstacle.
   Tags: 36
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 0
+  IntelligenceRequirement: 4
   cooldown: 5
   resourceCost: 10
   Range: 12

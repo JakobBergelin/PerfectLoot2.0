@@ -16,8 +16,14 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 48301d444e6d47c0b2837e68dfb10081, type: 3}
   Description: Spin with your weapon out, hitting everything around you. It takes a moment to wind up.
   Tags: 10
+  CritShake: 0
+  StrengthRequirement: 3
+  AgilityRequirement: 1
+  IntelligenceRequirement: 0
   resourceCostPerSecond: 12
   WeaponDamageMultiplier: 0.4
   RotationsPerSecond: 2
   AttackRadius: 0.9
   SpinUpTime: 0.4
+  HitForce: 3
+  TickInterval: 0.3

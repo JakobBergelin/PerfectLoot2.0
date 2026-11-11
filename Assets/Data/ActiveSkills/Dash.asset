@@ -16,4 +16,9 @@ MonoBehaviour:
   Icon: {fileID: 21300000, guid: 1ff07bc96e2843b082f00b2147e65eef, type: 3}
   Description: A quick dash toward the cursor, straight through enemies and over water, but not through walls. The more Agility you have, the sooner you can go again.
   Tags: 36
+  CritShake: 0
+  StrengthRequirement: 0
+  AgilityRequirement: 4
+  IntelligenceRequirement: 0
   cooldown: 2
+  cooldownPerAgility: 0.01

@@ -37,6 +37,13 @@ public partial struct BarrageSystem : ISystem
         {
             int index = -1;
             if (!SkillUtil.FindSkill(skills, SkillType.Barrage, ref index)) continue;
+            // Requirements not met in a dungeon: no missiles (On / Off only picks their targets, so it's kept)
+            if (!skills[index].State.Usable)
+            {
+                barrage.ValueRW.Spent = 0f;
+                skills.ElementAt(index).State.IsActive = false;
+                continue;
+            }
 
             int slot = skills[index].SlotIndex;
             if (slot >= 0 && slot < 4 && inputs.ValueRO.SkillPressedThisFrame[slot] && !modifiers.ValueRO.PreventsActions)

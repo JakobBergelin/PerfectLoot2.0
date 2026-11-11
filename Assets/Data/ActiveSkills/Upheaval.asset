@@ -17,6 +17,9 @@ MonoBehaviour:
   Description: Slam the ground in front of you. A moment later the ground heaves around the impact, throwing enemies away.
   Tags: 2
   CritShake: 0
+  StrengthRequirement: 5
+  AgilityRequirement: 0
+  IntelligenceRequirement: 0
   AttackSpeed: 1.2
   resourceCost: 25
   SlamDamage: 2
