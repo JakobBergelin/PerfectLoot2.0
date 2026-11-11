@@ -24,8 +24,12 @@
 }
 
 .skills-panel {
-    width: 560px;
-    padding: 16px;
+    position: absolute;
+    left: 24px;
+    top: 24px;
+    right: 24px;
+    bottom: 24px;
+    padding: 16px 20px;
     background-color: var(--panel-bg);
     border-width: 2px;
     border-color: var(--panel-border);
@@ -64,15 +68,38 @@
     padding: 0;
 }
 
-/* Active skill slots: 2x2 cards */
-.sp-active-slots {
+/* The page: slots on the left, the wheel in the middle, the highlighted skill's card on the right */
+.sp-main {
+    flex-grow: 1;
     flex-direction: row;
-    flex-wrap: wrap;
-    justify-content: space-between;
+    align-items: center;
+}
+
+.sp-column {
+    width: 320px;
+    flex-shrink: 0;
+    align-self: stretch;
+    justify-content: center;
+}
+
+.sp-wheel-holder {
+    flex-grow: 1;
+    align-items: center;
+    justify-content: center;
+}
+
+.sp-card-holder {
+    width: 380px;
+    flex-shrink: 0;
+    height: 640px;
+}
+
+/* Active skill slots: a column of cards */
+.sp-active-slots {
+    flex-direction: column;
 }
 
 .sp-card {
-    width: 258px;
     flex-direction: row;
     align-items: center;
     margin-bottom: 8px;
@@ -89,6 +116,12 @@
 
 .sp-card--selected {
     border-color: var(--accent);
+}
+
+/* A skill is waiting for a slot: every slot invites a click */
+.sp-card--choose {
+    border-color: #F0C050;
+    background-color: rgba(60, 50, 20, 0.9);
 }
 
 .sp-card__icon {
@@ -127,11 +160,12 @@
 /* Passive skill slots: a row of round icons */
 .sp-passive-slots {
     flex-direction: row;
+    flex-wrap: wrap;
     justify-content: center;
 }
 
 .sp-passive {
-    width: 120px;
+    width: 100px;
     align-items: center;
     padding: 6px;
     border-width: 2px;
@@ -168,9 +202,6 @@
 
 /* The class passive, after the slots: a gold ring and a "Class" tag; it can't be changed */
 .sp-passive--class {
-    margin-left: 16px;
-    border-left-width: 1px;
-    border-left-color: var(--card-border);
     border-radius: 0;
 }
 
@@ -275,22 +306,13 @@
     margin: 0;
 }
 
-/* An active slot's picker (ActiveSkillPicker): the skill wheel, then the highlighted skill's card and its spoke */
-.skills-panel--wide {
-    width: 780px;
-}
-
-.sw-picker {
-    flex-direction: row;
-    align-items: flex-start;
-}
-
+/* The skill wheel (SkillWheel) */
 .sw-wheel {
     flex-shrink: 0;
 }
 
 .sw-attribute {
-    font-size: 13px;
+    font-size: 15px;
     -unity-font-style: bold;
     color: var(--text-color);
     padding: 0;
@@ -304,15 +326,19 @@
     margin: 0;
 }
 
-/* A skill on the wheel: its icon; left/top are set from code */
+/* A skill on the wheel: its icon, its name under it; left/top are set from code */
 .sw-node {
     position: absolute;
-    width: 30px;
-    height: 30px;
+    width: 40px;
+    height: 40px;
     border-width: 2px;
     border-radius: 6px;
     border-color: var(--card-border);
     background-color: var(--card-bg);
+}
+
+.sw-node__icon {
+    flex-grow: 1;
     -unity-background-scale-mode: scale-to-fit;
 }
 
@@ -320,40 +346,48 @@
     border-color: #1D9E75;
 }
 
-.sw-node--locked {
+.sw-node--locked .sw-node__icon {
     -unity-background-image-tint-color: #5A5A5A;
-    opacity: 0.55;
 }
 
-.sw-node--current {
+.sw-node--locked {
+    opacity: 0.6;
+}
+
+.sw-node--equipped {
     border-color: var(--accent);
 }
 
-.sw-node--highlighted {
+.sw-node--highlighted, .sw-node:hover {
     border-color: #F0C050;
-    scale: 1.2 1.2;
+    background-color: var(--card-bg-hover);
 }
 
-.sw-node:hover {
-    border-color: #F0C050;
+/* The skill waiting for a slot */
+.sw-node--pending {
+    border-color: #FFFFFF;
+    border-width: 3px;
 }
 
 .sw-node__name {
-    flex-grow: 1;
-    font-size: 8px;
-    color: var(--text-muted);
+    position: absolute;
+    top: 40px;
+    left: -24px;
+    width: 84px;
+    font-size: 10px;
+    color: var(--text-color);
     white-space: normal;
-    -unity-text-align: middle-center;
+    -unity-text-align: upper-center;
     padding: 0;
     margin: 0;
 }
 
-/* The key of another slot the skill is in */
+/* The key of the slot the skill is in */
 .sw-node__badge {
     position: absolute;
-    right: -8px;
-    bottom: -8px;
-    font-size: 9px;
+    right: -10px;
+    top: -10px;
+    font-size: 10px;
     -unity-font-style: bold;
     color: #1A1A1A;
     background-color: var(--accent);
@@ -362,12 +396,9 @@
     margin: 0;
 }
 
-.sw-side {
-    flex-grow: 1;
-    margin-left: 12px;
-}
-
+/* The highlighted skill's card: a fixed size, its tooltip scrolls */
 .sw-card {
+    height: 100%;
     padding: 10px 12px;
     background-color: var(--card-bg);
     border-width: 1px;
@@ -390,6 +421,15 @@
     margin: 0 0 8px 0;
 }
 
+.sw-card__status {
+    display: none;
+    font-size: 13px;
+    -unity-font-style: bold;
+    color: #F0C050;
+    padding: 0;
+    margin: 0 0 8px 0;
+}
+
 .sw-card__unlock {
     font-size: 12px;
     color: var(--text-muted);
@@ -398,13 +438,18 @@
     margin: 6px 0 0 0;
 }
 
-.sw-card__body {
-    font-size: 12px;
-    color: var(--text-color);
+.sw-card__scroll {
+    flex-grow: 1;
+    flex-shrink: 1;
     margin-top: 8px;
     padding-top: 8px;
     border-top-width: 1px;
     border-color: var(--divider);
+}
+
+.sw-card__body {
+    font-size: 12px;
+    color: var(--text-color);
 }
 
 .sw-bar {
@@ -445,47 +490,6 @@
 
 .sw-bar--short .sw-bar__fill {
     background-color: #D85A30;
-}
-
-.sw-list {
-    margin-top: 8px;
-}
-
-.sw-list__title {
-    font-size: 12px;
-    color: var(--text-muted);
-    padding: 0;
-    margin: 0 0 4px 0;
-}
-
-.sw-row {
-    flex-direction: row;
-    justify-content: space-between;
-    padding: 3px 8px;
-    margin-bottom: 3px;
-    border-width: 1px;
-    border-color: var(--card-border);
-    border-radius: 4px;
-    background-color: var(--card-bg);
-}
-
-.sw-row:hover {
-    background-color: var(--card-bg-hover);
-}
-
-.sw-row--locked {
-    opacity: 0.6;
-}
-
-.sw-row--highlighted {
-    border-color: #F0C050;
-}
-
-.sw-row__name, .sw-row__requirements {
-    font-size: 12px;
-    color: var(--text-color);
-    padding: 0;
-    margin: 0;
 }
 
 /* Stances: its card's border in the current stance's attribute colour */

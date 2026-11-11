@@ -2,27 +2,27 @@
     <ui:Style src="SkillsPanel.uss" />
     <ui:VisualElement name="skillsPanelRoot" class="skills-panel-root skills-panel-root--hidden" picking-mode="Ignore">
         <ui:VisualElement name="panel" class="skills-panel">
-            <ui:Label text="Skills" class="sp-title" />
+            <ui:Label name="title" text="Skills" class="sp-title" />
 
-            <!-- Slots and picker options are created by SkillsPanelHUD -->
-            <ui:VisualElement name="slotsPage">
-                <ui:Label text="Active Skills" class="sp-section-title" />
-                <ui:VisualElement name="activeSlots" class="sp-active-slots" />
+            <ui:VisualElement class="sp-main">
+                <!-- Slots and picker options are created by SkillsPanelHUD -->
+                <ui:VisualElement class="sp-column">
+                    <ui:Label text="Active Skills" class="sp-section-title" />
+                    <ui:VisualElement name="activeSlots" class="sp-active-slots" />
 
-                <ui:VisualElement class="sp-divider" />
+                    <ui:VisualElement class="sp-divider" />
 
-                <ui:Label text="Passive Skills" class="sp-section-title" />
-                <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
-                <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
+                    <ui:Label text="Passive Skills" class="sp-section-title" />
+                    <ui:VisualElement name="passiveSlots" class="sp-passive-slots" />
+                    <ui:VisualElement name="passivePicker" class="sp-picker sp-picker--hidden" />
+                </ui:VisualElement>
+
+                <!-- The skill wheel and the highlighted skill's card (ActiveSkillPicker) -->
+                <ui:VisualElement name="wheelHolder" class="sp-wheel-holder" />
+                <ui:VisualElement name="cardHolder" class="sp-card-holder" />
             </ui:VisualElement>
 
-            <!-- An active slot's skill wheel (ActiveSkillPicker), in place of the slots while it's open -->
-            <ui:VisualElement name="wheelPage" class="sp-picker--hidden">
-                <ui:Label name="wheelTitle" class="sp-section-title" />
-                <ui:VisualElement name="wheelHolder" />
-            </ui:VisualElement>
-
-            <ui:Label name="hint" text="Click a slot to change it · Press K to close" class="sp-hint" />
+            <ui:Label name="hint" text="Click a skill, then a slot · Press K to close" class="sp-hint" />
         </ui:VisualElement>
         <ui:VisualElement name="tooltip" class="sp-tooltip" picking-mode="Ignore">
             <ui:Label name="tooltipTitle" class="sp-tooltip__title" picking-mode="Ignore" />

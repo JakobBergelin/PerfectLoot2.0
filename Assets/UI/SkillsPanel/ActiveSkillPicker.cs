@@ -7,21 +7,19 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// The Skills panel's active skill picker: the skill wheel (SkillWheel) on the left; on the right the highlighted
-/// skill's card (its requirements against the character's attributes, when its class reaches it, then its tooltip:
-/// SkillTooltip) and the other skills on its spoke. Pointer or controller focus highlights a skill, a click or A picks
-/// it (Picked), LT/RT go to the next spoke. Skills the character can't use yet can be picked too: they're greyed out
-/// until their requirements are met. Styles in SkillsPanel.uss.
+/// The Skills panel's skill wheel (SkillWheel) and the highlighted skill's card beside it: its requirements against
+/// the character's attributes, when its class reaches it, then its tooltip (SkillTooltip). The card has a fixed size and
+/// scrolls, so nothing moves when the highlight changes. Pointer or controller focus highlights a skill, a click or A
+/// picks it (Picked), LT/RT go to the next spoke. Styles in SkillsPanel.uss.
 /// </summary>
 public sealed class ActiveSkillPicker
 {
-    public readonly VisualElement Element;
+    public readonly SkillWheel Wheel;
+    public readonly VisualElement Card;
     public Action<ActiveSkill> Picked;
 
-    readonly SkillWheel _wheel;
-    readonly Label _name, _spoke, _unlock;
-    readonly VisualElement _bars, _body, _list;
-    readonly Label _listTitle;
+    readonly Label _name, _spoke, _unlock, _status;
+    readonly VisualElement _bars, _body;
 
     IReadOnlyList<ActiveSkill> _skills = Array.Empty<ActiveSkill>();
     float3 _attributes;
@@ -31,66 +29,64 @@ public sealed class ActiveSkillPicker
 
     public ActiveSkillPicker()
     {
-        Element = new VisualElement();
-        Element.AddToClassList("sw-picker");
+        Wheel = new SkillWheel();
+        Wheel.Highlighted += Highlight;
+        Wheel.Picked += skill => Picked?.Invoke(skill);
 
-        _wheel = new SkillWheel();
-        _wheel.Highlighted += Highlight;
-        _wheel.Picked += skill => Picked?.Invoke(skill);
-        Element.Add(_wheel);
-
-        var side = new VisualElement();
-        side.AddToClassList("sw-side");
-        var card = new VisualElement();
-        card.AddToClassList("sw-card");
+        Card = new VisualElement();
+        Card.AddToClassList("sw-card");
         _name = NewLabel("sw-card__name");
         _spoke = NewLabel("sw-card__spoke");
+        _status = NewLabel("sw-card__status");
         _bars = new VisualElement();
         _bars.AddToClassList("sw-bars");
         _unlock = NewLabel("sw-card__unlock");
+        var scroll = new ScrollView(ScrollViewMode.Vertical);
+        scroll.AddToClassList("sw-card__scroll");
+        scroll.verticalScrollerVisibility = ScrollerVisibility.Hidden;
+        scroll.horizontalScrollerVisibility = ScrollerVisibility.Hidden;
         _body = new VisualElement();
         _body.AddToClassList("sw-card__body");
-        card.Add(_name);
-        card.Add(_spoke);
-        card.Add(_bars);
-        card.Add(_unlock);
-        card.Add(_body);
-
-        var list = new VisualElement();
-        list.AddToClassList("sw-list");
-        _listTitle = NewLabel("sw-list__title");
-        _list = new VisualElement();
-        list.Add(_listTitle);
-        list.Add(_list);
-
-        side.Add(card);
-        side.Add(list);
-        Element.Add(side);
+        scroll.Add(_body);
+        Card.Add(_name);
+        Card.Add(_spoke);
+        Card.Add(_status);
+        Card.Add(_bars);
+        Card.Add(_unlock);
+        Card.Add(scroll);
     }
 
-    /// <summary>The element a controller starts on: the node of the slot's current skill (or the first).</summary>
-    public VisualElement StartNode { get; private set; }
+    /// <summary>The highlighted skill, or null.</summary>
+    public ActiveSkill Highlighted => _highlighted;
 
     /// <summary>
-    /// Shows the skills for a slot. current: its skill now; badge: another slot's key for a skill equipped there, or
-    /// null. attributes: the character's Strength, Agility and Intelligence now; characterClass for "reached at level".
-    /// stats: for the tooltip, or null.
+    /// Shows every skill. badge: the key of the slot a skill is equipped in, or null. attributes: the character's
+    /// Strength, Agility and Intelligence now; characterClass for "reached at level". stats: for the tooltip, or null.
+    /// Keeps the highlighted skill.
     /// </summary>
-    public void Open(IReadOnlyList<ActiveSkill> skills, ActiveSkill current, Func<ActiveSkill, string> badge, float3 attributes,
-                     CharacterClass characterClass, StatBlock? stats)
+    public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, string> badge, float3 attributes, CharacterClass characterClass, StatBlock? stats)
     {
         _skills = skills ?? Array.Empty<ActiveSkill>();
         _attributes = attributes;
         _class = characterClass;
         _stats = stats;
-        _wheel.Show(_skills, Usable, badge, current);
+        Wheel.Show(_skills, Usable, badge, attributes);
 
-        var start = current;
-        if (start == null)
+        var start = _highlighted;
+        if (start == null || !Contains(start))
             foreach (var skill in _skills)
                 if (skill != null) { start = skill; break; }
-        StartNode = _wheel.NodeOf(start);
         Highlight(start);
+    }
+
+    /// <summary>The node of a skill on the wheel, or null.</summary>
+    public VisualElement NodeOf(ActiveSkill skill) => Wheel.NodeOf(skill);
+
+    /// <summary>A line under the name, e.g. "Choose a slot"; empty hides it.</summary>
+    public void SetStatus(string text)
+    {
+        _status.text = text;
+        _status.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
     }
 
     /// <summary>LT/RT: the first skill on the next (1) or previous (-1) spoke that has any; returns its node to focus.</summary>
@@ -103,12 +99,18 @@ public sealed class ActiveSkillPicker
             var first = OnSpoke(spoke);
             if (first.Count == 0) continue;
             Highlight(first[0]);
-            return _wheel.NodeOf(first[0]);
+            return Wheel.NodeOf(first[0]);
         }
         return null;
     }
 
     bool Usable(ActiveSkill skill) => SkillRequirements.Meets(skill.Requirements, _attributes);
+
+    bool Contains(ActiveSkill skill)
+    {
+        foreach (var other in _skills) if (other == skill) return true;
+        return false;
+    }
 
     List<ActiveSkill> OnSpoke(int spoke)
     {
@@ -121,10 +123,19 @@ public sealed class ActiveSkillPicker
 
     // ---------- The highlighted skill ----------
 
-    void Highlight(ActiveSkill skill)
+    /// <summary>Shows a skill on the card (also for a slot pointed at).</summary>
+    public void Highlight(ActiveSkill skill)
     {
         _highlighted = skill;
-        if (skill == null) return;
+        if (skill == null)
+        {
+            _name.text = "";
+            _spoke.text = "";
+            _bars.Clear();
+            _unlock.text = "";
+            _body.Clear();
+            return;
+        }
         var requirements = skill.Requirements;
         int spoke = SkillWheel.SpokeOf(skill);
         _name.text = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
@@ -137,7 +148,6 @@ public sealed class ActiveSkillPicker
 
         _unlock.text = UnlockText(requirements);
         SkillTooltip.Fill(_body, skill, _stats);
-        ShowList(spoke);
     }
 
     VisualElement Bar(string attribute, int required, float have)
@@ -169,35 +179,6 @@ public sealed class ActiveSkillPicker
         int level = SkillRequirements.UnlockLevel(requirements, _class);
         if (level == int.MaxValue) return $"A {className} never reaches it alone: it needs items";
         return level <= Experience.MaxLevel ? $"A {className} reaches it at level {level}" : $"Needs items: a {className} would need level {level}";
-    }
-
-    // The skills on the highlighted one's spoke; pointing at a row highlights it, a click picks it
-    void ShowList(int spoke)
-    {
-        _listTitle.text = spoke == SkillWheel.Spokes.Length - 1 ? "All three (the middle)" : $"{SkillWheel.Spokes[spoke].Name} spoke";
-        _list.Clear();
-        foreach (var skill in OnSpoke(spoke))
-        {
-            var row = new VisualElement();
-            row.AddToClassList("sw-row");
-            row.AddToClassList(Usable(skill) ? "sw-row--usable" : "sw-row--locked");
-            if (skill == _highlighted) row.AddToClassList("sw-row--highlighted");
-            row.Add(NewLabel("sw-row__name", string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name));
-            row.Add(NewLabel("sw-row__requirements", RequirementsText(skill.Requirements)));
-            var picked = skill;
-            row.RegisterCallback<ClickEvent>(_ => Picked?.Invoke(picked));
-            _list.Add(row);
-        }
-    }
-
-    // "Str 3 · Agi 1", each green or red
-    string RequirementsText(int3 requirements)
-    {
-        var parts = new List<string>();
-        for (int i = 0; i < 3; i++)
-            if (requirements[i] > 0)
-                parts.Add($"<color={(_attributes[i] >= requirements[i] ? "#7FD07F" : "#E05050")}>{SkillRequirements.Short[i]} {requirements[i]}</color>");
-        return parts.Count > 0 ? string.Join(" · ", parts) : "None";
     }
 
     static Label NewLabel(string className, string text = "")

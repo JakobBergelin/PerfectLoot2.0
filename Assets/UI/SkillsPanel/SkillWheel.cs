@@ -8,27 +8,32 @@ using UnityEngine.UIElements;
 /// <summary>
 /// The active skills on a wheel by their requirements (SkillRequirements). Six spokes outside the middle circle:
 /// Strength, Agility and Intelligence, and between them the skills that need two of them; the further out, the more
-/// they need in total (rings at 10, 20 and 30, what a class has at level 10). Skills that need all three sit inside
-/// the middle circle, placed only by which way they lean (3/3/3 in the exact middle). Each skill is a node with its
-/// icon: usable ones lit, the others greyed. Pointer or controller focus on a node highlights it, a click or A picks
-/// it. Drawn with the Painter2D; ActiveSkillPicker puts it next to the highlighted skill's details.
+/// they need in total, on a log scale so the many low ones get room (rings at 5, 10, 20 and 30). Skills that need all
+/// three sit inside the middle circle, placed by which way they lean. Skills that would overlap move sideways within
+/// their spoke's sector, then outward. Each skill is a node with its icon and name: usable ones lit, the others greyed,
+/// equipped ones with their slot's key. A green fill shows the character's attributes: on a one-attribute spoke out to
+/// its value, on a two-attribute spoke up to the first skill they can't use yet. Pointer or controller focus highlights
+/// a node, a click or A picks it. Always the same size; nothing moves when the highlight changes.
 /// </summary>
 public sealed class SkillWheel : VisualElement
 {
-    public const float Size = 400f;
+    public const float Size = 640f;
     const float Center = Size * 0.5f;
-    const float MiddleRadius = 58f;     // The circle the all-three skills sit in
-    const float RingStart = MiddleRadius + 10f;
-    const float PerPoint = 3.3f;        // Pixels out per point of total requirement (30 lands well inside the edge)
-    const float MaxRadius = 184f;       // Totals beyond about 35 stop here
-    const float LabelRadius = 198f;     // The attribute names, outside every skill
+    const float MiddleRadius = 72f;     // The circle the all-three skills sit in
+    const float RingStart = MiddleRadius + 22f;
+    const float MaxRadius = 276f;       // Where a total of MaxTotal lands; beyond it they stop here
+    const float MaxTotal = 32f;
+    const float LabelRadius = 304f;     // The attribute names, outside every skill
     const float RingLabelDegrees = -60f;   // Ring totals go between two spokes, where no skill sits
     const float Lean = 2.2f;            // How much an all-three skill's lean is exaggerated, so small leans show
-    const float NodeSize = 30f;
-    const float SpreadDegrees = 10f;    // Skills on one spoke with close totals sit to either side of it
-    const float MinGap = 26f;           // All-three skills closer than this are nudged apart
+    const float NodeSize = 40f;
+    const float MinGap = 60f;           // Centres closer than this overlap (the node and its name under it)
+    const float SectorHalf = 27f;       // Degrees a skill may move to either side of its spoke
+    const float FillWidth = 10f;
 
     static readonly float[] Directions = { -90f, 150f, 30f };     // Strength up, Agility lower left, Intelligence lower right
+    static readonly int[] Rings = { 5, 10, 20, 30 };
+    static readonly Color Green = new Color(0.11f, 0.62f, 0.46f, 0.45f);
 
     /// <summary>A spoke: which attributes its skills need (x Str, y Agi, z Int: 1 when needed), its name and direction.</summary>
     public readonly struct Spoke
@@ -70,6 +75,7 @@ public sealed class SkillWheel : VisualElement
 
     readonly VisualElement _nodes;
     readonly Dictionary<ActiveSkill, VisualElement> _nodeOf = new Dictionary<ActiveSkill, VisualElement>();
+    readonly float[] _fills = new float[6];     // Per outer spoke: how far out the green fill reaches (0: none)
 
     public SkillWheel()
     {
@@ -81,7 +87,7 @@ public sealed class SkillWheel : VisualElement
         // Attribute names past the ends of their spokes, ring totals between two spokes
         for (int i = 0; i < 3; i++)
             AddLabel(SkillRequirements.Names[i], Point(Directions[i], LabelRadius), "sw-attribute");
-        foreach (int total in new[] { 10, 20, 30 })
+        foreach (int total in Rings)
             AddLabel(total == 30 ? "30 · level 10" : total.ToString(), Point(RingLabelDegrees, RadiusOf(total)), "sw-ring-label");
 
         _nodes = new VisualElement { pickingMode = PickingMode.Ignore };
@@ -96,11 +102,17 @@ public sealed class SkillWheel : VisualElement
     /// <summary>The node of a skill on the wheel, or null.</summary>
     public VisualElement NodeOf(ActiveSkill skill) => skill != null && _nodeOf.TryGetValue(skill, out var node) ? node : null;
 
+    /// <summary>Marks the skill waiting for a slot (null: none).</summary>
+    public void SetPending(ActiveSkill skill)
+    {
+        foreach (var pair in _nodeOf) pair.Value.EnableInClassList("sw-node--pending", pair.Key == skill);
+    }
+
     /// <summary>
-    /// Places the skills. usable: whether the character can use one (lit, else greyed); badge: the key of another slot
-    /// it's equipped in, or null; current: the skill in the slot being changed (marked).
+    /// Places the skills. usable: whether the character can use one (lit, else greyed); badge: the key of the slot it's
+    /// equipped in, or null. attributes: the character's Strength, Agility and Intelligence, for the green fill.
     /// </summary>
-    public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, bool> usable, Func<ActiveSkill, string> badge, ActiveSkill current)
+    public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, bool> usable, Func<ActiveSkill, string> badge, float3 attributes)
     {
         _nodes.Clear();
         _nodeOf.Clear();
@@ -112,49 +124,62 @@ public sealed class SkillWheel : VisualElement
                 if (skill != null && SpokeOf(skill) == spoke) onSpoke.Add(skill);
             onSpoke.Sort((a, b) => SkillRequirements.Total(a.Requirements).CompareTo(SkillRequirements.Total(b.Requirements)));
 
-            int lastTotal = int.MinValue;
-            float side = 1f;
+            bool middle = float.IsNaN(Spokes[spoke].Degrees);
+            float fill = 0f;
+            bool blocked = false;
             foreach (var skill in onSpoke)
             {
-                Vector2 position;
-                if (float.IsNaN(Spokes[spoke].Degrees)) position = Nudge(MiddlePoint(skill.Requirements), placed);
+                var position = middle ? PlaceFree(MiddlePoint(skill.Requirements), placed)
+                                      : PlaceOnSpoke(Spokes[spoke].Degrees, RadiusOf(SkillRequirements.Total(skill.Requirements)), placed);
+                placed.Add(position);
+                bool canUse = usable(skill);
+                AddNode(skill, position, canUse, badge(skill));
+
+                // Two-attribute spokes: the fill reaches past every usable skill up to the first one that isn't
+                if (middle || blocked) continue;
+                float distance = (position - new Vector2(Center, Center)).magnitude;
+                if (canUse) fill = distance + NodeSize * 0.6f;
                 else
                 {
-                    // Close totals on one spoke: to either side of it, so they don't overlap
-                    int total = SkillRequirements.Total(skill.Requirements);
-                    float offset = 0f;
-                    if (total - lastTotal < 4)
-                    {
-                        offset = side * SpreadDegrees;
-                        side = -side;
-                    }
-                    else side = 1f;
-                    lastTotal = total;
-                    position = Point(Spokes[spoke].Degrees + offset, RadiusOf(total));
+                    blocked = true;
+                    fill = fill > 0f ? Mathf.Min(fill, distance - NodeSize * 0.7f) : 0f;
                 }
-                placed.Add(position);
-                AddNode(skill, position, usable(skill), badge(skill), skill == current);
             }
+            if (middle) continue;
+
+            // One-attribute spokes: out to the attribute itself
+            var mask = Spokes[spoke].Mask;
+            if (mask.x + mask.y + mask.z == 1)
+            {
+                float value = math.csum(attributes * (float3)mask);
+                fill = value > 0f ? RadiusOf(value) + NodeSize * 0.5f : 0f;
+            }
+            else if (!blocked && onSpoke.Count > 0) fill = MaxRadius;
+            _fills[spoke] = Mathf.Clamp(fill, 0f, MaxRadius);
         }
+        MarkDirtyRepaint();
     }
 
-    void AddNode(ActiveSkill skill, Vector2 position, bool usable, string badge, bool current)
+    void AddNode(ActiveSkill skill, Vector2 position, bool usable, string badge)
     {
         var node = new VisualElement();
         node.AddToClassList("sw-node");
         node.AddToClassList(usable ? "sw-node--usable" : "sw-node--locked");
-        if (current) node.AddToClassList("sw-node--current");
         node.style.left = position.x - NodeSize * 0.5f;
         node.style.top = position.y - NodeSize * 0.5f;
-        if (skill.Icon != null) node.style.backgroundImage = new StyleBackground(skill.Icon);
-        else
-        {
-            var name = new Label(string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name) { pickingMode = PickingMode.Ignore };
-            name.AddToClassList("sw-node__name");
-            node.Add(name);
-        }
+
+        var icon = new VisualElement { pickingMode = PickingMode.Ignore };
+        icon.AddToClassList("sw-node__icon");
+        if (skill.Icon != null) icon.style.backgroundImage = new StyleBackground(skill.Icon);
+        node.Add(icon);
+
+        var name = new Label(string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name) { pickingMode = PickingMode.Ignore };
+        name.AddToClassList("sw-node__name");
+        node.Add(name);
+
         if (!string.IsNullOrEmpty(badge))
         {
+            node.AddToClassList("sw-node--equipped");
             var key = new Label(badge) { pickingMode = PickingMode.Ignore };
             key.AddToClassList("sw-node__badge");
             node.Add(key);
@@ -174,12 +199,53 @@ public sealed class SkillWheel : VisualElement
 
     // ---------- Layout ----------
 
-    static float RadiusOf(int total) => Mathf.Min(RingStart + total * PerPoint, MaxRadius);
+    // Log scale: the low totals, where most skills are, get the most room
+    static float RadiusOf(float total) =>
+        RingStart + (MaxRadius - RingStart) * Mathf.Min(Mathf.Log(1f + Mathf.Max(0f, total)) / Mathf.Log(1f + MaxTotal), 1f);
 
     static Vector2 Point(float degrees, float radius)
     {
         float radians = degrees * Mathf.Deg2Rad;
         return new Vector2(Center + Mathf.Cos(radians) * radius, Center + Mathf.Sin(radians) * radius);
+    }
+
+    // On its spoke if that's free; else the nearest free spot to either side within the sector, then a little further out
+    static Vector2 PlaceOnSpoke(float degrees, float radius, List<Vector2> placed)
+    {
+        for (float r = radius; r <= MaxRadius + MinGap; r += MinGap * 0.4f)
+        {
+            float step = MinGap / r * Mathf.Rad2Deg * 0.75f;
+            for (int k = 0; k * step <= SectorHalf; k++)
+            {
+                foreach (float side in k == 0 ? new[] { 0f } : new[] { 1f, -1f })
+                {
+                    var candidate = Point(degrees + side * k * step, r);
+                    if (IsFree(candidate, placed)) return candidate;
+                }
+            }
+        }
+        return Point(degrees, radius);
+    }
+
+    // Inside the middle: the nearest free spot, searched in growing circles around where it leans
+    static Vector2 PlaceFree(Vector2 position, List<Vector2> placed)
+    {
+        if (IsFree(position, placed)) return position;
+        for (float distance = MinGap * 0.5f; distance <= MinGap * 2f; distance += MinGap * 0.25f)
+            for (int i = 0; i < 12; i++)
+            {
+                float radians = i * 30f * Mathf.Deg2Rad;
+                var candidate = position + new Vector2(Mathf.Cos(radians), Mathf.Sin(radians)) * distance;
+                if (IsFree(candidate, placed)) return candidate;
+            }
+        return position;
+    }
+
+    static bool IsFree(Vector2 position, List<Vector2> placed)
+    {
+        foreach (var other in placed)
+            if ((other - position).sqrMagnitude < MinGap * MinGap) return false;
+        return true;
     }
 
     // Each attribute pulls toward its direction by its share of the total; the lean is exaggerated so small ones show
@@ -195,35 +261,21 @@ public sealed class SkillWheel : VisualElement
         }
         float length = pull.magnitude;
         if (length < 1e-4f) return new Vector2(Center, Center);
-        return new Vector2(Center, Center) + pull / length * Mathf.Min(length * Lean, 0.85f) * MiddleRadius;
+        return new Vector2(Center, Center) + pull / length * Mathf.Min(length * Lean, 0.7f) * MiddleRadius;
     }
 
-    // Skills that lean the same way: moved slightly apart
-    static Vector2 Nudge(Vector2 position, List<Vector2> placed)
-    {
-        for (int tries = 0; tries < 8; tries++)
-        {
-            bool clear = true;
-            foreach (var other in placed)
-                if ((other - position).magnitude < MinGap) clear = false;
-            if (clear) break;
-            position.x += MinGap * 0.6f;
-        }
-        return position;
-    }
-
-    void AddLabel(string text, Vector2 position, string className, bool centered = true)
+    void AddLabel(string text, Vector2 position, string className)
     {
         var label = new Label(text) { pickingMode = PickingMode.Ignore };
         label.AddToClassList(className);
         label.style.position = Position.Absolute;
         label.style.left = position.x;
         label.style.top = position.y;
-        if (centered) label.style.translate = new Translate(Length.Percent(-50f), Length.Percent(-50f));
+        label.style.translate = new Translate(Length.Percent(-50f), Length.Percent(-50f));
         Add(label);
     }
 
-    // Rings, the middle circle and the spokes
+    // The green fills, then the rings, the middle circle and the spokes
     void Draw(MeshGenerationContext context)
     {
         var painter = context.painter2D;
@@ -231,9 +283,22 @@ public sealed class SkillWheel : VisualElement
         var faint = new Color(0.66f, 0.68f, 0.72f, 0.25f);
         var line = new Color(0.66f, 0.68f, 0.72f, 0.55f);
 
+        painter.lineWidth = FillWidth;
+        painter.lineCap = LineCap.Round;
+        painter.strokeColor = Green;
+        for (int i = 0; i < 6; i++)
+        {
+            if (_fills[i] <= MiddleRadius) continue;
+            painter.BeginPath();
+            painter.MoveTo(Point(Spokes[i].Degrees, MiddleRadius));
+            painter.LineTo(Point(Spokes[i].Degrees, _fills[i]));
+            painter.Stroke();
+        }
+        painter.lineCap = LineCap.Butt;
+
         painter.lineWidth = 1f;
-        foreach (int total in new[] { 10, 20 })
-            Circle(painter, center, RadiusOf(total), faint);
+        foreach (int total in Rings)
+            if (total != 30) Circle(painter, center, RadiusOf(total), faint);
         painter.lineWidth = 1.5f;
         Circle(painter, center, RadiusOf(30), line);
         Circle(painter, center, MiddleRadius, line);
