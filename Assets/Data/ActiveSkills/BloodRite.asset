@@ -17,8 +17,8 @@ MonoBehaviour:
   Description: Spill your own blood to surge with strength and speed for a short while.
   Tags: 2080
   CritShake: 0
-  StrengthRequirement: 0
-  AgilityRequirement: 0
+  StrengthRequirement: 10
+  AgilityRequirement: 15
   IntelligenceRequirement: 0
   CooldownSeconds: 20
   HealthCost: 0.2

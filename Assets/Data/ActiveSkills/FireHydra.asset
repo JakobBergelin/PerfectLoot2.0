@@ -19,7 +19,7 @@ MonoBehaviour:
   CritShake: 0
   StrengthRequirement: 0
   AgilityRequirement: 0
-  IntelligenceRequirement: 14
+  IntelligenceRequirement: 10
   cooldown: 1
   resourceCost: 10
   Range: 12

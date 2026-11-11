@@ -17,8 +17,8 @@ MonoBehaviour:
   Description: 'Shift between three stances: Strength, Agility and Intelligence. Each press moves to the next, and the stance strengthens its attribute.'
   Tags: 2048
   CritShake: 0
-  StrengthRequirement: 0
-  AgilityRequirement: 0
-  IntelligenceRequirement: 0
+  StrengthRequirement: 2
+  AgilityRequirement: 2
+  IntelligenceRequirement: 5
   SwitchCooldown: 0.5
   Bonus: 5

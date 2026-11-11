@@ -19,7 +19,7 @@ MonoBehaviour:
   CritShake: 0
   StrengthRequirement: 0
   AgilityRequirement: 0
-  IntelligenceRequirement: 12
+  IntelligenceRequirement: 6
   resourceCost: 3
   resourceCostPerSecond: 12
   FlamesPerSecond: 15

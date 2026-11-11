@@ -19,7 +19,7 @@ MonoBehaviour:
   CritShake: 0
   StrengthRequirement: 6
   AgilityRequirement: 0
-  IntelligenceRequirement: 20
+  IntelligenceRequirement: 16
   CriticalChancePenalty: 0.2
   MarkDuration: 5
   MaxThralls: 5

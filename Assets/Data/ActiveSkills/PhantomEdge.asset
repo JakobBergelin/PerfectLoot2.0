@@ -18,7 +18,7 @@ MonoBehaviour:
   Tags: 54
   CritShake: 0
   StrengthRequirement: 0
-  AgilityRequirement: 28
+  AgilityRequirement: 25
   IntelligenceRequirement: 0
   Radius: 10
   StrikeInterval: 0.3

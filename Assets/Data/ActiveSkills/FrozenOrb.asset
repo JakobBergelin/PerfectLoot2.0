@@ -19,7 +19,7 @@ MonoBehaviour:
   CritShake: 0.3
   StrengthRequirement: 0
   AgilityRequirement: 0
-  IntelligenceRequirement: 9
+  IntelligenceRequirement: 17
   AttackSpeed: 1
   resourceCost: 25
   DamagePerSecond: 2

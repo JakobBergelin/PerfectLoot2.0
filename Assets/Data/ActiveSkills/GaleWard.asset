@@ -14,12 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.GaleWardSkill
   Name: Gale Ward
   Icon: {fileID: 0}
-  Description: Toggle. Each press switches the wind: off, clockwise, counter-clockwise. A band of wind circles you at a distance, bending every projectile in it, yours too, and chilling enemies. Drains resource while on, and pauses without enough.
+  Description: 
   Tags: 397568
   CritShake: 0
   StrengthRequirement: 0
-  AgilityRequirement: 9
-  IntelligenceRequirement: 9
+  AgilityRequirement: 10
+  IntelligenceRequirement: 10
   resourceCostPerSecond: 3
   InnerRadius: 6
   OuterRadius: 9

@@ -17,9 +17,9 @@ MonoBehaviour:
   Description: Hold to roll the way you face. Steer with left and right; walls and water bounce you off.
   Tags: 36
   CritShake: 0
-  StrengthRequirement: 8
+  StrengthRequirement: 9
   AgilityRequirement: 6
-  IntelligenceRequirement: 5
+  IntelligenceRequirement: 3
   cooldown: 3
   TurnSpeed: 180
   MovementSpeedBonus: 0.3

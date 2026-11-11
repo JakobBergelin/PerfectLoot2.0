@@ -17,7 +17,7 @@ MonoBehaviour:
   Description: Hold to raise your shield. You move slowly, but enemy projectiles in front of you are stopped, and each one builds resource.
   Tags: 12296
   CritShake: 0
-  StrengthRequirement: 12
+  StrengthRequirement: 16
   AgilityRequirement: 0
   IntelligenceRequirement: 0
   Reach: 2.5

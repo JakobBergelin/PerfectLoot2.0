@@ -17,9 +17,9 @@ MonoBehaviour:
   Description: Summons a Guardian that walks ahead of you and draws enemies to itself. The cooldown starts when it dies.
   Tags: 20480
   CritShake: 0
-  StrengthRequirement: 14
+  StrengthRequirement: 5
   AgilityRequirement: 0
-  IntelligenceRequirement: 0
+  IntelligenceRequirement: 10
   cooldown: 20
   resourceCost: 20
   Body: {fileID: 7900000000000000001, guid: b6ff23f74b12d954c9302db8f7a51b68, type: 3}
@@ -66,6 +66,9 @@ MonoBehaviour:
     CriticalDamage: 0
     BlockChance: 0
     DodgeChance: 0
+    ProjectileDamageReduction: 0
+    MeleeDamageReduction: 0
+    AgilityForStrength: 0
   Threat: 8
   SightRadius: 12
   Movement:

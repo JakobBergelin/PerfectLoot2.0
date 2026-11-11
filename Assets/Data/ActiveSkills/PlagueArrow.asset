@@ -18,8 +18,8 @@ MonoBehaviour:
   Tags: 66113
   CritShake: 0
   StrengthRequirement: 0
-  AgilityRequirement: 12
-  IntelligenceRequirement: 4
+  AgilityRequirement: 4
+  IntelligenceRequirement: 2
   AttackSpeed: 1.1
   resourceCost: 20
   DamagePerSecond: 4

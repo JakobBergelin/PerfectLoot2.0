@@ -17,8 +17,8 @@ MonoBehaviour:
   Description: Hold to throw your shield. It homes in on enemies, bounces between them and comes back to your arm. The better you block, the harder it hits.
   Tags: 1
   CritShake: 0
-  StrengthRequirement: 8
-  AgilityRequirement: 0
+  StrengthRequirement: 13
+  AgilityRequirement: 7
   IntelligenceRequirement: 0
   resourceCost: 5
   Damage: 3

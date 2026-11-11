@@ -18,8 +18,8 @@ MonoBehaviour:
   Tags: 1124
   CritShake: 0.35
   StrengthRequirement: 0
-  AgilityRequirement: 8
-  IntelligenceRequirement: 16
+  AgilityRequirement: 5
+  IntelligenceRequirement: 20
   cooldown: 2
   resourceCost: 10
   resourceCostPerSecond: 10

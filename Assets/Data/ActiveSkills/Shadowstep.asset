@@ -18,7 +18,7 @@ MonoBehaviour:
   Tags: 2080
   CritShake: 0
   StrengthRequirement: 6
-  AgilityRequirement: 12
+  AgilityRequirement: 24
   IntelligenceRequirement: 0
   cooldown: 60
   Duration: 20
