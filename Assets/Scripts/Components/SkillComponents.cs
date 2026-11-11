@@ -372,7 +372,7 @@ public struct TeslaCoil : IComponentData, IEnableableComponent
     public bool Channeling;
 }
 
-/// <summary>Marks the PeriodicAttack around a channeling Tesla Coil (its Source): it also blocks enemy projectiles (TeslaCoilFieldSystem).</summary>
+/// <summary>Marks the PeriodicAttack around a channeling Tesla Coil (its Source): it also reflects enemy projectiles, which become the caster's (TeslaCoilFieldSystem).</summary>
 public struct TeslaCoilField : IComponentData {}
 
 public struct PoisonDart : IComponentData, IEnableableComponent

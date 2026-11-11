@@ -27,7 +27,7 @@ namespace ActiveSkills
             description.Damage.Add(DamageLine(DamageType.Lightning, "Damage per second", stats).Text(Num(DamagePerSecond)));
             description.Effects.Add(AreaLine("Radius", Radius, stats));
             description.Effects.Add(new SkillLine().Text($"Cost per second rises by {Num(resourceCostIncrease)} every second"));
-            description.Effects.Add(new SkillLine().Text("Blocks enemy projectiles"));
+            description.Effects.Add(new SkillLine().Text("Reflects enemy projectiles: they become yours and keep their damage"));
             description.Effects.Add(new SkillLine().Text("You can't move while channeling"));
         }
 

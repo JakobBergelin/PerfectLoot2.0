@@ -1,4 +1,5 @@
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
@@ -91,8 +92,9 @@ public partial struct TeslaCoilSystem : ISystem
 }
 
 /// <summary>
-/// Tesla Coil fields: destroys every projectile aimed at the player inside one, at any height, whether it flew in or was
-/// fired from inside. The player's own projectiles aren't touched. Removes a field once its caster stops channeling.
+/// Tesla Coil fields: reflect every projectile aimed at the player inside one, at any height, whether it flew in or was
+/// fired from inside: it becomes the caster's (Reflect). The player's own projectiles aren't touched. Removes a field
+/// once its caster stops channeling.
 /// </summary>
 [BurstCompile]
 [UpdateInGroup(typeof(MovementSystemGroup))]
@@ -111,6 +113,9 @@ public partial struct TeslaCoilFieldSystem : ISystem
     {
         var commandBuffer = SystemAPI.GetSingleton<EndSimulationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
 
+        // The fields still up: centre and radius (x, y, z) and their caster
+        var fields = new NativeList<float3>(Allocator.Temp);
+        var casters = new NativeList<Entity>(Allocator.Temp);
         foreach (var (attack, transform, source, entity) in
                  SystemAPI.Query<RefRO<PeriodicAttack>, RefRO<LocalTransform>, RefRO<Source>>().WithAll<TeslaCoilField>().WithNone<DestroyWithChildren>().WithEntityAccess())
         {
@@ -120,15 +125,58 @@ public partial struct TeslaCoilFieldSystem : ISystem
                 commandBuffer.AddComponent<DestroyWithChildren>(entity);
                 continue;
             }
+            fields.Add(new float3(transform.ValueRO.Position.xz, attack.ValueRO.Radius));
+            casters.Add(caster);
+        }
+        if (fields.IsEmpty) return;
 
-            float radius = attack.ValueRO.Radius;
-            var center = transform.ValueRO.Position.xz;
-            foreach (var (target, projectileTransform, projectile) in
-                     SystemAPI.Query<RefRO<AttackTarget>, RefRO<LocalTransform>>().WithAll<Projectile>().WithNone<DestroyWithChildren>().WithEntityAccess())
+        foreach (var (target, projectileTransform, projectile, projectileAttack, projectileSource, entity) in
+                 SystemAPI.Query<RefRW<AttackTarget>, RefRW<LocalTransform>, RefRW<Projectile>, RefRW<Attack>, RefRW<Source>>()
+                     .WithNone<DestroyWithChildren>().WithEntityAccess())
+        {
+            if (target.ValueRO.TargetType != TargetType.Player) continue;
+            for (int i = 0; i < fields.Length; i++)
             {
-                if (target.ValueRO.TargetType == TargetType.Player && math.distancesq(projectileTransform.ValueRO.Position.xz, center) <= radius * radius)
-                    commandBuffer.AddComponent<DestroyWithChildren>(projectile);
+                var offset = projectileTransform.ValueRO.Position.xz - fields[i].xy;
+                if (math.lengthsq(offset) > fields[i].z * fields[i].z) continue;
+                Reflect(ref state, entity, ref projectile.ValueRW, ref projectileTransform.ValueRW, ref projectileAttack.ValueRW,
+                        ref projectileSource.ValueRW, ref target.ValueRW, offset, casters[i]);
+                break;
             }
+        }
+    }
+
+    // The projectile becomes the caster's: it hits enemies now (so the field leaves it alone), crits with the caster's
+    // stats and is credited to Tesla Coil, keeping the damage it was fired with. Coming in, it bounces off the field's edge
+    // like a mirror; fired from inside, it keeps flying out. A homing one turns back to the unit that fired it. It gets its
+    // full range again.
+    void Reflect(ref SystemState state, Entity entity, ref Projectile projectile, ref LocalTransform transform, ref Attack attack,
+                 ref Source source, ref AttackTarget target, float2 offset, Entity caster)
+    {
+        var shooter = attack.Origin.Unit != Entity.Null ? attack.Origin.Unit : source.Entity;
+
+        var normal = math.normalizesafe(new float3(offset.x, 0f, offset.y), -projectile.Direction);
+        float into = math.dot(projectile.Direction, normal);
+        if (into < 0f) projectile.Direction -= 2f * into * normal;
+        transform.Rotation = quaternion.LookRotationSafe(projectile.Direction, math.up());
+
+        target.TargetType = TargetType.Enemy;
+        source.Entity = caster;
+        attack.Origin = DamageLabel.TeslaCoil;
+        attack.CriticalChanceBonus = 0f;
+
+        if (SystemAPI.HasComponent<HomingProjectile>(entity))
+        {
+            var homing = SystemAPI.GetComponent<HomingProjectile>(entity);
+            homing.Target = shooter;
+            SystemAPI.SetComponent(entity, homing);
+        }
+        if (SystemAPI.HasComponent<ProjectileRange>(entity))
+        {
+            var range = SystemAPI.GetComponent<ProjectileRange>(entity);
+            range.Traveled = 0f;
+            range.LastPosition = transform.Position;
+            SystemAPI.SetComponent(entity, range);
         }
     }
 }
