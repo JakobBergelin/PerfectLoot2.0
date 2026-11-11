@@ -28,6 +28,10 @@ Balancing:
 - Use Unity ECS/DOTS as much as possible for gameplay code.
 - Keep systems simple and easy to read at a glance, and don't add too many exceptions.
 
+## Art
+
+Read [Docs/ArtStyleGuide.md](Docs/ArtStyleGuide.md) before creating any art in the project (models, sprites, textures, materials, shaders, VFX, UI art or AI image prompts).
+
 ## Multiplayer
 
 The end goal is a multiplayer and split-screen game, so make systems work for multiple players.

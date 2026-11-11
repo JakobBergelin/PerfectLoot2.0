@@ -73,6 +73,7 @@ For each biome, take a gameplay-angle screenshot and ask:
 2. Does the player stand out from enemies and from the ground?
 3. Does it look like *one game* across all four biomes?
 4. Does a thumbnail (≈300 px wide) still read clearly? (Steam capsule test)
+5. Can you tell walkable ground from the drop and from props at a glance?
 
 ## 8. Style comparison (Ember Forest, same layout and cast)
 
@@ -155,3 +156,39 @@ Scenes: `ArtStyleTest_Swamp_Comic`, `ArtStyleTest_Cathedral_Comic` (same layout 
 - Accent colors must not collide with trait colors (poison green, shield violet, summoner gold, fire orange). Pink/rose and teal are free for environment use.
 - Gore stays minimal; menace comes from silhouettes, not blood.
 - The palette lives in the Unity material builder (Blender colors are only the starting point), so a biome can be recolored without re-exporting models.
+
+## 12. Building a tileset
+
+References: `Docs/inspiration/Tileset/`. Take the principles from those pictures, never their assets, names or exact designs.
+
+- **Platforms over a drop.** Build walkable ground as platforms, ledges and bridges above a drop (chasm, lava pit, bog, void) wherever the biome allows, instead of one big flat floor. The drop frames the walkable area and gives depth at gameplay zoom.
+- **Depth fog.** The drop fades into one fog color per biome, so walkable edges read as dark silhouettes against it. The fog color comes from the biome palette and is never a trait hue at high saturation.
+- **Calm floors.** Floors are mid-dark, low contrast, with only a subtle tile pattern. Detail goes on walls, rails and edges. An actor's base color is always brighter than the floor under it.
+- **Clear edges.** Every walkable edge has a rim: railing, low wall, cliff lip or spikes, in the biome's shape language.
+- **Props stay off walkable tiles.** Props go on edges, corners, walls and background pieces. Only rarely put a prop on a walkable tile, and only when it is meant to be an obstacle or a landmark. Keep combat space clear.
+- **Light sources are part of the kit.** Torches, braziers, candles, lava cracks and glowing pools sit along edges and make warm pools of light, with darkness between them. Warm local light against cool fog. Key rooms may get one cold light shaft from above.
+- **Arena landmarks.** Each arena or key room gets one large floor emblem or dais. Its glow uses the biome accent, never a trait color.
+- **Height pieces.** Stairs, raised daises, pillars rising out of the drop, floating debris in the fog.
+- **Biome color.** One dominant hue for fog and stone tint, plus one opposite accent for light sources.
+
+**Minimum tile kit per biome**
+
+| Group | Pieces |
+|---|---|
+| Ground | floor tiles (2–3 variants) |
+| Edges | edge / cliff piece: straight, inner corner, outer corner; railing |
+| Connections | bridge segment, stairs |
+| Height | pillar, raised dais |
+| Landmark | arena floor emblem |
+| Light | 2–3 light-source props |
+| Clutter | 3–4 edge-clutter props |
+| Drop / background | spires, rocks or ruins that stand in the fog below the walkable level |
+
+## 13. Skill VFX
+
+References: `Docs/inspiration/Skills/`.
+
+- **Domes and shields:** bright glowing rim, a glowing ring where the effect cuts the ground, a subtle inner pattern (veins, hexagons, runes), and a mostly transparent middle so gameplay stays readable.
+- **Fire:** hard-edged stylized blobs, not realistic smoke. Gradient along the length from a white-hot core to yellow, orange and a red fringe, breaking into ember shapes at the tip.
+- An effect's color follows its element or trait color (section 4).
+- Effects are the brightest things on screen; the environment stays darker and less saturated around them.
