@@ -53,4 +53,7 @@ public enum VfxType
     Consecration = 49,
     DarkHealOrb = 50,
     DarkHealBurst = 51,
+    StrikeSlash = 52,
+    StrikeShock = 53,
+    StrikeThrust = 54,
 }

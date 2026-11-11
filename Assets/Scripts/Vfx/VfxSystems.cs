@@ -43,6 +43,7 @@ public partial class VfxSystem : SystemBase
     const float StatusInterval = 0.4f;
     const int StatusCap = 10;   // Per status and interval, so swarms stay cheap
     const int HitCap = 8;       // Crit, dodge, block and ripple bursts per frame, each
+    const int StrikeCap = 12;   // Strike effects (slash, shockwave, thrust) per frame
     const float StepLength = 1.2f;  // Meters walked between footstep puffs
     const float FootDepth = 1.05f;  // Meters from a unit's root (its capsule's centre) down to its feet, times its scale
 
@@ -201,6 +202,7 @@ public partial class VfxSystem : SystemBase
                     if (field) vfx.Scale(binding.Handle, EntityManager.GetComponentData<TimezoneField>(e).Radius);
                     bindings.Add((e, binding));
                 }
+            int strikes = 0;
             using (var entities = _newAttacks.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
@@ -219,12 +221,14 @@ public partial class VfxSystem : SystemBase
                         bool enemies = EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Enemy;
                         QueueChain(t.Position, attack.Radius, enemies);
                     }
-                    else if (attack.Type == DamageType.Cold)
+                    else if (attack.Type == DamageType.Cold && !EntityManager.HasComponent<AttackShape>(e))
                     {
                         // Sized to the attack's area (Cold Snap's radius); drawn at radius 1
                         int nova = vfx.Burst(VfxType.ColdNova, t.Position, Quaternion.identity);
                         if (attack.Radius > 0f) vfx.Scale(nova, attack.Radius);
                     }
+                    // Player-side area attacks land with a strike drawn from their shape, tinted by damage type
+                    if (strikes < StrikeCap && attack.Origin.Label != DamageLabel.Consecration && TargetsEnemies(e) && Strike(vfx, e, t, attack)) strikes++;
                     bindings.Add((e, new VfxBinding { Position = t.Position, Rotation = quaternion.identity }));
                 }
         }
@@ -317,6 +321,41 @@ public partial class VfxSystem : SystemBase
             if (!EntityManager.Exists(entity)) _stale.Add(entity);
         foreach (var entity in _stale) _lastSteps.Remove(entity);
     }
+
+    bool TargetsEnemies(Entity e) => EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Enemy;
+
+    /// <summary>
+    /// The generic look of an area attack: a slash arc for a cone (its reach), a thrust streak for a rectangle (its length),
+    /// a shockwave for a round attack of 2 m or more. Lightning and Cold round attacks keep their own bursts.
+    /// </summary>
+    bool Strike(VfxManager vfx, Entity e, LocalTransform t, Attack attack)
+    {
+        int handle;
+        if (EntityManager.HasComponent<AttackShape>(e))
+        {
+            var shape = EntityManager.GetComponentData<AttackShape>(e);
+            bool cone = shape.Kind == AttackShapeKind.Cone;
+            handle = vfx.Burst(cone ? VfxType.StrikeSlash : VfxType.StrikeThrust, t.Position, t.Rotation);
+            vfx.Scale(handle, cone ? math.max(attack.Radius, 0.5f) : math.max(shape.HalfExtents.z, 0.5f));
+        }
+        else if (attack.Radius >= 2f && attack.Type != DamageType.Cold && attack.Type != DamageType.Lightning)
+        {
+            handle = vfx.Burst(VfxType.StrikeShock, t.Position, Quaternion.identity);
+            vfx.Scale(handle, attack.Radius);
+        }
+        else return false;
+        vfx.Tint(handle, StrikeColor(attack.Type));
+        return true;
+    }
+
+    static Color StrikeColor(DamageType type) => type switch
+    {
+        DamageType.Fire => new Color(1f, 0.48f, 0.16f),
+        DamageType.Cold => new Color(0.62f, 0.9f, 1f),
+        DamageType.Poison => new Color(0.55f, 1f, 0.23f),
+        DamageType.Lightning => new Color(1f, 0.91f, 0.35f),
+        _ => new Color(0.91f, 0.93f, 0.97f),
+    };
 
     static Vector3 Feet(LocalTransform t) => t.Position - new float3(0f, FootDepth * t.Scale, 0f);
 
