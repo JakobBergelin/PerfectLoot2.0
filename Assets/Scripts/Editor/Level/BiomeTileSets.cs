@@ -29,6 +29,7 @@ public static class BiomeTileSets
     const int WallLayer = 7;
 
     public enum FloorPattern { Slabs, Plates, Mud }
+    public enum AmbientKind { None, Embers, Snow, Spores, Motes }
 
     public class Biome
     {
@@ -56,13 +57,14 @@ public static class BiomeTileSets
         public string AmbientSky, AmbientEquator, AmbientGround, Fog; public float FogDensity = 0.012f;
         public float Bloom = 0.35f, Saturation = 5f, Contrast = 8f, Vignette = 0.28f;
         public string ShadowTint, HighlightTint;
+        public AmbientKind Ambient;
     }
 
     public static readonly Biome[] All =
     {
         new Biome
         {
-            Name = "EmberDepths", TestScene = "TestKillEnemies", LiquidFactor = 0.75f,
+            Name = "EmberDepths", TestScene = "TestKillEnemies", Ambient = AmbientKind.Embers, LiquidFactor = 0.75f,
             Style = new BiomeTileGenerator.Style { WallHeight = 3.2f, WallTopJitter = 0.55f, WallBulge = 0.32f, BoundaryNoise = 0.2f, GlowReach = 1.3f, Accent = BiomeTileGenerator.Accent.MagmaSeam, RimRockChance = 0.3f },
             Pattern = FloorPattern.Slabs, Floor = "#3C2E3A", FloorAlt = "#382C38", FloorGap = "#221A24",
             WallSide = "#4E4A5E", WallTop = "#6E6880", Bank = "#2E2430", Rock = "#5E5A72", Accent = "#FF5418", AccentGlow = "#FF4A1C",
@@ -74,7 +76,7 @@ public static class BiomeTileSets
         },
         new Biome
         {
-            Name = "DrownedMire", TestScene = "TestSurvive", LiquidFactor = 0.95f,
+            Name = "DrownedMire", TestScene = "TestSurvive", Ambient = AmbientKind.Spores, LiquidFactor = 0.95f,
             Style = new BiomeTileGenerator.Style { WallHeight = 2.3f, WallTopJitter = 0.4f, WallBulge = 0.38f, WallRows = 2, BoundaryNoise = 0.24f, LiquidSurfaceY = -0.22f, GlowReach = 0.9f, Accent = BiomeTileGenerator.Accent.Mushrooms, AccentChance = 0.22f, RimRockChance = 0.25f },
             Pattern = FloorPattern.Mud, Floor = "#3E3436", FloorAlt = "#3A4438", FloorGap = "#2A2428",
             WallSide = "#3E2E38", WallTop = "#3F4C3E", Bank = "#2A2428", Rock = "#6C6A7C", Accent = "#C8447E", AccentGlow = "#FF5FA8", AccentGlowStrength = 0.9f,
@@ -86,7 +88,7 @@ public static class BiomeTileSets
         },
         new Biome
         {
-            Name = "FrozenHollow", TestScene = "TestKillBoss", LiquidFactor = 0.6f,
+            Name = "FrozenHollow", TestScene = "TestKillBoss", Ambient = AmbientKind.Snow, LiquidFactor = 0.6f,
             Style = new BiomeTileGenerator.Style { WallHeight = 3f, WallTopJitter = 0.6f, WallBulge = 0.2f, BoundaryNoise = 0.12f, NoiseScale = 1.1f, Accent = BiomeTileGenerator.Accent.Crystals, AccentChance = 0.35f, CrownRocks = 4, RimRockChance = 0.2f },
             Pattern = FloorPattern.Plates, Floor = "#3A3F52", FloorAlt = "#363B4E", FloorGap = "#22263A",
             WallSide = "#6E7A94", WallTop = "#C6D2EA", Bank = "#2E3446", Rock = "#5C6680", Accent = "#3F74E0", AccentGlow = "#4A7CFF", AccentGlowStrength = 0.9f,
@@ -97,7 +99,7 @@ public static class BiomeTileSets
         },
         new Biome
         {
-            Name = "AbyssalRuins", TestScene = "TestReachExit", Border = WfcCornerRule.Water, LiquidFactor = 1.1f,
+            Name = "AbyssalRuins", TestScene = "TestReachExit", Ambient = AmbientKind.Motes, Border = WfcCornerRule.Water, LiquidFactor = 1.1f,
             Style = new BiomeTileGenerator.Style { WallHeight = 2.4f, WallTopJitter = 0.7f, WallBulge = 0.08f, BoundaryNoise = 0.1f, Chasm = true, ChasmDepth = 12f, GlowReach = 0.9f, RimRockChance = 0.2f, CrownRocks = 4 },
             Pattern = FloorPattern.Slabs, Floor = "#403C4A", FloorAlt = "#3C3846", FloorGap = "#262330",
             WallSide = "#6E6880", WallTop = "#7E7892", Bank = "#2A2834", Rock = "#5E5A72", Accent = "#3FC4B4", AccentGlow = "#4FD6C8",
@@ -474,6 +476,9 @@ public static class BiomeTileSets
         RenderSettings.ambientSkyColor = Hex(b.AmbientSky);
         RenderSettings.ambientEquatorColor = Hex(b.AmbientEquator);
         RenderSettings.ambientGroundColor = Hex(b.AmbientGround);
+        foreach (var old in scene.GetRootGameObjects().Where(go => go.name.StartsWith("Ambient_")).ToList()) Object.DestroyImmediate(old);
+        var ambient = BuildAmbient(b);
+        if (ambient != null) SceneManager.MoveGameObjectToScene((GameObject)PrefabUtility.InstantiatePrefab(ambient), scene);
         RenderSettings.skybox = FogSky();
         RenderSettings.fog = true;
         RenderSettings.fogMode = FogMode.ExponentialSquared;
@@ -494,6 +499,127 @@ public static class BiomeTileSets
         EditorSceneManager.SaveScene(subscene);
         EditorSceneManager.CloseScene(subscene, true);
         Debug.Log($"{scenePath} now uses the {b.Name} biome.");
+    }
+
+    // ---------- ambient particles ----------
+
+    /// <summary>
+    /// A world-space particle volume that follows the camera's view (AmbientParticlesFollow): embers rising off the lava,
+    /// snow, spores or motes rising out of the chasm. Saved as a prefab beside the tile set.
+    /// </summary>
+    static GameObject BuildAmbient(Biome b)
+    {
+        if (b.Ambient == AmbientKind.None) return null;
+        string folder = $"{Root}/{b.Name}";
+        var material = Load($"{folder}/Materials/{b.Name}_Ambient.mat", "Universal Render Pipeline/Particles/Unlit");
+        material.SetTexture("_BaseMap", ParticleDot());
+        material.SetFloat("_Surface", 1f);
+        material.SetFloat("_Blend", b.Ambient == AmbientKind.Snow ? 0f : 2f);   // Snow: alpha blend; glowing kinds: additive
+        material.SetFloat("_SrcBlend", b.Ambient == AmbientKind.Snow ? (float)BlendMode.SrcAlpha : (float)BlendMode.SrcAlpha);
+        material.SetFloat("_DstBlend", b.Ambient == AmbientKind.Snow ? (float)BlendMode.OneMinusSrcAlpha : (float)BlendMode.One);
+        material.SetFloat("_ZWrite", 0f);
+        material.renderQueue = (int)RenderQueue.Transparent;
+        material.SetOverrideTag("RenderType", "Transparent");
+        material.EnableKeyword("_SURFACE_TYPE_TRANSPARENT");
+        EditorUtility.SetDirty(material);
+
+        var root = new GameObject("Ambient_" + b.Name);
+        root.AddComponent<AmbientParticlesFollow>().GroundHeight = 0f;
+        var system = root.AddComponent<ParticleSystem>();
+        system.Stop(true, ParticleSystemStopBehavior.StopEmittingAndClear);
+        var main = system.main;
+        main.loop = true;
+        main.playOnAwake = true;
+        main.prewarm = true;
+        main.simulationSpace = ParticleSystemSimulationSpace.World;
+        main.maxParticles = 600;
+        main.gravityModifier = 0f;
+        var emission = system.emission;
+        var shape = system.shape;
+        shape.shapeType = ParticleSystemShapeType.Box;
+        var velocity = system.velocityOverLifetime;
+        velocity.enabled = true;
+        velocity.space = ParticleSystemSimulationSpace.World;
+        var noise = system.noise;
+        noise.enabled = true;
+        noise.frequency = 0.35f;
+        noise.scrollSpeed = 0.2f;
+        var color = system.colorOverLifetime;
+        color.enabled = true;
+        var renderer = root.GetComponent<ParticleSystemRenderer>();
+        renderer.sharedMaterial = material;
+        renderer.renderMode = ParticleSystemRenderMode.Billboard;
+        renderer.shadowCastingMode = ShadowCastingMode.Off;
+        renderer.receiveShadows = false;
+        renderer.maxParticleSize = 0.05f;
+
+        Color tint; float rate, size, life;
+        switch (b.Ambient)
+        {
+            case AmbientKind.Embers:
+                tint = new Color(2.4f, 0.55f, 0.12f); rate = 70f; size = 0.11f; life = 6f;
+                shape.position = new Vector3(0f, 0.2f, 0f); shape.scale = new Vector3(44f, 0.5f, 44f);
+                velocity.y = new ParticleSystem.MinMaxCurve(0.5f, 1.4f); noise.strength = 0.6f;
+                break;
+            case AmbientKind.Snow:
+                tint = new Color(0.86f, 0.9f, 1f); rate = 380f; size = 0.13f; life = 9f;
+                shape.position = new Vector3(0f, 11f, 0f); shape.scale = new Vector3(48f, 1f, 48f);
+                velocity.y = new ParticleSystem.MinMaxCurve(-1.6f, -0.9f); noise.strength = 0.45f;
+                break;
+            case AmbientKind.Spores:
+                tint = new Color(1.3f, 0.45f, 0.75f); rate = 45f; size = 0.08f; life = 8f;
+                shape.position = new Vector3(0f, 1.2f, 0f); shape.scale = new Vector3(44f, 2.4f, 44f);
+                velocity.y = new ParticleSystem.MinMaxCurve(0.05f, 0.25f); noise.strength = 0.5f;
+                break;
+            default:
+                tint = new Color(0.35f, 1.3f, 1.2f); rate = 55f; size = 0.08f; life = 8f;
+                shape.position = new Vector3(0f, -3f, 0f); shape.scale = new Vector3(48f, 4f, 48f);
+                velocity.y = new ParticleSystem.MinMaxCurve(0.4f, 1f); noise.strength = 0.4f;
+                break;
+        }
+        velocity.x = new ParticleSystem.MinMaxCurve(-0.15f, 0.15f);
+        velocity.z = new ParticleSystem.MinMaxCurve(-0.15f, 0.15f);
+        main.startLifetime = new ParticleSystem.MinMaxCurve(life * 0.6f, life);
+        main.startSize = new ParticleSystem.MinMaxCurve(size * 0.6f, size * 1.3f);
+        main.startSpeed = 0f;
+        // Particle colors are 8 bit, so the HDR glow goes on the material and the particles stay white
+        material.SetColor("_BaseColor", tint);
+        main.startColor = Color.white;
+        emission.rateOverTime = rate;
+        var fade = new Gradient();
+        fade.SetKeys(new[] { new GradientColorKey(Color.white, 0f), new GradientColorKey(Color.white, 1f) },
+                     new[] { new GradientAlphaKey(0f, 0f), new GradientAlphaKey(1f, 0.15f), new GradientAlphaKey(0.8f, 0.7f), new GradientAlphaKey(0f, 1f) });
+        color.color = fade;
+
+        var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/{b.Name}_Ambient.prefab");
+        Object.DestroyImmediate(root);
+        return prefab;
+    }
+
+    /// <summary>A soft round 64 px dot for particles, drawn once.</summary>
+    static Texture2D ParticleDot()
+    {
+        string path = $"{Root}/PL_ParticleDot.png";
+        var existing = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+        if (existing != null) return existing;
+        const int size = 64;
+        var texture = new Texture2D(size, size, TextureFormat.RGBA32, false);
+        for (int y = 0; y < size; y++)
+            for (int x = 0; x < size; x++)
+            {
+                float d = Vector2.Distance(new Vector2(x + 0.5f, y + 0.5f), new Vector2(size / 2f, size / 2f)) / (size / 2f);
+                float a = Mathf.Clamp01(1f - d);
+                texture.SetPixel(x, y, new Color(1f, 1f, 1f, a * a * (3f - 2f * a)));
+            }
+        texture.Apply();
+        File.WriteAllBytes(path, texture.EncodeToPNG());
+        Object.DestroyImmediate(texture);
+        AssetDatabase.ImportAsset(path);
+        var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+        importer.alphaIsTransparency = true;
+        importer.wrapMode = TextureWrapMode.Clamp;
+        importer.SaveAndReimport();
+        return AssetDatabase.LoadAssetAtPath<Texture2D>(path);
     }
 
     /// <summary>The shared sky material that shows the scene's fog color (PerfectLoot/FogSky).</summary>
