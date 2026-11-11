@@ -202,7 +202,12 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         var buffer = entityManager.GetBuffer<Skill>(player);
         buffer.Clear();
         foreach (var (slotIndex, skill) in equipped)
-            buffer.Add(ToSkill(slotIndex, skill));
+        {
+            // The skill's own mode (Stances' stance) carries on from before (a new entity after a death or a scene)
+            var entry = ToSkill(slotIndex, skill);
+            entry.State.Variant = slots[slotIndex].Variant;
+            buffer.Add(entry);
+        }
 
         // Its copy uses the skills above
         foreach (var (_, skill) in equipped)

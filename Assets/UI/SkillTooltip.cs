@@ -48,7 +48,7 @@ public static class SkillTooltip
             {
                 if (requirements[i] <= 0) continue;
                 string part = $"{SkillRequirements.Short[i]} {requirements[i]}";
-                if (stats is StatBlock s) part = $"<color={(Attribute(s, i) >= requirements[i] ? "#7FD07F" : "#E05050")}>{part}</color>";
+                if (stats is StatBlock s) part = $"<color={(SkillRequirements.Attributes(s)[i] >= requirements[i] ? "#7FD07F" : "#E05050")}>{part}</color>";
                 parts.Add(part);
             }
             container.Add(Text("Requires " + string.Join(" · ", parts)));
@@ -78,9 +78,6 @@ public static class SkillTooltip
             container.Add(text);
         }
     }
-
-    // Strength (0), Agility (1) or Intelligence (2)
-    static float Attribute(in StatBlock stats, int index) => index == 0 ? stats.Strength : index == 1 ? stats.Agility : stats.Intelligence;
 
     // "7.5 (10)": the value after reductions, base greyed when they differ
     static SkillLine Reduced(SkillLine line, float baseValue, float? current, string unit)

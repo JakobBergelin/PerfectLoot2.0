@@ -16,6 +16,13 @@ namespace ActiveSkills
         public static readonly string[] Names = { "Strength", "Agility", "Intelligence" };
         public static readonly string[] Short = { "Str", "Agi", "Int" };
 
+        /// <summary>
+        /// The Strength, Agility and Intelligence requirements are checked against: the unit's attributes, with its
+        /// AgilityForStrength share of Agility added to Strength (Ambidextrous).
+        /// </summary>
+        public static float3 Attributes(in StatBlock stats) =>
+            new float3(stats.Strength + stats.Agility * stats.AgilityForStrength, stats.Agility, stats.Intelligence);
+
         /// <summary>True when these attributes (x Strength, y Agility, z Intelligence) cover the requirements.</summary>
         public static bool Meets(int3 requirements, float3 attributes) => math.all(attributes >= requirements);
 

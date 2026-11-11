@@ -127,6 +127,19 @@
     display: flex;
 }
 
+/* Stances: the border in the current stance's attribute colour */
+.skill-slot--stance-str {
+    border-color: #E05050;
+}
+
+.skill-slot--stance-agi {
+    border-color: #50C878;
+}
+
+.skill-slot--stance-int {
+    border-color: #4A90E2;
+}
+
 /* Requirements not met (ActiveSkillSlot.MeetsRequirements): greyed out; after cooldown so it wins */
 .skill-slot--locked > .skill-slot__icon {
     -unity-background-image-tint-color: #4A4A4A;

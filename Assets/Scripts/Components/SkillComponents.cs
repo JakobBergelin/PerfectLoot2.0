@@ -42,6 +42,7 @@ public struct SkillState
     public bool HasEnoughResource;      // Set by SkillActivationSystem
     public bool MeetsRequirements;      // The unit's attributes cover Skill.Requirements (SkillActivationSystem)
     public bool Usable;                 // MeetsRequirements, or anywhere but a dungeon: else it can't be used (SkillActivationSystem)
+    public int Variant;                 // A skill's own mode, kept by its slot through deaths and scenes (Stances: 0 Strength, 1 Agility, 2 Intelligence)
 }
 
 public enum SkillType
@@ -79,6 +80,8 @@ public enum SkillType
     Immolation,
     CursedHammer,
     FrostLance,
+    Stances,
+    BloodRite,
 }
 
 /// <summary>
@@ -854,4 +857,29 @@ public struct FrostLance : IComponentData, IEnableableComponent
     public float ResourcePerAttack;
     public float ProjectileDamageReduction; // The buff's: 0.2 = -20%
     public float BuffDuration;              // Seconds, scaled by the buff duration stat
+}
+
+/// <summary>
+/// Stances: each press (Cooldown apart) moves to the next stance, Strength, Agility, Intelligence and back, kept in the
+/// skill's SkillState.Variant. The stance gives Bonus to its attribute (StancesStatsSystem) while the skill is usable.
+/// </summary>
+public struct Stances : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Bonus;
+    public float Elapsed;       // Seconds since the last switch
+}
+
+/// <summary>
+/// Blood Rite: when off cooldown, pays HealthCost of max health (never below 1) and grants the Blood Rite buff
+/// (BloodRiteBuff: Strength and Agility) for Duration, scaled by BuffDuration.
+/// </summary>
+public struct BloodRite : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float HealthCost;    // Share of max health: 0.2 = 20%
+    public float Duration;
+    public float StrengthBonus;
+    public float AgilityBonus;
+    public float Elapsed;       // Seconds since the last use
 }

@@ -236,7 +236,7 @@ public class PortalHUD : MonoBehaviour
                 var missing = new System.Collections.Generic.List<string>();
                 for (int k = 0; k < 3; k++)
                 {
-                    float have = stats is StatBlock s ? (k == 0 ? s.Strength : k == 1 ? s.Agility : s.Intelligence) : 0f;
+                    float have = stats is StatBlock s ? ActiveSkills.SkillRequirements.Attributes(s)[k] : 0f;
                     if (requirements[k] > have) missing.Add($"{requirements[k]} {ActiveSkills.SkillRequirements.Short[k]}");
                 }
                 string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;

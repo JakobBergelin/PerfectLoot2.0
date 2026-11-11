@@ -55,6 +55,7 @@ public struct StatBlock
     public float DodgeChance;
     public float ProjectileDamageReduction;    // Less damage from projectiles' hits: 0.2 = -20% (no cap; 1 or more takes none)
     public float MeleeDamageReduction;         // Less damage from enemies' melee hits, the same way
+    public float AgilityForStrength;           // Share of Agility that also counts toward Strength requirements (Ambidextrous: 0.5); not an affix
 
     // Elemental conversion legendary powers: every skill hit and area of this unit deals ConvertDamageTo instead.
     // Set each frame by ElementalConversionSystem, not by items' stats (Add leaves them alone).
@@ -137,6 +138,7 @@ public struct StatBlock
         DodgeChance += other.DodgeChance;
         ProjectileDamageReduction += other.ProjectileDamageReduction;
         MeleeDamageReduction += other.MeleeDamageReduction;
+        AgilityForStrength += other.AgilityForStrength;
     }
 
     /// <summary>Undoes Add (the character panel's swap preview takes one set of equipment stats out). Keep in step with Add.</summary>
@@ -189,6 +191,7 @@ public struct StatBlock
         DodgeChance -= other.DodgeChance;
         ProjectileDamageReduction -= other.ProjectileDamageReduction;
         MeleeDamageReduction -= other.MeleeDamageReduction;
+        AgilityForStrength -= other.AgilityForStrength;
     }
 }
 

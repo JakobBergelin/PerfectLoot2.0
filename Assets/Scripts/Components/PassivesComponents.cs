@@ -100,6 +100,8 @@ public enum PassiveType
 
     // Added later (kept at the end so the values above stay put)
     ShadowPriest,
+    Ambidextrous,
+    MomentumOfMind,
 }
 
 // Resource types, added by CharacterManager from a ResourceDefinition asset
@@ -238,6 +240,18 @@ public struct Brittle : IComponentData
 /// companions') heals them and every ally within Range, split evenly, as dark healing orbs flying back from the enemy
 /// hit hardest. Healing is merged: the first damage sends at once, and the rest gathers for SendInterval (ShadowPriestSystem).
 /// </summary>
+/// <summary>Ambidextrous: AgilityForStrength of Agility also counts toward Strength requirements (StatBlock.AgilityForStrength).</summary>
+public struct Ambidextrous : IComponentData
+{
+    public float AgilityForStrength;    // 0.5 = half of Agility
+}
+
+/// <summary>Momentum of Mind: IntelligencePerCooldown for each of the unit's skills on cooldown right now.</summary>
+public struct MomentumOfMind : IComponentData
+{
+    public float IntelligencePerCooldown;
+}
+
 public struct ShadowPriest : IComponentData
 {
     public float Range;             // Meters around the wearer an ally can be

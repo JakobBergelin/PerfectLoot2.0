@@ -33,6 +33,7 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
     const string WheelHint = "Click a skill to equip it · Esc to go back";
     const string GamepadWheelHint = "A Equip · LT/RT Spokes · B Back";
     const string WideClass = "skills-panel--wide";
+    static readonly string[] StanceClasses = { "sp-card--stance-str", "sp-card--stance-agi", "sp-card--stance-int" };
 
     /// <summary>One slot in the panel; active and passive slots only differ in these delegates and their look.</summary>
     class SlotView
@@ -185,6 +186,13 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
             for (int i = 0; i < _activeSlots.Count; i++) _activeSlots[i].Key.text = KeyLabel(i);
         }
         foreach (var view in _activeSlots) RefreshSlot(view);
+        // Stances: its card's border in the current stance's attribute colour
+        for (int i = 0; i < _activeSlots.Count; i++)
+        {
+            var slot = ActiveSlot(i);
+            int stance = slot != null && !slot.IsEmpty && slot.EquippedSkill.Type == SkillType.Stances ? slot.Variant : -1;
+            for (int s = 0; s < StanceClasses.Length; s++) _activeSlots[i].Element.EnableInClassList(StanceClasses[s], stance == s);
+        }
         foreach (var view in _passiveSlots) RefreshSlot(view);
         RefreshSlot(_classPassive);
         _classPassive.Element.style.display = _classPassive.Shown != null ? DisplayStyle.Flex : DisplayStyle.None;
@@ -441,7 +449,7 @@ public class SkillsPanelHUD : MonoBehaviour, IPerPlayer
         var characters = CharacterManager.For(PlayerIndex);
         var stats = SkillTooltip.CurrentStats(PlayerIndex);
         _wheel.Open(manager != null ? manager.AllSkills : null, ActiveSlot(index)?.EquippedSkill, skill => KeyOfOtherSlot(skill, index),
-                    stats is StatBlock s ? new float3(s.Strength, s.Agility, s.Intelligence) : ClassAttributes(characters),
+                    stats is StatBlock s ? SkillRequirements.Attributes(s) : ClassAttributes(characters),
                     characters != null ? characters.Class : null, stats);
     }
 

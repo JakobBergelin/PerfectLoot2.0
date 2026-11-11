@@ -19,6 +19,7 @@ public class ActiveSkillSlot : MonoBehaviour
     public bool HasEnoughResource;
     public bool MeetsRequirements = true;   // The player's attributes cover the skill's requirements
     public bool Usable = true;              // MeetsRequirements, or outside a dungeon
+    public int Variant;                     // The skill's own mode (Stances' stance), kept here through deaths and scenes
     public float CooldownRemaining;
     public float CooldownDuration;
 
@@ -47,6 +48,7 @@ public class ActiveSkillSlot : MonoBehaviour
         HasEnoughResource = state.HasEnoughResource;
         MeetsRequirements = state.MeetsRequirements;
         Usable = state.Usable;
+        Variant = state.Variant;
         CooldownRemaining = state.CooldownRemaining;
         CooldownDuration = state.CooldownDuration;
     }

@@ -20,6 +20,8 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
     const string CooldownClass = "skill-slot--cooldown";
     const string NoResourceClass = "skill-slot--no-resource";
     const string LockedClass = "skill-slot--locked";
+    // Stances: the border in the current stance's attribute colour (ActiveSkillSlot.Variant)
+    static readonly string[] StanceClasses = { "skill-slot--stance-str", "skill-slot--stance-agi", "skill-slot--stance-int" };
 
     class SlotView
     {
@@ -208,6 +210,8 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
         view.Slot.EnableInClassList(NoResourceClass, !empty && !slot.HasEnoughResource);
         // Requirements not met: greyed out (still usable outside dungeons)
         view.Slot.EnableInClassList(LockedClass, !empty && !slot.MeetsRequirements);
+        int stance = !empty && skill.Type == SkillType.Stances ? slot.Variant : -1;
+        for (int i = 0; i < StanceClasses.Length; i++) view.Slot.EnableInClassList(StanceClasses[i], stance == i);
         view.Slot.EnableInClassList(CooldownClass, onCooldown);
 
         view.Sweep.Fraction = onCooldown ? slot.CooldownFraction : 0f;

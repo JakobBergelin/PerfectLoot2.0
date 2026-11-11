@@ -34,6 +34,7 @@ public enum EffectType
     DelayedDamage,
     StolenSouls,
     FrostLance,
+    BloodRite,
 }
 
 public enum EffectKind
@@ -150,6 +151,17 @@ public struct AsceticBuff : IComponentData, IEnableableComponent
 public struct AfterglowBuff : IComponentData, IEnableableComponent, ITimedEffect
 {
     public float DamageBonus;
+    public float TimeRemaining;
+    public float Duration;
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Blood Rite skill's buff: extra Strength and Agility (BloodRiteBuffStatsSystem).</summary>
+public struct BloodRiteBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float Strength;
+    public float Agility;
     public float TimeRemaining;
     public float Duration;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }

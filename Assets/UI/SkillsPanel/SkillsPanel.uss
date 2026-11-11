@@ -487,3 +487,16 @@
     padding: 0;
     margin: 0;
 }
+
+/* Stances: its card's border in the current stance's attribute colour */
+.sp-card--stance-str {
+    border-color: #E05050;
+}
+
+.sp-card--stance-agi {
+    border-color: #50C878;
+}
+
+.sp-card--stance-int {
+    border-color: #4A90E2;
+}

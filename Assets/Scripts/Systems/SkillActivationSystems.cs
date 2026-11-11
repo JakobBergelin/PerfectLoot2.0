@@ -34,7 +34,7 @@ public partial class SkillActivationSystem : SystemBase
             // Sonic Ball rolling: only Sonic Ball itself stays usable (held keeps it rolling)
             var calculatedStats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity) : default;
             var stats = calculatedStats.Value;
-            UpdateUsable(entity, skills, new float3(stats.Strength, stats.Agility, stats.Intelligence), enforceRequirements);
+            UpdateUsable(entity, skills, ActiveSkills.SkillRequirements.Attributes(stats), enforceRequirements);
 
             bool rolling = SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling;
             // Hookshot Slash out or pulling: no skills (its own system carries on without being held)
@@ -155,6 +155,9 @@ public partial class SkillActivationSystem : SystemBase
                 break;
             case SkillType.FrostLance:
                 if (SystemAPI.HasComponent<FrostLance>(entity)) SystemAPI.SetComponentEnabled<FrostLance>(entity, enabled);
+                break;
+            case SkillType.BloodRite:
+                if (SystemAPI.HasComponent<BloodRite>(entity)) SystemAPI.SetComponentEnabled<BloodRite>(entity, enabled);
                 break;
             case SkillType.ColdSnap:
                 if (SystemAPI.HasComponent<ColdSnap>(entity)) SystemAPI.SetComponentEnabled<ColdSnap>(entity, enabled);
