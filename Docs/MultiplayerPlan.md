@@ -2,6 +2,9 @@
 
 How local split-screen and later online play can work. Written 2026-11-06 on `flair/evening-polish`. No code has been changed for this plan.
 
+**Update 2026-11-13:** phases O2 to O5 are done on `net/foundation`. How the online game works now is in
+[MultiplayerArchitecture.md](MultiplayerArchitecture.md).
+
 **Update 2026-11-12:** couch co-op has shipped since (shared camera with a tether, `CoopManager`, `CoopHUD`, per-player managers and HUDs through `IPerPlayer`), so the local phases M1-M5 below are mostly history. The online plan agreed on 2026-11-12, with Steam, is in [Online with Steam](#online-with-steam-2026-11-12) at the end. It builds on the facts in "Networking" below, which still apply.
 
 Marks: **[V]** verified by reading the code at this commit. **[A]** assumed or from memory, check before relying on it. Nothing here was run with two real players.
