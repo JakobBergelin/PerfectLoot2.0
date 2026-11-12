@@ -40,7 +40,7 @@ MeshFilter:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 126307881528713830}
-  m_Mesh: {fileID: -5396879147202836708, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
+  m_Mesh: {fileID: -7008881112300170948, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
 --- !u!23 &8072689487098658458
 MeshRenderer:
   m_ObjectHideFlags: 0
@@ -149,7 +149,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -5384628327860958767, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
+  m_Mesh: {fileID: 531176387210528004, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
 --- !u!114 &6533428774950767468
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -251,7 +251,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: -1645452370384606260, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
+  m_Mesh: {fileID: -6211176496407136304, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
 --- !u!1 &4822373712575911394
 GameObject:
   m_ObjectHideFlags: 0
@@ -305,7 +305,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 3701404519762573909, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
+  m_Mesh: {fileID: -2907869448437255020, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
 --- !u!1 &5094288726418026301
 GameObject:
   m_ObjectHideFlags: 0
@@ -360,7 +360,7 @@ MeshCollider:
   serializedVersion: 5
   m_Convex: 0
   m_CookingOptions: 30
-  m_Mesh: {fileID: 57888516900523292, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
+  m_Mesh: {fileID: 5264487521590595726, guid: 2de3b02c3016a1048ba9efc7fcb7d48a, type: 2}
 --- !u!114 &3816647562418789597
 MonoBehaviour:
   m_ObjectHideFlags: 0

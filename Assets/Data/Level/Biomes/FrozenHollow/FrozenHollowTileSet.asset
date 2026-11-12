@@ -19,7 +19,7 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
-    Weight: 115.2
+    Weight: 133.12
     AllowRotations: 1
   - Name: Tile_FFFF_Alt
     Prefab: {fileID: 6924942781134702358, guid: 62e0c328965f3a54db313fcdd635a26c, type: 3}
@@ -27,7 +27,7 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
-    Weight: 89.6
+    Weight: 92.16
     AllowRotations: 1
   - Name: Tile_FFFF_Var
     Prefab: {fileID: 5324756800094408614, guid: 427fd0fe1da0ee64ea56f3cb2c38c9b5, type: 3}
@@ -35,7 +35,7 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
-    Weight: 51.2
+    Weight: 30.72
     AllowRotations: 1
   - Name: Tile_WFFF
     Prefab: {fileID: 7047306008877205580, guid: 8832bb82955e7014abf963eb80a53e07, type: 3}

@@ -65,7 +65,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "EmberDepths", TestScene = "TestKillEnemies", Ambient = AmbientKind.Embers, LiquidFactor = 0.75f,
-            Style = new BiomeTileGenerator.Style { WallHeight = 3.2f, WallTopJitter = 0.55f, WallBulge = 0.32f, BoundaryNoise = 0.2f, GlowReach = 1.3f, Accent = BiomeTileGenerator.Accent.MagmaSeam, RimRockChance = 0.3f },
+            Style = new BiomeTileGenerator.Style { WallHeight = 3.2f, WallTopJitter = 0.55f, WallBulge = 0.32f, BoundaryNoise = 0.2f, GlowReach = 1.3f, Accent = BiomeTileGenerator.Accent.MagmaSeam, Feature = BiomeTileGenerator.FloorFeature.Cracks, RimRockChance = 0.3f },
             Pattern = FloorPattern.Slabs, Floor = "#3C2E3A", FloorAlt = "#382C38", FloorGap = "#221A24",
             WallSide = "#4E4A5E", WallTop = "#6E6880", Bank = "#2E2430", Rock = "#5E5A72", Accent = "#FF5418", AccentGlow = "#FF4A1C",
             EnvShadow = "#2E4252",
@@ -77,7 +77,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "DrownedMire", TestScene = "TestSurvive", Ambient = AmbientKind.Spores, LiquidFactor = 0.95f,
-            Style = new BiomeTileGenerator.Style { WallHeight = 2.3f, WallTopJitter = 0.4f, WallBulge = 0.38f, WallRows = 2, BoundaryNoise = 0.24f, LiquidSurfaceY = -0.22f, GlowReach = 0.9f, Accent = BiomeTileGenerator.Accent.Mushrooms, AccentChance = 0.22f, RimRockChance = 0.25f },
+            Style = new BiomeTileGenerator.Style { WallHeight = 2.3f, WallTopJitter = 0.4f, WallBulge = 0.38f, WallRows = 2, BoundaryNoise = 0.24f, LiquidSurfaceY = -0.22f, GlowReach = 0.9f, Accent = BiomeTileGenerator.Accent.Mushrooms, Feature = BiomeTileGenerator.FloorFeature.Puddles, AccentChance = 0.22f, RimRockChance = 0.25f },
             Pattern = FloorPattern.Mud, Floor = "#3E3436", FloorAlt = "#3A4438", FloorGap = "#2A2428",
             WallSide = "#3E2E38", WallTop = "#3F4C3E", Bank = "#2A2428", Rock = "#6C6A7C", Accent = "#C8447E", AccentGlow = "#FF5FA8", AccentGlowStrength = 0.9f,
             EnvShadow = "#2C4450",
@@ -89,7 +89,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "FrozenHollow", TestScene = "TestKillBoss", Ambient = AmbientKind.Snow, LiquidFactor = 0.6f,
-            Style = new BiomeTileGenerator.Style { WallHeight = 3f, WallTopJitter = 0.6f, WallBulge = 0.2f, BoundaryNoise = 0.12f, NoiseScale = 1.1f, Accent = BiomeTileGenerator.Accent.Crystals, AccentChance = 0.35f, CrownRocks = 4, RimRockChance = 0.2f },
+            Style = new BiomeTileGenerator.Style { WallHeight = 3f, WallTopJitter = 0.6f, WallBulge = 0.2f, BoundaryNoise = 0.12f, NoiseScale = 1.1f, Accent = BiomeTileGenerator.Accent.Crystals, Feature = BiomeTileGenerator.FloorFeature.Cracks, AccentChance = 0.35f, CrownRocks = 4, RimRockChance = 0.2f },
             Pattern = FloorPattern.Plates, Floor = "#3A3F52", FloorAlt = "#363B4E", FloorGap = "#22263A",
             WallSide = "#6E7A94", WallTop = "#C6D2EA", Bank = "#2E3446", Rock = "#5C6680", Accent = "#3F74E0", AccentGlow = "#4A7CFF", AccentGlowStrength = 0.9f,
             EnvShadow = "#3A4468",
@@ -100,13 +100,13 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "AbyssalRuins", TestScene = "TestReachExit", Ambient = AmbientKind.Motes, Border = WfcCornerRule.Water, LiquidFactor = 1.1f,
-            Style = new BiomeTileGenerator.Style { WallHeight = 2.4f, WallTopJitter = 0.7f, WallBulge = 0.08f, BoundaryNoise = 0.1f, Chasm = true, ChasmDepth = 12f, GlowReach = 0.9f, RimRockChance = 0.2f, CrownRocks = 4 },
+            Style = new BiomeTileGenerator.Style { WallHeight = 2.4f, WallTopJitter = 0.7f, WallBulge = 0.08f, BoundaryNoise = 0.1f, Chasm = true, ChasmDepth = 12f, Feature = BiomeTileGenerator.FloorFeature.RuneCircle, GlowReach = 0.9f, RimRockChance = 0.2f, CrownRocks = 4 },
             Pattern = FloorPattern.Slabs, Floor = "#403C4A", FloorAlt = "#3C3846", FloorGap = "#262330",
-            WallSide = "#6E6880", WallTop = "#7E7892", Bank = "#2A2834", Rock = "#5E5A72", Accent = "#3FC4B4", AccentGlow = "#4FD6C8",
+            WallSide = "#565470", WallTop = "#8C88A8", Bank = "#2A2834", Rock = "#5E5A78", Accent = "#3FC4B4", AccentGlow = "#4FD6C8",
             EnvShadow = "#2A4448",
             ChasmRim = "#2A2834", ChasmFog = "#123E44", ChasmMist = new Color(0.3f, 1.1f, 1.0f),
             Glow = new Color(0.03f, 0.15f, 0.14f),
-            Key = "#FFD8B0", KeyIntensity = 1.25f, AmbientSky = "#4A6670", AmbientEquator = "#2A3E44", AmbientGround = "#101418", Fog = "#0E2226", FogDensity = 0.014f,
+            Key = "#FFE6CC", KeyIntensity = 1.15f, AmbientSky = "#4A6670", AmbientEquator = "#2A3E44", AmbientGround = "#101418", Fog = "#0E2226", FogDensity = 0.014f,
             Bloom = 0.4f, ShadowTint = "#2A4448", HighlightTint = "#FFD8B0",
         },
     };
@@ -171,9 +171,9 @@ public static class BiomeTileSets
             bool allFloor = letters == "FFFF", allWall = letters == "WWWW";
             if (allFloor)
             {
-                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF", corners, weight * 0.45f, 1000, false);
-                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF_Alt", corners, weight * 0.35f, 1001, true);
-                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF_Var", corners, weight * 0.2f, 1002, false);
+                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF", corners, weight * 0.52f, 1000, false);
+                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF_Alt", corners, weight * 0.36f, 1001, true);
+                AddTile(tileSet, biome, container, materials, folder, "Tile_FFFF_Var", corners, weight * 0.12f, 1002, false);
             }
             else if (allWall)
             {
@@ -202,7 +202,7 @@ public static class BiomeTileSets
                         string folder, string name, WfcTerrain[] corners, float weight, int seed, bool floorAlt)
     {
         var generator = new BiomeTileGenerator(biome.Style, (WfcTerrain[])corners.Clone(), seed + StableHash(biome.Name));
-        generator.Build(floorAlt);
+        generator.Build(floorAlt, feature: name == "Tile_FFFF_Var");
 
         var root = new GameObject(name);
         var visual = new GameObject("Visual");
@@ -476,7 +476,7 @@ public static class BiomeTileSets
         RenderSettings.ambientSkyColor = Hex(b.AmbientSky);
         RenderSettings.ambientEquatorColor = Hex(b.AmbientEquator);
         RenderSettings.ambientGroundColor = Hex(b.AmbientGround);
-        foreach (var old in scene.GetRootGameObjects().Where(go => go.name.StartsWith("Ambient_")).ToList()) Object.DestroyImmediate(old);
+        foreach (var old in scene.GetRootGameObjects().Where(go => go.name.StartsWith("Ambient_") || go.name.EndsWith("_Ambient")).ToList()) Object.DestroyImmediate(old);
         var ambient = BuildAmbient(b);
         if (ambient != null) SceneManager.MoveGameObjectToScene((GameObject)PrefabUtility.InstantiatePrefab(ambient), scene);
         RenderSettings.skybox = FogSky();

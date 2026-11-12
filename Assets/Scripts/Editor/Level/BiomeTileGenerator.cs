@@ -43,9 +43,13 @@ public class BiomeTileGenerator
         public float RockSize = 0.45f;
         public Accent Accent;                   // Biome decoration in the Accent material
         public float AccentChance = 0.25f;
+        public FloorFeature Feature;           // Drawn on the plain floor variant tile
     }
 
     public enum Accent { None, MagmaSeam, Crystals, Mushrooms, Runes }
+
+    /// <summary>A flat feature on a plain floor tile (walkable, decoration only).</summary>
+    public enum FloorFeature { None, Cracks, RuneCircle, Puddles }
 
     // ---------- result ----------
 
@@ -74,13 +78,14 @@ public class BiomeTileGenerator
     }
 
     /// <summary>Builds the tile. floorAlt: use the second floor material (variety on plain floor tiles).</summary>
-    public void Build(bool floorAlt = false)
+    public void Build(bool floorAlt = false, bool feature = false)
     {
         Fields();
         var floor = floorAlt ? Part.FloorAlt : Part.Floor;
 
         // Floor at y = 0 wherever floor wins
         Fill(_dF, 0f, floor, p => new Vector2((p.x + Half) / TileSize, (p.y + Half) / TileSize));
+        if (feature) BuildFeature();
 
         if (HasAny(_dW)) BuildWalls();
         if (HasAny(_dL)) BuildLiquid();
@@ -395,6 +400,87 @@ public class BiomeTileGenerator
     }
 
     // ---------- decoration ----------
+
+    void BuildFeature()
+    {
+        var accent = _parts[(int)Part.Accent];
+        switch (_style.Feature)
+        {
+            case FloorFeature.Cracks:
+                // Glowing cracks branching from near the middle, thinning as they go
+                for (int branch = 0; branch < 4; branch++)
+                {
+                    var p = new Vector2(((float)_random.NextDouble() - 0.5f) * 0.8f, ((float)_random.NextDouble() - 0.5f) * 0.8f);
+                    float angle = branch * Mathf.PI * 0.5f + (float)_random.NextDouble() * 0.9f;
+                    float width = 0.14f;
+                    for (int step = 0; step < 6; step++)
+                    {
+                        angle += ((float)_random.NextDouble() - 0.5f) * 1.1f;
+                        var next = p + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * (0.3f + (float)_random.NextDouble() * 0.25f);
+                        if (Mathf.Abs(next.x) > Half - 0.3f || Mathf.Abs(next.y) > Half - 0.3f) break;
+                        float nextWidth = width * 0.78f;
+                        FlatStrip(accent, p, next, width, nextWidth, 0.012f);
+                        p = next; width = nextWidth;
+                    }
+                }
+                break;
+            case FloorFeature.RuneCircle:
+                // A landmark: two glowing rings with glyphs between them
+                FlatRing(accent, Vector2.zero, 1.55f, 1.7f, 0.012f, 40);
+                FlatRing(accent, Vector2.zero, 0.85f, 0.95f, 0.012f, 28);
+                for (int g = 0; g < 6; g++)
+                {
+                    float a = g * Mathf.PI / 3f + 0.3f;
+                    var c = new Vector2(Mathf.Cos(a), Mathf.Sin(a)) * 1.25f;
+                    var radial = c.normalized; var side = new Vector2(-radial.y, radial.x);
+                    FlatQuad(accent, c + radial * 0.18f, c + side * 0.09f, c - radial * 0.18f, c - side * 0.09f, 0.013f);
+                }
+                break;
+            case FloorFeature.Puddles:
+                // Shallow puddles of the biome's water lying on the floor
+                var liquid = _parts[(int)Part.Liquid];
+                for (int k = 0; k < 1; k++)
+                {
+                    var center = new Vector2(((float)_random.NextDouble() - 0.5f) * 1.6f, ((float)_random.NextDouble() - 0.5f) * 1.6f);
+                    float radius = 0.75f + (float)_random.NextDouble() * 0.45f;
+                    const int sides = 14;
+                    int middle = liquid.Add(new Vector3(center.x, 0.015f, center.y), Vector3.up, new Vector2(radius, 0f));
+                    int first = -1, previous = -1;
+                    for (int s = 0; s <= sides; s++)
+                    {
+                        float a = s % sides * Mathf.PI * 2f / sides;
+                        float r = radius * (0.55f + Value(center.x * 3f + Mathf.Cos(a) * 1.3f, center.y * 3f + Mathf.Sin(a) * 1.3f, 90) * 0.9f);
+                        int index = s == sides ? first : liquid.Add(new Vector3(center.x + Mathf.Cos(a) * r, 0.015f, center.y + Mathf.Sin(a) * r), Vector3.up, Vector2.zero);
+                        if (s == 0) first = index; else liquid.TriangleFacing(middle, previous, index, Vector3.up);
+                        previous = index;
+                    }
+                }
+                break;
+        }
+    }
+
+    /// <summary>A flat tapered strip lying on the floor from a to b.</summary>
+    static void FlatStrip(Builder builder, Vector2 a, Vector2 b, float widthA, float widthB, float y)
+    {
+        var direction = (b - a).normalized;
+        var side = new Vector2(-direction.y, direction.x);
+        FlatQuad(builder, a - side * widthA * 0.5f, b - side * widthB * 0.5f, b + side * widthB * 0.5f, a + side * widthA * 0.5f, y);
+    }
+
+    static void FlatQuad(Builder builder, Vector2 a, Vector2 b, Vector2 c, Vector2 d, float y)
+    {
+        builder.Quad(new Vector3(a.x, y, a.y), new Vector3(b.x, y, b.y), new Vector3(c.x, y, c.y), new Vector3(d.x, y, d.y), Vector3.up, Vector2.zero, Vector2.right, Vector2.one, Vector2.up);
+    }
+
+    static void FlatRing(Builder builder, Vector2 center, float inner, float outer, float y, int steps)
+    {
+        for (int i = 0; i < steps; i++)
+        {
+            float a0 = i * Mathf.PI * 2f / steps, a1 = (i + 1) * Mathf.PI * 2f / steps;
+            var d0 = new Vector2(Mathf.Cos(a0), Mathf.Sin(a0)); var d1 = new Vector2(Mathf.Cos(a1), Mathf.Sin(a1));
+            FlatQuad(builder, center + d0 * inner, center + d1 * inner, center + d1 * outer, center + d0 * outer, y);
+        }
+    }
 
     /// <summary>A chunky rock: a box with its corners pushed around, sitting on basePoint.</summary>
     void Rock(Vector3 basePoint, float size)
