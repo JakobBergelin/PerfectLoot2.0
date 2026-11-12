@@ -53,6 +53,7 @@ public static class CompanionEntitySetup
         AddPassives(entityManager, entity, definition.Passives);
         AddOrSet(entityManager, entity, new Thrall { RaisedAt = time });
         AddOrSet(entityManager, entity, new UnitInfo { Source = definition });
+        NetUnitSource.Set(entityManager, entity, definition, companion: true);
         AddOrSet(entityManager, entity, new Steering { Radius = definition.BodyRadius, BodyType = BodyType.Swarm });
         AddOrSet(entityManager, entity, new BodyMass { InverseMass = 1f / math.max(0.01f, definition.Mass) });
 

@@ -118,6 +118,7 @@ namespace ActiveSkills
 
             UnitEntitySetup.AddOrSet(entityManager, prefab, new SummonedCompanion { Type = Type });
             UnitEntitySetup.AddOrSet(entityManager, prefab, new UnitInfo { Source = this });
+            NetUnitSource.Set(entityManager, prefab, this, companion: true);
             CompanionEntitySetup.AddGameplayComponents(entityManager, prefab, owner, SightRadius, Skills);
             CompanionEntitySetup.AddMovementComponents(entityManager, prefab, Stats, Movement);
             CompanionEntitySetup.AddTargetable(entityManager, prefab, owner, Threat);
