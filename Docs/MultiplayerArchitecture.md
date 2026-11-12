@@ -88,6 +88,37 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
 Bandwidth measured in the editor: about 0.5 KB/s per client idle in the Hub, 1.2 KB/s idle in a dungeon, 9 to 17 KB/s
 in a fight with 46 enemies.
 
+## Platform (Steam)
+
+Gameplay never calls Steam directly. `Platform.Current` (`Scripts/Platform/IPlatform.cs`) is an `IPlatform`: who the
+player is, Rich Presence, and which friends are playing. `PlatformManager` (on the GameServices prefab) picks it at
+startup and publishes this game's presence every second:
+
+| Key | Value |
+|---|---|
+| `pl_area` | `town`, `dungeon` or `menu` |
+| `pl_players` | Players in the game, couch players included |
+| `status` | "In town (2/4)" (Steam shows it once the game has its own App ID) |
+| `pl_lobby` | The host's lobby, to join through (phase O6, not set yet) |
+
+Two versions:
+
+- **`LocalPlatform`**: no platform. Games join each other by IP address (the game menu's Join a game). It keeps the
+  presence it is given (for tests) and knows no friends. This is what runs today.
+- **`SteamPlatform`**: Steamworks.NET. Persona name, Rich Presence, friends playing this game with their presence
+  (`PlatformFriend.CanJoin`: in town and not full). It falls back to Local when Steam isn't running.
+
+`SteamPlatform` is behind the `PERFECTLOOT_STEAM` scripting define and **hasn't been compiled yet**, because the
+Steamworks.NET package isn't in the project. To switch it on:
+
+1. Add Steamworks.NET through Package Manager (Add package from git URL:
+   `https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net`, ideally with a release tag).
+2. Put a `steam_appid.txt` containing `480` (Spacewar, owned by every Steam account) in the project folder for editor
+   tests, and next to the build's exe.
+3. Add `PERFECTLOOT_STEAM` to Player Settings > Scripting Define Symbols.
+
+Joining through Steam (lobbies, Steam Networking Sockets as a transport, the Hub's Join button, invites) is phase O6.
+
 ## Adding to the game
 
 - **A new gameplay component**: add it on the host as usual. Clients never see it unless it is baked on a ghost prefab
