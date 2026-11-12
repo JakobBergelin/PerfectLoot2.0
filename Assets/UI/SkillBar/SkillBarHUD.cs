@@ -20,6 +20,8 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
     const string CooldownClass = "skill-slot--cooldown";
     const string NoResourceClass = "skill-slot--no-resource";
     const string LockedClass = "skill-slot--locked";
+    const string ReadyClass = "skill-slot--ready";   // A short pop when a cooldown ends
+    const long ReadyFlashMs = 260;
     // Stances: the border in the current stance's attribute colour (ActiveSkillSlot.Variant)
     static readonly string[] StanceClasses = { "skill-slot--stance-str", "skill-slot--stance-agi", "skill-slot--stance-int" };
 
@@ -36,6 +38,7 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
         public ActiveSkill ShownSkill;
         public Sprite ShownIcon;
         public int ShownCooldownTenths = -1;
+        public bool WasOnCooldown;
     }
 
     const string TooltipVisibleClass = "skill-tooltip--visible";
@@ -213,6 +216,13 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
         int stance = !empty && skill.Type == SkillType.Stances ? slot.Variant : -1;
         for (int i = 0; i < StanceClasses.Length; i++) view.Slot.EnableInClassList(StanceClasses[i], stance == i);
         view.Slot.EnableInClassList(CooldownClass, onCooldown);
+        if (view.WasOnCooldown && !onCooldown && !empty)
+        {
+            var flashing = view.Slot;
+            flashing.AddToClassList(ReadyClass);
+            flashing.schedule.Execute(() => flashing.RemoveFromClassList(ReadyClass)).StartingIn(ReadyFlashMs);
+        }
+        view.WasOnCooldown = onCooldown;
 
         view.Sweep.Fraction = onCooldown ? slot.CooldownFraction : 0f;
 
