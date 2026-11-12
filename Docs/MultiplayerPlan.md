@@ -2,6 +2,8 @@
 
 How local split-screen and later online play can work. Written 2026-11-06 on `flair/evening-polish`. No code has been changed for this plan.
 
+**Update 2026-11-12:** couch co-op has shipped since (shared camera with a tether, `CoopManager`, `CoopHUD`, per-player managers and HUDs through `IPerPlayer`), so the local phases M1-M5 below are mostly history. The online plan agreed on 2026-11-12, with Steam, is in [Online with Steam](#online-with-steam-2026-11-12) at the end. It builds on the facts in "Networking" below, which still apply.
+
 Marks: **[V]** verified by reading the code at this commit. **[A]** assumed or from memory, check before relying on it. Nothing here was run with two real players.
 
 Netcode for Entities is not in this project (`Packages/manifest.json`, `Library/PackageCache`). Everything said about it is from memory unless marked otherwise. Docs exist for a [`com.unity.netcode` 6.5](https://docs.unity3d.com/Packages/com.unity.netcode@6.5/manual/index.html), but I could not confirm which version pairs with Entities 6.6. Check Package Manager first.
@@ -184,3 +186,70 @@ Recommended: **personal loot.** Each kill rolls separately for each player, and 
 8. Should online and split-screen combine (two local players joining an online game)? I'd leave this out at first.
 9. Enemy scaling by player count: wanted later? Stats are placeholders, so this only needs a hook for now.
 10. Which platforms? Steam or console changes relay and session choices.
+
+## Online with Steam (2026-11-12)
+
+Agreed with you on 2026-11-12. Supersedes "Online phases" above where they differ; the facts in "Networking" still hold.
+
+### Decisions
+
+| Topic | Decision |
+|---|---|
+| Netcode | Netcode for Entities. From Unity 6.5 it is a core package bundled with the editor, so it pairs with Entities 6.6. |
+| One code path | Every game runs through netcode; single player is a host with nobody connected. |
+| Topology | Listen server: one player's game hosts, up to 3 machines join. No dedicated servers, no host migration. |
+| Authority | Server runs the whole simulation. Clients predict only their own players' movement ("thin prediction" above). |
+| Players | At most 4 per game, couch players included. Couch co-op stays at 2 per machine (`GameInput.MaxPlayers`). The host turns down a join that would go over 4. |
+| Movement rules | The same as couch co-op: `CoopTetherSystem` and `CoopRules` apply to every player, local or remote. |
+| Joining | Only while both the joiner and the host are in a town (the Hub or a hub-like level). The join button only shows then; otherwise the game may still show that a friend is in town and can be joined. |
+| Trust | The host accepts the items, skills and passives a friend's client sends. Saves stay local. No anti-cheat. |
+| Loot | Personal: each player rolls and sees only their own drops. |
+| Host leaves | Everyone returns to their own Hub. |
+| Steam library | Steamworks.NET. |
+| Platform layer | One interface with two versions: Local (direct IP, for development) and Steam. Gameplay never calls Steam directly. |
+
+### Rich Presence
+
+Published by every game, read by friends' games:
+
+| Key | Value | Use |
+|---|---|---|
+| `pl_area` | `town` or `dungeon` | The join button shows only for `town` |
+| `pl_players` | Players in the game, couch included | Hidden at 4 |
+| `pl_lobby` | The host's Steam lobby id | What the join button joins |
+| `connect` | `+connect_lobby <id>` | Steam's own Join Game in the friends list, and overlay invites |
+| `status`, `steam_display` | "In the Hub (2/4)" | Needs our own App ID: the localization file can't be uploaded for App 480 |
+
+### Join flow
+
+1. Hosting: in town, the host's game creates a Steam lobby (up to 4 players) and publishes the keys above. It updates them on every area change and player count change.
+2. The joiner's Hub lists friends playing PerfectLoot (`SteamFriends`) whose `pl_area` is `town` and `pl_players` is under 4, and shows a "Join <name>" button where the couch co-op prompt is (`CoopHUD`). Outside town it shows only a notice.
+3. Clicking joins the lobby, reads the host's SteamID and connects over Steam Networking Sockets (Steam relay, addressed by SteamID).
+4. Steam's Join Game and overlay invites arrive as `GameLobbyJoinRequested_t` or `GameRichPresenceJoinRequested_t`, or as a `+connect_lobby` launch argument, and take the same path from step 3.
+5. The host checks the player count and that it is still in town, then sends the level seed and current scene. The joiner loads it and its players spawn next to the host's.
+
+### Testing without being on Steam
+
+- **No Steam at all (phases O2-O5):** Unity's Multiplayer Play Mode runs up to 4 players inside the editor, and builds join each other by IP on a local network through the Local platform layer.
+- **Steam with no store page:** App ID 480 ("Spacewar") is owned by every Steam account. With `steam_appid.txt` set to 480, the friends list, Rich Presence keys, lobbies and Steam networking work, which is all the in-game join button needs. Steam's own Join Game button with 480 is reported to be unreliable, so it is not part of the first test. It needs two Steam accounts on two PCs.
+- **Later:** a private App ID through Steam Direct ($100). The store page stays unpublished; builds go to testers through keys or a private branch, and the `status` text works.
+
+### Phases
+
+**O1. Steam platform layer (M).** Steamworks.NET as a service next to `AccountManager` (`GameBootstrap`), safe with Steam not running. Platform interface with Local and Steam versions. Publish and read Rich Presence; list friends playing. Testable with App 480 before any netcode.
+
+**O2. Netcode spike (L, throwaway branch).** As N0 above: host plus one client, one player ghost, one enemy, move and cast Fireball in the Hub. Answers the open facts (fixed tick feel, world filters on the groups in `ExecutionGroups.cs`, ghosts for players built at runtime, bandwidth with 40+ enemies).
+
+**O3. Netcode foundation (L).** Fixed simulation tick (N1). Server and client worlds replace the single world; `GameSceneLoader` becomes a host-driven scene change that keeps connections. Player ghost with a fixed replicated set (transform, health, resource, `Skill` buffer, `EffectDisplay`, visuals). `InputsData` becomes the command, for up to 2 local players per connection. Predicted movement.
+
+**O4. Gameplay replication (L).** Enemies, companions and projectiles as interpolated ghosts. Combat text, hit flashes and telegraph markers from events or replicated cast state. VFX keep binding to ghosts on the client.
+
+**O5. Loadouts, loot and sessions (L).** Client managers (inventory, skills, passives, character) send changes to the host as requests; the host applies them with the existing `Apply` code. Personal loot. Host and join by IP, the 4-player limit, joining only in town, tether for every player, disconnects, host leaving.
+
+**O6. Steam join (M).** Steam Networking Sockets as a Unity Transport network interface (Unity Transport 2.3 added a custom network family for addresses that aren't IPs; there's a [community Netcode for Entities Steamworks integration](https://discussions.unity.com/t/here-is-my-steamworks-integration-for-netcode-for-entities-and-transport-use-as-you-like/942447) to start from). Lobbies, the Hub join button and notice, Steam Join Game and invites.
+
+### Open risks
+
+- Everything in "Risks" above under networking still applies, mainly the fixed tick and the components added at runtime.
+- Two local players on one client connection: each player entity needs its own command stream. Check in O2.
+- Netcode package numbering: the docs use 6.x labels while older packages were 1.x. Confirm the bundled version in Package Manager in O2.
