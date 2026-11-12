@@ -8,6 +8,7 @@ using UnityEngine;
 [UpdateAfter(typeof(SkillSystemGroup))]
 [UpdateBefore(typeof(AttackSystemGroup))]
 
+[WorldSystemFilter(GameWorlds.Server)]
 public partial class InitializeFromSourceSystem : SystemBase
 {
     private EndSimulationEntityCommandBufferSystem _endSimulationEntityCommandBufferSystem;

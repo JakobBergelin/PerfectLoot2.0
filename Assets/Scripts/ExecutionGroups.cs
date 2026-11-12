@@ -1,7 +1,18 @@
 using Unity.Entities;
 
+/// <summary>
+/// Which worlds a group runs in. Server: the simulation (a local world, or the server side of a host); remote clients
+/// only show what the server sends. Client: what is only drawn (a local world, a host, or a remote client).
+/// </summary>
+public static class GameWorlds
+{
+    public const WorldSystemFilterFlags Server = WorldSystemFilterFlags.ServerSimulation | WorldSystemFilterFlags.LocalSimulation;
+    public const WorldSystemFilterFlags Client = WorldSystemFilterFlags.ClientSimulation | WorldSystemFilterFlags.LocalSimulation;
+}
+
 [UpdateInGroup(typeof(InitializationSystemGroup))]
 [UpdateAfter(typeof(BeginInitializationEntityCommandBufferSystem))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class CalculateStatsSystemGroup : ComponentSystemGroup
 {}
 
@@ -33,12 +44,14 @@ public partial class FinalizeStatsSystemGroup : ComponentSystemGroup
 /// just before Update, so this sees this frame's input (InitializationSystemGroup would see last frame's).
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup), OrderFirst = true)]
+// Every world: a remote client reads its own player's input here too (NetInputSendSystem sends it)
 public partial class InputSystemGroup : ComponentSystemGroup
 {}
 
 /// <summary>Player and enemy skills: spend resources, turn the unit and spawn attacks.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(InputSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class SkillSystemGroup : ComponentSystemGroup
 {}
 
@@ -54,12 +67,14 @@ public partial class SkillReactionSystemGroup : ComponentSystemGroup
 /// <summary>Moves units and projectiles.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(SkillSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class MovementSystemGroup : ComponentSystemGroup
 {}
 
 /// <summary>Hit detection: turns attacks overlapping units into DamageInstances.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(MovementSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class AttackSystemGroup : ComponentSystemGroup
 {}
 
@@ -69,6 +84,7 @@ public partial class AttackSystemGroup : ComponentSystemGroup
 /// </summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(AttackSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class DamageSystemGroup : ComponentSystemGroup
 {}
 
@@ -84,6 +100,7 @@ public partial class EffectSystemGroup : ComponentSystemGroup
 /// <summary>Healing, regeneration and resource gains; UpdateResourcesSystem (last) applies this frame's resource changes.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(DamageSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class HealthAndResourceSystemGroup : ComponentSystemGroup
 {}
 
@@ -91,5 +108,6 @@ public partial class HealthAndResourceSystemGroup : ComponentSystemGroup
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(HealthAndResourceSystemGroup))]
 [UpdateBefore(typeof(Unity.Transforms.TransformSystemGroup))]
+[WorldSystemFilter(GameWorlds.Client, GameWorlds.Client)]
 public partial class FeedbackSystemGroup : ComponentSystemGroup
 {}

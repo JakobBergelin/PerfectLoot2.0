@@ -275,7 +275,7 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         // A player leaving saves their progress and takes their entity along (player 1's goes with the scene)
         if (PlayerIndex > 0) SaveProgress();
         var world = World.DefaultGameObjectInjectionWorld;
-        if (PlayerIndex > 0 && world != null && world.IsCreated && world == _playerWorld && world.EntityManager.Exists(_player))
+        if (PlayerIndex > 0 && NetSession.IsHost && world != null && world.IsCreated && world == _playerWorld && world.EntityManager.Exists(_player))
             world.EntityManager.DestroyEntity(_player);
     }
 
@@ -294,9 +294,11 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
             _groundWait = 0f;
         }
 
-        // Died: CheckDeathSystem destroyed the entity
-        if (_player != Entity.Null && !entityManager.Exists(_player))
+        // Died: CheckDeathSystem destroyed the entity. A ghost lingers for Netcode's cleanup, and a command buffer can
+        // even add to it meanwhile, which keeps it around, so a player without its transform is gone too: finish it off
+        if (_player != Entity.Null && (!entityManager.Exists(_player) || !entityManager.HasComponent<LocalTransform>(_player)))
         {
+            if (entityManager.Exists(_player) && NetSession.IsHost) entityManager.DestroyEntity(_player);
             _player = Entity.Null;
             _respawnTimer = RespawnDelay;
             PlayerDied?.Invoke();
@@ -304,6 +306,12 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
 
         if (_player == Entity.Null)
         {
+            // In someone else's game the host makes this player's ghost: take it over when it arrives
+            if (!NetSession.IsHost)
+            {
+                TryAdopt(entityManager);
+                return;
+            }
             if (_hasSpawned)
             {
                 _respawnTimer -= Time.deltaTime;
@@ -381,8 +389,23 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         _appliedClass = null;
         _pushedLevel = null;
         _hasSpawned = true;
+        // Owned by this machine's own connection, as this local player (NetInputSendSystem sends its input like a client's)
+        NetPlayerSetup.MarkLocal(entityManager, _player, PlayerIndex);
+
         PushCharacter();
 
+        PlayerSpawned?.Invoke(_player);
+    }
+
+    // On a client: this machine's player ghost with this PlayerIndex, made by the host (NetPlayerSpawnSystem). It gets the
+    // local player's components, so the camera follows it and its input is read and sent. Its gameplay stays on the host.
+    void TryAdopt(EntityManager entityManager)
+    {
+        var ghost = NetPlayerSetup.FindOwned(entityManager, PlayerIndex);
+        if (ghost == Entity.Null) return;
+        _player = ghost;
+        _hasSpawned = true;
+        NetPlayerSetup.AddLocalPlayerComponents(entityManager, ghost, PlayerIndex);
         PlayerSpawned?.Invoke(_player);
     }
 
@@ -472,6 +495,12 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
 
         var entityManager = world.EntityManager;
         if (_player == Entity.Null || !entityManager.Exists(_player)) return;
+        // In someone else's game the host runs this player; its class and resource are sent in phase O5
+        if (!NetSession.IsHost)
+        {
+            _dirty = false;
+            return;
+        }
 
         if (_appliedClass != null && _appliedClass != Class) _appliedClass.RemovePassive(entityManager, _player);
         if (Class != null) Class.Apply(entityManager, _player);

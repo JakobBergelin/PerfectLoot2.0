@@ -38,7 +38,13 @@ public partial class CharacterMovementSystem : SystemBase
                        || (SystemAPI.HasComponent<PhantomEdgeFlurry>(entity) && SystemAPI.GetComponent<PhantomEdgeFlurry>(entity).Active);
             // Tesla Coil locks the unit in place; that still counts as standing still
             bool rooted = SystemAPI.HasComponent<TeslaCoil>(entity) && SystemAPI.GetComponent<TeslaCoil>(entity).Channeling;
-            if(!modifiers.PreventsActions && !flying && !rooted && (inputs.ValueRO.Move.x != 0.0f || inputs.ValueRO.Move.y != 0.0f))
+            bool wantsToMove = !modifiers.PreventsActions && !flying && !rooted && (inputs.ValueRO.Move.x != 0.0f || inputs.ValueRO.Move.y != 0.0f);
+            // Players walk and turn in the prediction loop (PlayerMoveSystem); only whether they stand still is worked out here
+            if (SystemAPI.HasComponent<Player>(entity) && SystemAPI.HasComponent<PredictedMove>(entity))
+            {
+                moving = wantsToMove;
+            }
+            else if(wantsToMove)
             {
                 position.x += inputs.ValueRO.Move.x;
                 position.z += inputs.ValueRO.Move.y;

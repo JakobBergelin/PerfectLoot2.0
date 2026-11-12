@@ -93,6 +93,7 @@ public partial struct MirrorImageSystem : ISystem
 [UpdateInGroup(typeof(InputSystemGroup))]
 [UpdateAfter(typeof(InputsDataSystem))]
 [BurstCompile]
+[WorldSystemFilter(GameWorlds.Server)]
 public partial struct MirrorImageInputSystem : ISystem
 {
     [BurstCompile]

@@ -1,10 +1,11 @@
 using Unity.Entities;
+using Unity.NetCode;
 using Unity.Mathematics;
 
 public struct Health : IComponentData
 {
-    public float MaxValue;
-    public float CurrentValue;
+    [GhostField(Quantization = 100)] public float MaxValue;          // Replicated to clients (SPIKE)
+    [GhostField(Quantization = 100)] public float CurrentValue;
     public float MaxHealthMultiplier;
 }
 

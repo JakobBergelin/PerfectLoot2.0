@@ -87,6 +87,8 @@ public class EnemyManager : MonoBehaviour
     Entity SpawnAt(EnemyDefinition definition, NativeArray<Vector3> positions, bool riseIn, bool huntPlayer)
     {
         if (definition == null) { Debug.LogWarning("EnemyManager.Spawn: no definition.", this); return Entity.Null; }
+        // In someone else's game the host spawns the enemies (level spawners and dungeon waves run on every machine)
+        if (!NetSession.IsHost) return Entity.Null;
         if (!TryGetPrefabs(out var entityManager))
         {
             Debug.LogWarning("EnemyManager.Spawn: enemy prefabs aren't loaded yet. Is EnemyPrefabs in the CoreEntities subscene?", this);

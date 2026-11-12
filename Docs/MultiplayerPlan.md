@@ -253,3 +253,43 @@ Published by every game, read by friends' games:
 - Everything in "Risks" above under networking still applies, mainly the fixed tick and the components added at runtime.
 - Two local players on one client connection: each player entity needs its own command stream. Check in O2.
 - Netcode package numbering: the docs use 6.x labels while older packages were 1.x. Confirm the bundled version in Package Manager in O2.
+
+## Spike results (O2, 2026-11-12)
+
+Branch `spike/netcode`, not merged. Tested in the editor in the Hub: a single-world host, plus a second, real client world created in the same process and connected over loopback (`ClientServerBootstrap.CreateClientWorld`, subscenes loaded into it by hand). Not tested with Multiplayer Play Mode, builds or real latency.
+
+### What worked
+
+| Question | Answer |
+|---|---|
+| Package version | Netcode for Entities **6.6.0**, Unity Transport **6.6.0** and Multiplayer Play Mode **3.0.0** ship with editor 6000.6.5f1; adding them to `manifest.json` is enough. |
+| Host model | **Single-world host** works: one world runs the server and the host's own client, so the host plays exactly as before (managers, rendering, couch co-op untouched). It is experimental: needs the `NETCODE_EXPERIMENTAL_SINGLE_WORLD_HOST` define, and throws in builds made with only `UNITY_CLIENT` or `UNITY_SERVER`. Fallback: the binary host (separate server and client worlds), which would need the managers to read the client world. |
+| Fixed tick | Free: Netcode runs the server's `SimulationSystemGroup` at its own fixed rate (60 Hz), and the existing `DeltaTime` code works unchanged. Phase N1 shrinks to a feel check. |
+| World filters | `[WorldSystemFilter]` on the groups in `ExecutionGroups.cs` covers almost everything: gameplay groups server-only (`GameWorlds.Server`), `FeedbackSystemGroup` client-only, `InputSystemGroup` everywhere. Only 4 loose systems needed their own filter (`SkillActivationSystem`, `MirrorImageInputSystem`, `DamageMeterSystem`, `InitializeFromSourceSystem`). |
+| Players built at runtime | Works. The player prefab (`PL_Base_Visuals`) is an owner-predicted ghost; the server adds all gameplay components at runtime exactly as today (`PlayerEntitySetup`), and they stay server-only. Only components a client must see need to be baked onto the prefab (`NetReplicatedAuthoring`: Health, Resource, the input command). The "components added at runtime" blocker is gone. |
+| Enemies built at runtime | Works unchanged: `EnemyManager`'s template spawning gives ghost instances. 40 Skeletons reached the client with position and health. |
+| Projectiles made in code | Works with one generic ghost prefab (`NetPrefabsAuthoring.Projectile`): `FireballSystem` instantiates it instead of `CreateEntity` and adds its components as before. Each remote Fireball appeared and vanished on the client in step. |
+| Input | The remote client runs the normal `InputsDataSystem` on the player ghost it owns; `NetInputSendSystem` packs `InputsData` into an `IInputComponentData` command; on the server `NetInputReceiveSystem` unpacks it before skills run, finding presses itself (held now, not last tick), so a press is never lost or doubled. The remote player moved and cast Fireball. |
+| Two local players per connection | Works: two ghosts owned by one connection get separate command streams. |
+
+### What broke and how it was fixed
+
+- **`World.DefaultGameObjectInjectionWorld` in `OnCreate`:** 19 `SystemBase` systems fetched their command buffer system through it. Netcode creates a world's systems before that world becomes the default, so they threw. Fixed by using the system's own `World`. Worth bringing to `main` as is.
+- **Physics never ran, so nobody could move.** Netcode moves Unity Physics into its prediction loop, which only runs once a connection is in game **and** predicted ghosts exist; until then the physics world is empty and every floor check fails. Needs all three: every connection goes in game (`GoInGameSystem`), `NetCodePhysicsConfig` set to `AlwaysRun` (in `CoreEntities`), and `ClientTickRate.PredictionLoopUpdateMode = AlwaysRun` (`NetClientConfigSystem`).
+- **A remote client spawned its own local player.** `CharacterManager` now skips spawning on a remote client; the client instead adopts the player ghost it owns (`NetSpikeDriver`).
+
+### Open, for O3 onward
+
+- **Own player's prediction:** the client's own owner-predicted ghost showed a stale position, because no prediction systems run for it yet. Either move player movement (`CharacterMovementSystem`, `UnitMoverSystem`) into the prediction loop, or start with the own player interpolated (feels about one round trip late).
+- **What a client sees:** ghosts only carry what is baked and replicated: transform, health, resource. Missing on clients: projectile visuals (VFX bind to `Projectile`, which is server-only, so a replicated visual kind is needed), enemy bars and names (`Enemy`, `UnitInfo`), skill states and cooldowns, effects, combat text.
+- **Loadout:** a remote player gets the host's class, resource type and Fireball. Its own class, items, skills and passives must come from its client (O5).
+- **Scene changes:** not tested. `GameSceneLoader` disposes the world and builds a new one through the same bootstrap; connections must survive that.
+- **Level generation and spawners on clients:** not tested (the Hub is fixed). A client must build the level from the seed, but its enemy spawners must not spawn local enemies.
+- **Bandwidth:** Netcode's snapshot byte counters are internal; measure with the Network Profiler. Estimate for 40 moving Skeletons (quantized position, rotation, health, delta-compressed): tens of KB/s per client.
+- **Performance:** about 40 fps in the editor with both worlds and 40 Skeletons, Burst partly disabled in the editor; not representative.
+- **Run In Background** must be on in builds, or a host that loses focus stalls and drops its clients (Netcode warns about this).
+- **Experimental API:** the single-world host is experimental in 6.6. Keep the binary host as the fallback in mind.
+
+### How to try it
+
+On `spike/netcode`, `Assets/Resources/NetSpike.txt` turns the networked bootstrap on (delete it for the normal local world). Play in the Hub: the editor is the host. A client: a Multiplayer Play Mode virtual player (`-name Player2`), a build with `-netclient`, or `ClientServerBootstrap.CreateClientWorld("Client")` from the console, with the subscenes loaded into it.

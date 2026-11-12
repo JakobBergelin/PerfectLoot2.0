@@ -131,7 +131,7 @@ namespace LevelGeneration
             int cells = blob.Width * blob.Height;
             bool useSaved = layout.UseSaved && blob.SavedCells.Length == cells;
             // A saved layout keeps the editor's seed, so its bend matches the preview too
-            uint seed = useSaved || !layout.RandomSeed ? layout.Seed : (uint)System.DateTime.Now.Ticks;
+            uint seed = useSaved || !layout.RandomSeed ? layout.Seed : LevelSeed.Take();
 
             var packed = new NativeArray<int>(cells, Allocator.Temp);
             if (useSaved)

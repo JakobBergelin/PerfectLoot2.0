@@ -7,7 +7,7 @@ using Unity.Transforms;
 
 /// <summary>
 /// Physics queries for moving units without the physics solver: sweeping a unit's collider to find what blocks it,
-/// and finding the floor under it. Shared by UnitMoverSystem, DashSystem, TeleportSystem and BallLightningSystem.
+/// and finding the floor under it. Shared by UnitMoverSystem, PlayerMoveSystem, DashSystem, TeleportSystem and BallLightningSystem.
 /// </summary>
 public static class UnitMovement
 {
@@ -73,7 +73,7 @@ public static class UnitMovement
 }
 
 /// <summary>
-/// Moves every unit (player and enemies) by its wanted velocity (UnitMotion) plus knockback. Units are kinematic, so
+/// Moves every unit but players (they move in the prediction loop, PlayerMoveSystem) by its wanted velocity (UnitMotion) plus knockback. Units are kinematic, so
 /// nothing else moves them: overlaps are pushed apart gently, the collider is swept so it slides along walls, props,
 /// steep ground and blocking units (the player and Physics-body enemies block each other unless either is Phased;
 /// Swarm only hits the world),
@@ -99,8 +99,9 @@ public partial struct UnitMoverSystem : ISystem
         var config = SystemAPI.GetSingleton<MovementConfig>();
         state.Dependency = new MoveJob
         {
-            World = SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld,
+            Step = UnitStep.Create(SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld, config, SystemAPI.Time.DeltaTime),
             Players = SystemAPI.GetComponentLookup<Player>(true),
+            PredictedMoves = SystemAPI.GetComponentLookup<PredictedMove>(true),
             Dashes = SystemAPI.GetComponentLookup<Dash>(true),
             Teleports = SystemAPI.GetComponentLookup<Teleport>(true),
             BallLightnings = SystemAPI.GetComponentLookup<BallLightning>(true),
@@ -110,11 +111,6 @@ public partial struct UnitMoverSystem : ISystem
             PlayerPhased = !SystemAPI.QueryBuilder().WithAll<Player, Phased>().Build().IsEmpty,
             WaterWalkers = SystemAPI.GetComponentLookup<WaterWalking>(true),
             Knockbacks = SystemAPI.GetComponentLookup<Knockback>(true),
-            DeltaTime = SystemAPI.Time.DeltaTime,
-            StepHeight = config.StepHeight,
-            MinWalkableNormalY = math.cos(math.radians(config.MaxSlope)),
-            MaxSlopeTangent = math.tan(math.radians(math.clamp(config.MaxSlope, 0f, 85f))),
-            OverlapPushSpeed = config.OverlapPushSpeed,
         }.ScheduleParallel(state.Dependency);
     }
 
@@ -122,10 +118,9 @@ public partial struct UnitMoverSystem : ISystem
     [WithNone(typeof(SpawnRise))]
     partial struct MoveJob : IJobEntity
     {
-        const int SlideIterations = 3;
-
-        [ReadOnly] public CollisionWorld World;
+        [ReadOnly] public UnitStep Step;
         [ReadOnly] public ComponentLookup<Player> Players;
+        [ReadOnly] public ComponentLookup<PredictedMove> PredictedMoves;
         [ReadOnly] public ComponentLookup<Dash> Dashes;
         [ReadOnly] public ComponentLookup<Teleport> Teleports;
         [ReadOnly] public ComponentLookup<BallLightning> BallLightnings;
@@ -135,11 +130,13 @@ public partial struct UnitMoverSystem : ISystem
         [ReadOnly] public ComponentLookup<WaterWalking> WaterWalkers;
         [ReadOnly] public ComponentLookup<Knockback> Knockbacks;
         public bool PlayerPhased;   // Enemies move through the player while it's phased
-        public float DeltaTime, StepHeight, MinWalkableNormalY, MaxSlopeTangent, OverlapPushSpeed;
 
         void Execute(Entity entity, ref LocalTransform transform, ref UnitMotion motion, in PhysicsCollider collider, in Steering steering)
         {
-            if (DeltaTime <= 0f) return;
+            if (Step.DeltaTime <= 0f) return;
+            bool isPlayer = Players.HasComponent(entity);
+            // Players move in the prediction loop instead (PlayerMoveSystem), on the host and on the client that owns them
+            if (isPlayer && PredictedMoves.HasComponent(entity)) return;
             // A dash, Ball Lightning, Sonic Ball or Hookshot Slash moves the unit itself (DashSystem, BallLightningSystem, SonicBallSystem,
             // HookshotSlashSystem); a teleport stands still until it lands (TeleportSystem)
             if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting) ||
@@ -152,9 +149,7 @@ public partial struct UnitMoverSystem : ISystem
 
             var velocity = motion.Velocity;
             if (Knockbacks.HasComponent(entity)) velocity += Knockbacks[entity].Velocity;
-            var move = new float3(velocity.x, 0f, velocity.z) * DeltaTime;
 
-            bool isPlayer = Players.HasComponent(entity);
             // Phased: other units don't block (nor push it out of them)
             bool phased = Phaseds.HasComponent(entity) && Phaseds.IsComponentEnabled(entity);
             uint blockLayers = UnitMovement.WorldLayers |
@@ -164,92 +159,123 @@ public partial struct UnitMoverSystem : ISystem
             uint floorLayers = UnitMovement.GroundLayer |
                                (WaterWalkers.HasComponent(entity) && WaterWalkers.IsComponentEnabled(entity) ? (uint)CollisionLayerHelper.Water : 0u);
 
-            var rotation = transform.Rotation;
-            float scale = transform.Scale;
-            float bottom = UnitMovement.BottomOffset(collider, rotation, scale);
-            var start = transform.Position;
-            var position = start;
-            var hits = new NativeList<ColliderCastHit>(8, Allocator.Temp);
-
-            // Overlapping something already (spawned on top of the player, pushed into a wall): out gently
-            position += Depenetrate(entity, collider, position, rotation, scale, blockLayers);
-
-            // Collide and slide
-            for (int i = 0; i < SlideIterations && math.lengthsq(move) > 1e-10f; i++)
-            {
-                float fraction = UnitMovement.Sweep(World, collider, position, move, rotation, scale, entity, blockLayers, MinWalkableNormalY, ref hits, out var normal);
-                float length = math.length(move);
-                var step = move * fraction;
-                if (fraction < 1f) step -= move / length * math.min(UnitMovement.Skin, length * fraction);
-
-                // Already touching what blocks it: nothing to step, straight to sliding along it. Otherwise only onto
-                // floor; along a water or map edge (at any angle), the step turned along the edge
-                if (math.lengthsq(step) > 1e-10f && !TryStepAlongEdge(ref position, step, bottom, floorLayers))
-                    break;
-                if (fraction >= 1f) break;
-
-                // Slide: what's left of the move, along the blocking surface
-                var flatNormal = math.normalizesafe(new float3(normal.x, 0f, normal.z));
-                move *= 1f - fraction;
-                move -= math.dot(move, flatNormal) * flatNormal;
-            }
-
-            // Standing still still follows the floor (no floor under it at all: stays where it is)
-            if (UnitMovement.TryFindFloor(World, position, bottom, StepHeight, StepHeight + 0.1f, floorLayers, out float floorY))
-                position.y = floorY + bottom + UnitMovement.Skin;
-
-            transform.Position = position;
-            motion.Actual = new float3(position.x - start.x, 0f, position.z - start.z) / DeltaTime;
+            motion.Actual = Step.Move(entity, ref transform, velocity, collider, blockLayers, floorLayers);
         }
+    }
+}
 
-        // The step if it ends on floor; otherwise turned 30°, 60° or 90° to either side (shortened to the part that goes that
-        // way), the smallest turn that stays on floor, so units slide along water and map edges; else half the step
-        bool TryStepAlongEdge(ref float3 position, float3 step, float bottom, uint floorLayers)
+/// <summary>
+/// One unit's move for one step: pushed gently out of what it overlaps, swept so it slides along walls, props, steep
+/// ground and blocking units, onto floor only (turned along water and map edges), and following the floor up steps and
+/// hills. Shared by UnitMoverSystem (every unit but players) and PlayerMoveSystem (players, in the prediction loop).
+/// </summary>
+public struct UnitStep
+{
+    const int SlideIterations = 3;
+
+    [ReadOnly] public CollisionWorld World;
+    public float DeltaTime, StepHeight, MinWalkableNormalY, MaxSlopeTangent, OverlapPushSpeed;
+
+    public static UnitStep Create(in CollisionWorld world, in MovementConfig config, float deltaTime) => new UnitStep
+    {
+        World = world,
+        DeltaTime = deltaTime,
+        StepHeight = config.StepHeight,
+        MinWalkableNormalY = math.cos(math.radians(config.MaxSlope)),
+        MaxSlopeTangent = math.tan(math.radians(math.clamp(config.MaxSlope, 0f, 85f))),
+        OverlapPushSpeed = config.OverlapPushSpeed,
+    };
+
+    /// <summary>Moves the unit by velocity (its horizontal part) for DeltaTime; returns the horizontal velocity it actually moved at.</summary>
+    public float3 Move(Entity entity, ref LocalTransform transform, float3 velocity, in PhysicsCollider collider, uint blockLayers, uint floorLayers)
+    {
+        if (DeltaTime <= 0f) return float3.zero;
+        var move = new float3(velocity.x, 0f, velocity.z) * DeltaTime;
+        var rotation = transform.Rotation;
+        float scale = transform.Scale;
+        float bottom = UnitMovement.BottomOffset(collider, rotation, scale);
+        var start = transform.Position;
+        var position = start;
+        var hits = new NativeList<ColliderCastHit>(8, Allocator.Temp);
+
+        // Overlapping something already (spawned on top of the player, pushed into a wall): out gently
+        position += Depenetrate(entity, collider, position, rotation, scale, blockLayers);
+
+        // Collide and slide
+        for (int i = 0; i < SlideIterations && math.lengthsq(move) > 1e-10f; i++)
         {
-            if (TryStep(ref position, step, bottom, floorLayers)) return true;
-            for (int degrees = 30; degrees <= 90; degrees += 30)
-            {
-                float angle = math.radians(degrees);
-                float length = math.cos(angle);
-                for (int side = -1; side <= 1; side += 2)
-                {
-                    var turned = math.mul(quaternion.RotateY(angle * side), step) * length;
-                    if (TryStep(ref position, turned, bottom, floorLayers)) return true;
-                }
-            }
-            return TryStep(ref position, step * 0.5f, bottom, floorLayers);
+            float fraction = UnitMovement.Sweep(World, collider, position, move, rotation, scale, entity, blockLayers, MinWalkableNormalY, ref hits, out var normal);
+            float length = math.length(move);
+            var step = move * fraction;
+            if (fraction < 1f) step -= move / length * math.min(UnitMovement.Skin, length * fraction);
+
+            // Already touching what blocks it: nothing to step, straight to sliding along it. Otherwise only onto
+            // floor; along a water or map edge (at any angle), the step turned along the edge
+            if (math.lengthsq(step) > 1e-10f && !TryStepAlongEdge(ref position, step, bottom, floorLayers))
+                break;
+            if (fraction >= 1f) break;
+
+            // Slide: what's left of the move, along the blocking surface
+            var flatNormal = math.normalizesafe(new float3(normal.x, 0f, normal.z));
+            move *= 1f - fraction;
+            move -= math.dot(move, flatNormal) * flatNormal;
         }
 
-        // Moves by step when there's floor at the end (stepping up or down to it); false (unmoved) otherwise
-        bool TryStep(ref float3 position, float3 step, float bottom, uint floorLayers)
-        {
-            if (math.lengthsq(step) < 1e-12f) return false;
-            var target = position + step;
-            float down = StepHeight + math.length(step.xz) * MaxSlopeTangent + 0.1f;
-            if (!UnitMovement.TryFindFloor(World, target, bottom, StepHeight, down, floorLayers, out float floorY)) return false;
-            target.y = floorY + bottom + UnitMovement.Skin;
-            position = target;
-            return true;
-        }
+        // Standing still still follows the floor (no floor under it at all: stays where it is)
+        if (UnitMovement.TryFindFloor(World, position, bottom, StepHeight, StepHeight + 0.1f, floorLayers, out float floorY))
+            position.y = floorY + bottom + UnitMovement.Skin;
 
-        // Horizontal push out of walls, props, steep ground and blocking units it overlaps, at most OverlapPushSpeed
-        float3 Depenetrate(Entity self, in PhysicsCollider collider, float3 position, quaternion rotation, float scale, uint blockLayers)
+        transform.Position = position;
+        return new float3(position.x - start.x, 0f, position.z - start.z) / DeltaTime;
+    }
+
+    // The step if it ends on floor; otherwise turned 30°, 60° or 90° to either side (shortened to the part that goes that
+    // way), the smallest turn that stays on floor, so units slide along water and map edges; else half the step
+    bool TryStepAlongEdge(ref float3 position, float3 step, float bottom, uint floorLayers)
+    {
+        if (TryStep(ref position, step, bottom, floorLayers)) return true;
+        for (int degrees = 30; degrees <= 90; degrees += 30)
         {
-            if (!collider.IsValid) return float3.zero;
-            var distances = new NativeList<DistanceHit>(8, Allocator.Temp);
-            World.CalculateDistance(new ColliderDistanceInput(collider.Value, 0f, new RigidTransform(rotation, position), scale), ref distances);
-            var push = float3.zero;
-            foreach (var hit in distances)
+            float angle = math.radians(degrees);
+            float length = math.cos(angle);
+            for (int side = -1; side <= 1; side += 2)
             {
-                if (hit.Entity == self || hit.Distance >= 0f) continue;
-                uint layer = World.Bodies[hit.RigidBodyIndex].Collider.Value.GetCollisionFilter(hit.ColliderKey).BelongsTo;
-                bool blocks = (layer & blockLayers) != 0 || ((layer & UnitMovement.GroundLayer) != 0 && hit.SurfaceNormal.y < MinWalkableNormalY);
-                if (!blocks) continue;
-                push += new float3(hit.SurfaceNormal.x, 0f, hit.SurfaceNormal.z) * -hit.Distance;
+                var turned = math.mul(quaternion.RotateY(angle * side), step) * length;
+                if (TryStep(ref position, turned, bottom, floorLayers)) return true;
             }
-            float max = OverlapPushSpeed * DeltaTime;
-            float length = math.length(push);
-            return length > max ? push * (max / length) : push;
         }
+        return TryStep(ref position, step * 0.5f, bottom, floorLayers);
+    }
+
+    // Moves by step when there's floor at the end (stepping up or down to it); false (unmoved) otherwise
+    bool TryStep(ref float3 position, float3 step, float bottom, uint floorLayers)
+    {
+        if (math.lengthsq(step) < 1e-12f) return false;
+        var target = position + step;
+        float down = StepHeight + math.length(step.xz) * MaxSlopeTangent + 0.1f;
+        if (!UnitMovement.TryFindFloor(World, target, bottom, StepHeight, down, floorLayers, out float floorY)) return false;
+        target.y = floorY + bottom + UnitMovement.Skin;
+        position = target;
+        return true;
+    }
+
+    // Horizontal push out of walls, props, steep ground and blocking units it overlaps, at most OverlapPushSpeed
+    float3 Depenetrate(Entity self, in PhysicsCollider collider, float3 position, quaternion rotation, float scale, uint blockLayers)
+    {
+        if (!collider.IsValid) return float3.zero;
+        var distances = new NativeList<DistanceHit>(8, Allocator.Temp);
+        World.CalculateDistance(new ColliderDistanceInput(collider.Value, 0f, new RigidTransform(rotation, position), scale), ref distances);
+        var push = float3.zero;
+        foreach (var hit in distances)
+        {
+            if (hit.Entity == self || hit.Distance >= 0f) continue;
+            uint layer = World.Bodies[hit.RigidBodyIndex].Collider.Value.GetCollisionFilter(hit.ColliderKey).BelongsTo;
+            bool blocks = (layer & blockLayers) != 0 || ((layer & UnitMovement.GroundLayer) != 0 && hit.SurfaceNormal.y < MinWalkableNormalY);
+            if (!blocks) continue;
+            push += new float3(hit.SurfaceNormal.x, 0f, hit.SurfaceNormal.z) * -hit.Distance;
+        }
+        float max = OverlapPushSpeed * DeltaTime;
+        float length = math.length(push);
+        return length > max ? push * (max / length) : push;
     }
 }

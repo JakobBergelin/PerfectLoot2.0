@@ -5,6 +5,7 @@ using Unity.Entities;
 /// <summary>Owns the DamageMeter singleton and keeps its clock.</summary>
 [UpdateInGroup(typeof(InputSystemGroup), OrderFirst = true)]
 [BurstCompile]
+[WorldSystemFilter(GameWorlds.Server)]
 public partial struct DamageMeterSystem : ISystem
 {
     public void OnCreate(ref SystemState state)

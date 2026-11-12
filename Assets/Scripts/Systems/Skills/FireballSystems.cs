@@ -21,6 +21,8 @@ public partial class FireballSystem : SystemBase
     {
         // SkillState: no cooldown to report (the time between attacks is the shared AttackRecovery); IsActive/resource set by SkillActivationSystem
         var commandBuffer = _beginInitializationEntityCommandBufferSystem.CreateCommandBuffer();
+        // SPIKE: a ghost when the game is networked, so clients see it
+        var projectilePrefab = SystemAPI.TryGetSingleton<NetPrefabs>(out var netPrefabs) ? netPrefabs.Projectile : Entity.Null;
         var movementConfig = SystemAPI.GetSingleton<MovementConfig>();
 
         // Casts requested by effects (e.g. Echoing Blade): no attack recovery, the normal cost (skipped if it can't be paid)
@@ -39,7 +41,7 @@ public partial class FireballSystem : SystemBase
                     available = Mathf.Max(0f, available - cost);
                     resourceChanges.Add(new ResourceChanger{Value = -cost});
                 }
-                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
+                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction, projectilePrefab);
                 SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
             }
         }
@@ -65,7 +67,7 @@ public partial class FireballSystem : SystemBase
             }
 
             // Fires as soon as it faces the cursor; the wait comes after (shared with the other repeated attacks)
-            Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction);
+            Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, desiredDirection.ValueRO.Direction, projectilePrefab);
             recovery.ValueRW.Remaining += fireball.ValueRO.AttackSpeed;
 
             SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger{Value = -cost});
@@ -77,9 +79,9 @@ public partial class FireballSystem : SystemBase
     /// One fireball from the caster toward direction. Used by the normal cast and by effects that cast it (Echoing Blade);
     /// the caller pays the cost.
     /// </summary>
-    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in FireBall fireball, float3 casterPosition, float3 direction)
+    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in FireBall fireball, float3 casterPosition, float3 direction, Entity ghostPrefab = default)
     {
-        var newEntity = commandBuffer.CreateEntity();
+        var newEntity = ghostPrefab == Entity.Null ? commandBuffer.CreateEntity() : commandBuffer.Instantiate(ghostPrefab);
 
         commandBuffer.AddComponent(newEntity, new LocalTransform{Position = casterPosition + direction, Rotation = quaternion.identity, Scale = 0.5f});
         commandBuffer.AddComponent(newEntity, new Projectile{Direction = direction, Speed = fireball.ProjectileSpeed, DestroyOnHit = true, BounceCount = 0, PierceCount = 0, FollowGround = true});

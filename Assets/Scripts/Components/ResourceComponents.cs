@@ -1,9 +1,10 @@
 using Unity.Entities;
+using Unity.NetCode;
 
 public struct Resource : IComponentData
 {
-    public float MaxValue;
-    public float CurrentValue;
+    [GhostField(Quantization = 100)] public float MaxValue;          // Replicated to clients (SPIKE)
+    [GhostField(Quantization = 100)] public float CurrentValue;
     public float Regeneration;
     public float RegenerationMultiplier;
 }

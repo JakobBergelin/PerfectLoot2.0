@@ -11,6 +11,7 @@ using Unity.Mathematics;
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(InputSystemGroup))]
 [UpdateBefore(typeof(SkillSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server)]
 public partial class SkillActivationSystem : SystemBase
 {
     protected override void OnUpdate()
