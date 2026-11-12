@@ -148,6 +148,10 @@ machine on the network joins through the game menu's **Join a game** with the ho
 - With the host alone and three remote players, the fourth player takes flow field slot 1, which is also player 2's
   `PlayerIndex` on the host.
 - The host logs "server tick batching" with two editors running in the background; check performance in a build.
-- Not tested yet: a dungeon's completion drop, a cooldown ticking down on a client after a real cast, Quarry marks and
-  Charged puffs on clients, a real game over a network between two PCs.
+- On Player 2, Netcode often logs `InvalidOperationException: Cannot find ghostTypeId in GhostPrefabCollection ...
+  (GhostPrefabCollection.Length: 0)` from `GhostPredictionHistorySystem.PredictionBackupJob` right after joining or
+  following the host into a scene. The game carries on (the player spawns, plays and gets its loadout), but a predicted
+  ghost seems to exist in the new client world before its ghost prefab list has loaded. Not investigated yet.
+- Not tested yet: a cooldown ticking down on a client after a real cast, Quarry marks and Charged puffs on clients, a
+  real game over a network between two PCs. (A dungeon's completion drop works on the host: 3 items.)
 - The single-world host is experimental in Netcode 6.6.
