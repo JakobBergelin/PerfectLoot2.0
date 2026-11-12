@@ -12,6 +12,7 @@ public struct VfxBinding : ICleanupComponentData
     public VfxType Impact;      // Played where the entity was when it goes away
     public float3 Position;
     public quaternion Rotation;
+    public Entity Proxy;        // On the host: the NetVfx stand-in that shows it on the other machines, or Entity.Null
 }
 
 /// <summary>Last frame's hit flash timer and whether the death effect has played, for units' hit and death effects.</summary>
@@ -47,7 +48,7 @@ public partial class VfxSystem : SystemBase
     const float StepLength = 1.2f;  // Meters walked between footstep puffs
     const float FootDepth = 1.05f;  // Meters from a unit's root (its capsule's centre) down to its feet, times its scale
 
-    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _newMirrors, _newSplits, _bound, _gone, _unwatched, _charged;
+    EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _newMirrors, _newSplits, _newStandIns, _bound, _gone, _unwatched, _charged;
     readonly List<Entity> _spawned = new List<Entity>();    // From CharacterManager.PlayerSpawned
     readonly List<Vector3> _crits = new List<Vector3>(), _dodges = new List<Vector3>(), _blocks = new List<Vector3>();   // From the damage systems' events
     readonly Dictionary<Entity, float3> _lastSteps = new Dictionary<Entity, float3>();
@@ -84,6 +85,7 @@ public partial class VfxSystem : SystemBase
         _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
         _newPortals = SystemAPI.QueryBuilder().WithAll<Portal, LocalTransform>().WithNone<VfxBinding>().Build();
         _newMirrors = SystemAPI.QueryBuilder().WithAll<MirrorImageUnit, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newStandIns = SystemAPI.QueryBuilder().WithAll<NetVfx, LocalTransform>().WithNone<VfxBinding>().Build();
         _newSplits = SystemAPI.QueryBuilder().WithAll<SplitProjectile, LocalTransform>().WithNone<VfxSplitSeen>().Build();
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
         _damaging = World.GetOrCreateSystemManaged<DamagingSystem>();
@@ -123,6 +125,8 @@ public partial class VfxSystem : SystemBase
     {
         var vfx = VfxManager.Instance;
         var bindings = new NativeList<(Entity, VfxBinding)>(Allocator.Temp);
+        // The looks of effects that follow what only the host has, for their stand-ins (made below, on the host)
+        var standIns = new NativeList<(Entity, NetVfx)>(Allocator.Temp);
 
         if (vfx != null)
         {
@@ -145,30 +149,39 @@ public partial class VfxSystem : SystemBase
                         // Everything else that hits (arrows, thrown weapons, lightning) gets a dart tinted by its damage type
                         : attack ? (VfxType.ProjectileStreak, EntityManager.GetComponentData<Attack>(e).Type == DamageType.Lightning ? VfxType.LightningHit : VfxType.SlingshotSpark)
                         : (VfxType.None, VfxType.None);
-                    var bound = Bind(vfx, type, impact, t);
-                    if (type == VfxType.ProjectileStreak) vfx.Tint(bound.Handle, StrikeColor(EntityManager.GetComponentData<Attack>(e).Type));
-                    bindings.Add((e, bound));
+                    var look = new NetVfx { Type = type, Impact = impact };
+                    if (type == VfxType.ProjectileStreak)
+                    {
+                        look.Tinted = true;
+                        look.Tint = EntityManager.GetComponentData<Attack>(e).Type;
+                    }
+                    bindings.Add((e, Bind(vfx, look, t)));
+                    standIns.Add((e, look));
                 }
             using (var entities = _newPeriodic.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
                     var attack = EntityManager.GetComponentData<PeriodicAttack>(e);
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    var binding = attack.Skill switch
+                    var look = attack.Skill switch
                     {
-                        SkillType.Tornado => Bind(vfx, VfxType.Tornado, VfxType.TornadoEnd, t),
-                        SkillType.FrozenOrb => Bind(vfx, VfxType.FrozenOrb, VfxType.None, t),
-                        SkillType.Flamethrower => Bind(vfx, VfxType.Flame, VfxType.None, t),
-                        SkillType.TeslaCoil => Bind(vfx, VfxType.TeslaField, VfxType.None, t),
+                        SkillType.Tornado => new NetVfx { Type = VfxType.Tornado, Impact = VfxType.TornadoEnd },
+                        SkillType.FrozenOrb => new NetVfx { Type = VfxType.FrozenOrb },
+                        SkillType.Flamethrower => new NetVfx { Type = VfxType.Flame },
+                        SkillType.TeslaCoil => new NetVfx { Type = VfxType.TeslaField, Scale = attack.Radius },
                         _ => default,
                     };
-                    if (attack.Skill == SkillType.TeslaCoil) vfx.Scale(binding.Handle, attack.Radius);
-                    bindings.Add((e, binding));
+                    bindings.Add((e, Bind(vfx, look, t)));
+                    standIns.Add((e, look));
                 }
             // A pop when the soul goes, taken or faded
             using (var entities = _newSouls.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
-                    bindings.Add((e, Bind(vfx, VfxType.SoulOrb, VfxType.SoulPop, EntityManager.GetComponentData<LocalTransform>(e))));
+                {
+                    var look = new NetVfx { Type = VfxType.SoulOrb, Impact = VfxType.SoulPop };
+                    bindings.Add((e, Bind(vfx, look, EntityManager.GetComponentData<LocalTransform>(e))));
+                    standIns.Add((e, look));
+                }
             // Turned like the portal, as its ring faces one way
             using (var entities = _newPortals.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
@@ -184,7 +197,9 @@ public partial class VfxSystem : SystemBase
                 {
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     vfx.Burst(VfxType.MirrorPop, t.Position, Quaternion.identity);
-                    bindings.Add((e, Bind(vfx, VfxType.MirrorShimmer, VfxType.MirrorPop, t)));
+                    var look = new NetVfx { Type = VfxType.MirrorShimmer, Impact = VfxType.MirrorPop };
+                    bindings.Add((e, Bind(vfx, look, t)));
+                    standIns.Add((e, look));
                 }
             // A split makes a copy of the shot with neither one's spark played: the original still has its binding (Instantiate
             // doesn't copy cleanup components), so one spark per split
@@ -203,11 +218,17 @@ public partial class VfxSystem : SystemBase
                 foreach (var e in entities)
                 {
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    bool field = EntityManager.HasComponent<TimezoneField>(e);
-                    var binding = Bind(vfx, field ? VfxType.TimezoneField : VfxType.FireHydra, VfxType.None, t);
-                    if (field) vfx.Scale(binding.Handle, EntityManager.GetComponentData<TimezoneField>(e).Radius);
-                    bindings.Add((e, binding));
+                    var look = EntityManager.HasComponent<TimezoneField>(e)
+                        ? new NetVfx { Type = VfxType.TimezoneField, Scale = EntityManager.GetComponentData<TimezoneField>(e).Radius }
+                        : new NetVfx { Type = VfxType.FireHydra };
+                    bindings.Add((e, Bind(vfx, look, t)));
+                    standIns.Add((e, look));
                 }
+            // In someone else's game: the host's stand-ins for what only it has; their impact plays where they go away
+            if (!NetSession.IsHost)
+                using (var entities = _newStandIns.ToEntityArray(Allocator.Temp))
+                    foreach (var e in entities)
+                        bindings.Add((e, Bind(vfx, EntityManager.GetComponentData<NetVfx>(e), EntityManager.GetComponentData<LocalTransform>(e))));
             int strikes = 0;
             using (var entities = _newAttacks.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
@@ -240,8 +261,10 @@ public partial class VfxSystem : SystemBase
         }
         _spawned.Clear();
         foreach (var (entity, binding) in bindings) EntityManager.AddComponentData(entity, binding);
+        if (NetSession.IsHost) MakeStandIns(standIns);
 
-        // Follow, facing the way they move
+        // Follow, facing the way they move; the stand-ins follow along
+        var standInMoves = new NativeList<(Entity, float3)>(Allocator.Temp);
         foreach (var (binding, transform) in SystemAPI.Query<RefRW<VfxBinding>, RefRO<LocalTransform>>())
         {
             var position = transform.ValueRO.Position;
@@ -249,14 +272,18 @@ public partial class VfxSystem : SystemBase
             if (math.lengthsq(moved) > 1e-6f) binding.ValueRW.Rotation = quaternion.LookRotationSafe(math.normalize(moved), math.up());
             binding.ValueRW.Position = position;
             if (vfx != null && binding.ValueRO.Handle != 0) vfx.Move(binding.ValueRO.Handle, position, binding.ValueRO.Rotation);
+            if (binding.ValueRO.Proxy != Entity.Null) standInMoves.Add((binding.ValueRO.Proxy, position));
         }
+        foreach (var (standIn, position) in standInMoves)
+            if (EntityManager.HasComponent<LocalTransform>(standIn)) EntityManager.SetComponentData(standIn, LocalTransform.FromPosition(position));
 
-        // Gone: release, impact where it was, let the entity be removed
+        // Gone: release, impact where it was, let the entity be removed (its stand-in with it)
         using (var gone = _gone.ToEntityArray(Allocator.Temp))
         {
             foreach (var e in gone)
             {
                 var binding = EntityManager.GetComponentData<VfxBinding>(e);
+                if (binding.Proxy != Entity.Null && EntityManager.Exists(binding.Proxy)) EntityManager.DestroyEntity(binding.Proxy);
                 if (vfx == null) continue;
                 if (binding.Handle != 0) vfx.Release(binding.Handle);
                 if (binding.Impact != VfxType.None) vfx.Burst(binding.Impact, binding.Position, binding.Rotation);
@@ -430,6 +457,31 @@ public partial class VfxSystem : SystemBase
                 watch.ValueRW.Died = true;
                 vfx.Burst(profile.Death, position + Vector3.up * 0.6f * scale, Quaternion.identity);
             }
+        }
+    }
+
+    // An effect that follows its entity, sized and tinted as the look says (a host's stand-in carries the same look)
+    static VfxBinding Bind(VfxManager vfx, in NetVfx look, LocalTransform t)
+    {
+        var binding = Bind(vfx, look.Type, look.Impact, t);
+        if (look.Scale > 0f) vfx.Scale(binding.Handle, look.Scale);
+        if (look.Tinted) vfx.Tint(binding.Handle, StrikeColor(look.Tint));
+        return binding;
+    }
+
+    // The host: a NetVfx ghost for each new effect that follows what only it has, so the other machines show it too
+    void MakeStandIns(NativeList<(Entity, NetVfx)> standIns)
+    {
+        if (standIns.IsEmpty || !SystemAPI.TryGetSingleton<NetPrefabs>(out var prefabs) || prefabs.Vfx == Entity.Null) return;
+        foreach (var (entity, look) in standIns)
+        {
+            if (look.Type == VfxType.None) continue;
+            var standIn = EntityManager.Instantiate(prefabs.Vfx);
+            EntityManager.SetComponentData(standIn, LocalTransform.FromPosition(EntityManager.GetComponentData<LocalTransform>(entity).Position));
+            EntityManager.SetComponentData(standIn, look);
+            var binding = EntityManager.GetComponentData<VfxBinding>(entity);
+            binding.Proxy = standIn;
+            EntityManager.SetComponentData(entity, binding);
         }
     }
 

@@ -11,8 +11,9 @@ GameObject:
   - component: {fileID: 6488870254728707025}
   - component: {fileID: 354966201406247095}
   - component: {fileID: 1504730700231605415}
+  - component: {fileID: 5865373356091334948}
   m_Layer: 0
-  m_Name: NetProjectile
+  m_Name: NetVfx
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -72,3 +73,15 @@ MonoBehaviour:
   MaxSendRate: 0
   SingleWorldHostInterpolationSmoothing: 1
   prefabId: 
+--- !u!114 &5865373356091334948
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 3772292115802863317}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 37b1e523af238184c946b297f7236dc4, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetVfxAuthoring
