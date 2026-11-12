@@ -204,13 +204,21 @@ public class DungeonManager : MonoBehaviour
         using var kills = buffer.ToNativeArray(Allocator.Temp);
         buffer.Clear();
         // Every kill rolls the kill table; the items land where the enemy died
-        var groundLoot = GroundLootManager.Instance;
         foreach (var kill in kills)
         {
             if (kill.Boss) _bossKilled = true;
             else _kills++;
-            if (groundLoot != null) groundLoot.DropFromTable(_dungeon.KillLootTable, kill.Position);
+            DropLoot(entityManager, NetLootTable.Kill, kill.Position);
         }
+    }
+
+    // Personal loot: this machine's drop from the dungeon's table, and every other machine in the game rolls its own
+    void DropLoot(EntityManager entityManager, NetLootTable table, float3 position)
+    {
+        var groundLoot = GroundLootManager.Instance;
+        var lootTable = table == NetLootTable.Kill ? _dungeon.KillLootTable : _dungeon.CompletionLootTable;
+        if (groundLoot != null) groundLoot.DropFromTable(lootTable, position);
+        NetLoot.Send(entityManager, table, position);
     }
 
     void UpdateSteps(EntityManager entityManager)
@@ -400,9 +408,7 @@ public class DungeonManager : MonoBehaviour
         _portalPending = false;
 
         float3 position = AroundPlayer(entityManager, player, ReturnPortalDistance);
-        var groundLoot = GroundLootManager.Instance;
-        if (groundLoot != null && _state == RunState.Complete)
-            groundLoot.DropFromTable(_dungeon.CompletionLootTable, math.lerp(player, position, 0.5f));
+        if (_state == RunState.Complete) DropLoot(entityManager, NetLootTable.Completion, math.lerp(player, position, 0.5f));
         if (_returnPortalPrefab == Entity.Null || !entityManager.Exists(_returnPortalPrefab)) return;
         float3 toPlayer = new float3(player.x - position.x, 0f, player.z - position.z);
         var turn = quaternion.LookRotationSafe(toPlayer, math.up());
