@@ -102,9 +102,11 @@ public partial class VfxSystem : SystemBase
         _receive.OnDamageDodged += OnDodged;
         _receive.OnDamageBlocked += OnBlocked;
         _receive.OnBurst += OnReceivedBurst;
-        _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
+        // Charged units have the status bit set by the host (NetUnitFeedback), on every machine
+        _charged = SystemAPI.QueryBuilder().WithAll<NetUnitFeedback, LocalTransform>().WithNone<RigidDeath>().Build();
         _enemyBodies = SystemAPI.QueryBuilder().WithAll<Enemy, LocalTransform>().WithNone<RigidDeath>().Build();
-        _friendlyBodies = SystemAPI.QueryBuilder().WithAny<Player, Companion>().WithAll<LocalTransform>().WithNone<RigidDeath>().Build();
+        // NetPlayer: every machine's players, on every machine
+        _friendlyBodies = SystemAPI.QueryBuilder().WithAny<NetPlayer, Companion>().WithAll<LocalTransform>().WithNone<RigidDeath>().Build();
         _statuses = new[]
         {
             (SystemAPI.QueryBuilder().WithAll<Burning, LocalTransform>().WithNone<RigidDeath>().Build(), VfxType.StatusBurn),
@@ -348,11 +350,10 @@ public partial class VfxSystem : SystemBase
         }
 
         // Footsteps: a puff every StepLength walked; none while dashing, nor after a jump (teleport, respawn)
-        var dashes = SystemAPI.GetComponentLookup<Dash>(true);
-        foreach (var (transform, entity) in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Player>().WithEntityAccess())
+        foreach (var (transform, actions, entity) in SystemAPI.Query<RefRO<LocalTransform>, RefRO<NetPlayerActions>>().WithEntityAccess())
         {
             var position = transform.ValueRO.Position;
-            bool dashing = dashes.HasComponent(entity) && dashes[entity].Dashing;
+            bool dashing = actions.ValueRO.Has(NetPlayerActions.Dashing);
             if (!_lastSteps.TryGetValue(entity, out var last) || dashing || math.distance(last.xz, position.xz) > StepLength * 4f)
             {
                 _lastSteps[entity] = position;
@@ -438,12 +439,12 @@ public partial class VfxSystem : SystemBase
                     StatusPuff(vfx, effect, transforms[i]);
 
         int puffs = 0;
-        using (var entities = _charged.ToEntityArray(Allocator.Temp))
-            foreach (var e in entities)
+        using (var feedbacks = _charged.ToComponentDataArray<NetUnitFeedback>(Allocator.Temp))
+        using (var transforms = _charged.ToComponentDataArray<LocalTransform>(Allocator.Temp))
+            for (int i = 0; i < feedbacks.Length && puffs < StatusCap; i++)
             {
-                if (puffs == StatusCap) break;
-                if (EntityManager.GetBuffer<ChargedInstance>(e, true).Length == 0) continue;
-                StatusPuff(vfx, VfxType.StatusCharged, EntityManager.GetComponentData<LocalTransform>(e));
+                if ((feedbacks[i].Statuses & NetUnitFeedback.Charged) == 0) continue;
+                StatusPuff(vfx, VfxType.StatusCharged, transforms[i]);
                 puffs++;
             }
     }
@@ -451,13 +452,13 @@ public partial class VfxSystem : SystemBase
     static void StatusPuff(VfxManager vfx, VfxType effect, LocalTransform t) =>
         vfx.Burst(effect, (Vector3)t.Position + Vector3.up * 0.8f * t.Scale, Quaternion.identity);
 
-    // Keyed by the wearer: the marker jumps to the next target, and goes with the passive or the wearer
+    // Keyed by the wearer: the marker jumps to the next target, and goes with the passive or the wearer (NetPlayerActions)
     void UpdateQuarryMarks(VfxManager vfx)
     {
         var transforms = SystemAPI.GetComponentLookup<LocalTransform>(true);
-        foreach (var (quarry, entity) in SystemAPI.Query<RefRO<Quarry>>().WithEntityAccess())
+        foreach (var (actions, entity) in SystemAPI.Query<RefRO<NetPlayerActions>>().WithEntityAccess())
         {
-            var target = quarry.ValueRO.Target;
+            var target = actions.ValueRO.QuarryTarget;
             bool marked = transforms.HasComponent(target);
             var t = marked ? transforms[target] : default;
             t.Position.y += 1.6f * t.Scale;  // Over the head: the root is the capsule's centre
@@ -466,7 +467,7 @@ public partial class VfxSystem : SystemBase
 
         _stale.Clear();
         foreach (var (entity, handle) in _quarryMarks)
-            if (!EntityManager.HasComponent<Quarry>(entity)) { vfx.Release(handle); _stale.Add(entity); }
+            if (!EntityManager.HasComponent<NetPlayerActions>(entity)) { vfx.Release(handle); _stale.Add(entity); }
         foreach (var entity in _stale) _quarryMarks.Remove(entity);
     }
 
@@ -526,15 +527,14 @@ public partial class VfxSystem : SystemBase
         Rotation = quaternion.identity,
     };
 
-    // Whirlwind arc while spinning, dash trail (and a burst at the start) while dashing
+    // Whirlwind arc while spinning, dash trail (and a burst at the start) while dashing, on every machine (NetPlayerActions)
     void UpdatePlayerEffects(VfxManager vfx)
     {
-        foreach (var (whirlwind, transform, entity) in SystemAPI.Query<RefRO<Whirlwind>, RefRO<LocalTransform>>()
-                     .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-            Track(vfx, _whirlwinds, entity, whirlwind.ValueRO.Spinning, VfxType.WhirlwindArc, VfxType.None, transform.ValueRO);
-        foreach (var (dash, transform, entity) in SystemAPI.Query<RefRO<Dash>, RefRO<LocalTransform>>()
-                     .WithOptions(EntityQueryOptions.IgnoreComponentEnabledState).WithEntityAccess())
-            Track(vfx, _dashes, entity, dash.ValueRO.Dashing, VfxType.DashTrail, VfxType.DashBurst, transform.ValueRO);
+        foreach (var (actions, transform, entity) in SystemAPI.Query<RefRO<NetPlayerActions>, RefRO<LocalTransform>>().WithEntityAccess())
+        {
+            Track(vfx, _whirlwinds, entity, actions.ValueRO.Has(NetPlayerActions.Spinning), VfxType.WhirlwindArc, VfxType.None, transform.ValueRO);
+            Track(vfx, _dashes, entity, actions.ValueRO.Has(NetPlayerActions.Dashing), VfxType.DashTrail, VfxType.DashBurst, transform.ValueRO);
+        }
 
         foreach (var map in new[] { _whirlwinds, _dashes })
         {

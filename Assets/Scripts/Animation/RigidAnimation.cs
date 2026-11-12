@@ -53,6 +53,8 @@ public struct RigidAnimator : IComponentData
     public float3 LastPosition;
     public int LastAttackCount;
     public float LastFlashTimer;
+    // A player's NetPlayerActions counters
+    public byte LastReleases, LastShots, LastSweeps, LastPunches;
 }
 
 /// <summary>The animated bones, in RigidAnimationSet.Bones order.</summary>

@@ -9,9 +9,9 @@ using Unity.Transforms;
 /// <summary>
 /// Picks each rigid model's clip from gameplay state and poses its bones: Death while RigidDeath, Hit when a hit flash
 /// starts, Attack when a melee attack fires (both play once), otherwise Move or Idle from how fast it moves.
-/// The player's skills are read from their own state: Dash while dashing, Spin while whirlwinding, a punch per Fists of
-/// Thunder hit, Release / Shoot / Sweep when a fireball, barrage bolt or tornado goes out (once each), Cast while
-/// Fireball is held. Clip changes cross-fade. Before transforms are calculated, like the other visual feedback.
+/// A player's skills come from its NetPlayerActions, on every machine: Dash while dashing, Spin while whirlwinding, a
+/// punch per Fists of Thunder hit, Release / Shoot / Sweep when a fireball, barrage bolt or tornado goes out (once each),
+/// Cast while Fireball is held. Clip changes cross-fade. Before transforms are calculated, like the other visual feedback.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 [BurstCompile]
@@ -34,11 +34,7 @@ public partial struct RigidAnimationSystem : ISystem
         var flashes = SystemAPI.GetComponentLookup<HitFlash>(true);
         var deaths = SystemAPI.GetComponentLookup<RigidDeath>(true);
         var motions = SystemAPI.GetComponentLookup<UnitMotion>(true);
-        var fireballs = SystemAPI.GetComponentLookup<FireBall>(true);
-        var skills = SystemAPI.GetBufferLookup<Skill>(true);
-        var fists = SystemAPI.GetComponentLookup<FistsOfThunder>(true);
-        var whirlwinds = SystemAPI.GetComponentLookup<Whirlwind>(true);
-        var dashes = SystemAPI.GetComponentLookup<Dash>(true);
+        var playerActions = SystemAPI.GetComponentLookup<NetPlayerActions>(true);
 
         foreach (var (animatorRef, bones, entity) in SystemAPI.Query<RefRW<RigidAnimator>, DynamicBuffer<RigidBone>>().WithEntityAccess())
         {
@@ -50,12 +46,17 @@ public partial struct RigidAnimationSystem : ISystem
             // In someone else's game the host's count comes with the ghost
             int attackCount = behaviors.HasComponent(entity) ? behaviors[entity].AttackCount : feedbacks.HasComponent(entity) ? feedbacks[entity].Attacks : 0;
             float flashTimer = flashes.HasComponent(entity) ? flashes[entity].Timer : 0f;
+            var actions = playerActions.HasComponent(entity) ? playerActions[entity] : default;
             if (!animator.Started)
             {
                 animator.Started = true;
                 animator.LastPosition = position;
                 animator.LastAttackCount = attackCount;
                 animator.LastFlashTimer = flashTimer;
+                animator.LastReleases = actions.Releases;
+                animator.LastShots = actions.Shots;
+                animator.LastSweeps = actions.Sweeps;
+                animator.LastPunches = actions.Punches;
             }
 
             // Units: how fast UnitMoverSystem actually moved them; anything else from its position change
@@ -68,14 +69,17 @@ public partial struct RigidAnimationSystem : ISystem
             animator.LastAttackCount = attackCount;
             animator.LastFlashTimer = flashTimer;
 
-            bool released = WasUsed(skills, entity, SkillType.Fireball);
-            bool shot = WasUsed(skills, entity, SkillType.Barrage);
-            bool swept = WasUsed(skills, entity, SkillType.Tornado);
-            bool punched = WasUsed(skills, entity, SkillType.FistOfThunder);
-            int punchCount = fists.HasComponent(entity) ? fists[entity].PunchCount : 0;
-            bool dashing = dashes.HasComponent(entity) && dashes[entity].Dashing;
-            bool spinning = whirlwinds.HasComponent(entity) && whirlwinds[entity].Spinning;
-            bool winding = fireballs.HasComponent(entity) && fireballs.IsComponentEnabled(entity);
+            bool released = actions.Releases != animator.LastReleases;
+            bool shot = actions.Shots != animator.LastShots;
+            bool swept = actions.Sweeps != animator.LastSweeps;
+            bool punched = actions.Punches != animator.LastPunches;
+            animator.LastReleases = actions.Releases;
+            animator.LastShots = actions.Shots;
+            animator.LastSweeps = actions.Sweeps;
+            animator.LastPunches = actions.Punches;
+            bool dashing = actions.Has(NetPlayerActions.Dashing);
+            bool spinning = actions.Has(NetPlayerActions.Spinning);
+            bool winding = actions.Has(NetPlayerActions.Winding);
 
             var wanted = animator.Clip;
             bool restart = false;
@@ -93,7 +97,7 @@ public partial struct RigidAnimationSystem : ISystem
             }
             else if (punched && animation.Has(RigidClip.PunchL))
             {
-                wanted = punchCount % 2 == 1 ? RigidClip.PunchR : RigidClip.PunchL;
+                wanted = actions.Punches % 2 == 1 ? RigidClip.PunchR : RigidClip.PunchL;
                 restart = true;
             }
             else if (released && animation.Has(RigidClip.Release))
@@ -165,16 +169,6 @@ public partial struct RigidAnimationSystem : ISystem
         (clip == RigidClip.Attack || clip == RigidClip.Hit || clip == RigidClip.PunchL || clip == RigidClip.PunchR ||
          clip == RigidClip.Release || clip == RigidClip.Shoot || clip == RigidClip.Sweep) &&
         animation.Has(clip) && time < animation.Clips[(int)clip].Length;
-
-    // A skill timer that was full last frame and dropped: the skill just fired
-    // Skills raise this on the frame they go out
-    static bool WasUsed(in BufferLookup<Skill> skills, Entity entity, SkillType type)
-    {
-        if (!skills.HasBuffer(entity)) return false;
-        foreach (var skill in skills[entity])
-            if (skill.Type == type && skill.events.OnUsed) return true;
-        return false;
-    }
 
     static LocalTransform Sample(ref RigidAnimationBlob animation, RigidClip kind, float time, int bone)
     {

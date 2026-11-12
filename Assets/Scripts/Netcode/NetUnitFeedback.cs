@@ -10,7 +10,7 @@ using Unity.NetCode;
 /// </summary>
 public struct NetUnitFeedback : IComponentData
 {
-    public const byte Burning = 1, Poisoned = 2, Chilled = 4, Bleeding = 8, Frozen = 16;
+    public const byte Burning = 1, Poisoned = 2, Chilled = 4, Bleeding = 8, Frozen = 16, Charged = 32;
 
     [GhostField] public byte Hits;
     [GhostField] public DamageType HitType;
@@ -35,13 +35,15 @@ public partial struct NetUnitFeedbackWriteSystem : ISystem
         var chilled = SystemAPI.GetComponentLookup<Chilled>(true);
         var bleeding = SystemAPI.GetComponentLookup<Bleeding>(true);
         var frozen = SystemAPI.GetComponentLookup<Frozen>(true);
+        var charged = SystemAPI.GetBufferLookup<ChargedInstance>(true);
         foreach (var (feedback, entity) in SystemAPI.Query<RefRW<NetUnitFeedback>>().WithEntityAccess())
         {
             var value = feedback.ValueRO;
             if (behaviors.HasComponent(entity)) value.Attacks = (byte)behaviors[entity].AttackCount;
             value.Dying = deaths.HasComponent(entity);
             value.Statuses = (byte)(Bit(burning, entity, NetUnitFeedback.Burning) | Bit(poisoned, entity, NetUnitFeedback.Poisoned)
-                | Bit(chilled, entity, NetUnitFeedback.Chilled) | Bit(bleeding, entity, NetUnitFeedback.Bleeding) | Bit(frozen, entity, NetUnitFeedback.Frozen));
+                | Bit(chilled, entity, NetUnitFeedback.Chilled) | Bit(bleeding, entity, NetUnitFeedback.Bleeding) | Bit(frozen, entity, NetUnitFeedback.Frozen)
+                | (charged.HasBuffer(entity) && charged[entity].Length > 0 ? NetUnitFeedback.Charged : 0));
             if (value.Attacks != feedback.ValueRO.Attacks || value.Dying != feedback.ValueRO.Dying || value.Statuses != feedback.ValueRO.Statuses)
                 feedback.ValueRW = value;
         }
