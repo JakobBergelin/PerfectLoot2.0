@@ -12,7 +12,7 @@ public partial class FrozenOrbSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         RequireForUpdate<MovementConfig>();
     }
 

@@ -20,7 +20,7 @@ public partial class FrostLanceSystem : SystemBase
     protected override void OnCreate()
     {
         _random = Random.CreateFromIndex((uint)System.Environment.TickCount);
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         RequireForUpdate<MovementConfig>();
     }
 

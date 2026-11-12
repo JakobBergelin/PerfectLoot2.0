@@ -219,7 +219,7 @@ public partial class PeriodicAttackSystem : SystemBase
     protected override void OnCreate()
     {
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
-        _endSimulationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
+        _endSimulationEntityCommandBufferSystem = World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
     }
     [BurstCompile]
     protected override void OnUpdate()

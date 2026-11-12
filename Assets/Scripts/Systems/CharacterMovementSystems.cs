@@ -15,7 +15,7 @@ public partial class CharacterMovementSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         RequireForUpdate<MovementConfig>();
     }
 

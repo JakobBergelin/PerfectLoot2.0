@@ -245,7 +245,7 @@ public partial class DamagingSystem : SystemBase
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     protected override void OnCreate()
     {
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         RequireForUpdate<StatusEffectConfig>();
     }
 
@@ -384,7 +384,7 @@ public partial class ApplyHealingSystem : SystemBase
     private BeginInitializationEntityCommandBufferSystem _beginInitializationEntityCommandBufferSystem;
     protected override void OnCreate()
     {
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
     }
 
     protected override void OnUpdate()

@@ -15,7 +15,7 @@ public partial class FistsOfThunderSystem : SystemBase
     protected override void OnCreate()
     {
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
-        _beginInitializationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
+        _beginInitializationEntityCommandBufferSystem = World.GetExistingSystemManaged<BeginInitializationEntityCommandBufferSystem>();
         RequireForUpdate<MovementConfig>();
     }
 

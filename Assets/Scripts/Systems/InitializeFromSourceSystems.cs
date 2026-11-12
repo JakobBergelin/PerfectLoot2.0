@@ -15,7 +15,7 @@ public partial class InitializeFromSourceSystem : SystemBase
     [BurstCompile]
     protected override void OnCreate()
     {
-        _endSimulationEntityCommandBufferSystem = World.DefaultGameObjectInjectionWorld.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
+        _endSimulationEntityCommandBufferSystem = World.GetExistingSystemManaged<EndSimulationEntityCommandBufferSystem>();
     }
 
     [BurstCompile]
