@@ -30,6 +30,7 @@ public partial struct RigidAnimationSystem : ISystem
 
         var transforms = SystemAPI.GetComponentLookup<LocalTransform>();
         var behaviors = SystemAPI.GetComponentLookup<NpcBehavior>(true);
+        var feedbacks = SystemAPI.GetComponentLookup<NetUnitFeedback>(true);
         var flashes = SystemAPI.GetComponentLookup<HitFlash>(true);
         var deaths = SystemAPI.GetComponentLookup<RigidDeath>(true);
         var motions = SystemAPI.GetComponentLookup<UnitMotion>(true);
@@ -46,7 +47,8 @@ public partial struct RigidAnimationSystem : ISystem
             ref var animation = ref animator.Animation.Value;
 
             var position = transforms[entity].Position;
-            int attackCount = behaviors.HasComponent(entity) ? behaviors[entity].AttackCount : 0;
+            // In someone else's game the host's count comes with the ghost
+            int attackCount = behaviors.HasComponent(entity) ? behaviors[entity].AttackCount : feedbacks.HasComponent(entity) ? feedbacks[entity].Attacks : 0;
             float flashTimer = flashes.HasComponent(entity) ? flashes[entity].Timer : 0f;
             if (!animator.Started)
             {
@@ -212,13 +214,7 @@ public static class RigidDeathUtility
             var entity = entities[i];
             var animator = entityManager.GetComponentData<RigidAnimator>(entity);
             float length = animator.Animation.Value.Clips[(int)RigidClip.Death].Length;
-            entityManager.AddComponentData(entity, new RigidDeath { Timer = length + Linger });
-            if (entityManager.HasComponent<HealthBarUI>(entity))
-            {
-                var bars = entityManager.GetComponentData<HealthBarUI>(entity);
-                HideHierarchy(entityManager, bars.BarEntity);
-                HideHierarchy(entityManager, bars.StickEntity);
-            }
+            ShowDying(entityManager, entity, length + Linger);
         }
 
         entityManager.RemoveComponent(entities, new ComponentTypeSet(new FixedList128Bytes<ComponentType>
@@ -243,6 +239,19 @@ public static class RigidDeathUtility
             ComponentType.ReadWrite<PhysicsGravityFactor>(),
             ComponentType.ReadWrite<PhysicsWorldIndex>(),
         }));
+    }
+
+    /// <summary>
+    /// The look of dying: its Death clip (RigidDeath, sinking and destroyed after timer) and no bars. All another machine
+    /// shows of a host's dying unit, with a timer that doesn't end (NetUnitFeedbackApplySystem).
+    /// </summary>
+    public static void ShowDying(EntityManager entityManager, Entity entity, float timer)
+    {
+        entityManager.AddComponentData(entity, new RigidDeath { Timer = timer });
+        if (!entityManager.HasComponent<HealthBarUI>(entity)) return;
+        var bars = entityManager.GetComponentData<HealthBarUI>(entity);
+        HideHierarchy(entityManager, bars.BarEntity);
+        HideHierarchy(entityManager, bars.StickEntity);
     }
 
     static void HideHierarchy(EntityManager entityManager, Entity entity)

@@ -22,7 +22,12 @@ public class NetReplicatedAuthoring : MonoBehaviour
         public override void Bake(NetReplicatedAuthoring authoring)
         {
             var entity = GetEntity(TransformUsageFlags.Dynamic);
-            if (authoring.Health) AddComponent(entity, new Health());
+            // A unit with health also shows its hits, attacks, death and statuses on the other machines
+            if (authoring.Health)
+            {
+                AddComponent(entity, new Health());
+                AddComponent(entity, new NetUnitFeedback());
+            }
             if (authoring.Resource) AddComponent(entity, new Resource());
             if (authoring.Player)
             {

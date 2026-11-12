@@ -313,6 +313,13 @@ public partial class DamagingSystem : SystemBase
                         flash.ValueRW.FlashColor = hitFlashConfig.FlashColor(instance.Type);
                         flash.ValueRW.Timer = hitFlashConfig.Duration;
                     }
+                    // The other machines flash it too (NetUnitFeedbackApplySystem)
+                    if(SystemAPI.HasComponent<NetUnitFeedback>(entity))
+                    {
+                        var feedback = SystemAPI.GetComponentRW<NetUnitFeedback>(entity);
+                        feedback.ValueRW.Hits++;
+                        feedback.ValueRW.HitType = instance.Type;
+                    }
 
                     // Status effect per damage type
                     switch(instance.Type)
