@@ -85,3 +85,31 @@
     -unity-text-align: middle-center;
     margin: 6px 0 0 0;
 }
+
+/* Join a game: the host's address, in place of the buttons (like the main menu's name field) */
+.gm-field {
+    margin: 8px 0 0 0;
+    padding: 0;
+    --unity-cursor-color: #F2F2F2;
+    --unity-selection-color: rgba(224, 160, 32, 0.5);
+}
+
+.gm-field .unity-base-text-field__input {
+    font-size: 17px;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--card-border);
+    border-radius: 4px;
+    padding: 6px 10px;
+    min-height: 38px;
+    -unity-text-align: middle-center;
+}
+
+.gm-field:focus .unity-base-text-field__input {
+    border-color: var(--accent);
+}
+
+.gm-error {
+    color: #E06A50;
+}

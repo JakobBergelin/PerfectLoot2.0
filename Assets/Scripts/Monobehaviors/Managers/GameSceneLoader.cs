@@ -51,9 +51,23 @@ public static class GameSceneLoader
     /// <summary>Loads at once, without telling anyone (Load, or NetSceneSync when the time has come).</summary>
     public static void LoadNow(string sceneName)
     {
+        bool mainMenu = sceneName == GameBootstrap.MainMenuScene;
+        // The main menu ends a session in someone else's game: the next game is this machine's own
+        if (mainMenu) NetSession.End();
+        LoadFresh(sceneName, keepConnections: !mainMenu);
+    }
+
+    /// <summary>
+    /// Starts over in this scene with a fresh world and no connections, for NetSession.Role as it is now (joining
+    /// someone's game, or back to this machine's own).
+    /// </summary>
+    public static void Restart(string sceneName) => LoadFresh(sceneName, keepConnections: false);
+
+    static void LoadFresh(string sceneName, bool keepConnections)
+    {
         PreviousScene = SceneManager.GetActiveScene().name;
         Loading?.Invoke();
-        ResetWorld(keepConnections: sceneName != GameBootstrap.MainMenuScene);
+        ResetWorld(keepConnections);
         SceneManager.LoadScene(sceneName);
     }
 

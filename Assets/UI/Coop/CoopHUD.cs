@@ -7,7 +7,9 @@ using UnityEngine.UIElements;
 /// and pressing it there adds player 2 with a character picker on the right (CoopPicker). Picking spawns them next to
 /// player 1 (CoopManager). Change character in their Start menu opens it again (OpenPicker), with Leave co-op too.
 /// Nobody joins in a dungeon; a player 2 who never picked a character leaves when the Hub is left. The picker is one of
-/// player 2's menu panels (PlayerMenus), so their gameplay input is ignored while it's open.
+/// player 2's menu panels (PlayerMenus), so their gameplay input is ignored while it's open. Couch players join only in
+/// this machine's own game, up to NetSession.MaxPlayers with the online ones. Also shows online session notices
+/// (NetSession.Notice) at the top, in every scene.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class CoopHUD : MonoBehaviour
@@ -19,12 +21,19 @@ public class CoopHUD : MonoBehaviour
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _pickerHolder;
-    Label _joinHint;
+    Label _joinHint, _netNotice;
     CoopPicker _picker;
     bool _open;
 
     /// <summary>True in the Hub (GameBootstrap.TownScene), where player 2 can join, change character and leave.</summary>
     public static bool InHub => SceneManager.GetActiveScene().name == GameBootstrap.TownScene;
+
+    /// <summary>
+    /// Another couch player may join: in this machine's own game, while it has room (NetSession.MaxPlayers, remote
+    /// players included). In someone else's game the host counts the players a client brought when it joined, so couch
+    /// players join before joining a game.
+    /// </summary>
+    static bool CouchJoinAllowed => NetSession.IsHost && GameInput.PlayerCount + NetSession.RemotePlayers < NetSession.MaxPlayers;
 
     static PlayerMenus Player2Menus => MenuPanels.For(1);
     static AccountCharacter Player2Character => AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(1) : null;
@@ -68,8 +77,9 @@ public class CoopHUD : MonoBehaviour
 
         _pickerHolder = root.Q<VisualElement>("pickerHolder");
         _joinHint = root.Q<Label>("joinHint");
+        _netNotice = root.Q<Label>("netNotice");
         _boundVersion = version;
-        if (_pickerHolder == null || _joinHint == null)
+        if (_pickerHolder == null || _joinHint == null || _netNotice == null)
         {
             Debug.LogError("CoopHUD: CoopHUD.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             _picker = null;
@@ -94,13 +104,16 @@ public class CoopHUD : MonoBehaviour
     {
         if (_picker == null) return;
         bool hub = InHub;
-        GameInput.AllowJoining(this, hub);
+        GameInput.AllowJoining(this, hub && CouchJoinAllowed);
         var device = hub ? GameInput.JoinPressed() : null;
         if (device != null && CoopManager.Join(device)) SetOpen(true);
 
         string hint = CoopManager.JoinHint();
         _joinHint.text = hint ?? "";
         _joinHint.EnableInClassList(HiddenClass, hint == null);
+        string notice = NetSession.Notice;
+        _netNotice.text = notice ?? "";
+        _netNotice.EnableInClassList(HiddenClass, notice == null);
 
         if (GameInput.For(1) == null)
         {

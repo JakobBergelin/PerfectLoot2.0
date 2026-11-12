@@ -9,6 +9,9 @@
                 <!-- Player 2's, in the Hub (CoopHUD) -->
                 <ui:Button name="changeCharacterButton" text="Change character" class="gm-button" />
                 <ui:Button name="leaveCoopButton" text="Leave co-op" class="gm-button" />
+                <!-- Player 1's: in their own game's Hub, and while in someone else's -->
+                <ui:Button name="joinGameButton" text="Join a game" class="gm-button" />
+                <ui:Button name="leaveGameButton" text="Leave game" class="gm-button" />
                 <ui:Button name="optionsButton" text="Options" class="gm-button" />
                 <ui:Button name="mainMenuButton" text="Main menu" class="gm-button" />
                 <ui:Button name="exitButton" text="Exit game" class="gm-button" />
@@ -17,6 +20,13 @@
                 <ui:Label name="leaveQuestion" class="gm-question" />
                 <ui:Button name="confirmLeaveButton" text="Leave" class="gm-button gm-button--primary" />
                 <ui:Button name="stayButton" text="Stay" class="gm-button" />
+            </ui:VisualElement>
+            <ui:VisualElement name="joinPanel" class="gm--hidden">
+                <ui:Label text="The host's IP address" class="gm-question" />
+                <ui:TextField name="joinAddress" class="gm-field" />
+                <ui:Label name="joinError" text="That isn't an IP address." class="gm-question gm-error gm--hidden" />
+                <ui:Button name="confirmJoinButton" text="Join" class="gm-button gm-button--primary" />
+                <ui:Button name="cancelJoinButton" text="Back" class="gm-button" />
             </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>

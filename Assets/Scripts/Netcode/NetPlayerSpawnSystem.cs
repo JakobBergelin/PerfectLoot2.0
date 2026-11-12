@@ -9,7 +9,8 @@ using UnityEngine;
 /// On the host: makes the player ghosts of each remote client that joined (JoinedPlayers), on the host's first player,
 /// set up by the same PlayerEntitySetup as the host's own, and owned by that client's connection. The first time at
 /// once; one that went missing (died) is made again after RespawnDelay. Each takes the next free flow field slot after the
-/// host's couch players. Their loadout is the client's own, sent once it has the ghost (NetLoadoutReceiveSystem).
+/// host's couch players. Their loadout is the client's own, sent once it has the ghost (NetLoadoutReceiveSystem). The
+/// players of a client that left or lost its connection are removed.
 /// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -35,6 +36,7 @@ public partial class NetPlayerSpawnSystem : SystemBase
 
     protected override void OnUpdate()
     {
+        RemoveLeftPlayers();
         var entityManager = EntityManager;
         var host = CharacterManager.For(0);
         if (host == null || host.Player == Entity.Null || !entityManager.Exists(host.Player)) return;
@@ -66,6 +68,23 @@ public partial class NetPlayerSpawnSystem : SystemBase
             }
             entityManager.SetComponentData(connection, timer);
         }
+    }
+
+    // Players whose client is gone (left, lost the connection) go with it
+    void RemoveLeftPlayers()
+    {
+        var connected = new NativeHashSet<int>(NetSession.MaxPlayers, Allocator.Temp);
+        foreach (var id in SystemAPI.Query<RefRO<NetworkId>>()) connected.Add(id.ValueRO.Value);
+        var left = new NativeList<Entity>(Allocator.Temp);
+        foreach (var (owner, entity) in SystemAPI.Query<RefRO<GhostOwner>>().WithAll<RemotePlayer>().WithEntityAccess())
+            if (!connected.Contains(owner.ValueRO.NetworkId)) left.Add(entity);
+        if (left.Length > 0)
+        {
+            EntityManager.DestroyEntity(left.AsArray());
+            Debug.Log($"NetPlayerSpawnSystem: {left.Length} player(s) of a client that left removed");
+        }
+        connected.Dispose();
+        left.Dispose();
     }
 
     bool HasPlayer(int networkId, int localIndex)
@@ -101,14 +120,15 @@ public partial class NetPlayerSpawnSystem : SystemBase
         Debug.Log($"NetPlayerSpawnSystem: player {localIndex + 1} of connection {networkId}");
     }
 
-    // Flow field slots 0 and 1 are the host's couch players; remote players take the next free one (up to 4 players)
+    // Flow field slots 0 and 1 are the host's couch players; remote players take a free one from the top, so slot 1 is only
+    // taken by a fourth player while the host plays alone (and then nobody more can join on the couch: MaxPlayers)
     int FreeFieldSlot()
     {
         int used = 0;
         foreach (var targetable in SystemAPI.Query<RefRO<EnemyTargetable>>().WithAll<Player>())
             used |= 1 << targetable.ValueRO.FieldSlot;
-        for (int slot = 2; slot < 4; slot++)
+        for (int slot = FlowFields.MaxFields - 1; slot >= 1; slot--)
             if ((used & (1 << slot)) == 0) return slot;
-        return 3;
+        return FlowFields.MaxFields - 1;
     }
 }

@@ -67,6 +67,12 @@ public static class NetSceneSync
     /// <summary>The host: loads the scene a few frames from now, after its LoadSceneRequest has gone out.</summary>
     public static void LoadLater(string scene) => Runner.Get().LoadAfter(scene, HostLoadDelayFrames);
 
+    /// <summary>
+    /// Starts over in the scene next frame, with a fresh world and no connections (GameSceneLoader.Restart); before that,
+    /// once the old world is no longer updated, runs before (NetSession changes its role there).
+    /// </summary>
+    public static void RestartLater(string scene, System.Action before) => Runner.Get().LoadAfter(scene, 0, before);
+
     /// <summary>A client: the host asked for this scene (the next GameSceneLoader.Load of it is allowed).</summary>
     public static void Follow(string scene, uint seed)
     {
@@ -124,6 +130,8 @@ public static class NetSceneSync
         static Runner _instance;
         string _scene;
         int _frames = -1;
+        bool _restart;
+        System.Action _before;
 
         public static Runner Get()
         {
@@ -134,10 +142,17 @@ public static class NetSceneSync
             return _instance;
         }
 
-        public void LoadAfter(string scene, int frames)
+        public void LoadAfter(string scene, int frames) => Set(scene, frames, false, null);
+
+        // A restart: a fresh world without connections, before runs first
+        public void LoadAfter(string scene, int frames, System.Action before) => Set(scene, frames, true, before);
+
+        void Set(string scene, int frames, bool restart, System.Action before)
         {
             _scene = scene;
             _frames = frames;
+            _restart = restart;
+            _before = before;
         }
 
         void Update()
@@ -146,8 +161,16 @@ public static class NetSceneSync
             if (_frames-- > 0) return;
             var scene = _scene;
             _scene = null;
-            Debug.Log($"NetSceneSync: loading {scene} now.");
-            GameSceneLoader.LoadNow(scene);
+            Debug.Log($"NetSceneSync: {(_restart ? "starting over in" : "loading")} {scene} now.");
+            if (!_restart)
+            {
+                GameSceneLoader.LoadNow(scene);
+                return;
+            }
+            var before = _before;
+            _before = null;
+            before?.Invoke();
+            GameSceneLoader.Restart(scene);
         }
     }
 }

@@ -148,3 +148,21 @@
     right: 40px;
     top: 22%;
 }
+
+/* Online session notices (NetSession.Notice: joining, turned down, the host left), top centre */
+.coop-net-notice {
+    position: absolute;
+    top: 24px;
+    left: 50%;
+    translate: -50% 0;
+    -unity-text-align: middle-center;
+    font-size: 16px;
+    color: #F2F2F2;
+    background-color: rgba(10, 11, 14, 0.85);
+    border-width: 1px;
+    border-color: #E0A020;
+    border-radius: 4px;
+    padding: 8px 16px;
+    margin: 0;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
