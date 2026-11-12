@@ -4,11 +4,12 @@ using Unity.Transforms;
 
 /// <summary>
 /// What the player wears, by visual key (the asset name of the item's visual base, see RollableItem.VisualKey).
-/// Written by InventoryManager; EquipmentVisualSystem turns it into part entities on the socket bones.
+/// Written by InventoryManager; EquipmentVisualSystem turns it into part entities on the socket bones. Sent to every
+/// machine, where NetEquippedVisualsSystem notices a change.
 /// </summary>
 public struct EquippedVisual : IBufferElementData
 {
-    public FixedString64Bytes Key;
+    [Unity.NetCode.GhostField] public FixedString64Bytes Key;
 }
 
 /// <summary>Added with a new EquippedVisual list; EquipmentVisualSystem rebuilds the parts and removes it.</summary>

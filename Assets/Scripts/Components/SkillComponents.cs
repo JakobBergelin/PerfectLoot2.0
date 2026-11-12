@@ -2,25 +2,30 @@ using Unity.Collections;
 using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 
-/// <summary>An equipped active skill. Written by ActiveSkillManager, state filled in each frame for UI.</summary>
+/// <summary>
+/// An equipped active skill. Written by ActiveSkillManager, state filled in each frame for UI. A player's type, slot and
+/// state are sent to its owner, whose skill bar shows them (ActiveSkillManager.MirrorState); the rest stays on the host.
+/// </summary>
+[GhostComponent(OwnerSendType = SendToOwnerType.SendToOwner)]
 public struct Skill : IBufferElementData
 {
-    public SkillType Type;
-    public int SlotIndex;   // Which slot/key (Skill1..Skill4) triggers it
+    [GhostField] public SkillType Type;
+    [GhostField] public int SlotIndex;   // Which slot/key (Skill1..Skill4) triggers it
 
-    public SkillTags BaseTags;  // From the ActiveSkill asset
-    public SkillTags Tags;      // This frame's tags: BaseTags (reset by SkillActivationSystem) plus whatever effects add
+    [GhostField(SendData = false)] public SkillTags BaseTags;  // From the ActiveSkill asset
+    [GhostField(SendData = false)] public SkillTags Tags;      // This frame's tags: BaseTags (reset by SkillActivationSystem) plus whatever effects add
 
-    public SkillState State;
+    [GhostField] public SkillState State;
 
-    public float CooldownReduction; // Seconds to take off the remaining cooldown, used up by the skill's system (SkillUtil.ApplyCooldownReduction)
+    [GhostField(SendData = false)] public float CooldownReduction; // Seconds to take off the remaining cooldown, used up by the skill's system (SkillUtil.ApplyCooldownReduction)
 
-    public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
-    public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
-    public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
-    public int Priority;            // With several keys held, the highest is cast (ActiveSkill.Priority)
-    public double LastPressed;      // When its key was last pressed: between equal priorities the latest press wins
+    [GhostField(SendData = false)] public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
+    [GhostField(SendData = false)] public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
+    [GhostField(SendData = false)] public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
+    [GhostField(SendData = false)] public int Priority;            // With several keys held, the highest is cast (ActiveSkill.Priority)
+    [GhostField(SendData = false)] public double LastPressed;      // When its key was last pressed: between equal priorities the latest press wins
 
     public struct Triggers
     {
@@ -29,7 +34,7 @@ public struct Skill : IBufferElementData
         public SkillTags UsedAs;    // Which of the skill's tags this frame's uses raise events for (see MarkUsed)
     }
 
-    public Triggers events;
+    [GhostField(SendData = false)] public Triggers events;
 }
 
 /// <summary>Per-frame skill state, reported for UI (mirrored to ActiveSkillSlot).</summary>

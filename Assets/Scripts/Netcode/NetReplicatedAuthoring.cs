@@ -11,7 +11,8 @@ public class NetReplicatedAuthoring : MonoBehaviour
 {
     public bool Health = true;
     public bool Resource = true;
-    [Tooltip("A player: which local player it is on its owner's machine (NetPlayer), the input command its owner sends and its predicted walking (PredictedMove)")]
+    [Tooltip("A player: which local player it is on its owner's machine (NetPlayer), the input command its owner sends, its predicted walking (PredictedMove), " +
+             "and what its HUD shows: skills, effects, level and stats (gear comes from EquipmentSocketsAuthoring)")]
     [FormerlySerializedAs("PlayerInput")]
     public bool Player;
     [Tooltip("An enemy: which EnemyDefinition the host made it from (NetUnitSource), so other machines can show its name, passives and skills")]
@@ -34,6 +35,10 @@ public class NetReplicatedAuthoring : MonoBehaviour
                 AddComponent(entity, new NetPlayer());
                 AddComponent(entity, new NetPlayerInput());
                 AddComponent(entity, new PredictedMove());
+                AddBuffer<Skill>(entity);
+                AddBuffer<EffectDisplay>(entity);
+                AddComponent(entity, new Level());
+                AddComponent(entity, new CalculatedStats());
             }
             if (authoring.Unit) AddComponent(entity, new NetUnitSource());
         }

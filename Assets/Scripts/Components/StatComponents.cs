@@ -206,13 +206,16 @@ public struct EquipmentStats : IComponentData
     public StatBlock Value;
 }
 
-/// <summary>Reset to BaseStats every frame, then built up by the systems in CalculateStatsSystemGroup.</summary>
+/// <summary>
+/// Reset to BaseStats every frame, then built up by the systems in CalculateStatsSystemGroup. A player's are sent to every
+/// machine, for its character panel and the unit panel.
+/// </summary>
 public struct CalculatedStats : IComponentData
 {
-    public StatBlock Value;
-    public bool PierceOnCrit;
-    public float AlwaysAffordableCost;  // One-off skill costs up to this can be paid without enough resource (Bottomless)
-    public float CooldownDamage;        // Extra damage per second of a skill's base cooldown (Patience), see SkillUtil.CooldownDamage
+    [Unity.NetCode.GhostField] public StatBlock Value;
+    [Unity.NetCode.GhostField] public bool PierceOnCrit;
+    [Unity.NetCode.GhostField] public float AlwaysAffordableCost;  // One-off skill costs up to this can be paid without enough resource (Bottomless)
+    [Unity.NetCode.GhostField] public float CooldownDamage;        // Extra damage per second of a skill's base cooldown (Patience), see SkillUtil.CooldownDamage
 }
 
 public struct MovementSpeed : IComponentData

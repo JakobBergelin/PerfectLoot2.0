@@ -1,11 +1,14 @@
 using Unity.Entities;
 using Unity.Mathematics;
 
-/// <summary>A player's level and its experience toward the next one (ExperienceSystem levels it up).</summary>
+/// <summary>
+/// A player's level and its experience toward the next one (ExperienceSystem levels it up). Sent to every machine; the
+/// owner's CharacterManager keeps and saves it.
+/// </summary>
 public struct Level : IComponentData
 {
-    public int Value;
-    public int Experience;
+    [Unity.NetCode.GhostField] public int Value;
+    [Unity.NetCode.GhostField] public int Experience;
 }
 
 /// <summary>Experience every player gets when this enemy dies (EnemyDefinition.Experience).</summary>

@@ -335,6 +335,8 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         // A dying player can still exist for a frame without its components
         if (!entityManager.HasComponent<Level>(_player)) return;
         var level = entityManager.GetComponentData<Level>(_player);
+        // In someone else's game the level arrives from the host, which has none until it has this loadout (NetLoadout)
+        if (level.Value < 1) return;
         if (level.Value == StartingLevel && level.Experience == _experience) return;
         bool levelledUp = level.Value > StartingLevel;
         StartingLevel = level.Value;

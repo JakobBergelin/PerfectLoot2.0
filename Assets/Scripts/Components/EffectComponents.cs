@@ -328,14 +328,15 @@ public struct EffectDamageText : IComponentData
     public float Timer;
 }
 
-/// <summary>Only on the player: its active effects, rebuilt every frame by EffectDisplaySystem for the HUD.</summary>
+/// <summary>Only on the player: its active effects, rebuilt every frame by EffectDisplaySystem for the HUD. Sent to its owner.</summary>
+[Unity.NetCode.GhostComponent(OwnerSendType = Unity.NetCode.SendToOwnerType.SendToOwner)]
 public struct EffectDisplay : IBufferElementData
 {
-    public EffectType Type;
-    public int Stacks;
-    public float TimeRemaining;
-    public float Duration;      // 0 = untimed
-    public float Magnitude;     // Effect-specific number shown in the description, e.g. damage per second or slow
+    [Unity.NetCode.GhostField] public EffectType Type;
+    [Unity.NetCode.GhostField] public int Stacks;
+    [Unity.NetCode.GhostField(Quantization = 100)] public float TimeRemaining;
+    [Unity.NetCode.GhostField(Quantization = 100)] public float Duration;      // 0 = untimed
+    [Unity.NetCode.GhostField(Quantization = 1000)] public float Magnitude;    // Effect-specific number shown in the description, e.g. damage per second or slow
 }
 
 /// <summary>On the player: the active effects of its InputsData.Hovered unit, for the unit panel. Units have no list of their own.</summary>
