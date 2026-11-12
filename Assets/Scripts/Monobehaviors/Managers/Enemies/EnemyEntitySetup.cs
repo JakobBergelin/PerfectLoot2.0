@@ -18,6 +18,8 @@ public static class EnemyEntitySetup
     {
         AddOrSet(entityManager, entity, new Enemy());
         AddOrSet(entityManager, entity, new UnitInfo { Source = definition });
+        // Which definition, for the other machines (NetUnitSourceSystem): the ghost prefab has it baked
+        if (entityManager.HasComponent<NetUnitSource>(entity)) entityManager.SetComponentData(entity, new NetUnitSource { Key = definition.name });
         AddOrSet(entityManager, entity, new ExperienceReward { Value = definition.Experience });
 
         // Stats, health, damage buffers, status effects, knockback, smoothing, rotation lock

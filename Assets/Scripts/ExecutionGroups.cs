@@ -100,13 +100,13 @@ public partial class EffectSystemGroup : ComponentSystemGroup
 /// <summary>Healing, regeneration and resource gains; UpdateResourcesSystem (last) applies this frame's resource changes.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 [UpdateAfter(typeof(DamageSystemGroup))]
+[UpdateBefore(typeof(FeedbackSystemGroup))]  // Ordered from here: remote clients have FeedbackSystemGroup without this group
 [WorldSystemFilter(GameWorlds.Server, GameWorlds.Server)]
 public partial class HealthAndResourceSystemGroup : ComponentSystemGroup
 {}
 
-/// <summary>Visual feedback: hit flash, health/resource bars and combat text events. Before transforms are calculated.</summary>
+/// <summary>Visual feedback: hit flash, health/resource bars and combat text events. After HealthAndResourceSystemGroup, before transforms are calculated.</summary>
 [UpdateInGroup(typeof(SimulationSystemGroup))]
-[UpdateAfter(typeof(HealthAndResourceSystemGroup))]
 [UpdateBefore(typeof(Unity.Transforms.TransformSystemGroup))]
 [WorldSystemFilter(GameWorlds.Client, GameWorlds.Client)]
 public partial class FeedbackSystemGroup : ComponentSystemGroup

@@ -19,7 +19,7 @@ public partial class ResourceUISystem : SystemBase
         }
 
         var bars = SystemAPI.GetComponentLookup<UnitBarParams>();
-        var players = SystemAPI.GetComponentLookup<Player>(true);
+        var players = SystemAPI.GetComponentLookup<NetPlayer>(true);  // Every player, also the other machines' ones (Player is only on this machine's)
         foreach (var (resourceBar, resource, localTransform, entity) in SystemAPI.Query<RefRO<ResourceBarUI>, RefRO<Resource>, RefRO<LocalTransform>>().WithEntityAccess())
         {
             float kind = players.HasComponent(entity) ? UnitBarKind.Hidden : UnitBarKind.Resource;

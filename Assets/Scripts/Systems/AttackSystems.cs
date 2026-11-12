@@ -196,6 +196,7 @@ public partial struct IgnoreEntitySystem : ISystem
 }
 
 [UpdateBefore(typeof(AttackSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server)]
 public partial struct ResetAttackTriggersSystem : ISystem
 {
     [BurstCompile]

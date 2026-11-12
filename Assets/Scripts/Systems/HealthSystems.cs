@@ -20,7 +20,7 @@ public partial class HealthUISystem : SystemBase
         }
 
         var bars = SystemAPI.GetComponentLookup<UnitBarParams>();
-        var players = SystemAPI.GetComponentLookup<Player>(true);
+        var players = SystemAPI.GetComponentLookup<NetPlayer>(true);  // Every player, also the other machines' ones (Player is only on this machine's)
         var companions = SystemAPI.GetComponentLookup<Companion>(true);
         var barriers = SystemAPI.GetComponentLookup<Barrier>(true);
         foreach (var (healthBar, health, localTransform, entity) in SystemAPI.Query<RefRO<HealthBarUI>, RefRO<Health>, RefRO<LocalTransform>>().WithEntityAccess())

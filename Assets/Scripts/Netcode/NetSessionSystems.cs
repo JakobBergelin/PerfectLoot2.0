@@ -64,6 +64,10 @@ public partial struct NetJoinSystem : ISystem
             foreach (var (request, receive, rpc) in SystemAPI.Query<RefRO<JoinRequest>, RefRO<ReceiveRpcCommandRequest>>().WithEntityAccess())
             {
                 var connection = receive.ValueRO.SourceConnection;
+                // The client's world is new (after a scene change too): it has no ghost prefabs until it says so, so the
+                // host sends it the prefab list before any ghosts
+                var ack = SystemAPI.GetComponentRW<NetworkSnapshotAck>(connection);
+                ack.ValueRW.NumLoadedPrefabs = 0;
                 commandBuffer.AddComponent<NetworkStreamInGame>(connection);
                 commandBuffer.AddComponent(connection, new JoinedPlayers { Count = request.ValueRO.LocalPlayers });
                 commandBuffer.DestroyEntity(rpc);
@@ -71,8 +75,11 @@ public partial struct NetJoinSystem : ISystem
         }
         else
         {
-            // Only once the ghost prefabs have loaded (after a scene change too), so the host's snapshots can be read
+            // Only once every subscene of the scene has loaded (after a scene change too): the ghost prefabs, so the host's
+            // snapshots can be read, and the level, so the players have ground to stand on
             if (!SystemAPI.HasSingleton<PlayerPrefab>()) return;
+            foreach (var (_, scene) in SystemAPI.Query<RefRO<SceneReference>>().WithEntityAccess())
+                if (!Unity.Scenes.SceneSystem.IsSceneLoaded(state.WorldUnmanaged, scene)) return;
             foreach (var (_, connection) in SystemAPI.Query<RefRO<NetworkId>>().WithNone<NetworkStreamInGame>().WithEntityAccess())
             {
                 commandBuffer.AddComponent<NetworkStreamInGame>(connection);

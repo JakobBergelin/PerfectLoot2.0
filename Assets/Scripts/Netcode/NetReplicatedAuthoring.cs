@@ -14,6 +14,8 @@ public class NetReplicatedAuthoring : MonoBehaviour
     [Tooltip("A player: which local player it is on its owner's machine (NetPlayer), the input command its owner sends and its predicted walking (PredictedMove)")]
     [FormerlySerializedAs("PlayerInput")]
     public bool Player;
+    [Tooltip("An enemy: which EnemyDefinition the host made it from (NetUnitSource), so other machines can show its name, passives and skills")]
+    public bool Unit;
 
     class Baker : Baker<NetReplicatedAuthoring>
     {
@@ -28,6 +30,7 @@ public class NetReplicatedAuthoring : MonoBehaviour
                 AddComponent(entity, new NetPlayerInput());
                 AddComponent(entity, new PredictedMove());
             }
+            if (authoring.Unit) AddComponent(entity, new NetUnitSource());
         }
     }
 }

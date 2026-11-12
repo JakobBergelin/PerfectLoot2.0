@@ -150,6 +150,7 @@ public partial struct MirrorImageInputSystem : ISystem
 /// are applied. Captain's Shield and Tesla Coil's field stay the copy's: they track their caster.
 /// </summary>
 [UpdateBefore(typeof(InitializeFromSourceSystem))]
+[WorldSystemFilter(GameWorlds.Server)]
 [BurstCompile]
 public partial struct MirrorImageSourceSystem : ISystem
 {

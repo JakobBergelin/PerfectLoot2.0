@@ -16,9 +16,9 @@ namespace EnemySkills
         [Tooltip("Hit radius of each missile")]
         public float Radius = 0.35f;
         [Tooltip("Radians per second a missile turns toward the target at first")]
-        public float TurnSpeed = 1.5f;
+        public float MissileTurnSpeed = 1.5f;
         [Tooltip("Added to the turn speed every second")]
-        public float TurnAcceleration = 1.5f;
+        public float MissileTurnAcceleration = 1.5f;
         [Tooltip("Meters a missile flies before it fizzles")]
         public float MaxDistance = 30f;
         public float HitForce = 1f;
@@ -33,8 +33,8 @@ namespace EnemySkills
             Type = DamageType,
             ProjectileSpeed = ProjectileSpeed,
             Radius = Radius,
-            TurnSpeed = TurnSpeed,
-            TurnAcceleration = TurnAcceleration,
+            TurnSpeed = MissileTurnSpeed,
+            TurnAcceleration = MissileTurnAcceleration,
             MaxDistance = MaxDistance,
             HitForce = HitForce,
         };

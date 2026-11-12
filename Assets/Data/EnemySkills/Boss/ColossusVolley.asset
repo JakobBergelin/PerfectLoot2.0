@@ -39,7 +39,7 @@ MonoBehaviour:
   DamageType: 3
   ProjectileSpeed: 9
   Radius: 0.35
-  TurnSpeed: 1.5
-  TurnAcceleration: 1.5
+  MissileTurnSpeed: 1.5
+  MissileTurnAcceleration: 1.5
   MaxDistance: 30
   HitForce: 1

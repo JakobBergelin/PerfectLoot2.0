@@ -98,7 +98,7 @@ public class UnitPanelHUD : MonoBehaviour
 
         var entityManager = world.EntityManager;
         var player = characterManager.Player;
-        bool hasPlayer = entityManager.Exists(player) && entityManager.HasComponent<InputsData>(player) && entityManager.HasBuffer<HoveredEffect>(player);
+        bool hasPlayer = entityManager.Exists(player) && entityManager.HasComponent<InputsData>(player);
         var unit = hasPlayer ? entityManager.GetComponentData<InputsData>(player).Hovered : Entity.Null;
 
         // A dying unit has lost its Health
@@ -117,7 +117,7 @@ public class UnitPanelHUD : MonoBehaviour
         }
         UpdateHealth(entityManager.GetComponentData<Health>(unit));
         UpdateStats(entityManager, unit);
-        UpdateEffects(entityManager.GetBuffer<HoveredEffect>(player, isReadOnly: true));
+        UpdateEffects(entityManager, player);
     }
 
     void ShowDescription(IUnitDescription unit)
@@ -145,10 +145,18 @@ public class UnitPanelHUD : MonoBehaviour
         _healthText.text = $"{health.CurrentValue:0.#} / {health.MaxValue:0.#}";
     }
 
+    // Stats and effects are the host's: in someone else's game the panel shows the name, health, passives and skills
     void UpdateStats(EntityManager entityManager, Entity unit)
     {
-        var stats = entityManager.GetComponentData<CalculatedStats>(unit).Value;
         _usedStatRows = 0;
+        if (entityManager.HasComponent<CalculatedStats>(unit)) AddStats(entityManager, unit);
+        for (int i = _usedStatRows; i < _statRows.Count; i++)
+            _statRows[i].Element.AddToClassList(HiddenClass);
+    }
+
+    void AddStats(EntityManager entityManager, Entity unit)
+    {
+        var stats = entityManager.GetComponentData<CalculatedStats>(unit).Value;
 
         AddStat(Affix.HealthRegeneration, entityManager.GetComponentData<HealthRegeneration>(unit).Value);
         AddStat(Affix.Armor, entityManager.GetComponentData<Armor>(unit).Value);
@@ -178,9 +186,6 @@ public class UnitPanelHUD : MonoBehaviour
         float speed = entityManager.GetComponentData<MovementSpeed>(unit).Value;
         if (entityManager.HasComponent<Enemy>(unit)) SetStatRow(ItemText.AffixName(Affix.MovementSpeed), $"{speed:0.#} m/s");
         else AddStat(Affix.MovementSpeed, speed);
-
-        for (int i = _usedStatRows; i < _statRows.Count; i++)
-            _statRows[i].Element.AddToClassList(HiddenClass);
     }
 
     void AddStat(Affix affix, float value)
@@ -212,18 +217,21 @@ public class UnitPanelHUD : MonoBehaviour
         return row;
     }
 
-    void UpdateEffects(DynamicBuffer<HoveredEffect> effects)
+    void UpdateEffects(EntityManager entityManager, Entity player)
     {
         foreach (var row in _effectRows.Values) row.Tile.Active = false;
 
-        foreach (var effect in effects)
+        if (entityManager.HasBuffer<HoveredEffect>(player))
         {
-            var row = GetEffectRow(effect.Value.Type);
-            if (row == null) continue;
-            row.Tile.Active = true;
-            row.Tile.Effect = effect.Value;
-            row.Tile.Refresh();
-            row.Text.text = $"{row.Tile.Definition.DisplayName}: {row.Tile.Definition.Describe(effect.Value)}";
+            foreach (var effect in entityManager.GetBuffer<HoveredEffect>(player, isReadOnly: true))
+            {
+                var row = GetEffectRow(effect.Value.Type);
+                if (row == null) continue;
+                row.Tile.Active = true;
+                row.Tile.Effect = effect.Value;
+                row.Tile.Refresh();
+                row.Text.text = $"{row.Tile.Definition.DisplayName}: {row.Tile.Definition.Describe(effect.Value)}";
+            }
         }
 
         foreach (var row in _effectRows.Values)

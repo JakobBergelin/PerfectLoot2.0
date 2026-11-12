@@ -59,6 +59,9 @@ public static class NetSceneSync
             entityManager.AddComponentData(rpc, new LoadSceneRequest { Scene = scene, Seed = seed });
             entityManager.AddComponentData(rpc, new SendRpcCommandRequest { TargetConnection = connection });
         }
+        // Out of the game at once: no more snapshots of this scene while the clients load the next one (RPCs still go out)
+        entityManager.RemoveComponent<NetworkStreamInGame>(query);
+        Debug.Log($"NetSceneSync: taking {connections.Length} client(s) to {scene} (level seed {seed}).");
     }
 
     /// <summary>The host: loads the scene a few frames from now, after its LoadSceneRequest has gone out.</summary>
@@ -67,6 +70,7 @@ public static class NetSceneSync
     /// <summary>A client: the host asked for this scene (the next GameSceneLoader.Load of it is allowed).</summary>
     public static void Follow(string scene, uint seed)
     {
+        Debug.Log($"NetSceneSync: following the host to {scene} (level seed {seed}).");
         _followScene = scene;
         LevelSeed.Next = seed;
         Runner.Get().LoadAfter(scene, 0);
@@ -142,6 +146,7 @@ public static class NetSceneSync
             if (_frames-- > 0) return;
             var scene = _scene;
             _scene = null;
+            Debug.Log($"NetSceneSync: loading {scene} now.");
             GameSceneLoader.LoadNow(scene);
         }
     }

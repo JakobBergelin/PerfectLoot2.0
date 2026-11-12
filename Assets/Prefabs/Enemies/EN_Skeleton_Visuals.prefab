@@ -601,6 +601,9 @@ GameObject:
   - component: {fileID: 2492974145272659573}
   - component: {fileID: 4756775983315349433}
   - component: {fileID: 7745584754201163025}
+  - component: {fileID: 4055982969855038222}
+  - component: {fileID: 3850127692247762515}
+  - component: {fileID: 9215137883983987070}
   m_Layer: 9
   m_Name: EN_Skeleton_Visuals
   m_TagString: Untagged
@@ -728,6 +731,61 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitVfxAuthoring
   Hit: 11
   Death: 13
+--- !u!114 &4055982969855038222
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4713609444164311729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c16549610bfe4458aa9389201d072bb6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.Entities.Hybrid::Unity.Entities.Hybrid.Baking.LinkedEntityGroupAuthoring
+--- !u!114 &3850127692247762515
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4713609444164311729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7c79d771cedb4794bf100ce60df5f764, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Unity.NetCode.Authoring.Hybrid::Unity.NetCode.GhostAuthoringComponent
+  HasOwner: 0
+  SupportAutoCommandTarget: 0
+  TrackInterpolationDelay: 0
+  GhostGroup: 0
+  UsePreSerialization: 0
+  UseSingleBaseline: 0
+  RollbackPredictedSpawnedGhostState: 0
+  RollbackPredictionOnStructuralChanges: 1
+  DefaultGhostMode: 0
+  SupportedGhostModes: 1
+  OptimizationMode: 0
+  Importance: 1
+  MaxSendRate: 0
+  SingleWorldHostInterpolationSmoothing: 1
+  prefabId: 
+--- !u!114 &9215137883983987070
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4713609444164311729}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6b937b5c6320f8c4bb5fb362cb441f55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::NetReplicatedAuthoring
+  Health: 1
+  Resource: 0
+  Player: 0
+  Unit: 1
 --- !u!1 &4756191691272130466
 GameObject:
   m_ObjectHideFlags: 0

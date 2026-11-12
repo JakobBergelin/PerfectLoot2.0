@@ -102,6 +102,8 @@ public class DungeonManager : MonoBehaviour
             ResetRun();
         }
         if (world == null || !world.IsCreated) return;
+        // In someone else's game the host runs the dungeon (its steps, spawns, completion and return portal)
+        if (!NetSession.IsHost) return;
         var entityManager = world.EntityManager;
 
         if (!_checked)

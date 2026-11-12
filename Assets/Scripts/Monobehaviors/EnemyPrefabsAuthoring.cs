@@ -39,15 +39,17 @@ public class EnemyPrefabsAuthoring : MonoBehaviour
                 {
                     Key = definition.name,
                     Prefab = GetEntity(definition.Prefab, TransformUsageFlags.Dynamic),
+                    Definition = definition,
                 });
             }
         }
     }
 }
 
-/// <summary>A baked enemy prefab, keyed by its EnemyDefinition's asset name.</summary>
+/// <summary>A baked enemy prefab, keyed by its EnemyDefinition's asset name, with that EnemyDefinition (for UnitInfo).</summary>
 public struct EnemyPrefabElement : IBufferElementData
 {
     public FixedString64Bytes Key;
     public Entity Prefab;
+    public UnityObjectRef<ScriptableObject> Definition;
 }

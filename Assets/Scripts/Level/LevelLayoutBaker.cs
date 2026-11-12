@@ -270,6 +270,7 @@ namespace LevelGeneration
                 {
                     Key = definition.name,
                     Prefab = GetEntity(definition.Prefab, TransformUsageFlags.Dynamic),
+                    Definition = definition,
                 });
             }
         }
