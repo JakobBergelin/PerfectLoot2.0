@@ -1,4 +1,3 @@
-using ActiveSkills;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -10,8 +9,7 @@ using UnityEngine;
 /// On the host: makes the player ghosts of each remote client that joined (JoinedPlayers), on the host's first player,
 /// set up by the same PlayerEntitySetup as the host's own, and owned by that client's connection. The first time at
 /// once; one that went missing (died) is made again after RespawnDelay. Each takes the next free flow field slot after the
-/// host's couch players. Until a client's own loadout is sent (phase O5) its players borrow the host's class, resource
-/// type and equipped skills.
+/// host's couch players. Their loadout is the client's own, sent once it has the ghost (NetLoadoutReceiveSystem).
 /// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
@@ -99,21 +97,7 @@ public partial class NetPlayerSpawnSystem : SystemBase
         var baseStats = host.BaseStats != null ? host.BaseStats.Stats : ScriptableObject.CreateInstance<Characters.PlayerBaseStats>().Stats;
         PlayerEntitySetup.AddGameplayComponents(entityManager, player, baseStats, FreeFieldSlot());
         entityManager.AddComponentData(player, new RemotePlayer());
-
-        // The host's class, resource type and skills, until the client's own loadout is sent (O5)
-        if (host.Class != null) host.Class.Apply(entityManager, player);
-        if (host.Resource != null) host.Resource.Apply(entityManager, player);
-        var skills = ActiveSkillManager.For(0);
-        if (skills != null)
-        {
-            var slots = new[] { skills.Slot1, skills.Slot2, skills.Slot3, skills.Slot4 };
-            for (int i = 0; i < slots.Length; i++)
-            {
-                if (slots[i] == null || slots[i].IsEmpty) continue;
-                slots[i].EquippedSkill.Apply(entityManager, player);
-                entityManager.GetBuffer<Skill>(player).Add(ActiveSkillManager.ToSkill(i, slots[i].EquippedSkill));
-            }
-        }
+        // Its class, skills, passives and items come from the client once it has the ghost (NetLoadoutReceiveSystem)
         Debug.Log($"NetPlayerSpawnSystem: player {localIndex + 1} of connection {networkId}");
     }
 

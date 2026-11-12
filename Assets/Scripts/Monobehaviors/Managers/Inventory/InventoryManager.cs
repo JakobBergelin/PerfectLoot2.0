@@ -263,6 +263,14 @@ public class InventoryManager : MonoBehaviour, IPerPlayer
     /// <summary>Writes the summed equipment stats to the player's EquipmentStats component.</summary>
     void TryPushEquipmentStats()
     {
+        // In someone else's game the host runs this player: the loadout is sent to it instead (NetLoadoutSendSystem)
+        if (!NetSession.IsHost)
+        {
+            NetLoadoutSendSystem.MarkDirty(PlayerIndex);
+            _equipmentStatsDirty = false;
+            return;
+        }
+
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null || !world.IsCreated) return;
 
@@ -270,15 +278,38 @@ public class InventoryManager : MonoBehaviour, IPerPlayer
         var player = OwnPlayer;
         if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<EquipmentStats>(player)) return;
 
+        ApplyEquipment(entityManager, player, EquippedItems, _appliedPowers);
+        _equipmentStatsDirty = false;
+    }
+
+    /// <summary>The items in the slots, in slot order.</summary>
+    public List<Item> EquippedItems
+    {
+        get
+        {
+            var items = new List<Item>();
+            foreach (var (_, slot) in NamedSlots)
+                if (slot != null && !slot.IsEmpty) items.Add(slot.EquippedItem);
+            return items;
+        }
+    }
+
+    /// <summary>
+    /// Gives a player entity what these equipped items add: their summed stats (EquipmentStats), the powers of the
+    /// Legendary/Unique ones (each power once, removing the ones applied before that aren't among them: appliedPowers,
+    /// updated) and their 3D parts. Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
+    /// </summary>
+    public static void ApplyEquipment(EntityManager entityManager, Entity player, IReadOnlyList<Item> items, List<LegendaryPower> appliedPowers)
+    {
         // Rolled affixes plus fixed per-item stats (weapon reach, weapon damage range)
-        var block = Stats.ToStatBlock();
-        foreach (var (_, slot) in NamedSlots)
-            if (slot != null && !slot.IsEmpty) slot.EquippedItem.BaseItem.AddFixedStats(ref block);
+        var summary = new StatSummary();
+        foreach (var item in items) summary.AddItem(item);
+        var block = summary.ToStatBlock();
+        foreach (var item in items) item.BaseItem.AddFixedStats(ref block);
 
         entityManager.SetComponentData(player, new EquipmentStats { Value = block });
-        SyncLegendaryPowers(entityManager, player);
-        SyncVisuals(entityManager, player);
-        _equipmentStatsDirty = false;
+        SyncLegendaryPowers(entityManager, player, items, appliedPowers);
+        SyncVisuals(entityManager, player, items);
     }
 
     // This player's entity (CharacterManager with the same PlayerIndex), or Entity.Null
@@ -295,34 +326,31 @@ public class InventoryManager : MonoBehaviour, IPerPlayer
     readonly List<LegendaryPower> _appliedPowers = new List<LegendaryPower>();
 
     /// <summary>Applies the powers of equipped Legendary/Unique items (each power once) and removes ones no longer equipped.</summary>
-    void SyncLegendaryPowers(EntityManager entityManager, Entity player)
+    static void SyncLegendaryPowers(EntityManager entityManager, Entity player, IReadOnlyList<Item> items, List<LegendaryPower> appliedPowers)
     {
         var equipped = new List<LegendaryPower>();
-        foreach (var (_, slot) in NamedSlots)
-        {
-            if (slot == null || slot.IsEmpty) continue;
-            if (slot.EquippedItem.BaseItem is ILegendaryItem legendary && legendary.Power != null && !equipped.Contains(legendary.Power))
+        foreach (var item in items)
+            if (item.BaseItem is ILegendaryItem legendary && legendary.Power != null && !equipped.Contains(legendary.Power))
                 equipped.Add(legendary.Power);
-        }
 
-        foreach (var power in _appliedPowers)
+        foreach (var power in appliedPowers)
             if (!equipped.Contains(power)) power.Remove(entityManager, player);
         // Apply also refreshes already applied powers, so edited values take effect
         foreach (var power in equipped)
             power.Apply(entityManager, player);
 
-        _appliedPowers.Clear();
-        _appliedPowers.AddRange(equipped);
+        appliedPowers.Clear();
+        appliedPowers.AddRange(equipped);
     }
 
     /// <summary>Tells the player's visual which items it wears (EquipmentVisualSystem attaches their 3D parts).</summary>
-    void SyncVisuals(EntityManager entityManager, Entity player)
+    static void SyncVisuals(EntityManager entityManager, Entity player, IReadOnlyList<Item> items)
     {
         if (!entityManager.HasBuffer<EquippedVisual>(player)) return;
         var visuals = entityManager.GetBuffer<EquippedVisual>(player);
         visuals.Clear();
-        foreach (var (_, slot) in NamedSlots)
-            if (slot != null && !slot.IsEmpty) visuals.Add(new EquippedVisual { Key = slot.EquippedItem.BaseItem.VisualKey });
+        foreach (var item in items)
+            visuals.Add(new EquippedVisual { Key = item.BaseItem.VisualKey });
         if (!entityManager.HasComponent<EquipmentVisualsChanged>(player)) entityManager.AddComponent<EquipmentVisualsChanged>(player);
     }
 

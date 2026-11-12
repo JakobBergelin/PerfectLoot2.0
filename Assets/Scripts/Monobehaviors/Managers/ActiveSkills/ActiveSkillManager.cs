@@ -176,15 +176,42 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
 
     void TryPushSkills()
     {
+        // In someone else's game the host runs this player: the loadout is sent to it instead (NetLoadoutSendSystem)
+        if (!NetSession.IsHost)
+        {
+            NetLoadoutSendSystem.MarkDirty(PlayerIndex);
+            _dirty = false;
+            return;
+        }
         if (!TryGetPlayer(out var entityManager, out var player)) return;
 
-        // Equipped skills by slot; the same skill type in two slots only applies once
-        var equipped = new List<(int SlotIndex, ActiveSkill Skill)>();
         var slots = Slots;
+        var skills = new ActiveSkill[slots.Length];
+        var variants = new int[slots.Length];
         for (int i = 0; i < slots.Length; i++)
         {
             if (slots[i] == null || slots[i].IsEmpty) continue;
-            var skill = slots[i].EquippedSkill;
+            skills[i] = slots[i].EquippedSkill;
+            variants[i] = slots[i].Variant;
+        }
+        ApplySkills(entityManager, player, skills, variants, _applied);
+        _dirty = false;
+    }
+
+    /// <summary>
+    /// Gives a player entity these skills (by slot, null for an empty one) and removes the ones applied before that aren't
+    /// among them (applied, updated). Each slot's variant is its skill's own mode (Stances' stance), carried on from
+    /// before. Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
+    /// </summary>
+    public static void ApplySkills(EntityManager entityManager, Entity player, IReadOnlyList<ActiveSkill> skillsBySlot, IReadOnlyList<int> variants,
+                                   List<ActiveSkill> applied)
+    {
+        // The same skill type in two slots only applies once
+        var equipped = new List<(int SlotIndex, ActiveSkill Skill)>();
+        for (int i = 0; i < skillsBySlot.Count; i++)
+        {
+            var skill = skillsBySlot[i];
+            if (skill == null) continue;
             if (equipped.Exists(e => e.Skill.Type == skill.Type))
             {
                 Debug.LogWarning($"{skill.Type} is equipped in more than one skill slot, only the first one is used.");
@@ -193,7 +220,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
             equipped.Add((i, skill));
         }
 
-        foreach (var skill in _applied)
+        foreach (var skill in applied)
             if (!equipped.Exists(e => e.Skill == skill)) skill.Remove(entityManager, player);
         foreach (var (_, skill) in equipped)
             skill.Apply(entityManager, player);
@@ -203,9 +230,8 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         buffer.Clear();
         foreach (var (slotIndex, skill) in equipped)
         {
-            // The skill's own mode (Stances' stance) carries on from before (a new entity after a death or a scene)
             var entry = ToSkill(slotIndex, skill);
-            entry.State.Variant = slots[slotIndex].Variant;
+            entry.State.Variant = variants[slotIndex];
             buffer.Add(entry);
         }
 
@@ -213,9 +239,8 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         foreach (var (_, skill) in equipped)
             if (skill is MirrorImageSkill mirrorImage) mirrorImage.SetUpCopy(entityManager, player, equipped);
 
-        _applied.Clear();
-        foreach (var (_, skill) in equipped) _applied.Add(skill);
-        _dirty = false;
+        applied.Clear();
+        foreach (var (_, skill) in equipped) applied.Add(skill);
     }
 
     /// <summary>What goes in a unit's Skill buffer for this skill in this slot.</summary>

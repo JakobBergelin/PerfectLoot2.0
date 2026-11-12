@@ -237,6 +237,9 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     AccountCharacter _character;
     int _experience;
 
+    /// <summary>The experience earned toward the next level (sent with the loadout in someone else's game).</summary>
+    public int EarnedExperience => _experience;
+
     void Awake()
     {
         if (For(PlayerIndex) != null && For(PlayerIndex) != this) { Destroy(gameObject); return; }
@@ -495,38 +498,44 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
 
         var entityManager = world.EntityManager;
         if (_player == Entity.Null || !entityManager.Exists(_player)) return;
-        // In someone else's game the host runs this player; its class and resource are sent in phase O5
+        // In someone else's game the host runs this player: the loadout is sent to it instead (NetLoadoutSendSystem)
         if (!NetSession.IsHost)
         {
+            NetLoadoutSendSystem.MarkDirty(PlayerIndex);
             _dirty = false;
             return;
         }
 
-        if (_appliedClass != null && _appliedClass != Class) _appliedClass.RemovePassive(entityManager, _player);
-        if (Class != null) Class.Apply(entityManager, _player);
-        else CharacterClass.Remove(entityManager, _player);
-
-        if (_appliedResource != null && _appliedResource != Resource) _appliedResource.Remove(entityManager, _player);
-        if (Resource != null) Resource.Apply(entityManager, _player);
-
-        // Apply/Remove are structural changes, so set the records afterwards
-        entityManager.SetComponentData(_player, new UnitClass { Type = Class != null ? Class.Type : ClassType.None });
-        entityManager.SetComponentData(_player, new UnitResource { Type = Resource != null ? Resource.Type : ResourceType.None });
-
+        ApplyCharacter(entityManager, _player, Class, Resource, ref _appliedClass, ref _appliedResource);
         // Only overwrite Level when StartingLevel changed (or on spawn), so earned experience isn't reset
-        if (_pushedLevel != StartingLevel)
-        {
-            var level = entityManager.GetComponentData<Level>(_player);
-            level.Value = StartingLevel;
-            level.Experience = _experience;
-            entityManager.SetComponentData(_player, level);
-        }
-
-        _appliedResource = Resource;
-        _appliedClass = Class;
+        if (_pushedLevel != StartingLevel) SetLevel(entityManager, _player, StartingLevel, _experience);
         _pushedLevel = StartingLevel;
         _dirty = false;
     }
+
+    /// <summary>
+    /// Gives a player entity this class and resource, removing the ones applied to it before (appliedClass and
+    /// appliedResource, updated). Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
+    /// </summary>
+    public static void ApplyCharacter(EntityManager entityManager, Entity player, CharacterClass characterClass, ResourceDefinition resource,
+                                      ref CharacterClass appliedClass, ref ResourceDefinition appliedResource)
+    {
+        if (appliedClass != null && appliedClass != characterClass) appliedClass.RemovePassive(entityManager, player);
+        if (characterClass != null) characterClass.Apply(entityManager, player);
+        else CharacterClass.Remove(entityManager, player);
+
+        if (appliedResource != null && appliedResource != resource) appliedResource.Remove(entityManager, player);
+        if (resource != null) resource.Apply(entityManager, player);
+
+        // Apply/Remove are structural changes, so set the records afterwards
+        entityManager.SetComponentData(player, new UnitClass { Type = characterClass != null ? characterClass.Type : ClassType.None });
+        entityManager.SetComponentData(player, new UnitResource { Type = resource != null ? resource.Type : ResourceType.None });
+        appliedClass = characterClass;
+        appliedResource = resource;
+    }
+
+    public static void SetLevel(EntityManager entityManager, Entity player, int value, int experience) =>
+        entityManager.SetComponentData(player, new Level { Value = value, Experience = experience });
 
     void OnValidate()
     {

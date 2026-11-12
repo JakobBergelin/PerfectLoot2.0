@@ -280,13 +280,15 @@ Branch `spike/netcode`, not merged. Tested in the editor in the Hub: a single-wo
 
 ### Open, for O3 onward
 
+Updated 2026-11-12, after O4 and O5's first step, on `net/foundation`.
+
 - **Own player's prediction:** the client's own owner-predicted ghost showed a stale position, because no prediction systems run for it yet. Either move player movement (`CharacterMovementSystem`, `UnitMoverSystem`) into the prediction loop, or start with the own player interpolated (feels about one round trip late).
-- **What a client sees:** ghosts only carry what is baked and replicated: transform, health, resource. Missing on clients: projectile visuals (VFX bind to `Projectile`, which is server-only, so a replicated visual kind is needed), enemy bars and names (`Enemy`, `UnitInfo`), skill states and cooldowns, effects, combat text.
-- **Loadout:** a remote player gets the host's class, resource type and Fireball. Its own class, items, skills and passives must come from its client (O5).
-- **Scene changes:** not tested. `GameSceneLoader` disposes the world and builds a new one through the same bootstrap; connections must survive that.
-- **Level generation and spawners on clients:** not tested (the Hub is fixed). A client must build the level from the seed, but its enemy spawners must not spawn local enemies.
-- **Bandwidth:** Netcode's snapshot byte counters are internal; measure with the Network Profiler. Estimate for 40 moving Skeletons (quantized position, rotation, health, delta-compressed): tens of KB/s per client.
-- **Performance:** about 40 fps in the editor with both worlds and 40 Skeletons, Burst partly disabled in the editor; not representative.
+- **What a client sees:** done in O4 for enemies and companions (ghosts with bars, names and tints), projectiles and fields (`NetVfx` stand-ins), hit flashes, attack and death clips, statuses, combat text, one-shot effects and telegraphs. Still missing: the own player's skill states and cooldowns, effects, level and stats, and other players' gear (O5 step 5b).
+- **Loadout:** done (O5 step 5a). The client sends its class, resource, level, skills, passives and equipped items (`NetLoadout`), again on every change and for every new player ghost; the host applies them with the managers' own code.
+- **Scene changes:** work. The host keeps its connections through `GameSceneLoader` (`NetSceneSync`) and clients follow.
+- **Level generation and spawners on clients:** work. Clients build the level from the seed; enemy spawners only run on the host and trigger on any player.
+- **Bandwidth:** measured with Netcode's `GhostMetricsMonitor` on a client: about 0.5 KB/s idle in the Hub, 1.2 KB/s idle in a dungeon, and 9 to 17 KB/s per client in a fight with 46 enemies (largest snapshot 1.3 KB, at the spawn burst).
+- **Performance:** about 40 fps in the editor with both worlds and 40 Skeletons, Burst partly disabled in the editor; not representative. With two editors in the background the host logs "server tick batching": check in a build.
 - **Run In Background** must be on in builds, or a host that loses focus stalls and drops its clients (Netcode warns about this).
 - **Experimental API:** the single-world host is experimental in 6.6. Keep the binary host as the fallback in mind.
 

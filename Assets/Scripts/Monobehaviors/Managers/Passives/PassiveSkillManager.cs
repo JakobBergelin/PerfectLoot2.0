@@ -191,6 +191,14 @@ public class PassiveSkillManager : MonoBehaviour, IPerPlayer
 
     void TryPushPassives()
     {
+        // In someone else's game the host runs this player: the loadout is sent to it instead (NetLoadoutSendSystem)
+        if (!NetSession.IsHost)
+        {
+            NetLoadoutSendSystem.MarkDirty(PlayerIndex);
+            _dirty = false;
+            return;
+        }
+
         var world = World.DefaultGameObjectInjectionWorld;
         if (world == null || !world.IsCreated) return;
 
@@ -198,20 +206,29 @@ public class PassiveSkillManager : MonoBehaviour, IPerPlayer
         var player = OwnPlayer;
         if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasBuffer<Passive>(player)) return;
 
-        foreach (var passive in _applied)
-            if (!Active.Contains(passive)) passive.Remove(entityManager, player);
+        ApplyPassives(entityManager, player, Active, _applied);
+        _dirty = false;
+    }
 
-        foreach (var passive in Active)
+    /// <summary>
+    /// Gives a player entity these passives (each type once) and removes the ones applied before that aren't among them
+    /// (applied, updated). Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
+    /// </summary>
+    public static void ApplyPassives(EntityManager entityManager, Entity player, IReadOnlyList<PassiveSkill> active, List<PassiveSkill> applied)
+    {
+        foreach (var passive in applied)
+            if (!active.Contains(passive)) passive.Remove(entityManager, player);
+
+        foreach (var passive in active)
             passive.Apply(entityManager, player);
 
         // Apply/Remove are structural changes, so fetch the buffer afterwards
         var buffer = entityManager.GetBuffer<Passive>(player);
         buffer.Clear();
-        foreach (var passive in Active)
+        foreach (var passive in active)
             buffer.Add(new Passive { Type = passive.Type });
 
-        _applied.Clear();
-        _applied.AddRange(Active);
-        _dirty = false;
+        applied.Clear();
+        applied.AddRange(active);
     }
 }
