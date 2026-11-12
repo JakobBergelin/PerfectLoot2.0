@@ -192,3 +192,29 @@ References: `Docs/inspiration/Skills/`.
 - **Fire:** hard-edged stylized blobs, not realistic smoke. Gradient along the length from a white-hot core to yellow, orange and a red fringe, breaking into ember shapes at the tip.
 - An effect's color follows its element or trait color (section 4).
 - Effects are the brightest things on screen; the environment stays darker and less saturated around them.
+
+## 14. Biome tile sets (procedural)
+
+`Tools/Level/Biomes/Build All Biome Tile Sets` (`Assets/Scripts/Editor/Level/BiomeTileSets.cs`) builds four WFC tile sets without Blender models: `BiomeTileGenerator` turns each tile's four corner terrains into floor, rock walls and liquid with marching squares, so any two tiles with matching corners meet seamlessly in every rotation. Everything lands in `Assets/Data/Level/Biomes/<Biome>/`. `Tools/Level/Biomes/Apply Biomes To Test Levels` points each test level at its biome and sets its light, ambient, fog, sky, post-processing and ambient particles.
+
+| Biome | Test level | Liquid | Accents | Ambient |
+|---|---|---|---|---|
+| Ember Depths | Test Kill Enemies | lava (deep red-orange, crust plates, glowing shore) | magma seams at wall feet, magma cracks in the floor | rising embers |
+| Drowned Mire | Test Survive | teal swamp water with foam and ripple lines | rose glowing mushrooms, puddles | rose spores |
+| Frozen Hollow | Test Kill Boss | dark sapphire water | sapphire crystals on walls, frost cracks | snow |
+| Abyssal Ruins | Test Reach Exit | a bottomless chasm fading into teal fog (the level border is chasm too) | teal rune circles, teal glow on chasm edges | teal motes rising from the drop |
+
+Rules the builder follows (sections 11 and 12):
+- Floors are a 512 px texture per tile with a seam along every border, so tiles meet in any rotation. Colors ×0.85, close in value.
+- Walls, rocks and banks use `PerfectLoot/Comic` with the environment settings. Glowing accents use the glowing-parts settings and free accent hues only (rose, teal, sapphire, deep lava red-orange).
+- Props stay off walkable space: pebbles at wall feet, stones on pool rims, growths on wall tops. Floor features (cracks, runes, puddles) are flat and walkable.
+
+Shaders made for surfaces the comic shader can't animate (the only exceptions to "one shader"):
+- `PerfectLoot/Liquid`: water and lava. UV0.x is the distance to the shore, so foam and the shallow band survive the level's mesh merging.
+- `PerfectLoot/Glow`: additive light pools on the floor around lava and chasms, in stepped bands, instead of point lights (the comic shader's point light reach is short).
+- `PerfectLoot/Chasm`: the walls and bottom of a drop fading into fog by depth (UV0.y).
+- `PerfectLoot/FogSky`: a sky in the scene's fog color, so nothing beyond the level shows a gray void. Also used in the Hub and cathedral scenes.
+
+To add a biome: add an entry to `BiomeTileSets.All` (palette from section 11's table style, a `Style` for the geometry), rebuild, then apply or set a level's Tile Set by hand.
+
+Screenshots (gameplay camera): `screenshots/Biome_EmberDepths.png`, `Biome_DrownedMire.png`, `Biome_FrozenHollow.png`, `Biome_AbyssalRuins.png`; the placeholder look they replaced: `Biome_Before_Placeholder.png`.
