@@ -498,33 +498,33 @@ namespace LevelGeneration
     }
 
     /// <summary>
-    /// Spawns each level enemy group once, when the player first comes within its TriggerRadius (horizontally), through
-    /// EnemyManager, which puts the enemies on the ground. Waits for the level and the enemy prefabs.
+    /// Spawns each level enemy group once, when any player first comes within its TriggerRadius (horizontally), through
+    /// EnemyManager, which puts the enemies on the ground. Waits for the level and the enemy prefabs. Only the host spawns.
     /// </summary>
+    [WorldSystemFilter(GameWorlds.Server)]
     public partial class LevelEnemySpawnerSystem : SystemBase
     {
+        EntityQuery _players;
+
         protected override void OnCreate()
         {
+            _players = SystemAPI.QueryBuilder().WithAll<NetPlayer, LocalTransform>().Build();
             RequireForUpdate<LevelReady>();
             RequireForUpdate<LevelEnemySpawner>();
+            RequireForUpdate(_players);
         }
 
         protected override void OnUpdate()
         {
             var enemyManager = EnemyManager.Instance;
-            var characterManager = CharacterManager.Instance;
-            if (enemyManager == null || !enemyManager.IsReady || characterManager == null) return;
-            var player = characterManager.Player;
-            if (player == Entity.Null || !EntityManager.Exists(player) || !EntityManager.HasComponent<LocalTransform>(player)) return;
-            var playerPosition = EntityManager.GetComponentData<LocalTransform>(player).Position;
+            if (enemyManager == null || !enemyManager.IsReady) return;
+            using var players = _players.ToComponentDataArray<LocalTransform>(Allocator.Temp);
 
             using var spawners = SystemAPI.QueryBuilder().WithAll<LevelEnemySpawner, LevelEnemySpawnerEntry>().Build().ToEntityArray(Allocator.Temp);
             foreach (var entity in spawners)
             {
                 var spawner = EntityManager.GetComponentData<LevelEnemySpawner>(entity);
-                if (spawner.Triggered) continue;
-                var offset = (playerPosition - spawner.Position).xz;
-                if (math.lengthsq(offset) > spawner.TriggerRadius * spawner.TriggerRadius) continue;
+                if (spawner.Triggered || !AnyWithin(players, spawner.Position, spawner.TriggerRadius)) continue;
 
                 spawner.Triggered = true;
                 EntityManager.SetComponentData(entity, spawner);
@@ -537,6 +537,13 @@ namespace LevelGeneration
                 }
                 entries.Dispose();
             }
+        }
+
+        static bool AnyWithin(NativeArray<LocalTransform> players, float3 position, float radius)
+        {
+            foreach (var player in players)
+                if (math.lengthsq((player.Position - position).xz) <= radius * radius) return true;
+            return false;
         }
     }
 }

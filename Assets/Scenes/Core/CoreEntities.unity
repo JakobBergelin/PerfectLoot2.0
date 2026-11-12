@@ -415,7 +415,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6cfdc4b05eee19f45a164608cccbdb59, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::NetPrefabsAuthoring
-  Projectile: {fileID: 3772292115802863317, guid: 9ed1029c7bf46d24a9f79b229acd57c5, type: 3}
+  Vfx: {fileID: 3772292115802863317, guid: 9ed1029c7bf46d24a9f79b229acd57c5, type: 3}
+  Telegraph: {fileID: 1100277295980611600, guid: 5eed2d530a625314ba428cd01631eb14, type: 3}
 --- !u!4 &2040839497
 Transform:
   m_ObjectHideFlags: 0

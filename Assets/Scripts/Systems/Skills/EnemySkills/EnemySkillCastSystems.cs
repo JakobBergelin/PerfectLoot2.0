@@ -32,7 +32,7 @@ public partial struct EnemySkillCastSystem : ISystem
         var fields = SystemAPI.GetSingleton<FlowFields>();
         var physics = SystemAPI.GetSingleton<PhysicsWorldSingleton>();
         var commandBuffer = SystemAPI.GetSingleton<BeginInitializationEntityCommandBufferSystem.Singleton>().CreateCommandBuffer(state.WorldUnmanaged);
-        bool hasMarker = SystemAPI.TryGetSingleton<TelegraphPrefab>(out var markerPrefab);
+        var markerPrefab = SystemAPI.TryGetSingleton<NetPrefabs>(out var prefabs) ? prefabs.Telegraph : Entity.Null;
         float deltaTime = SystemAPI.Time.DeltaTime;
 
         var targetables = SystemAPI.GetComponentLookup<EnemyTargetable>(true);
@@ -112,10 +112,10 @@ public partial struct EnemySkillCastSystem : ISystem
                 cast.Direction = direction;
                 npc.ValueRW.IsCasting = true;
                 // Companions' telegraphs aren't shown: they're only a warning for players
-                if (hasMarker && !companions.HasComponent(entity))
+                if (markerPrefab != Entity.Null && !companions.HasComponent(entity))
                 {
                     var origin = slot.Telegraph.Shape == TelegraphShape.Circle && !slot.Telegraph.OnSelf ? unitPosition : position;
-                    TelegraphUtil.Spawn(commandBuffer, markerPrefab.Value, slot.Telegraph, entity, cast.CastId, TelegraphUtil.OnGround(physics, origin), direction);
+                    TelegraphUtil.Spawn(commandBuffer, markerPrefab, slot.Telegraph, entity, cast.CastId, TelegraphUtil.OnGround(physics, origin), direction);
                 }
                 break;
             }

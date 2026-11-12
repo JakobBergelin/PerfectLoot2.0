@@ -2,10 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Physics;
-using Unity.Rendering;
 using Unity.Transforms;
-using UnityEngine;
-using UnityEngine.Rendering;
 
 public static class TelegraphUtil
 {
@@ -42,8 +39,12 @@ public static class TelegraphUtil
     }
 }
 
-/// <summary>Fills each marker as its cast goes on and removes it when the cast ends, is cancelled or its caster is gone.</summary>
+/// <summary>
+/// Fills each marker as its cast goes on and removes it when the cast ends, is cancelled or its caster is gone. On the host:
+/// markers are ghosts, so the other machines get the fill and the removal from it.
+/// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
+[WorldSystemFilter(GameWorlds.Server)]
 [BurstCompile]
 public partial struct TelegraphMarkerSystem : ISystem
 {
@@ -72,61 +73,5 @@ public partial struct TelegraphMarkerSystem : ISystem
             var cast = casts[caster];
             parameters.ValueRW.Value.x = 1f - math.saturate(cast.TimeRemaining / cast.Duration);
         }
-    }
-}
-
-/// <summary>
-/// Makes the marker prefab at runtime: a box with the TelegraphMarker material from Resources, so no scene has to set it
-/// up. Runs again if the singleton is ever gone.
-/// </summary>
-[UpdateInGroup(typeof(InitializationSystemGroup))]
-public partial class TelegraphPrefabSystem : SystemBase
-{
-    const string MaterialPath = "TelegraphMarker";
-
-    protected override void OnUpdate()
-    {
-        if (SystemAPI.HasSingleton<TelegraphPrefab>()) return;
-
-        var material = Resources.Load<UnityEngine.Material>(MaterialPath);
-        if (material == null)
-        {
-            Debug.LogError($"TelegraphPrefabSystem: no material Resources/{MaterialPath}.");
-            Enabled = false;
-            return;
-        }
-
-        var prefab = EntityManager.CreateEntity();
-        RenderMeshUtility.AddComponents(prefab, EntityManager, new RenderMeshDescription(ShadowCastingMode.Off),
-            new RenderMeshArray(new[] { material }, new[] { CreateBox() }), MaterialMeshInfo.FromRenderMeshArrayIndices(0, 0));
-        EntityManager.AddComponentData(prefab, LocalTransform.Identity);
-        EntityManager.AddComponentData(prefab, new LocalToWorld { Value = float4x4.identity });
-        EntityManager.AddComponentData(prefab, new TelegraphParams());
-        EntityManager.AddComponentData(prefab, new TelegraphMarker());
-        EntityManager.AddComponent<Prefab>(prefab);
-
-        EntityManager.CreateSingleton(new TelegraphPrefab { Value = prefab });
-    }
-
-    // 1 meter across and 2 high, around its center: tall enough for the marker's reach on the steepest slopes
-    static Mesh CreateBox()
-    {
-        var mesh = new Mesh { name = "TelegraphBox" };
-        mesh.vertices = new[]
-        {
-            new Vector3(-0.5f, -1f, -0.5f), new Vector3(-0.5f, 1f, -0.5f), new Vector3(0.5f, 1f, -0.5f), new Vector3(0.5f, -1f, -0.5f),
-            new Vector3(-0.5f, -1f, 0.5f), new Vector3(-0.5f, 1f, 0.5f), new Vector3(0.5f, 1f, 0.5f), new Vector3(0.5f, -1f, 0.5f),
-        };
-        mesh.triangles = new[]
-        {
-            0, 1, 2, 0, 2, 3,   // Back
-            7, 6, 5, 7, 5, 4,   // Front
-            4, 5, 1, 4, 1, 0,   // Left
-            3, 2, 6, 3, 6, 7,   // Right
-            1, 5, 6, 1, 6, 2,   // Top
-            3, 7, 4, 3, 4, 0,   // Bottom
-        };
-        mesh.RecalculateBounds();
-        return mesh;
     }
 }

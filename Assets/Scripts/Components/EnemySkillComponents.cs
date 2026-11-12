@@ -1,6 +1,7 @@
 using System;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Rendering;
 using UnityEngine;
 
@@ -164,13 +165,7 @@ public struct EnemyHomingVolley : IComponentData
     public float HitForce;
 }
 
-/// <summary>Singleton: the marker to copy for a telegraph. Made at runtime by TelegraphPrefabSystem.</summary>
-public struct TelegraphPrefab : IComponentData
-{
-    public Entity Value;
-}
-
-/// <summary>A telegraph on the ground. Follows its cast's progress and goes away with it (TelegraphMarkerSystem).</summary>
+/// <summary>A telegraph on the ground. Follows its cast's progress and goes away with it (TelegraphMarkerSystem, on the host).</summary>
 public struct TelegraphMarker : IComponentData
 {
     public Entity Caster;
@@ -179,10 +174,10 @@ public struct TelegraphMarker : IComponentData
 
 /// <summary>
 /// What the marker's shader draws. x: how full, 0 to 1. y: TelegraphShape. z: Line half width (1 = Size) or Cone half angle in
-/// radians. w: how far above and below its center it reaches (1 = Size).
+/// radians. w: how far above and below its center it reaches (1 = Size). Sent to the other machines.
 /// </summary>
 [MaterialProperty("_Telegraph")]
 public struct TelegraphParams : IComponentData
 {
-    public float4 Value;
+    [GhostField(Quantization = 1000, Smoothing = SmoothingAction.Interpolate)] public float4 Value;
 }
