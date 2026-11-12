@@ -54,6 +54,9 @@ public partial class VfxSystem : SystemBase
     readonly Dictionary<Entity, float3> _lastSteps = new Dictionary<Entity, float3>();
     DamagingSystem _damaging;
     CalculateDamageSystem _calculateDamage;
+    NetFeedbackSendSystem _send;        // The host: its one-shots for the other machines
+    NetFeedbackReceiveSystem _receive;  // Someone else's game: the host's events and one-shots
+    readonly List<NetFeedbackRpc> _received = new List<NetFeedbackRpc>();
     (EntityQuery Query, VfxType Effect)[] _statuses;
     double _nextStatus;
     readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
@@ -93,6 +96,12 @@ public partial class VfxSystem : SystemBase
         _calculateDamage = World.GetOrCreateSystemManaged<CalculateDamageSystem>();
         _calculateDamage.OnDamageDodged += OnDodged;
         _calculateDamage.OnDamageBlocked += OnBlocked;
+        _send = World.GetOrCreateSystemManaged<NetFeedbackSendSystem>();
+        _receive = World.GetOrCreateSystemManaged<NetFeedbackReceiveSystem>();
+        _receive.OnDamageTaken += OnDamageTaken;
+        _receive.OnDamageDodged += OnDodged;
+        _receive.OnDamageBlocked += OnBlocked;
+        _receive.OnBurst += OnReceivedBurst;
         _charged = SystemAPI.QueryBuilder().WithAll<ChargedInstance, LocalTransform>().WithNone<RigidDeath>().Build();
         _enemyBodies = SystemAPI.QueryBuilder().WithAll<Enemy, LocalTransform>().WithNone<RigidDeath>().Build();
         _friendlyBodies = SystemAPI.QueryBuilder().WithAny<Player, Companion>().WithAll<LocalTransform>().WithNone<RigidDeath>().Build();
@@ -114,12 +123,17 @@ public partial class VfxSystem : SystemBase
         _damaging.OnDamageTaken -= OnDamageTaken;
         _calculateDamage.OnDamageDodged -= OnDodged;
         _calculateDamage.OnDamageBlocked -= OnBlocked;
+        _receive.OnDamageTaken -= OnDamageTaken;
+        _receive.OnDamageDodged -= OnDodged;
+        _receive.OnDamageBlocked -= OnBlocked;
+        _receive.OnBurst -= OnReceivedBurst;
     }
 
     void OnPlayerSpawned(Entity player) => _spawned.Add(player);
     void OnDamageTaken(float damage, float3 position, bool isCrit) { if (isCrit && _crits.Count < HitCap) _crits.Add(position); }
     void OnDodged(float3 position) { if (_dodges.Count < HitCap) _dodges.Add(position); }
     void OnBlocked(float amount, float3 position) { if (_blocks.Count < HitCap) _blocks.Add(position); }
+    void OnReceivedBurst(NetFeedbackRpc feedback) => _received.Add(feedback);
 
     protected override void OnUpdate()
     {
@@ -196,7 +210,7 @@ public partial class VfxSystem : SystemBase
                 foreach (var e in entities)
                 {
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    vfx.Burst(VfxType.MirrorPop, t.Position, Quaternion.identity);
+                    SharedBurst(vfx, VfxType.MirrorPop, t.Position, quaternion.identity);
                     var look = new NetVfx { Type = VfxType.MirrorShimmer, Impact = VfxType.MirrorPop };
                     bindings.Add((e, Bind(vfx, look, t)));
                     standIns.Add((e, look));
@@ -207,7 +221,7 @@ public partial class VfxSystem : SystemBase
             {
                 foreach (var e in entities)
                     if (EntityManager.HasComponent<VfxBinding>(e))
-                        vfx.Burst(VfxType.SlingshotSpark, EntityManager.GetComponentData<LocalTransform>(e).Position, Quaternion.identity);
+                        SharedBurst(vfx, VfxType.SlingshotSpark, EntityManager.GetComponentData<LocalTransform>(e).Position, quaternion.identity);
                 EntityManager.AddComponent<VfxSplitSeen>(_newSplits);
             }
             // Players that spawned since the last update: at their position now
@@ -237,22 +251,19 @@ public partial class VfxSystem : SystemBase
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     var attack = EntityManager.GetComponentData<Attack>(e);
                     if (attack.Origin.Label == DamageLabel.Consecration)
-                    {
-                        int nova = vfx.Burst(VfxType.Consecration, t.Position, Quaternion.identity);
-                        if (attack.Radius > 0f) vfx.Scale(nova, attack.Radius);
-                    }
-                    else if (attack.Type == DamageType.Lightning) vfx.Burst(VfxType.LightningHit, t.Position, Quaternion.identity);
+                        SharedBurst(vfx, VfxType.Consecration, t.Position, quaternion.identity, math.max(attack.Radius, 0f));
+                    else if (attack.Type == DamageType.Lightning) SharedBurst(vfx, VfxType.LightningHit, t.Position, quaternion.identity);
                     // A discharge (LightningSystem) hits the charged unit's allies: enemies when it has an enemy target
                     if (attack.Type == DamageType.Lightning && attack.Origin.Label == DamageLabel.Charged)
                     {
                         bool enemies = EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Enemy;
                         QueueChain(t.Position, attack.Radius, enemies);
+                        _send.Chain(t.Position, attack.Radius, enemies);
                     }
                     else if (attack.Type == DamageType.Cold && !EntityManager.HasComponent<AttackShape>(e))
                     {
                         // Sized to the attack's area (Cold Snap's radius); drawn at radius 1
-                        int nova = vfx.Burst(VfxType.ColdNova, t.Position, Quaternion.identity);
-                        if (attack.Radius > 0f) vfx.Scale(nova, attack.Radius);
+                        SharedBurst(vfx, VfxType.ColdNova, t.Position, quaternion.identity, math.max(attack.Radius, 0f));
                     }
                     // Player-side area attacks land with a strike drawn from their shape, tinted by damage type
                     if (strikes < StrikeCap && attack.Origin.Label != DamageLabel.Consecration && TargetsEnemies(e) && Strike(vfx, e, t, attack)) strikes++;
@@ -298,11 +309,13 @@ public partial class VfxSystem : SystemBase
             UpdateQuarryMarks(vfx);
             UpdateStatusEffects(vfx);
             UpdateCombatEffects(vfx);
+            PlayReceived(vfx);
             UpdateArcs(vfx);
             UpdateIceBlocks(vfx);
         }
         _arcsThisFrame = 0;
         _crits.Clear();
+        _received.Clear();
         _dodges.Clear();
         _blocks.Clear();
     }
@@ -322,7 +335,7 @@ public partial class VfxSystem : SystemBase
         {
             if (ripples == HitCap) break;
             if (lastHit.ValueRO.Time != now || lastHit.ValueRO.HitForce >= 0f) continue;
-            vfx.Burst(VfxType.UndertowRipple, Feet(transform.ValueRO), Quaternion.identity);
+            SharedBurst(vfx, VfxType.UndertowRipple, Feet(transform.ValueRO), quaternion.identity);
             ripples++;
         }
 
@@ -331,7 +344,7 @@ public partial class VfxSystem : SystemBase
         {
             if (lastHit.ValueRO.Time != now) continue;
             if (math.dot(-lastHit.ValueRO.Direction.xz, transform.ValueRO.Forward().xz) <= 0f) continue;
-            vfx.Burst(VfxType.BulwarkShimmer, transform.ValueRO.Position, transform.ValueRO.Rotation);
+            SharedBurst(vfx, VfxType.BulwarkShimmer, transform.ValueRO.Position, transform.ValueRO.Rotation);
         }
 
         // Footsteps: a puff every StepLength walked; none while dashing, nor after a jump (teleport, respawn)
@@ -363,22 +376,42 @@ public partial class VfxSystem : SystemBase
     /// </summary>
     bool Strike(VfxManager vfx, Entity e, LocalTransform t, Attack attack)
     {
-        int handle;
         if (EntityManager.HasComponent<AttackShape>(e))
         {
             var shape = EntityManager.GetComponentData<AttackShape>(e);
             bool cone = shape.Kind == AttackShapeKind.Cone;
-            handle = vfx.Burst(cone ? VfxType.StrikeSlash : VfxType.StrikeThrust, t.Position, t.Rotation);
-            vfx.Scale(handle, cone ? math.max(attack.Radius, 0.5f) : math.max(shape.HalfExtents.z, 0.5f));
+            SharedBurst(vfx, cone ? VfxType.StrikeSlash : VfxType.StrikeThrust, t.Position, t.Rotation,
+                cone ? math.max(attack.Radius, 0.5f) : math.max(shape.HalfExtents.z, 0.5f), tinted: true, attack.Type);
         }
         else if (attack.Radius >= 2f && attack.Type != DamageType.Cold && attack.Type != DamageType.Lightning)
-        {
-            handle = vfx.Burst(VfxType.StrikeShock, t.Position, Quaternion.identity);
-            vfx.Scale(handle, attack.Radius);
-        }
+            SharedBurst(vfx, VfxType.StrikeShock, t.Position, quaternion.identity, attack.Radius, tinted: true, attack.Type);
         else return false;
-        vfx.Tint(handle, StrikeColor(attack.Type));
         return true;
+    }
+
+    // A one-shot only the host can tell happened: played here, and on the other machines (NetFeedbackSendSystem).
+    // Sized sideways by scale (0: as it is), tinted by the damage type's colour.
+    void SharedBurst(VfxManager vfx, VfxType type, float3 position, quaternion rotation, float scale = 0f, bool tinted = false, DamageType tint = default)
+    {
+        PlayBurst(vfx, type, position, rotation, scale, tinted, tint);
+        _send.Burst(type, position, rotation, scale, tinted, tint);
+    }
+
+    static void PlayBurst(VfxManager vfx, VfxType type, float3 position, quaternion rotation, float scale, bool tinted, DamageType tint)
+    {
+        int handle = vfx.Burst(type, position, rotation);
+        if (scale > 0f) vfx.Scale(handle, scale);
+        if (tinted) vfx.Tint(handle, StrikeColor(tint));
+    }
+
+    // Someone else's game: the host's one-shots and chains since the last update
+    void PlayReceived(VfxManager vfx)
+    {
+        foreach (var feedback in _received)
+        {
+            if (feedback.Kind == NetFeedbackKind.Chain) QueueChain(feedback.Position, feedback.Amount, feedback.Enemies);
+            else PlayBurst(vfx, feedback.Vfx, feedback.Position, feedback.Rotation, feedback.Amount, feedback.Tinted, feedback.Tint);
+        }
     }
 
     static Color StrikeColor(DamageType type) => type switch

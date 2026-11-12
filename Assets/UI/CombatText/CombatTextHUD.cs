@@ -71,6 +71,7 @@ public class CombatTextHUD : MonoBehaviour
     CalculateDamageSystem _calculateDamageSystem;
     EffectDamageTextSystem _effectDamageTextSystem;
     ApplyHealingSystem _healingSystem;
+    NetFeedbackReceiveSystem _receiveSystem;   // In someone else's game: the host's numbers
 
     void Awake() => _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
 
@@ -138,6 +139,19 @@ public class CombatTextHUD : MonoBehaviour
             _effectDamageTextSystem.OnPoisoned += OnPoisoned;
         }
         if (_healingSystem != null) _healingSystem.OnHealingReceived += OnHealing;
+
+        _receiveSystem = world.GetExistingSystemManaged<NetFeedbackReceiveSystem>();
+        if (_receiveSystem != null)
+        {
+            _receiveSystem.OnDamageTaken += OnDamageTaken;
+            _receiveSystem.OnDamageAbsorbed += OnAbsorbed;
+            _receiveSystem.OnDamageBlocked += OnBlocked;
+            _receiveSystem.OnDamageDodged += OnDodged;
+            _receiveSystem.OnBleeding += OnBleeding;
+            _receiveSystem.OnBurning += OnBurning;
+            _receiveSystem.OnPoisoned += OnPoisoned;
+            _receiveSystem.OnHealingReceived += OnHealing;
+        }
     }
 
     void UnsubscribeFromSystems()
@@ -159,6 +173,17 @@ public class CombatTextHUD : MonoBehaviour
             _effectDamageTextSystem.OnPoisoned -= OnPoisoned;
         }
         if (_healingSystem != null) _healingSystem.OnHealingReceived -= OnHealing;
+        if (_receiveSystem != null)
+        {
+            _receiveSystem.OnDamageTaken -= OnDamageTaken;
+            _receiveSystem.OnDamageAbsorbed -= OnAbsorbed;
+            _receiveSystem.OnDamageBlocked -= OnBlocked;
+            _receiveSystem.OnDamageDodged -= OnDodged;
+            _receiveSystem.OnBleeding -= OnBleeding;
+            _receiveSystem.OnBurning -= OnBurning;
+            _receiveSystem.OnPoisoned -= OnPoisoned;
+            _receiveSystem.OnHealingReceived -= OnHealing;
+        }
     }
 
     void OnDamageTaken(float amount, float3 position, bool isCrit) => Queue(amount, position, isCrit ? Kind.Crit : Kind.Damage);
