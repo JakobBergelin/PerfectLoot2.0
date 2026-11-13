@@ -1,6 +1,6 @@
-// Needs Steamworks.NET (com.rlabrecque.steamworks.net) and the PERFECTLOOT_STEAM scripting define; without them the game
-// runs on LocalPlatform. See Docs/MultiplayerArchitecture.md, Platform.
-#if PERFECTLOOT_STEAM
+// Needs Steamworks.NET (com.rlabrecque.steamworks.net), whose editor scripts add the STEAMWORKS_NET scripting define;
+// without it the game runs on LocalPlatform. See Docs/MultiplayerArchitecture.md, Platform.
+#if STEAMWORKS_NET
 using System.Collections.Generic;
 using Steamworks;
 using UnityEngine;

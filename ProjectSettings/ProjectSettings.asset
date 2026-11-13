@@ -832,7 +832,7 @@ PlayerSettings:
   webEnableSubmoduleStrippingCompatibility: 0
   webProgressiveAssetLoading: 0
   scriptingDefineSymbols:
-    Standalone: NETCODE_EXPERIMENTAL_SINGLE_WORLD_HOST
+    Standalone: NETCODE_EXPERIMENTAL_SINGLE_WORLD_HOST;STEAMWORKS_NET
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:

@@ -108,14 +108,18 @@ Two versions:
 - **`SteamPlatform`**: Steamworks.NET. Persona name, Rich Presence, friends playing this game with their presence
   (`PlatformFriend.CanJoin`: in town and not full). It falls back to Local when Steam isn't running.
 
-`SteamPlatform` is behind the `PERFECTLOOT_STEAM` scripting define and **hasn't been compiled yet**, because the
-Steamworks.NET package isn't in the project. To switch it on:
+Setup, all in the project:
 
-1. Add Steamworks.NET through Package Manager (Add package from git URL:
-   `https://github.com/rlabrecque/Steamworks.NET.git?path=/com.rlabrecque.steamworks.net`, ideally with a release tag).
-2. Put a `steam_appid.txt` containing `480` (Spacewar, owned by every Steam account) in the project folder for editor
-   tests, and next to the build's exe.
-3. Add `PERFECTLOOT_STEAM` to Player Settings > Scripting Define Symbols.
+- Steamworks.NET `2025.165.0` from git (`Packages/manifest.json`). Its editor scripts add the `STEAMWORKS_NET`
+  scripting define, which `SteamPlatform` and `PlatformManager` check; without the package the game runs on Local.
+- `steam_appid.txt` in the project folder contains `480` (Spacewar, owned by every Steam account), so the editor starts
+  the Steam API as that app. A build needs it next to the exe (or our own App ID later). While playing, Steam shows the
+  player as playing Spacewar.
+- `PlatformManager.UseSteam` (on GameServices) turns Steam off for a run.
+
+Tested in the editor with Steam running: the game picks the Steam platform (App 480), reads the persona name, and Steam
+holds the published presence (`pl_area=town`, `pl_players=1`, `status=In town (1/4)`). Presence stays empty until the
+scene's area is known. Not tested yet: a friend on another PC seeing it, `FriendsPlaying` with a real friend.
 
 Joining through Steam (lobbies, Steam Networking Sockets as a transport, the Hub's Join button, invites) is phase O6.
 

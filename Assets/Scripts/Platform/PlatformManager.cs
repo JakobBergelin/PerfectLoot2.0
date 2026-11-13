@@ -6,8 +6,8 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// On the Services (GameBootstrap, next to AccountManager): picks the platform for this run, Steam when it runs (needs
-/// Steamworks.NET and the PERFECTLOOT_STEAM define) or else Local, and keeps this game's Rich Presence up to date for
+/// On the Services (GameBootstrap, next to AccountManager): picks the platform for this run, Steam when it runs (with
+/// Steamworks.NET in the project, which adds the STEAMWORKS_NET define) or else Local, and keeps this game's Rich Presence up to date for
 /// friends: its area (town, dungeon or menu), how many players are in it, and a status line. Only changes are sent.
 /// </summary>
 public class PlatformManager : MonoBehaviour
@@ -35,7 +35,7 @@ public class PlatformManager : MonoBehaviour
 
     IPlatform Create()
     {
-#if PERFECTLOOT_STEAM
+#if STEAMWORKS_NET
         if (UseSteam)
         {
             var steam = SteamPlatform.TryCreate();
@@ -55,8 +55,10 @@ public class PlatformManager : MonoBehaviour
 
     void Publish()
     {
-        string area = GameBootstrap.IsMenuScene(SceneManager.GetActiveScene().name) ? PresenceKeys.AreaMenu
-            : GameArea.IsTown ? PresenceKeys.AreaTown : PresenceKeys.AreaDungeon;
+        bool menu = GameBootstrap.IsMenuScene(SceneManager.GetActiveScene().name);
+        // A game scene's area is known once its subscenes have loaded; until then the last one stays
+        if (!menu && !GameArea.TryGet(out _)) return;
+        string area = menu ? PresenceKeys.AreaMenu : GameArea.IsTown ? PresenceKeys.AreaTown : PresenceKeys.AreaDungeon;
         int players = area == PresenceKeys.AreaMenu ? 0 : PlayersInGame();
         Set(PresenceKeys.Area, area);
         Set(PresenceKeys.Players, players > 0 ? players.ToString() : null);
