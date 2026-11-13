@@ -8,17 +8,16 @@ using UnityEngine;
 /// <summary>
 /// On the host: makes the player ghosts of each remote client that joined (JoinedPlayers), on the host's first player,
 /// set up by the same PlayerEntitySetup as the host's own, and owned by that client's connection. The first time at
-/// once; one that went missing (died) is made again after RespawnDelay. Each takes the next free flow field slot after the
-/// host's couch players. Their loadout is the client's own, sent once it has the ghost (NetLoadoutReceiveSystem). The
-/// players of a client that left or lost its connection are removed.
+/// once; one that went missing (died) is made again after the host's CharacterManager.RespawnDelay, like the host's own,
+/// and at the level's start in a dungeon's Reach Exit step (DungeonManager.RespawnAtStart). Each takes the next free
+/// flow field slot after the host's couch players. Their loadout is the client's own, sent once it has the ghost
+/// (NetLoadoutReceiveSystem). The players of a client that left or lost its connection are removed.
 /// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ServerSimulation)]
 [UpdateInGroup(typeof(SimulationSystemGroup))]
 public partial class NetPlayerSpawnSystem : SystemBase
 {
-    const float RespawnDelay = 3f;
-
-    /// <summary>A remote client's player died (went missing while its client is connected), like CharacterManager.PlayerDied.</summary>
+    /// <summary>A remote client's player died (went missing while its client is connected), like CharacterManager.PlayerDied: once per player.</summary>
     public static event System.Action RemotePlayerDied;
 
     /// <summary>On a remote client's connection: seconds until its missing players may be made.</summary>
@@ -27,6 +26,7 @@ public partial class NetPlayerSpawnSystem : SystemBase
         public float Remaining;
         public bool Spawned;    // Its players have been made once
         public bool Waiting;    // Counting down to remake a missing one
+        public int Present;     // Of its players, after last frame
     }
 
     protected override void OnCreate()
@@ -55,20 +55,23 @@ public partial class NetPlayerSpawnSystem : SystemBase
             var timer = entityManager.GetComponentData<RespawnTimer>(connection);
 
             // The first time at once; after a player went missing (died), RespawnDelay later
-            bool missing = !AllPresent(networkId, count);
-            if (missing && timer.Spawned && !timer.Waiting)
+            int present = PresentCount(networkId, count);
+            if (timer.Spawned && present < timer.Present)
             {
-                timer.Remaining = RespawnDelay;
+                for (int i = present; i < timer.Present; i++) RemotePlayerDied?.Invoke();
+                if (!timer.Waiting) timer.Remaining = host.RespawnDelay;
                 timer.Waiting = true;
-                RemotePlayerDied?.Invoke();
             }
+            timer.Present = present;
             timer.Remaining = math.max(0f, timer.Remaining - SystemAPI.Time.DeltaTime);
-            if (missing && timer.Remaining <= 0f)
+            if (present < count && timer.Remaining <= 0f)
             {
+                bool backToStart = timer.Spawned && DungeonManager.RespawnAtStart;
                 for (int localIndex = 0; localIndex < count; localIndex++)
-                    if (!HasPlayer(networkId, localIndex)) Spawn(host, networkId, localIndex);
+                    if (!HasPlayer(networkId, localIndex)) Spawn(host, networkId, localIndex, backToStart);
                 timer.Spawned = true;
                 timer.Waiting = false;
+                timer.Present = count;
             }
             entityManager.SetComponentData(connection, timer);
         }
@@ -98,21 +101,28 @@ public partial class NetPlayerSpawnSystem : SystemBase
         return false;
     }
 
-    bool AllPresent(int networkId, int count)
+    int PresentCount(int networkId, int count)
     {
+        int present = 0;
         for (int i = 0; i < count; i++)
-            if (!HasPlayer(networkId, i)) return false;
-        return true;
+            if (HasPlayer(networkId, i)) present++;
+        return present;
     }
 
-    void Spawn(CharacterManager host, int networkId, int localIndex)
+    void Spawn(CharacterManager host, int networkId, int localIndex, bool backToStart)
     {
         var entityManager = EntityManager;
-        var hostPosition = entityManager.GetComponentData<LocalTransform>(host.Player).Position;
-        var player = entityManager.Instantiate(SystemAPI.GetSingleton<PlayerPrefab>().Value);
-        var transform = entityManager.GetComponentData<LocalTransform>(player);
+        var prefab = SystemAPI.GetSingleton<PlayerPrefab>().Value;
         // On the host player (players don't block each other), so never inside a wall next to it
-        transform.Position = hostPosition + new float3(0.3f * (localIndex + 1), 0f, 0f);
+        var position = entityManager.GetComponentData<LocalTransform>(host.Player).Position + new float3(0.3f * (localIndex + 1), 0f, 0f);
+        // Or standing at the level's start
+        if (backToStart && LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var start) &&
+            LevelGeneration.GroundPlacement.TryGetCollisionWorld(entityManager, out var collisionWorld) &&
+            LevelGeneration.GroundPlacement.TryPlace(collisionWorld, start, LevelGeneration.GroundPlacement.BottomOffset(entityManager, prefab), out var placed))
+            position = placed;
+        var player = entityManager.Instantiate(prefab);
+        var transform = entityManager.GetComponentData<LocalTransform>(player);
+        transform.Position = position;
         entityManager.SetComponentData(player, transform);
         entityManager.SetComponentData(player, new GhostOwner { NetworkId = networkId });
         entityManager.SetComponentData(player, new NetPlayer { LocalIndex = localIndex });

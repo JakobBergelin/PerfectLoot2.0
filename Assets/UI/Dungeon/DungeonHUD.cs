@@ -3,9 +3,10 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Top of the screen while in a dungeon (DungeonManager): its name, the current step and its progress, or that it's
-/// complete and the return portal is open; how many items were picked up. Leave dungeon asks first when something would
-/// be lost: an unfinished run, or items still on the ground.
+/// Top of the screen while in a dungeon (DungeonManager): its name, the time left (and what a death just cost), the
+/// current step and its progress with what dying does in it, or that it's complete or failed and the return portal is
+/// open; how many items were picked up. Leave dungeon (the host's only: a client leaves the game from its menu) asks first
+/// when something would be lost: an unfinished run, or items still on the ground.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class DungeonHUD : MonoBehaviour
@@ -14,14 +15,20 @@ public class DungeonHUD : MonoBehaviour
     const string CompleteClass = "dh-card--complete";
     const string FailedClass = "dh-card--failed";
     const string ActionsHiddenClass = "dh-actions--hidden";
+    const string TimerLowClass = "dh-timer--low";
+    const float LowTime = 30f;          // Seconds left when the timer turns red
+    const float PenaltyShown = 2.5f;    // Seconds a death's cost shows next to the timer
 
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _card;
-    Label _name, _stepCount, _objective, _note, _found, _confirmText;
-    VisualElement _progressBar, _progressFill, _leaveRow, _confirmRow;
+    Label _name, _stepCount, _objective, _note, _found, _confirmText, _timer, _penalty;
+    VisualElement _progressBar, _progressFill, _leaveRow, _confirmRow, _timerRow;
 
     bool _hovered;
+    int _shownDeaths;
+    float _shownCost;       // Seconds the latest deaths cost, shown next to the timer
+    float _penaltyHide;     // Time.time when the shown cost goes away
 
     void OnEnable()
     {
@@ -65,12 +72,16 @@ public class DungeonHUD : MonoBehaviour
         _leaveRow = root.Q<VisualElement>("leaveRow");
         _confirmRow = root.Q<VisualElement>("confirmRow");
         _confirmText = root.Q<Label>("confirmText");
+        _timerRow = root.Q<VisualElement>("timerRow");
+        _timer = root.Q<Label>("timer");
+        _penalty = root.Q<Label>("penalty");
         var leave = root.Q<Button>("leaveButton");
         var confirmLeave = root.Q<Button>("confirmLeaveButton");
         var stay = root.Q<Button>("stayButton");
         _boundVersion = version;
         if (_card == null || _name == null || _stepCount == null || _objective == null || _note == null || _found == null || _progressBar == null || _progressFill == null ||
-            _leaveRow == null || _confirmRow == null || _confirmText == null || leave == null || confirmLeave == null || stay == null)
+            _leaveRow == null || _confirmRow == null || _confirmText == null || _timerRow == null || _timer == null || _penalty == null ||
+            leave == null || confirmLeave == null || stay == null)
         {
             Debug.LogError("DungeonHUD: DungeonHUD.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             _card = null;
@@ -105,6 +116,9 @@ public class DungeonHUD : MonoBehaviour
         _card.EnableInClassList(CompleteClass, complete);
         _card.EnableInClassList(FailedClass, failed);
         _name.text = manager.Dungeon.DisplayName;
+        // Leaving someone else's game is in the game menu
+        _leaveRow.style.display = NetSession.IsHost ? DisplayStyle.Flex : DisplayStyle.None;
+        UpdateTimer(manager);
 
         var step = manager.CurrentStep;
         _stepCount.text = !complete && !failed && manager.StepCount > 1 ? $"Step {manager.StepIndex + 1} of {manager.StepCount}" : "";
@@ -113,10 +127,11 @@ public class DungeonHUD : MonoBehaviour
         float progress = -1f;   // No bar
         string note = "";
         if (complete) _objective.text = "Dungeon complete · Return portal open";
-        else if (failed) _objective.text = "Dungeon failed · Return portal open";
+        else if (failed) _objective.text = manager.OutOfTime ? "Out of time · Return portal open" : "Dungeon failed · Return portal open";
         else if (step == null) _objective.text = "";
         else
         {
+            float penalty = manager.NextDeathPenalty;
             switch (step.Kind)
             {
                 case DungeonStepKind.KillEnemies:
@@ -124,13 +139,16 @@ public class DungeonHUD : MonoBehaviour
                     int kills = Mathf.Min(manager.Kills, target);
                     _objective.text = $"Defeat enemies  {kills} / {target}";
                     progress = target > 0 ? (float)kills / target : 1f;
+                    if (penalty > 0f) note = $"Dying costs {penalty:0} s";
                     break;
                 case DungeonStepKind.KillBoss:
                     string boss = step.Boss == null ? "the boss" : string.IsNullOrWhiteSpace(step.Boss.Name) ? step.Boss.name : step.Boss.Name;
                     _objective.text = $"Defeat {boss}";
+                    if (penalty > 0f) note = $"Dying costs {penalty:0} s";
                     break;
                 case DungeonStepKind.ReachExit:
                     _objective.text = "Find the exit";
+                    note = "Dying sends you back to the start";
                     break;
                 case DungeonStepKind.Survive:
                     int left = Mathf.CeilToInt(manager.SurviveTimeLeft);
@@ -151,8 +169,39 @@ public class DungeonHUD : MonoBehaviour
         _found.style.display = found > 0 ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
-    /// <summary>True while in a dungeon, so it can be left (also from the in-game menu).</summary>
-    public static bool InDungeon => DungeonManager.Instance != null && DungeonManager.Instance.State != DungeonManager.RunState.None;
+    // The time limit's clock while it runs (not in Survive steps), red near the end; a death's cost next to it for a while
+    void UpdateTimer(DungeonManager manager)
+    {
+        // A new run starts the count over
+        if (manager.Deaths < _shownDeaths) _shownDeaths = 0;
+        if (manager.Deaths > _shownDeaths)
+        {
+            // What the deaths since last frame cost: DeathPenalty × each one's number, in Kill steps
+            float cost = 0f;
+            if (manager.CurrentStep is { Kind: DungeonStepKind.KillEnemies or DungeonStepKind.KillBoss } && manager.ClockRunning)
+                for (int death = _shownDeaths + 1; death <= manager.Deaths; death++) cost += manager.DeathPenalty * death;
+            _shownDeaths = manager.Deaths;
+            if (cost > 0f)
+            {
+                // Added to a cost still shown (deaths close together)
+                if (Time.time < _penaltyHide) cost += _shownCost;
+                _shownCost = cost;
+                _penalty.text = $"-{cost:0} s";
+                _penaltyHide = Time.time + PenaltyShown;
+            }
+        }
+
+        bool shown = manager.ClockRunning;
+        _timerRow.style.display = shown ? DisplayStyle.Flex : DisplayStyle.None;
+        if (!shown) return;
+        int left = Mathf.CeilToInt(manager.TimeLeft);
+        _timer.text = $"{left / 60}:{left % 60:00}";
+        _timer.EnableInClassList(TimerLowClass, manager.TimeLeft <= LowTime);
+        _penalty.style.display = Time.time < _penaltyHide ? DisplayStyle.Flex : DisplayStyle.None;
+    }
+
+    /// <summary>True while in a dungeon of this machine's own game, so it can be left (also from the in-game menu).</summary>
+    public static bool InDungeon => NetSession.IsHost && DungeonManager.Instance != null && DungeonManager.Instance.State != DungeonManager.RunState.None;
 
     /// <summary>What leaving now would lose, as a question; null when nothing would be, so it can be left at once.</summary>
     public static string LeaveQuestion()

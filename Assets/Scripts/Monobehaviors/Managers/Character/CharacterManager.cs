@@ -37,7 +37,7 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     [Tooltip("Base stats before class, gear, passives and buffs")]
     public PlayerBaseStats BaseStats;
     [Tooltip("Seconds between the player dying and respawning")]
-    public float RespawnDelay = 3f;
+    public float RespawnDelay = 2f;
 
     [Header("Selected (set from the character picked in Character Select; empty = random from the lists below at start)")]
     public CharacterClass Class;
@@ -424,7 +424,8 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
 
     /// <summary>
     /// The level's player start (or this object's position without a level), or in co-op next to the other player,
-    /// standing on the ground below it. False while the ground isn't in the physics world yet (e.g. the frame the level
+    /// standing on the ground below it. A respawn in a dungeon's Reach Exit step is always at the start
+    /// (DungeonManager.RespawnAtStart). False while the ground isn't in the physics world yet (e.g. the frame the level
     /// appears); after MaxGroundWait at the same position it gives up and uses the plain position, with the player's feet
     /// at its height.
     /// </summary>
@@ -433,7 +434,8 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
         // In co-op: next to the other player while they're in the level (player 2 joining, anyone respawning)
-        for (int i = 0; i < _players.Length; i++)
+        bool backToStart = _hasSpawned && DungeonManager.RespawnAtStart;
+        for (int i = 0; i < _players.Length && !backToStart; i++)
         {
             var other = _players[i];
             if (i == PlayerIndex || other == null || other._player == Entity.Null || !entityManager.Exists(other._player)) continue;

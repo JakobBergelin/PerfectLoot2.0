@@ -69,9 +69,18 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
   its own players and for a client's when its `PortalChoiceRpc` arrives (`NetPortal`), clears a choice when that player
   walks away, and enters once everyone has chosen the same portal (`PortalHUD`), taking every machine along.
 - **The dungeon runs on the host** (`DungeonManager`), counting every player: any living player at the exit finishes a
-  Reach Exit step, any player's death fails a Survive step (`NetPlayerSpawnSystem.RemotePlayerDied` for remote ones),
-  and dungeon XP goes to every player. The boss, waves and return portal go around the host's first living player, or a
-  remote one while the host's are all dead.
+  Reach Exit step, and dungeon XP goes to every player. The boss, waves and return portal go around the host's first
+  living player, or a remote one while the host's are all dead.
+- **Time limit and deaths**: each dungeon has a `TimeLimit` (5:00 by default); running out fails it (enemies vanish, no
+  further step starts, the return portal opens). The clock stops in Survive steps, which have their own. Every player's
+  death counts (`CharacterManager.PlayerDied`, `NetPlayerSpawnSystem.RemotePlayerDied` once per remote player), and
+  what it does depends on the step: in Kill Enemies and Kill Boss steps it takes 10 × (1 + the group's earlier deaths)
+  seconds off the clock (`DeathPenalty`), in Reach Exit steps the player respawns at the level's start
+  (`DungeonManager.RespawnAtStart`, read by `CharacterManager` and `NetPlayerSpawnSystem`), and in Survive steps it
+  fails the dungeon. Every player respawns after `CharacterManager.RespawnDelay` (2 s).
+- **The dungeon card on clients**: the host sends how the run stands (`DungeonStatusRpc`: state, step, kills, time left,
+  deaths) whenever it changes and every second; the client's `DungeonManager.ApplyStatus` fills the same fields its
+  `DungeonHUD` reads, and runs the clocks on in between. Leaving is the host's (a client leaves the game from its menu).
 - **The return portal** only exists on the host; it tells the clients where (`ReturnPortalRpc`) and each places its
   own copy from the level's prefab (`NetPortal.PlaceReturnPortal`). Completing a dungeon is recorded on every machine's
   characters (`DungeonCompletedRpc`).

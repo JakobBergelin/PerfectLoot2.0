@@ -18,6 +18,19 @@ public struct DungeonCompletedRpc : IRpcCommand
     public FixedString64Bytes DungeonId;
 }
 
+/// <summary>The host to a client: how the dungeon run stands, for its DungeonHUD (DungeonManager.ApplyStatus).</summary>
+public struct DungeonStatusRpc : IRpcCommand
+{
+    public byte State;          // DungeonManager.RunState
+    public byte Step;
+    public int Kills;
+    public int TotalEnemies;
+    public int Deaths;
+    public bool OutOfTime;
+    public float TimeLeft;
+    public float Survived;
+}
+
 /// <summary>The host to a client: the dungeon's return portal opened here (the client places its own, NetPortal.PlaceReturnPortal).</summary>
 public struct ReturnPortalRpc : IRpcCommand
 {
@@ -173,21 +186,29 @@ public partial class NetPortalReceiveSystem : SystemBase
     }
 }
 
-/// <summary>In someone else's game: the host's dungeon messages (completion, the return portal).</summary>
+/// <summary>In someone else's game: the host's dungeon messages (how the run stands, completion, the return portal).</summary>
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 public partial class NetDungeonReceiveSystem : SystemBase
 {
-    EntityQuery _completed, _portals;
+    EntityQuery _status, _completed, _portals;
 
     protected override void OnCreate()
     {
+        _status = SystemAPI.QueryBuilder().WithAll<DungeonStatusRpc, ReceiveRpcCommandRequest>().Build();
         _completed = SystemAPI.QueryBuilder().WithAll<DungeonCompletedRpc, ReceiveRpcCommandRequest>().Build();
         _portals = SystemAPI.QueryBuilder().WithAll<ReturnPortalRpc, ReceiveRpcCommandRequest>().Build();
-        RequireAnyForUpdate(_completed, _portals);
+        RequireAnyForUpdate(_status, _completed, _portals);
     }
 
     protected override void OnUpdate()
     {
+        using (var statuses = _status.ToComponentDataArray<DungeonStatusRpc>(Allocator.Temp))
+        {
+            EntityManager.DestroyEntity(_status);
+            // Only the latest counts
+            if (statuses.Length > 0 && DungeonManager.Instance != null) DungeonManager.Instance.ApplyStatus(statuses[statuses.Length - 1]);
+        }
+
         using (var completed = _completed.ToComponentDataArray<DungeonCompletedRpc>(Allocator.Temp))
         {
             EntityManager.DestroyEntity(_completed);

@@ -6,9 +6,9 @@ using UnityEngine;
 
 public enum DungeonStepKind
 {
-    KillEnemies,    // Kill a share of the enemies the level's spawners make
-    KillBoss,       // Kill a boss spawned when the step starts
-    ReachExit,      // Reach a painted Dungeon Exit
+    KillEnemies,    // Kill a share of the enemies the level's spawners make; dying costs time
+    KillBoss,       // Kill a boss spawned when the step starts; dying costs time
+    ReachExit,      // Reach a painted Dungeon Exit; dying sends the player back to the level's start
     Survive,        // Stay alive while waves of enemies come; dying fails the dungeon
 }
 
@@ -53,6 +53,9 @@ public class DungeonDefinition : ScriptableObject
     public LootTable CompletionLootTable;
     [Tooltip("Given to every player when the dungeon is finished")]
     [Min(0)] public int CompletionExperience = 1000;
+    [Tooltip("Seconds to finish the dungeon in; running out fails it and no further step starts. The clock stops in " +
+             "Survive steps (they have their own). Deaths in Kill steps take time off it. 0: no limit.")]
+    [Min(0f)] public float TimeLimit = 300f;
     [Tooltip("Done in order; the last one finishes the dungeon")]
     public List<DungeonStep> Steps = new List<DungeonStep>();
     [Tooltip("Spawned next to the player when the dungeon is finished (the Portal prefab). Leads back where the player came from.")]

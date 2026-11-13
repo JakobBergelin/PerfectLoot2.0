@@ -14,9 +14,16 @@ using UnityEngine.SceneManagement;
 /// DungeonRun's DungeonKill buffer (EnemyKillSystem). Every kill rolls the kill loot table onto the ground where the
 /// enemy died (GroundLootManager). After the last step the return portal opens next to the player, the completion loot
 /// table is rolled onto the ground in front of it, and the finish is saved on the character. A Survive step sends waves
-/// at the player (they always know where it is); dying during one fails the dungeon (Fail). Leave goes back without
-/// finishing; the next visit is a new run with a new layout (every scene load makes a new world). Kept between scenes
-/// (GameBootstrap's rig); DungeonHUD shows it.
+/// at the player (they always know where it is). Leave goes back without finishing; the next visit is a new run with a
+/// new layout (every scene load makes a new world). Kept between scenes (GameBootstrap's rig); DungeonHUD shows it.
+///
+/// The dungeon's TimeLimit runs out (Fail, no further step starts) unless it's finished first; its clock stops in
+/// Survive steps, which have their own. What a death of any player (this machine's or another's) does depends on the
+/// step: in Kill steps it takes DeathPenalty × (1 + the run's earlier deaths) seconds off the clock, in Reach Exit
+/// steps the player respawns at the level's start (RespawnAtStart), and in Survive steps it fails the dungeon.
+///
+/// Only the host runs the dungeon; it sends how the run stands to the clients (DungeonStatusRpc, ApplyStatus), so their
+/// DungeonHUD shows it too.
 /// </summary>
 public class DungeonManager : MonoBehaviour
 {
@@ -25,7 +32,7 @@ public class DungeonManager : MonoBehaviour
         None,       // Not in a dungeon (or it isn't loaded yet)
         Running,
         Complete,
-        Failed,     // Died in a Survive step: the enemies are gone and only the return portal is left
+        Failed,     // Died in a Survive step, or out of time: the enemies are gone and only the return portal is left
     }
 
     public static DungeonManager Instance;
@@ -34,6 +41,11 @@ public class DungeonManager : MonoBehaviour
     public float ReturnPortalDistance = 4f;
     [Tooltip("Meters from the player where a boss spawns when the level has no Boss Spawn Point built")]
     public float BossDistance = 10f;
+    [Tooltip("Seconds a death in a Kill step takes off the time limit, times (1 + the run's earlier deaths)")]
+    public float DeathPenalty = 10f;
+
+    // Seconds between status messages to the clients while nothing else changed (their clock runs on in between)
+    const float StatusInterval = 1f;
 
     // Directions tried around the player for the boss and the return portal before settling for one without ground
     const int GroundTries = 8;
@@ -55,7 +67,12 @@ public class DungeonManager : MonoBehaviour
     Entity _boss;
     float _survived;            // Seconds into the current Survive step
     float _nextWave;            // Seconds until its next wave
-    bool _playerDied;           // Since the last Update (CharacterManager.PlayerDied)
+    float _timeLeft;            // Of the dungeon's TimeLimit
+    bool _outOfTime;            // Failed because the time ran out
+    int _deaths;                // Players' deaths this run, all players together
+    int _newDeaths;             // Since the last Update (CharacterManager.PlayerDied, NetPlayerSpawnSystem.RemotePlayerDied)
+    float _statusTimer;         // Until the next status message to the clients
+    DungeonStatusRpc _sentStatus;
 
     public RunState State => _state;
     public DungeonDefinition Dungeon => _dungeon;
@@ -63,6 +80,8 @@ public class DungeonManager : MonoBehaviour
     public int StepCount => _dungeon != null ? _dungeon.Steps.Count : 0;
     public int Kills => _kills;
     public int TotalEnemies => _totalEnemies;
+    public int Deaths => _deaths;
+    public bool OutOfTime => _outOfTime;
 
     /// <summary>The step being worked on, or null when not running.</summary>
     public DungeonStep CurrentStep =>
@@ -70,6 +89,22 @@ public class DungeonManager : MonoBehaviour
 
     /// <summary>Seconds left of the current Survive step.</summary>
     public float SurviveTimeLeft => CurrentStep is { Kind: DungeonStepKind.Survive } step ? Mathf.Max(0f, step.SurviveSeconds - _survived) : 0f;
+
+    /// <summary>The dungeon has a time limit.</summary>
+    public bool HasTimeLimit => _dungeon != null && _dungeon.TimeLimit > 0f;
+
+    /// <summary>Seconds left of the time limit.</summary>
+    public float TimeLeft => Mathf.Max(0f, _timeLeft);
+
+    /// <summary>The time limit's clock runs now: running, and not in a Survive step (it has its own).</summary>
+    public bool ClockRunning => HasTimeLimit && CurrentStep is { } step && step.Kind != DungeonStepKind.Survive;
+
+    /// <summary>Seconds the next death takes off the clock (0 when deaths cost no time in this step).</summary>
+    public float NextDeathPenalty =>
+        ClockRunning && CurrentStep.Kind is DungeonStepKind.KillEnemies or DungeonStepKind.KillBoss ? DeathPenalty * (1 + _deaths) : 0f;
+
+    /// <summary>Players respawn at the level's start rather than next to another player: in a Reach Exit step.</summary>
+    public static bool RespawnAtStart => Instance != null && Instance.CurrentStep is { Kind: DungeonStepKind.ReachExit };
 
     /// <summary>Kills a Kill Enemies step needs (all of the level's spawned enemies times its percent, rounded up).</summary>
     public int KillTarget(DungeonStep step) =>
@@ -94,7 +129,7 @@ public class DungeonManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    void OnPlayerDied() => _playerDied = true;
+    void OnPlayerDied() => _newDeaths++;
 
     void Update()
     {
@@ -105,8 +140,15 @@ public class DungeonManager : MonoBehaviour
             ResetRun();
         }
         if (world == null || !world.IsCreated) return;
-        // In someone else's game the host runs the dungeon (its steps, spawns, completion and return portal)
-        if (!NetSession.IsHost) return;
+        // In someone else's game the host runs the dungeon (its steps, spawns, completion and return portal); between its
+        // status messages the clocks run on here
+        if (!NetSession.IsHost)
+        {
+            _newDeaths = 0;
+            if (ClockRunning) _timeLeft -= Time.deltaTime;
+            if (CurrentStep is { Kind: DungeonStepKind.Survive }) _survived += Time.deltaTime;
+            return;
+        }
         var entityManager = world.EntityManager;
 
         if (!_checked)
@@ -118,8 +160,42 @@ public class DungeonManager : MonoBehaviour
 
         ReadKills(entityManager);
         if (_state == RunState.Running) UpdateSteps(entityManager);
-        _playerDied = false;
+        _newDeaths = 0;
         if (_portalPending) OpenReturnPortal(entityManager);
+        SendStatus(entityManager);
+    }
+
+    // To the clients: when something they show changed, and every StatusInterval
+    void SendStatus(EntityManager entityManager)
+    {
+        var status = new DungeonStatusRpc
+        {
+            State = (byte)_state, Step = (byte)_step, Kills = _kills, TotalEnemies = _totalEnemies, Deaths = _deaths,
+            OutOfTime = _outOfTime, TimeLeft = _timeLeft, Survived = _survived,
+        };
+        _statusTimer -= Time.deltaTime;
+        bool changed = status.State != _sentStatus.State || status.Step != _sentStatus.Step || status.Kills != _sentStatus.Kills ||
+                       status.TotalEnemies != _sentStatus.TotalEnemies || status.Deaths != _sentStatus.Deaths;
+        if (!changed && _statusTimer > 0f) return;
+        _statusTimer = StatusInterval;
+        _sentStatus = status;
+        NetPortal.Send(entityManager, status);
+    }
+
+    /// <summary>In someone else's game: how the host's run stands (NetDungeonReceiveSystem).</summary>
+    public void ApplyStatus(DungeonStatusRpc status)
+    {
+        if (NetSession.IsHost || !GameArea.TryGet(out var area) || area.Kind != AreaKind.Dungeon || area.Dungeon.Value == null) return;
+        _checked = true;
+        _dungeon = area.Dungeon.Value;
+        _state = (RunState)status.State;
+        _step = status.Step;
+        _kills = status.Kills;
+        _totalEnemies = status.TotalEnemies;
+        _deaths = status.Deaths;
+        _outOfTime = status.OutOfTime;
+        _timeLeft = status.TimeLeft;
+        _survived = status.Survived;
     }
 
     /// <summary>Back to ReturnScene; an unfinished run is lost.</summary>
@@ -141,7 +217,12 @@ public class DungeonManager : MonoBehaviour
         _step = 0;
         _kills = 0;
         _totalEnemies = 0;
-        _playerDied = false;
+        _timeLeft = 0f;
+        _outOfTime = false;
+        _deaths = 0;
+        _newDeaths = 0;
+        _statusTimer = 0f;
+        _sentStatus = default;
         ResetStep();
     }
 
@@ -186,10 +267,12 @@ public class DungeonManager : MonoBehaviour
         _returnScene = FindReturnScene();
         _state = RunState.Running;
         _step = 0;
-        _playerDied = false;
+        _timeLeft = _dungeon.TimeLimit;
+        _deaths = 0;
+        _newDeaths = 0;
         ResetStep();
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} started, {_totalEnemies} enemies in its spawners, {_dungeon.Steps.Count} steps. " +
-                  $"Returns to {_returnScene}.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} started, {_totalEnemies} enemies in its spawners, {_dungeon.Steps.Count} steps, " +
+                  $"{(HasTimeLimit ? $"{_dungeon.TimeLimit:0} s" : "no")} time limit. Returns to {_returnScene}.", this);
     }
 
     static string FindReturnScene()
@@ -226,11 +309,32 @@ public class DungeonManager : MonoBehaviour
 
     void UpdateSteps(EntityManager entityManager)
     {
-        // Dying in a Survive step fails the dungeon
-        if (_playerDied && CurrentStep is { Kind: DungeonStepKind.Survive })
+        // Deaths: in a Survive step one fails the dungeon; in Kill steps each takes time off the clock (more for every
+        // earlier one); in Reach Exit steps the player respawns at the start (RespawnAtStart)
+        for (int i = 0; i < _newDeaths; i++)
         {
-            Fail(entityManager);
-            return;
+            if (CurrentStep is { Kind: DungeonStepKind.Survive })
+            {
+                Fail(entityManager, "a player died in a Survive step");
+                return;
+            }
+            float penalty = NextDeathPenalty;
+            _timeLeft -= penalty;
+            _deaths++;
+            if (penalty > 0f) Debug.Log($"DungeonManager: death {_deaths} costs {penalty:0} s, {TimeLeft:0} s left.", this);
+        }
+
+        // Out of time: no further step starts
+        if (ClockRunning)
+        {
+            _timeLeft -= Time.deltaTime;
+            if (_timeLeft <= 0f)
+            {
+                _timeLeft = 0f;
+                _outOfTime = true;
+                Fail(entityManager, "out of time");
+                return;
+            }
         }
 
         while (_state == RunState.Running)
@@ -392,9 +496,9 @@ public class DungeonManager : MonoBehaviour
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete.", this);
     }
 
-    // Died in a Survive step: every enemy disappears, the level's spawners that haven't triggered never will, and only
-    // the return portal is left (opened once the player has respawned). No completion loot, nothing saved.
-    void Fail(EntityManager entityManager)
+    // Died in a Survive step, or out of time: every enemy disappears, the level's spawners that haven't triggered never
+    // will, and only the return portal is left (opened once a player is alive). No completion loot, nothing saved.
+    void Fail(EntityManager entityManager, string reason)
     {
         _state = RunState.Failed;
         _portalPending = true;
@@ -409,7 +513,7 @@ public class DungeonManager : MonoBehaviour
             spawner.Triggered = true;
             entityManager.SetComponentData(entity, spawner);
         }
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} failed: a player died in a Survive step.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} failed: {reason}.", this);
     }
 
     // ReturnPortalDistance from the player (on the side away from the camera), leading to ReturnScene. After a finish
