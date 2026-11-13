@@ -6,20 +6,28 @@ using UnityEngine;
 using UnityEngine.SceneManagement;
 
 /// <summary>
-/// On the Services (GameBootstrap, next to AccountManager): picks the platform for this run, Steam when it runs (with
-/// Steamworks.NET in the project, which adds the STEAMWORKS_NET define) or else Local, and keeps this game's Rich Presence up to date for
-/// friends: its area (town, dungeon or menu), how many players are in it, and a status line. Only changes are sent.
+/// On the Services (GameBootstrap, next to AccountManager): runs the platform (Platform.Current: Steam when it runs, else
+/// Local) and keeps this game's Rich Presence up to date for friends: its area (town, dungeon or menu), how many players
+/// are in it, how to join it (PresenceKeys.Host, Connect) and a status line. Only changes are sent. It also keeps the
+/// friends whose games can be joined (JoinableFriends, for the Hub) and carries out the platform's join requests (Steam's
+/// Join Game, invites), from town only: elsewhere the request waits until the player is back in town.
 /// </summary>
 public class PlatformManager : MonoBehaviour
 {
-    [Tooltip("Use Steam when it runs; off: always the Local platform (join by IP)")]
-    public bool UseSteam = true;
     [Tooltip("Seconds between Rich Presence updates")]
     public float PresenceInterval = 1f;
+    [Tooltip("Seconds between looks at the friends playing")]
+    public float FriendsInterval = 2f;
 
     static PlatformManager _instance;
-    float _nextPresence;
+    static readonly List<PlatformFriend> _joinable = new List<PlatformFriend>();
+
+    float _nextPresence, _nextFriends;
+    string _pendingJoin;
     readonly Dictionary<string, string> _published = new Dictionary<string, string>();
+
+    /// <summary>Friends whose games take another player now (in town, not full), for the Hub's join buttons.</summary>
+    public static IReadOnlyList<PlatformFriend> JoinableFriends => _joinable;
 
     void Awake()
     {
@@ -29,25 +37,22 @@ public class PlatformManager : MonoBehaviour
             return;
         }
         _instance = this;
-        Platform.Current = Create();
+        _joinable.Clear();
+        Platform.Current.JoinRequested += OnJoinRequested;
         Debug.Log($"PlatformManager: running on the {Platform.Current.Name} platform.");
-    }
-
-    IPlatform Create()
-    {
-#if STEAMWORKS_NET
-        if (UseSteam)
-        {
-            var steam = SteamPlatform.TryCreate();
-            if (steam != null) return steam;
-        }
-#endif
-        return new LocalPlatform();
     }
 
     void Update()
     {
         Platform.Current.Update();
+        if (_pendingJoin != null) TryJoin();
+        if (Time.unscaledTime >= _nextFriends)
+        {
+            _nextFriends = Time.unscaledTime + FriendsInterval;
+            _joinable.Clear();
+            foreach (var friend in Platform.Current.FriendsPlaying())
+                if (friend.CanJoin) _joinable.Add(friend);
+        }
         if (Time.unscaledTime < _nextPresence) return;
         _nextPresence = Time.unscaledTime + PresenceInterval;
         Publish();
@@ -60,8 +65,11 @@ public class PlatformManager : MonoBehaviour
         if (!menu && !GameArea.TryGet(out _)) return;
         string area = menu ? PresenceKeys.AreaMenu : GameArea.IsTown ? PresenceKeys.AreaTown : PresenceKeys.AreaDungeon;
         int players = area == PresenceKeys.AreaMenu ? 0 : PlayersInGame();
+        string host = menu ? null : Platform.Current.JoinId;
         Set(PresenceKeys.Area, area);
         Set(PresenceKeys.Players, players > 0 ? players.ToString() : null);
+        Set(PresenceKeys.Host, host);
+        Set(PresenceKeys.Connect, host != null ? PresenceKeys.ConnectPrefix + host : null);
         Set(PresenceKeys.Status, area == PresenceKeys.AreaMenu ? "In the main menu"
             : $"{(area == PresenceKeys.AreaTown ? "In town" : "In a dungeon")} ({players}/{NetSession.MaxPlayers})");
     }
@@ -88,12 +96,45 @@ public class PlatformManager : MonoBehaviour
         return count;
     }
 
+    /// <summary>Joins a friend's game now, from town in this machine's own game (Hub join buttons).</summary>
+    public static void Join(PlatformFriend friend)
+    {
+        if (Platform.Current.TryGetJoinEndpoint(friend.Host, out var endpoint)) NetSession.Join(endpoint, friend.Name);
+    }
+
+    void OnJoinRequested(string joinId)
+    {
+        _pendingJoin = joinId;
+        TryJoin();
+    }
+
+    // A game is joined from town, in this machine's own game, with a character picked (not from the main menu)
+    void TryJoin()
+    {
+        if (!Platform.Current.TryGetJoinEndpoint(_pendingJoin, out var endpoint))
+        {
+            _pendingJoin = null;
+            return;
+        }
+        bool menu = GameBootstrap.IsMenuScene(SceneManager.GetActiveScene().name);
+        if (!NetSession.IsHost || menu || !GameArea.TryGet(out _) || !GameArea.IsTown)
+        {
+            string notice = !NetSession.IsHost ? "Leave this game to join another one."
+                : menu ? "Pick a character: you'll join your friend's game in town."
+                : GameArea.IsTown ? null : "Go back to town to join your friend's game.";
+            if (notice != null && NetSession.Notice != notice) NetSession.ShowNotice(notice);
+            return;
+        }
+        _pendingJoin = null;
+        NetSession.Join(endpoint, "your friend's game");
+    }
+
     void OnDestroy()
     {
         if (_instance != this) return;
         _instance = null;
-        Platform.Current.Shutdown();
-        Platform.Current = new LocalPlatform();
+        Platform.Current.JoinRequested -= OnJoinRequested;
+        Platform.Shutdown();
     }
 
     [ContextMenu("Log presence and friends playing")]

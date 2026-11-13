@@ -27,7 +27,8 @@ public struct JoinedPlayers : IComponentData
 }
 
 /// <summary>
-/// Starts the network for this world: a host listens while NetSession.Listen is on, a client connects to
+/// Starts the network for this world: a host listens while NetSession.Listen is on or the platform hosts online (Steam),
+/// on every driver it has (NetDriverConstructor); a client connects to
 /// NetSession.ConnectTo. Once, when the world is made; not when the world was rebuilt around connections kept through a
 /// scene change (NetSceneSync).
 /// </summary>
@@ -45,7 +46,8 @@ public partial struct NetStartSystem : ISystem
         {
             var store = driver.DriverStore;
             bool listening = store.DriversCount > 0 && store.GetDriverRO(store.FirstDriver).Listening;
-            if (NetSession.Listen && !listening) driver.Listen(NetworkEndpoint.AnyIpv4.WithPort(NetSession.Port));
+            bool listen = NetSession.Listen || Platform.Current.HostsOnline;
+            if (listen && !listening) driver.Listen(NetworkEndpoint.AnyIpv4.WithPort(NetSession.Port));
         }
         else if (SystemAPI.QueryBuilder().WithAll<NetworkStreamConnection>().Build().IsEmpty)
             driver.Connect(state.EntityManager, NetSession.ConnectTo);

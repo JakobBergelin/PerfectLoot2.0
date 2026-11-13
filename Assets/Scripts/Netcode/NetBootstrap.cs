@@ -29,6 +29,8 @@ public class NetBootstrap : ClientServerBootstrap
     public static World CreateWorld()
     {
         AutoConnectPort = 0;    // Connecting and listening are started explicitly (NetStartSystem)
+        // UDP and the online platform's driver (Steam)
+        NetworkStreamReceiveSystem.DriverConstructor = new NetDriverConstructor();
         bool client = NetSession.Role == NetSession.Roles.Client;
         var world = NetSceneSync.TakeMigratedWorld();
         if (world != null)
@@ -111,7 +113,14 @@ public static class NetSession
     public static bool Join(string address)
     {
         if (!TryParseAddress(address, out var endpoint)) return false;
-        ShowNotice($"Joining {address.Trim()}...");
+        Join(endpoint, address.Trim());
+        return true;
+    }
+
+    /// <summary>Plays in someone else's game at this endpoint (an IP address, or a friend's SteamID: Platform), named as given.</summary>
+    public static void Join(NetworkEndpoint endpoint, string name)
+    {
+        ShowNotice($"Joining {name}...");
         // Changed only as the world is replaced: this world still runs as a host until then
         NetSceneSync.RestartLater(GameBootstrap.TownScene, () =>
         {
@@ -119,7 +128,6 @@ public static class NetSession
             ConnectTo = endpoint;
             RemotePlayers = 0;
         });
-        return true;
     }
 
     /// <summary>An IP address, IPv4 with an optional :port ("192.168.1.20" or "192.168.1.20:7979") or IPv6.</summary>

@@ -9,7 +9,8 @@ using UnityEngine.UIElements;
 /// Nobody joins in a dungeon; a player 2 who never picked a character leaves when the Hub is left. The picker is one of
 /// player 2's menu panels (PlayerMenus), so their gameplay input is ignored while it's open. Couch players join only in
 /// this machine's own game, up to NetSession.MaxPlayers with the online ones. Also shows online session notices
-/// (NetSession.Notice) at the top, in every scene.
+/// (NetSession.Notice) at the top, in every scene, and in the Hub a Join button per friend whose game can be joined
+/// (PlatformManager.JoinableFriends, Steam).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class CoopHUD : MonoBehaviour
@@ -20,8 +21,9 @@ public class CoopHUD : MonoBehaviour
 
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
-    VisualElement _pickerHolder;
+    VisualElement _pickerHolder, _friendsPanel;
     Label _joinHint, _netNotice;
+    string _shownFriends;   // The joinable friends the panel shows, to rebuild it only when they change
     CoopPicker _picker;
     bool _open;
 
@@ -78,8 +80,10 @@ public class CoopHUD : MonoBehaviour
         _pickerHolder = root.Q<VisualElement>("pickerHolder");
         _joinHint = root.Q<Label>("joinHint");
         _netNotice = root.Q<Label>("netNotice");
+        _friendsPanel = root.Q<VisualElement>("friendsPanel");
+        _shownFriends = null;
         _boundVersion = version;
-        if (_pickerHolder == null || _joinHint == null || _netNotice == null)
+        if (_pickerHolder == null || _joinHint == null || _netNotice == null || _friendsPanel == null)
         {
             Debug.LogError("CoopHUD: CoopHUD.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             _picker = null;
@@ -114,6 +118,7 @@ public class CoopHUD : MonoBehaviour
         string notice = NetSession.Notice;
         _netNotice.text = notice ?? "";
         _netNotice.EnableInClassList(HiddenClass, notice == null);
+        UpdateFriends(hub && NetSession.IsHost);
 
         if (GameInput.For(1) == null)
         {
@@ -133,6 +138,27 @@ public class CoopHUD : MonoBehaviour
         if (!_open) return;
         _picker.SetActions("Play", Player2Character == null ? "Leave" : "Close");
         _picker.Update();
+    }
+
+    // A button per friend whose game can be joined (Steam), while in this machine's own game in the Hub
+    void UpdateFriends(bool show)
+    {
+        var friends = PlatformManager.JoinableFriends;
+        string shown = "";
+        if (show)
+            foreach (var friend in friends) shown += $"{friend.Id}:{friend.Players};";
+        _friendsPanel.EnableInClassList(HiddenClass, shown.Length == 0);
+        if (shown == _shownFriends) return;
+        _shownFriends = shown;
+        _friendsPanel.Clear();
+        if (shown.Length == 0) return;
+        foreach (var friend in friends)
+        {
+            var joining = friend;
+            var button = new Button(() => PlatformManager.Join(joining)) { text = $"Join {friend.Name} ({friend.Players}/{NetSession.MaxPlayers})" };
+            button.AddToClassList("coop-friend-button");
+            _friendsPanel.Add(button);
+        }
     }
 
     void SetOpen(bool open)

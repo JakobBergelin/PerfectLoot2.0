@@ -91,37 +91,72 @@ in a fight with 46 enemies.
 ## Platform (Steam)
 
 Gameplay never calls Steam directly. `Platform.Current` (`Scripts/Platform/IPlatform.cs`) is an `IPlatform`: who the
-player is, Rich Presence, and which friends are playing. `PlatformManager` (on the GameServices prefab) picks it at
-startup and publishes this game's presence every second:
+player is, Rich Presence, which friends are playing, and how to reach their games. It is made on first use, which can be
+while the first world makes its network drivers, so a host listens on Steam from the start.
+
+Two versions:
+
+- **`LocalPlatform`**: no platform. Games join each other by IP address (the game menu's Join a game). It keeps the
+  presence it is given (for tests) and knows no friends.
+- **`SteamPlatform`**: Steamworks.NET. Persona name, Rich Presence, friends playing this game, joining them. Used when
+  Steam runs; a run started with `-nosteam`, or a Multiplayer Play Mode virtual player, uses Local.
+
+`PlatformManager` (on the GameServices prefab) publishes this game's presence every second (only changes) and keeps
+the list of friends whose games can be joined:
 
 | Key | Value |
 |---|---|
 | `pl_area` | `town`, `dungeon` or `menu` |
 | `pl_players` | Players in the game, couch players included |
+| `pl_host` | The SteamID of the game's host (this machine, or the host a client joined through Steam) |
+| `connect` | `+connect_host <SteamID>`: what Steam's Join Game and invites hand to the friend's game |
 | `status` | "In town (2/4)" (Steam shows it once the game has its own App ID) |
-| `pl_lobby` | The host's lobby, to join through (phase O6, not set yet) |
 
-Two versions:
+### Joining through Steam
 
-- **`LocalPlatform`**: no platform. Games join each other by IP address (the game menu's Join a game). It keeps the
-  presence it is given (for tests) and knows no friends. This is what runs today.
-- **`SteamPlatform`**: Steamworks.NET. Persona name, Rich Presence, friends playing this game with their presence
-  (`PlatformFriend.CanJoin`: in town and not full). It falls back to Local when Steam isn't running.
+- **Transport**: `SteamNetworkInterface` (own assembly `PerfectLoot.SteamTransport`, which allows unsafe code) carries
+  Unity Transport's packets as Steam's connectionless messages (`SteamNetworkingMessages`), relayed by Steam, so nobody
+  needs an open port. A Steam user is a custom endpoint holding their SteamID.
+- **Drivers** (`NetDriverConstructor`, set by `NetBootstrap`): a host gets UDP (while `NetSession.Listen`, i.e. editor
+  and development builds, or without Steam) plus Steam, and listens on both. A client gets Steam when it joins a SteamID,
+  UDP otherwise.
+- **No lobbies**: a game is joined by its host's SteamID, published as `pl_host`. Friends of a client join the same host.
+- **The Hub**: a "Join <name> (n/4)" button, bottom-left, for each friend whose game is in town and not full.
+- **Steam's Join Game and invites** arrive as `GameRichPresenceJoinRequested_t` with the `connect` string; the game joins
+  from town in its own game, and otherwise waits with a notice ("Go back to town...", "Pick a character...").
+- The host's join rules (4 players, town only) and everything after joining work as for any client.
 
-Setup, all in the project:
+### Setup
 
 - Steamworks.NET `2025.165.0` from git (`Packages/manifest.json`). Its editor scripts add the `STEAMWORKS_NET`
-  scripting define, which `SteamPlatform` and `PlatformManager` check; without the package the game runs on Local.
+  scripting define, which the Steam code checks; without the package the game runs on Local.
 - `steam_appid.txt` in the project folder contains `480` (Spacewar, owned by every Steam account), so the editor starts
   the Steam API as that app. A build needs it next to the exe (or our own App ID later). While playing, Steam shows the
   player as playing Spacewar.
-- `PlatformManager.UseSteam` (on GameServices) turns Steam off for a run.
 
-Tested in the editor with Steam running: the game picks the Steam platform (App 480), reads the persona name, and Steam
-holds the published presence (`pl_area=town`, `pl_players=1`, `status=In town (1/4)`). Presence stays empty until the
-scene's area is known. Not tested yet: a friend on another PC seeing it, `FriendsPlaying` with a real friend.
+### Tested on one PC (2026-11-13)
 
-Joining through Steam (lobbies, Steam Networking Sockets as a transport, the Hub's Join button, invites) is phase O6.
+- The game picks Steam (App 480), reads the persona name, and Steam holds the published presence, `pl_host` and
+  `connect` included. Presence stays empty until the scene's area is known.
+- The host has two drivers listening, UDP and Steam; Player 2 still joins over UDP.
+- The Hub's join button shows for a friend (inserted by hand). Pressing it starts over as a client with one Steam driver
+  connecting to that SteamID; an unreachable one gives up after about a minute with "Couldn't reach a game at that
+  address." and goes back to hosting.
+
+### Test with a friend (two PCs, two Steam accounts)
+
+1. Both: Steam running and logged in, each other as friends, the same build or project version. In the editor
+   `steam_appid.txt` is already there; for a build, put a `steam_appid.txt` containing `480` next to the exe. Builds keep
+   running in the background (Player Settings); in the editor keep the game window in front, or an unfocused host can
+   stall and drop the friend.
+2. Host: play into the Hub with a character. Check Steam: the friend should see you "playing Spacewar".
+3. Friend: play into their own Hub. Within a few seconds "Join <host> (1/4)" should show bottom-left. Click it.
+4. Expect "Joining <host>...", then the friend's game starts over in the host's Hub with their own character, next to
+   the host. Walk, fight, take a portal together, pick up loot (each sees their own).
+5. Also try: Steam friends list > right-click the host > Join Game (or the host invites the friend); a join while the
+   host is in a dungeon (should be turned down); the host going to the main menu (the friend gets "The host left").
+6. If the join button never shows: in the editor, right-click PlatformManager on GameServices (Play mode) >
+   "Log presence and friends playing" on both sides, and send the logs (`Logs/Editor.log`, or the build's `Player.log`).
 
 ## Adding to the game
 

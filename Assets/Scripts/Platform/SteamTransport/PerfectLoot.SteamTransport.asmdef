@@ -1,0 +1,20 @@
+{
+    "name": "PerfectLoot.SteamTransport",
+    "rootNamespace": "",
+    "references": [
+        "com.rlabrecque.steamworks.net",
+        "Unity.Networking.Transport",
+        "Unity.Collections"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": true,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "STEAMWORKS_NET"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

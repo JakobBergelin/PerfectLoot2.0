@@ -166,3 +166,31 @@
     margin: 0;
     -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
 }
+
+/* The Hub's list of friends whose games can be joined (Steam), bottom-left */
+.coop-friends {
+    position: absolute;
+    left: 24px;
+    bottom: 64px;
+    flex-direction: column;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.coop-friend-button {
+    height: 36px;
+    min-width: 220px;
+    margin: 6px 0 0 0;
+    padding: 0 14px;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    color: #F2F2F2;
+    background-color: rgba(10, 11, 14, 0.85);
+    border-width: 1px;
+    border-color: #E0A020;
+    border-radius: 4px;
+}
+
+.coop-friend-button:hover {
+    background-color: rgba(40, 44, 54, 0.95);
+}

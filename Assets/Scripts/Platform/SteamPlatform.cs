@@ -1,14 +1,18 @@
 // Needs Steamworks.NET (com.rlabrecque.steamworks.net), whose editor scripts add the STEAMWORKS_NET scripting define;
 // without it the game runs on LocalPlatform. See Docs/MultiplayerArchitecture.md, Platform.
 #if STEAMWORKS_NET
+using System;
 using System.Collections.Generic;
 using Steamworks;
+using Unity.Networking.Transport;
 using UnityEngine;
 
 /// <summary>
-/// Steam, through Steamworks.NET: the persona name, Rich Presence and the friends playing this game. Made by
-/// PlatformManager only when Steam runs and the API starts (TryCreate); otherwise the game uses LocalPlatform.
-/// Steam's networking, lobbies and join requests come in phase O6.
+/// Steam, through Steamworks.NET: the persona name, Rich Presence, the friends playing this game, and joining them.
+/// A game is joined by its host's SteamID (JoinId): the host listens on Steam (SteamNetworkInterface, added by
+/// NetDriverConstructor), and a client connects to the host's SteamID through Steam's relays. Steam's Join Game in the
+/// friends list and invites hand over the connect string ("+connect_host &lt;SteamID&gt;") as JoinRequested.
+/// Made by Platform only when Steam runs and the API starts (TryCreate); otherwise the game uses LocalPlatform.
 /// </summary>
 public class SteamPlatform : IPlatform
 {
@@ -17,8 +21,20 @@ public class SteamPlatform : IPlatform
 
     readonly List<PlatformFriend> _friends = new List<PlatformFriend>();
     float _nextPresenceRequest;
+    Callback<GameRichPresenceJoinRequested_t> _joinRequested;
 
-    SteamPlatform() { }
+    public event Action<string> JoinRequested;
+
+    SteamPlatform()
+    {
+        _joinRequested = Callback<GameRichPresenceJoinRequested_t>.Create(request =>
+        {
+            string connect = request.m_rgchConnect ?? "";
+            int start = connect.IndexOf(PresenceKeys.ConnectPrefix, StringComparison.Ordinal);
+            if (start < 0) return;
+            JoinRequested?.Invoke(connect.Substring(start + PresenceKeys.ConnectPrefix.Length).Trim());
+        });
+    }
 
     /// <summary>A started Steam API, or null when Steam isn't running, the app isn't owned or the library is missing.</summary>
     public static SteamPlatform TryCreate()
@@ -36,7 +52,7 @@ public class SteamPlatform : IPlatform
                 return null;
             }
         }
-        catch (System.DllNotFoundException e)
+        catch (DllNotFoundException e)
         {
             Debug.LogWarning($"SteamPlatform: steam_api64.dll couldn't be loaded ({e.Message}), so the game runs without Steam.");
             return null;
@@ -46,6 +62,19 @@ public class SteamPlatform : IPlatform
 
     public string Name => "Steam";
     public string PlayerName => SteamFriends.GetPersonaName();
+    public bool HostsOnline => true;
+
+    // The host is this machine, or the one a client joined through Steam
+    public string JoinId => NetSession.IsHost ? SteamUser.GetSteamID().m_SteamID.ToString()
+        : SteamNetworkInterface.TryGetSteamId(NetSession.ConnectTo, out var host) ? host.ToString() : null;
+
+    public bool TryGetJoinEndpoint(string joinId, out NetworkEndpoint endpoint)
+    {
+        endpoint = default;
+        if (!ulong.TryParse(joinId, out var steamId) || steamId == 0) return false;
+        endpoint = SteamNetworkInterface.Endpoint(steamId);
+        return true;
+    }
 
     public void SetPresence(string key, string value) => SteamFriends.SetRichPresence(key, value ?? "");
     public void ClearPresence() => SteamFriends.ClearRichPresence();
@@ -70,7 +99,7 @@ public class SteamPlatform : IPlatform
                 Name = SteamFriends.GetFriendPersonaName(id),
                 Area = SteamFriends.GetFriendRichPresence(id, PresenceKeys.Area),
                 Players = players,
-                Lobby = SteamFriends.GetFriendRichPresence(id, PresenceKeys.Lobby),
+                Host = SteamFriends.GetFriendRichPresence(id, PresenceKeys.Host),
             });
         }
         return _friends;
@@ -80,6 +109,8 @@ public class SteamPlatform : IPlatform
 
     public void Shutdown()
     {
+        _joinRequested?.Dispose();
+        _joinRequested = null;
         SteamFriends.ClearRichPresence();
         SteamAPI.Shutdown();
     }

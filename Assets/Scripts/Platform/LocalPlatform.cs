@@ -12,6 +12,17 @@ public class LocalPlatform : IPlatform
 
     public string Name => "Local";
     public string PlayerName => null;
+    public bool HostsOnline => false;
+    public string JoinId => null;
+
+    public bool TryGetJoinEndpoint(string joinId, out Unity.Networking.Transport.NetworkEndpoint endpoint)
+    {
+        endpoint = default;
+        return false;
+    }
+
+    // Nothing asks to join without a platform
+    public event System.Action<string> JoinRequested { add { } remove { } }
 
     /// <summary>What SetPresence was given (for tests and debugging).</summary>
     public IReadOnlyDictionary<string, string> Presence => _presence;

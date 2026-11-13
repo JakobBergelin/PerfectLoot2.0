@@ -4,6 +4,8 @@
     <ui:VisualElement name="coopRoot" class="coop-hub-root" picking-mode="Ignore">
         <ui:VisualElement name="pickerHolder" class="coop-hub-picker coop--hidden" />
         <ui:Label name="joinHint" class="coop-join-hint coop--hidden" picking-mode="Ignore" />
+        <!-- Friends whose games can be joined (PlatformManager.JoinableFriends), bottom-left in the Hub -->
+        <ui:VisualElement name="friendsPanel" class="coop-friends coop--hidden" />
         <!-- Online session notices (NetSession.Notice) -->
         <ui:Label name="netNotice" class="coop-net-notice coop--hidden" picking-mode="Ignore" />
     </ui:VisualElement>
