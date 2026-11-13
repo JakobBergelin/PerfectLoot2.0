@@ -53,10 +53,7 @@ public partial struct RigidAnimationSystem : ISystem
                 animator.LastPosition = position;
                 animator.LastAttackCount = attackCount;
                 animator.LastFlashTimer = flashTimer;
-                animator.LastReleases = actions.Releases;
-                animator.LastShots = actions.Shots;
-                animator.LastSweeps = actions.Sweeps;
-                animator.LastPunches = actions.Punches;
+                animator.LastCasts = actions.Casts;
             }
 
             // Units: how fast UnitMoverSystem actually moved them; anything else from its position change
@@ -69,14 +66,10 @@ public partial struct RigidAnimationSystem : ISystem
             animator.LastAttackCount = attackCount;
             animator.LastFlashTimer = flashTimer;
 
-            bool released = actions.Releases != animator.LastReleases;
-            bool shot = actions.Shots != animator.LastShots;
-            bool swept = actions.Sweeps != animator.LastSweeps;
-            bool punched = actions.Punches != animator.LastPunches;
-            animator.LastReleases = actions.Releases;
-            animator.LastShots = actions.Shots;
-            animator.LastSweeps = actions.Sweeps;
-            animator.LastPunches = actions.Punches;
+            // A skill used since last frame: its clip (SkillClips), Fists of Thunder alternating hands
+            var cast = actions.Casts != animator.LastCasts ? SkillClips.For((SkillType)actions.CastSkill) : RigidClip.Idle;
+            if (cast == RigidClip.PunchL && actions.Casts % 2 == 0) cast = RigidClip.PunchR;
+            animator.LastCasts = actions.Casts;
             bool dashing = actions.Has(NetPlayerActions.Dashing);
             bool spinning = actions.Has(NetPlayerActions.Spinning);
             bool winding = actions.Has(NetPlayerActions.Winding);
@@ -95,24 +88,9 @@ public partial struct RigidAnimationSystem : ISystem
             {
                 wanted = RigidClip.Spin;
             }
-            else if (punched && animation.Has(RigidClip.PunchL))
+            else if (cast != RigidClip.Idle && animation.Has(cast))
             {
-                wanted = actions.Punches % 2 == 1 ? RigidClip.PunchR : RigidClip.PunchL;
-                restart = true;
-            }
-            else if (released && animation.Has(RigidClip.Release))
-            {
-                wanted = RigidClip.Release;
-                restart = true;
-            }
-            else if (shot && animation.Has(RigidClip.Shoot))
-            {
-                wanted = RigidClip.Shoot;
-                restart = true;
-            }
-            else if (swept && animation.Has(RigidClip.Sweep))
-            {
-                wanted = RigidClip.Sweep;
+                wanted = cast;
                 restart = true;
             }
             else if (hit && animation.Has(RigidClip.Hit))

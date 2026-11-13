@@ -1,5 +1,11 @@
 using UnityEngine;
 
+/// <summary>An effect that spans two points and is moved by its ends (VfxManager.SetEnds), every frame it's shown.</summary>
+public interface IVfxEnds
+{
+    void SetEnds(Vector3 from, Vector3 to);
+}
+
 /// <summary>
 /// Root of a pooled effect prefab. On release its particles stop emitting and the HideOnRelease renderers (a fireball's
 /// core, a tornado's funnel) disappear at once; after Linger seconds, when the last particles have faded, it goes back

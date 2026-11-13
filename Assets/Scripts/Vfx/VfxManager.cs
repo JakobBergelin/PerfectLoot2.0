@@ -104,6 +104,13 @@ public class VfxManager : MonoBehaviour
             arc.SetEnds(from, to);
     }
 
+    /// <summary>Points an effect that spans two points (an IVfxEnds on its root, such as a hook's chain) from one to the other.</summary>
+    public void SetEnds(int handle, Vector3 from, Vector3 to)
+    {
+        if (_active.TryGetValue(handle, out var active) && active.Instance.TryGetComponent<IVfxEnds>(out var ends))
+            ends.SetEnds(from, to);
+    }
+
     /// <summary>
     /// Colors an effect's particles, such as a loot beam in its item's rarity color. Call it right after Spawn or Burst,
     /// before the first particles come out. Stays on the pooled instance, so only use it for types that are always tinted.
