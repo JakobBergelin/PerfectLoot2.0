@@ -61,6 +61,21 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
   build the same level from the seed, and send a new `JoinRequest`. `NetJoinSystem` resets the host's record of their
   loaded ghost prefabs (`NetworkSnapshotAck.NumLoadedPrefabs`), so they get the new scene's prefab list before any ghosts.
 
+## Portals and dungeons
+
+- **Portals need everyone**, couch and online alike: every living player has to choose the portal they stand at. A
+  choice is kept on the player's ghost (`NetPlayerActions.Portal`), so every machine's card shows "Player 1 ready ·
+  waiting for Player 3" (players numbered the same everywhere: by machine, then couch player). The host sets choices for
+  its own players and for a client's when its `PortalChoiceRpc` arrives (`NetPortal`), clears a choice when that player
+  walks away, and enters once everyone has chosen the same portal (`PortalHUD`), taking every machine along.
+- **The dungeon runs on the host** (`DungeonManager`), counting every player: any living player at the exit finishes a
+  Reach Exit step, any player's death fails a Survive step (`NetPlayerSpawnSystem.RemotePlayerDied` for remote ones),
+  and dungeon XP goes to every player. The boss, waves and return portal go around the host's first living player, or a
+  remote one while the host's are all dead.
+- **The return portal** only exists on the host; it tells the clients where (`ReturnPortalRpc`) and each places its
+  own copy from the level's prefab (`NetPortal.PlaceReturnPortal`). Completing a dungeon is recorded on every machine's
+  characters (`DungeonCompletedRpc`).
+
 ## Players
 
 | Concern | How |

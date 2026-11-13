@@ -82,12 +82,15 @@ public class DungeonManager : MonoBehaviour
     {
         if (Instance != null && Instance != this) { Destroy(gameObject); return; }
         Instance = this;
+        // This machine's players, and the ones other machines play here
         CharacterManager.PlayerDied += OnPlayerDied;
+        NetPlayerSpawnSystem.RemotePlayerDied += OnPlayerDied;
     }
 
     void OnDestroy()
     {
         CharacterManager.PlayerDied -= OnPlayerDied;
+        NetPlayerSpawnSystem.RemotePlayerDied -= OnPlayerDied;
         if (Instance == this) Instance = null;
     }
 
@@ -352,14 +355,16 @@ public class DungeonManager : MonoBehaviour
 
     // ---------- Exit ----------
 
+    // Any living player, this machine's or another's, at an exit
     bool IsPlayerAtExit(EntityManager entityManager)
     {
-        if (!TryGetPlayer(entityManager, out var player)) return false;
         using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<DungeonExit>(), ComponentType.ReadOnly<LocalToWorld>());
         using var exits = query.ToComponentDataArray<DungeonExit>(Allocator.Temp);
         using var transforms = query.ToComponentDataArray<LocalToWorld>(Allocator.Temp);
-        for (int i = 0; i < exits.Length; i++)
-            if (math.distance(player.xz, transforms[i].Position.xz) <= exits[i].Range) return true;
+        using var players = LivingPlayers(entityManager);
+        foreach (var player in players)
+            for (int i = 0; i < exits.Length; i++)
+                if (math.distance(player.xz, transforms[i].Position.xz) <= exits[i].Range) return true;
         return false;
     }
 
@@ -377,6 +382,13 @@ public class DungeonManager : MonoBehaviour
         if (account != null && !string.IsNullOrEmpty(_dungeon.Id))
             for (int i = 0; i < GameInput.PlayerCount; i++)
                 if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), _dungeon.Id);
+        // And for the other machines' characters (NetDungeonReceiveSystem)
+        if (!string.IsNullOrEmpty(_dungeon.Id))
+        {
+            FixedString64Bytes id = default;
+            id.CopyFromTruncated(_dungeon.Id);
+            NetPortal.Send(entityManager, new DungeonCompletedRpc { DungeonId = id });
+        }
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete.", this);
     }
 
@@ -413,43 +425,18 @@ public class DungeonManager : MonoBehaviour
         float3 toPlayer = new float3(player.x - position.x, 0f, player.z - position.z);
         var turn = quaternion.LookRotationSafe(toPlayer, math.up());
 
-        var portal = entityManager.Instantiate(_returnPortalPrefab);
-        if (entityManager.HasComponent<LocalTransform>(portal))
-        {
-            var transform = entityManager.GetComponentData<LocalTransform>(portal);
-            transform.Position = position;
-            transform.Rotation = turn;
-            entityManager.SetComponentData(portal, transform);
-        }
-        // Linked parts without a parent are placed themselves (like LevelGenerationSystem's spawns)
-        if (entityManager.HasBuffer<LinkedEntityGroup>(portal))
-        {
-            using var linked = entityManager.GetBuffer<LinkedEntityGroup>(portal).Reinterpret<Entity>().ToNativeArray(Allocator.Temp);
-            foreach (var entity in linked)
-            {
-                if (entity == portal || entityManager.HasComponent<Parent>(entity) || !entityManager.HasComponent<LocalTransform>(entity)) continue;
-                var transform = entityManager.GetComponentData<LocalTransform>(entity);
-                transform.Position = position + math.mul(turn, transform.Position);
-                transform.Rotation = math.mul(turn, transform.Rotation);
-                entityManager.SetComponentData(entity, transform);
-            }
-        }
-
-        if (entityManager.HasComponent<Portal>(portal))
-        {
-            var data = entityManager.GetComponentData<Portal>(portal);
-            data.Scene = default;
-            data.Scene.CopyFromTruncated(_returnScene);
-            data.DisplayName = default;
-            data.DisplayName.CopyFromTruncated(_returnScene == GameBootstrap.TownScene ? "Town" : Regex.Replace(_returnScene, "(\\B[A-Z])", " $1"));
-            entityManager.SetComponentData(portal, data);
-        }
-        else Debug.LogWarning($"DungeonManager: {_dungeon.name}'s Return Portal has no PortalAuthoring, so it leads nowhere.", this);
+        FixedString64Bytes scene = default, displayName = default;
+        scene.CopyFromTruncated(_returnScene);
+        displayName.CopyFromTruncated(_returnScene == GameBootstrap.TownScene ? "Town" : Regex.Replace(_returnScene, "(\\B[A-Z])", " $1"));
+        NetPortal.PlaceReturnPortal(entityManager, _returnPortalPrefab, position, turn, scene, displayName);
+        // The other machines place their own where this one is
+        NetPortal.Send(entityManager, new ReturnPortalRpc { Position = position, Rotation = turn, Scene = scene, DisplayName = displayName });
     }
 
     // ---------- Helpers ----------
 
-    // Player 1, or player 2 while player 1 is dead
+    // Where the boss, waves and return portal go around: player 1, or player 2 while player 1 is dead, or another
+    // machine's player while this machine's are all dead
     bool TryGetPlayer(EntityManager entityManager, out float3 position)
     {
         position = default;
@@ -461,7 +448,22 @@ public class DungeonManager : MonoBehaviour
             position = entityManager.GetComponentData<LocalTransform>(player).Position;
             return true;
         }
-        return false;
+        using var players = LivingPlayers(entityManager);
+        if (players.Length == 0) return false;
+        position = players[0];
+        return true;
+    }
+
+    // Where every living player is, this machine's and the others' (on the host every player is a Player)
+    static NativeList<float3> LivingPlayers(EntityManager entityManager)
+    {
+        var positions = new NativeList<float3>(Allocator.Temp);
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Player>(), ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<LocalTransform>());
+        using var healths = query.ToComponentDataArray<Health>(Allocator.Temp);
+        using var transforms = query.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+        for (int i = 0; i < healths.Length; i++)
+            if (healths[i].CurrentValue > 0f) positions.Add(transforms[i].Position);
+        return positions;
     }
 
     // A point on the ground distance meters from the player: first in the start direction (radians around Y from +X;

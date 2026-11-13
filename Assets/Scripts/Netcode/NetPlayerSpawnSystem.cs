@@ -18,6 +18,9 @@ public partial class NetPlayerSpawnSystem : SystemBase
 {
     const float RespawnDelay = 3f;
 
+    /// <summary>A remote client's player died (went missing while its client is connected), like CharacterManager.PlayerDied.</summary>
+    public static event System.Action RemotePlayerDied;
+
     /// <summary>On a remote client's connection: seconds until its missing players may be made.</summary>
     struct RespawnTimer : IComponentData
     {
@@ -57,6 +60,7 @@ public partial class NetPlayerSpawnSystem : SystemBase
             {
                 timer.Remaining = RespawnDelay;
                 timer.Waiting = true;
+                RemotePlayerDied?.Invoke();
             }
             timer.Remaining = math.max(0f, timer.Remaining - SystemAPI.Time.DeltaTime);
             if (missing && timer.Remaining <= 0f)

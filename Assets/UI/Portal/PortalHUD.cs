@@ -1,6 +1,7 @@
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Transforms;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -9,11 +10,12 @@ using UnityEngine.UIElements;
 /// <summary>
 /// While a player stands within a Portal's range, shows the portal's name and an Enter button pinned above it on screen
 /// (the nearest portal in range, player 1's first). Enter, or a player's Interact, loads the portal's scene with the
-/// current characters (GameSceneLoader). In co-op every living player has to choose it: each one's Interact (or the
-/// mouse's player's click) makes them ready for the portal they stand at, until they walk away, and the card says who
-/// is ready and who it waits for. Going into a dungeon it also warns about equipped skills whose requirements aren't
-/// met (they can't be used there). Hidden while player 1 has a menu panel open. Interact goes to the portal before
-/// any loot in reach (AtPortal).
+/// current characters (GameSceneLoader). With several players, couch or online, every living player has to choose it:
+/// each one's Interact (or the mouse's player's click) makes them ready for the portal they stand at, until they walk
+/// away (NetPortal keeps the choice on their player, so every machine sees it), and the card says who is ready and who
+/// it waits for. The host enters once everyone is ready, and takes the other machines along. Going into a dungeon it
+/// also warns about equipped skills whose requirements aren't met (they can't be used there). Hidden while player 1 has
+/// a menu panel open. Interact goes to the portal before any loot in reach (AtPortal).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
@@ -23,9 +25,8 @@ public class PortalHUD : MonoBehaviour
     [Tooltip("Height above the portal's origin where the card's bottom edge sits, in meters")]
     public float CardHeight = 3f;
 
-    // Per player: the portal they stand at (its scene; empty for none), and the one they chose
+    // Per local player: the portal they stand at (its scene; empty for none)
     static readonly FixedString64Bytes[] _at = new FixedString64Bytes[GameInput.MaxPlayers];
-    readonly FixedString64Bytes[] _ready = new FixedString64Bytes[GameInput.MaxPlayers];
     readonly float3[] _portalPositions = new float3[GameInput.MaxPlayers];
     readonly FixedString64Bytes[] _portalNames = new FixedString64Bytes[GameInput.MaxPlayers];
 
@@ -62,11 +63,7 @@ public class PortalHUD : MonoBehaviour
     }
 
     // The HUD is kept between scenes (GameBootstrap's rig): the portal entered is behind us
-    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        _entering = false;
-        for (int i = 0; i < _ready.Length; i++) _ready[i] = default;
-    }
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode) => _entering = false;
 
     void OnUIReload(PanelRenderer panelRenderer, VisualElement root, int version)
     {
@@ -109,6 +106,7 @@ public class PortalHUD : MonoBehaviour
         if (_card == null || _card.panel == null) return;
         var camera = Camera.main;
         FindPortals();
+        if (NetSession.IsHost && !_entering) EnterWhenEveryoneIsReady();
 
         // Each player's Interact chooses the portal they stand at
         for (int i = 0; i < GameInput.PlayerCount; i++)
@@ -150,7 +148,7 @@ public class PortalHUD : MonoBehaviour
         }
     }
 
-    // Where each player stands (the nearest portal in range, along the ground); a player who walked away isn't ready
+    // Where each local player stands (the nearest portal in range, along the ground)
     void FindPortals()
     {
         for (int i = 0; i < _at.Length; i++)
@@ -162,32 +160,64 @@ public class PortalHUD : MonoBehaviour
             var entityManager = world.EntityManager;
             var player = characters.Player;
             if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<LocalToWorld>(player)) continue;
-            if (!TryFindPortal(entityManager, entityManager.GetComponentData<LocalToWorld>(player).Position, out var portal, out var position)) continue;
+            if (!NetPortal.TryFindPortal(entityManager, entityManager.GetComponentData<LocalToWorld>(player).Position, out var portal, out var position)) continue;
             _at[i] = portal.Scene;
             _portalNames[i] = portal.DisplayName;
             _portalPositions[i] = position;
         }
-        for (int i = 0; i < _ready.Length; i++)
-            if (_ready[i] != _at[i]) _ready[i] = default;
     }
 
-    static bool TryFindPortal(EntityManager entityManager, float3 player, out Portal nearest, out float3 nearestPosition)
+    // Every player in the game, this machine's and the others', in the same order everywhere (by machine, then couch
+    // player), named Player 1, 2, ... in that order: their portal choice, and whether they're alive. Mirror Image copies,
+    // made from the player prefab, have no owner and don't count.
+    static NativeList<(int Order, Entity Player, FixedString64Bytes Portal, bool Alive)> Players(EntityManager entityManager)
     {
-        nearest = default;
-        nearestPosition = default;
-        using var portalQuery = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Portal>(), ComponentType.ReadOnly<LocalToWorld>());
-        using var portals = portalQuery.ToComponentDataArray<Portal>(Allocator.Temp);
-        using var transforms = portalQuery.ToComponentDataArray<LocalToWorld>(Allocator.Temp);
-        float nearestDistance = float.MaxValue;
-        for (int i = 0; i < portals.Length; i++)
+        var players = new NativeList<(int, Entity, FixedString64Bytes, bool)>(Allocator.Temp);
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetPlayer>(), ComponentType.ReadOnly<GhostOwner>(),
+            ComponentType.ReadOnly<NetPlayerActions>(), ComponentType.ReadOnly<Health>(), ComponentType.ReadOnly<LocalToWorld>());
+        using var entities = query.ToEntityArray(Allocator.Temp);
+        foreach (var entity in entities)
         {
-            float distance = math.distance(player.xz, transforms[i].Position.xz);
-            if (distance > portals[i].Range || distance >= nearestDistance) continue;
-            nearestDistance = distance;
-            nearest = portals[i];
-            nearestPosition = transforms[i].Position;
+            int owner = entityManager.GetComponentData<GhostOwner>(entity).NetworkId;
+            if (owner == 0) continue;
+            int order = owner * GameInput.MaxPlayers + entityManager.GetComponentData<NetPlayer>(entity).LocalIndex;
+            players.Add((order, entity, entityManager.GetComponentData<NetPlayerActions>(entity).Portal, entityManager.GetComponentData<Health>(entity).CurrentValue > 0f));
         }
-        return nearestDistance < float.MaxValue;
+        players.Sort(new ByOrder());
+        return players;
+    }
+
+    struct ByOrder : System.Collections.Generic.IComparer<(int Order, Entity Player, FixedString64Bytes Portal, bool Alive)>
+    {
+        public int Compare((int Order, Entity Player, FixedString64Bytes Portal, bool Alive) a, (int Order, Entity Player, FixedString64Bytes Portal, bool Alive) b) => a.Order.CompareTo(b.Order);
+    }
+
+    // The host: a player who walked away from the portal they chose isn't ready anymore; once every living player has
+    // chosen the same portal, it opens for everyone
+    void EnterWhenEveryoneIsReady()
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
+        var entityManager = world.EntityManager;
+        using var players = Players(entityManager);
+        FixedString64Bytes scene = default;
+        bool everyone = true;
+        foreach (var (_, player, chosen, alive) in players)
+        {
+            var portal = chosen;
+            var position = entityManager.GetComponentData<LocalToWorld>(player).Position;
+            if (!portal.IsEmpty && (!NetPortal.TryFindPortal(entityManager, position, out var at, out _) || at.Scene != portal))
+            {
+                NetPortal.SetChoice(entityManager, player, default);
+                portal = default;
+            }
+            if (!alive) continue;
+            if (portal.IsEmpty || (!scene.IsEmpty && portal != scene)) everyone = false;
+            else scene = portal;
+        }
+        if (!everyone || scene.IsEmpty) return;
+        _entering = GameSceneLoader.Load(scene.ToString());
+        if (_entering) Hide();
     }
 
     // The players in the level: the ones who have to choose a portal
@@ -197,19 +227,23 @@ public class PortalHUD : MonoBehaviour
         return GameInput.For(playerIndex) != null && characters != null && characters.Player != Entity.Null;
     }
 
-    // "Player 1 ready · waiting for Player 2" in co-op, then the requirement warnings
+    // "Player 1 ready · waiting for Player 2" with several players (Players: every machine's, alive), then the
+    // requirement warnings
     void ShowStatus()
     {
         string text = "";
-        if (GameInput.PlayerCount > 1)
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null && world.IsCreated)
         {
-            for (int i = 0; i < GameInput.PlayerCount; i++)
-            {
-                if (!InLevel(i)) continue;
-                bool ready = !_ready[i].IsEmpty && _ready[i] == _scene;
-                if (text.Length > 0) text += " · ";
-                text += ready ? $"Player {i + 1} ready" : $"waiting for Player {i + 1}";
-            }
+            using var players = Players(world.EntityManager);
+            if (players.Length > 1)
+                for (int i = 0; i < players.Length; i++)
+                {
+                    if (!players[i].Alive) continue;
+                    bool ready = players[i].Portal == _scene;
+                    if (text.Length > 0) text += " · ";
+                    text += ready ? $"Player {i + 1} ready" : $"waiting for Player {i + 1}";
+                }
         }
         string warnings = RequirementWarnings();
         if (warnings.Length > 0) text += (text.Length > 0 ? "\n" : "") + warnings;
@@ -261,15 +295,11 @@ public class PortalHUD : MonoBehaviour
         MenuPanels.SetBlocking(this, hovered);
     }
 
-    // The player chooses the portal they stand at; once everyone in the level has chosen it, it opens
+    // The player chooses the portal they stand at; once everyone in the game has chosen it, the host opens it
+    // (EnterWhenEveryoneIsReady)
     void Choose(int playerIndex)
     {
         if (_entering || !AtPortal(playerIndex)) return;
-        _ready[playerIndex] = _at[playerIndex];
-        var scene = _ready[playerIndex];
-        for (int i = 0; i < GameInput.PlayerCount; i++)
-            if (InLevel(i) && _ready[i] != scene) return;
-        _entering = GameSceneLoader.Load(scene.ToString());
-        if (_entering) Hide();
+        NetPortal.Choose(playerIndex, _at[playerIndex]);
     }
 }

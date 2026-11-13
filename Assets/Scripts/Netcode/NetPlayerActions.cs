@@ -1,4 +1,5 @@
 using Unity.Burst;
+using Unity.Collections;
 using Unity.Entities;
 using Unity.NetCode;
 
@@ -6,6 +7,7 @@ using Unity.NetCode;
 /// On player ghosts (and Mirror Image copies, made from the same prefab): what the player is doing, for its animation and
 /// effects on every machine (RigidAnimationSystem, VfxSystem). The host fills it from the player's skills and passives,
 /// which only it has. The counters count up as a fireball, barrage bolt, tornado or Fists of Thunder punch goes out.
+/// Portal is the one field set elsewhere (NetPortal), and kept here: the portal the player chose.
 /// </summary>
 public struct NetPlayerActions : IComponentData
 {
@@ -18,6 +20,8 @@ public struct NetPlayerActions : IComponentData
     [GhostField] public byte Punches;
     /// <summary>The enemy its Quarry passive marks, or Entity.Null.</summary>
     [GhostField] public Entity QuarryTarget;
+    /// <summary>The portal (its scene) the player chose and stands at, or empty (NetPortal; PortalHUD shows it).</summary>
+    [GhostField] public FixedString64Bytes Portal;
 
     public bool Has(byte state) => (States & state) != 0;
 }
