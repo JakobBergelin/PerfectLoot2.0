@@ -66,6 +66,7 @@ public partial class UpheavalSystem : SystemBase
                 Delay = u.QuakeDelay,
             });
             commandBuffer.AddComponent(quake, new Source { Entity = entity });
+            commandBuffer.AddComponent(quake, new QuakeAttack());
 
             recovery.ValueRW.Remaining += u.AttackSpeed;
             SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger { Value = -cost });
@@ -73,6 +74,9 @@ public partial class UpheavalSystem : SystemBase
         }
     }
 }
+
+/// <summary>Upheaval's quake, told apart from its slam (both are Upheaval hits) for their looks (VfxSystem).</summary>
+public struct QuakeAttack : IComponentData { }
 
 /// <summary>
 /// Counts delayed attacks down; one whose Delay has run out becomes a one-frame attack where it is (its source's stats

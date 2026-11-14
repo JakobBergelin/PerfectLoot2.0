@@ -24,7 +24,6 @@ namespace ActiveSkills
         public float Scale = 1.3f;
         [Tooltip("Heavier units are pushed less by hits")]
         public float Mass = 5f;
-        public Color Tint = new Color(0.55f, 0.55f, 0.6f);
         [Tooltip("Its own stats: Health, Armor and HealthRegeneration. MovementSpeed is a bonus, as for the player.")]
         public StatBlock Stats = new StatBlock { Health = 50f, HealthRegeneration = 1f };
         [Tooltip("Enemies choosing a target treat it as this many meters closer")]
@@ -124,7 +123,7 @@ namespace ActiveSkills
             CompanionEntitySetup.AddTargetable(entityManager, prefab, owner, Threat);
             UnitEntitySetup.AddPassives(entityManager, prefab, Passives);
             UnitEntitySetup.AddOrSet(entityManager, prefab, new BodyMass { InverseMass = 1f / Mathf.Max(0.01f, Mass) });
-            EnemyEntitySetup.ApplyTint(entityManager, prefab, Tint);
+            // No tint: the body's model has its own colours (CompanionModelBuilder)
         }
     }
 }

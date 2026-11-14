@@ -60,6 +60,7 @@ public static class EquipmentSetup
             Name = "PL_Base_Visuals",
             Sockets = Sockets,
         });
+        PlayerSkillClips.Write();   // The skill clips made in code, which the rebuild just dropped with the rig's clips
         var visuals = BuildItemVisuals(materials, items);
         MapUniques(items);
         AssetDatabase.SaveAssets();

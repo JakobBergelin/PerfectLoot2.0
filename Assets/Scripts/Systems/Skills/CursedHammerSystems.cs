@@ -176,25 +176,3 @@ public partial struct CursedHammerFlightSystem : ISystem
         commandBuffer.AddComponent(burst, new DestroyWithChildren());
     }
 }
-
-/// <summary>Placeholder art: each flying hammer as lines, a handle and a head, tumbling with it.</summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-[BurstCompile]
-partial struct CursedHammerUISystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var transform in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<CursedHammerProjectile>())
-        {
-            var t = transform.ValueRO;
-            var up = math.mul(t.Rotation, math.up());
-            var forward = math.mul(t.Rotation, new float3(0f, 0f, 1f));
-            var bottom = t.Position - up * 0.45f;
-            var top = t.Position + up * 0.45f;
-            Debug.DrawLine(bottom, top, Color.mediumPurple);
-            Debug.DrawLine(top - forward * 0.3f, top + forward * 0.3f, Color.cyan);
-            Debug.DrawLine(top - forward * 0.3f - up * 0.15f, top + forward * 0.3f - up * 0.15f, Color.cyan);
-        }
-    }
-}

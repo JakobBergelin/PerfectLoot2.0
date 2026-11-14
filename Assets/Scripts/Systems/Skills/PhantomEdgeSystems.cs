@@ -2,7 +2,6 @@ using Unity.Burst;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
-using Unity.Rendering;
 using Unity.Transforms;
 
 /// <summary>
@@ -185,53 +184,5 @@ public partial struct PhantomEdgeFlurrySystem : ISystem
             f.NextStrike += f.StrikeInterval;
             SkillUtil.MarkUsed(skills, SkillType.PhantomEdge, usedAs: SkillTags.Melee);
         }
-    }
-}
-
-/// <summary>
-/// Hides a unit during its Phantom Edge flurry: every render part that's showing gets DisableRendering (and HiddenByFlurry,
-/// so only those come back) when the flurry starts, and shows again when it ends. Structural changes, so on the main thread.
-/// </summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-public partial class PhantomEdgeVisibilitySystem : SystemBase
-{
-    protected override void OnCreate() => RequireForUpdate<PhantomEdgeFlurry>();
-
-    readonly System.Collections.Generic.List<Entity> _parts = new System.Collections.Generic.List<Entity>();
-
-    protected override void OnUpdate()
-    {
-        var commandBuffer = new EntityCommandBuffer(Allocator.Temp);
-        foreach (var (flurry, entity) in SystemAPI.Query<RefRO<PhantomEdgeFlurry>>().WithEntityAccess())
-        {
-            // Every part under it, including ones attached after it was made (equipment), which its LinkedEntityGroup misses
-            _parts.Clear();
-            Collect(entity);
-            foreach (var part in _parts)
-            {
-                if (!EntityManager.HasComponent<MaterialMeshInfo>(part)) continue;
-                bool hiddenByUs = EntityManager.HasComponent<HiddenByFlurry>(part);
-                if (flurry.ValueRO.Active && !hiddenByUs && !EntityManager.HasComponent<DisableRendering>(part))
-                {
-                    commandBuffer.AddComponent<DisableRendering>(part);
-                    commandBuffer.AddComponent<HiddenByFlurry>(part);
-                }
-                else if (!flurry.ValueRO.Active && hiddenByUs)
-                {
-                    commandBuffer.RemoveComponent<DisableRendering>(part);
-                    commandBuffer.RemoveComponent<HiddenByFlurry>(part);
-                }
-            }
-        }
-        commandBuffer.Playback(EntityManager);
-        commandBuffer.Dispose();
-    }
-
-    void Collect(Entity entity)
-    {
-        _parts.Add(entity);
-        if (!EntityManager.HasBuffer<Child>(entity)) return;
-        using var children = EntityManager.GetBuffer<Child>(entity).ToNativeArray(Allocator.Temp);
-        foreach (var child in children) Collect(child.Value);
     }
 }

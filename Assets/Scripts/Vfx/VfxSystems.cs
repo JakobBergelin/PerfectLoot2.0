@@ -13,6 +13,10 @@ public struct VfxBinding : ICleanupComponentData
     public float3 Position;
     public quaternion Rotation;
     public Entity Proxy;        // On the host: the NetVfx stand-in that shows it on the other machines, or Entity.Null
+    public float Scale;         // Above 0: the effect's size, sideways or (Uniform) every way; its impact gets the same
+    public bool Uniform;        // Sized every way, each frame, to its entity's size (a growing flame, a wall)
+    public bool Oriented;       // Turned like its entity (a wall) instead of facing where it moves
+    public bool Hostile;        // The host: a projectile aimed at players, to see it turned or blocked
 }
 
 /// <summary>Last frame's hit flash timer and whether the death effect has played, for units' hit and death effects.</summary>
@@ -25,30 +29,71 @@ public struct VfxHitWatch : IComponentData
 /// <summary>A split projectile (Slingshot) whose spark has played.</summary>
 public struct VfxSplitSeen : IComponentData { }
 
+/// <summary>An attack whose strike look has played (VfxSystem).</summary>
+public struct VfxAttackSeen : IComponentData { }
+
+/// <summary>A falling meteor whose rock has been sent down (VfxSystem).</summary>
+public struct VfxMeteorRock : IComponentData { }
+
+/// <summary>A companion whose arrival burst has played (VfxSystem).</summary>
+public struct VfxArrivalSeen : IComponentData { }
+
 /// <summary>
-/// Gives skill entities their look through VfxManager without the skill systems knowing: fireballs, barrage bolts and
-/// tornadoes get an effect that follows them (facing where they move) and an impact when they disappear; souls an orb; Fists of
-/// Thunder hits (single-frame lightning attacks) a burst; the player a whirlwind arc while spinning and a trail while
-/// dashing. Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects). A marker
-/// hovers over each Quarry wearer's target. Afflicted units give off small status puffs a few times a second. Portals
-/// swirl, and players shimmer as they spawn. Ice shards (Shatter, Frozen Orb) are any non-homing Cold projectile. Crits,
-/// dodges and blocks pop where they happen (the combat text's events); players kick up dust as they walk; Mirror Image
-/// copies shimmer; Undertow's pulls ripple at the enemy's feet; Slingshot's splits spark. A Charged discharge sends a
-/// bolt hopping through the units around it, a little after the damage; Frozen units stand in a block of ice. Bulwark flashes on hits from
-/// the front. Loot on the ground has its own, GroundLootVfx.
+/// Gives skill entities their look through VfxManager without the skill systems knowing: projectiles (fireballs, barrage
+/// bolts, arrows, Cursed Hammers, Captain's Shields), periodic attacks (tornadoes, Frozen Orbs, flames, Plague Arrows) and
+/// fields get an effect that follows them (facing where they move) and an impact when they disappear; growing flames are
+/// sized to their radius every frame. Meteors show their landing ring, a rock falling in for the last MeteorFallTime and
+/// burning ground; Upheaval's quake its warning; Earth Bending's wall stands where it is, turned and sized like it, and
+/// breaks. Souls get an orb, portals swirl, players shimmer as they spawn and companions as they arrive.
+/// Attacks land with a strike drawn from their shape, or a look of their own for some skills (SkillStrike). Turned and
+/// blocked shots spark, Captain's Shield sparks on each hit.
+/// Players: effects that follow them while a state or aura is on (PlayerLooks, from NetPlayerActions), their stance's aura,
+/// the hook and its chain, a burst for each skill use (CastLook) and a puff where they vanish and appear (Teleport, Phantom
+/// Edge, Shadowstep's jumps). Units burst when their hit flash starts and when they start dying (UnitVfx picks the effects).
+/// A marker hovers over each Quarry wearer's target and over Poison Dart's marks. Afflicted units give off small status
+/// puffs a few times a second. Ice shards (Shatter, Frozen Orb) are any non-homing Cold projectile. Crits, dodges and blocks
+/// pop where they happen (the combat text's events); players kick up dust as they walk; Mirror Image copies shimmer;
+/// Undertow's pulls ripple at the enemy's feet; Slingshot's splits spark. A Charged discharge sends a bolt hopping through
+/// the units around it, a little after the damage; Frozen units stand in a block of ice. Bulwark flashes on hits from the
+/// front. Loot on the ground has its own, GroundLootVfx.
+/// Every machine sees the same: host-only things through NetVfx stand-ins and SharedBurst, players through
+/// NetPlayerActions, units through NetUnitFeedback.
 /// In FeedbackSystemGroup, so single-frame attacks are seen before DestroyWithChildrenSystem removes them.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 public partial class VfxSystem : SystemBase
 {
+    /// <summary>Seconds a meteor's rock takes to fall in: it's sent down this long before the impact (the prefab's VfxSlide).</summary>
+    public const float MeteorFallTime = 0.6f;
+
     const float StatusInterval = 0.4f;
     const int StatusCap = 10;   // Per status and interval, so swarms stay cheap
     const int HitCap = 8;       // Crit, dodge, block and ripple bursts per frame, each
     const int StrikeCap = 12;   // Strike effects (slash, shockwave, thrust) per frame
+    const int MarkCap = 24;     // Poison marks shown at once
     const float StepLength = 1.2f;  // Meters walked between footstep puffs
     const float FootDepth = 1.05f;  // Meters from a unit's root (its capsule's centre) down to its feet, times its scale
+    const float JumpDistance = 1.5f;    // Meters in one frame that count as a jump (Shadowstep), for its puffs
+
+    // Effects that follow a player while one of its states or auras is on (NetPlayerActions), at its root and turned with
+    // it; Start plays once as it comes on. Spin: degrees a second it turns on its own instead (Gale Ward's band, the other
+    // way while GaleWardReversed).
+    static readonly (ushort States, byte Auras, VfxType Effect, VfxType Start, float Spin)[] PlayerLooks =
+    {
+        (NetPlayerActions.Spinning, 0, VfxType.WhirlwindArc, VfxType.None, 0f),
+        (NetPlayerActions.Dashing, 0, VfxType.DashTrail, VfxType.DashBurst, 0f),
+        (NetPlayerActions.Flying, 0, VfxType.BallLightningBody, VfxType.LightningHit, 0f),
+        (NetPlayerActions.Rolling, 0, VfxType.SonicBallBody, VfxType.None, 0f),
+        (NetPlayerActions.Guarding, 0, VfxType.ShieldWallArc, VfxType.None, 0f),
+        (0, NetPlayerActions.Invulnerable, VfxType.InvulnerableBubble, VfxType.None, 0f),
+        (0, NetPlayerActions.Immolating, VfxType.ImmolationAura, VfxType.None, 0f),
+        (0, NetPlayerActions.BarrageOn, VfxType.BarrageAura, VfxType.None, 0f),
+        (0, NetPlayerActions.Empowered | NetPlayerActions.Shadowed, VfxType.EmpoweredAura, VfxType.None, 0f),
+        (0, NetPlayerActions.GaleWard, VfxType.GaleWardBand, VfxType.None, 120f),
+    };
 
     EntityQuery _newProjectiles, _newPeriodic, _newAttacks, _newSouls, _newBodies, _newPortals, _newMirrors, _newSplits, _newStandIns, _bound, _gone, _unwatched, _charged;
+    EntityQuery _newDelayed, _newMeteors, _fallingMeteors, _newHazards, _newWalls, _newCompanions;
     readonly List<Entity> _spawned = new List<Entity>();    // From CharacterManager.PlayerSpawned
     readonly List<Vector3> _crits = new List<Vector3>(), _dodges = new List<Vector3>(), _blocks = new List<Vector3>();   // From the damage systems' events
     readonly Dictionary<Entity, float3> _lastSteps = new Dictionary<Entity, float3>();
@@ -59,10 +104,19 @@ public partial class VfxSystem : SystemBase
     readonly List<NetFeedbackRpc> _received = new List<NetFeedbackRpc>();
     (EntityQuery Query, VfxType Effect)[] _statuses;
     double _nextStatus;
-    readonly Dictionary<Entity, int> _whirlwinds = new Dictionary<Entity, int>();
-    readonly Dictionary<Entity, int> _dashes = new Dictionary<Entity, int>();
-    readonly Dictionary<Entity, int> _quarryMarks = new Dictionary<Entity, int>();
     readonly List<Entity> _stale = new List<Entity>();
+    readonly HashSet<Entity> _present = new HashSet<Entity>();
+
+    // Players: one map per PlayerLooks row, then the rest, each player's effect handle
+    readonly Dictionary<Entity, int>[] _playerLooks = new Dictionary<Entity, int>[PlayerLooks.Length];
+    readonly Dictionary<Entity, int> _hookHeads = new Dictionary<Entity, int>(), _hookChains = new Dictionary<Entity, int>();
+    readonly Dictionary<Entity, int> _quarryMarks = new Dictionary<Entity, int>(), _poisonMarks = new Dictionary<Entity, int>();
+    readonly Dictionary<Entity, (int Handle, byte Stance)> _stances = new Dictionary<Entity, (int, byte)>();
+    struct PlayerSeen { public byte Casts; public ushort States; public float3 Position; }
+    readonly Dictionary<Entity, PlayerSeen> _players = new Dictionary<Entity, PlayerSeen>();
+
+    // The host: shots turned or blocked, and Captain's Shield hits, this frame (from the binding pass)
+    readonly List<(float3 Position, quaternion Rotation)> _deflects = new List<(float3, quaternion)>(), _shieldHits = new List<(float3, quaternion)>();
 
     // Charged: each discharge's bolts, waiting for their moment
     const int ChainLength = 6;      // Units a discharge's bolt hops through
@@ -83,13 +137,20 @@ public partial class VfxSystem : SystemBase
     {
         _newProjectiles = SystemAPI.QueryBuilder().WithAll<Projectile, LocalTransform>().WithNone<VfxBinding, PeriodicAttack>().Build();
         _newPeriodic = SystemAPI.QueryBuilder().WithAll<PeriodicAttack, LocalTransform>().WithNone<VfxBinding>().Build();
-        _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxBinding, Projectile>().Build();
+        _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxAttackSeen, Projectile>().Build();
         _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
         _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
         _newPortals = SystemAPI.QueryBuilder().WithAll<Portal, LocalTransform>().WithNone<VfxBinding>().Build();
         _newMirrors = SystemAPI.QueryBuilder().WithAll<MirrorImageUnit, LocalTransform>().WithNone<VfxBinding>().Build();
         _newStandIns = SystemAPI.QueryBuilder().WithAll<NetVfx, LocalTransform>().WithNone<VfxBinding>().Build();
         _newSplits = SystemAPI.QueryBuilder().WithAll<SplitProjectile, LocalTransform>().WithNone<VfxSplitSeen>().Build();
+        _newDelayed = SystemAPI.QueryBuilder().WithAll<DelayedAttack, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newMeteors = SystemAPI.QueryBuilder().WithAll<MeteorStrike, LocalTransform>().WithNone<VfxBinding>().Build();
+        _fallingMeteors = SystemAPI.QueryBuilder().WithAll<MeteorStrike, LocalTransform>().WithNone<VfxMeteorRock>().Build();
+        _newHazards = SystemAPI.QueryBuilder().WithAll<Hazard, LocalTransform>().WithNone<VfxBinding>().Build();
+        _newWalls = SystemAPI.QueryBuilder().WithAll<EarthWall, LocalTransform>().WithNone<VfxBinding>().Build();
+        // Companion: every machine's (NetUnitSourceSystem adds it on the others)
+        _newCompanions = SystemAPI.QueryBuilder().WithAll<Companion, LocalTransform>().WithNone<VfxArrivalSeen, MirrorImageUnit>().Build();
         CharacterManager.PlayerSpawned += OnPlayerSpawned;
         _damaging = World.GetOrCreateSystemManaged<DamagingSystem>();
         _damaging.OnDamageTaken += OnDamageTaken;
@@ -102,7 +163,7 @@ public partial class VfxSystem : SystemBase
         _receive.OnDamageDodged += OnDodged;
         _receive.OnDamageBlocked += OnBlocked;
         _receive.OnBurst += OnReceivedBurst;
-        // Charged units have the status bit set by the host (NetUnitFeedback), on every machine
+        // Charged and Poison Dart's marks: status bits set by the host (NetUnitFeedback), on every machine
         _charged = SystemAPI.QueryBuilder().WithAll<NetUnitFeedback, LocalTransform>().WithNone<RigidDeath>().Build();
         _enemyBodies = SystemAPI.QueryBuilder().WithAll<Enemy, LocalTransform>().WithNone<RigidDeath>().Build();
         // NetPlayer: every machine's players, on every machine
@@ -117,6 +178,7 @@ public partial class VfxSystem : SystemBase
         _bound = SystemAPI.QueryBuilder().WithAll<VfxBinding, LocalTransform>().Build();
         _gone = SystemAPI.QueryBuilder().WithAll<VfxBinding>().WithNone<LocalTransform>().Build();
         _unwatched = SystemAPI.QueryBuilder().WithAll<HitFlash, LocalTransform>().WithNone<VfxHitWatch, Prefab>().Build();
+        for (int i = 0; i < _playerLooks.Length; i++) _playerLooks[i] = new Dictionary<Entity, int>();
     }
 
     protected override void OnDestroy()
@@ -150,28 +212,29 @@ public partial class VfxSystem : SystemBase
                 foreach (var e in entities)
                 {
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
-                    bool homing = EntityManager.HasComponent<HomingProjectile>(e);
-                    bool fire = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Fire;
-                    bool poison = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Poison;
-                    bool cold = EntityManager.HasComponent<Attack>(e) && EntityManager.GetComponentData<Attack>(e).Type == DamageType.Cold;
                     bool attack = EntityManager.HasComponent<Attack>(e);
+                    var damageType = attack ? EntityManager.GetComponentData<Attack>(e).Type : DamageType.Physical;
                     var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e)
                         ? (EntityManager.GetComponentData<HealOnArrival>(e).Label == DamageLabel.ShadowPriest ? (VfxType.DarkHealOrb, VfxType.DarkHealBurst) : (VfxType.HealOrb, VfxType.HealBurst))
-                        : homing ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
+                        : EntityManager.HasComponent<HomingProjectile>(e) ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
-                        : fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
-                        : poison ? (VfxType.PoisonDart, VfxType.None)
-                        : cold ? (VfxType.IceShard, VfxType.IceShardImpact)
-                        // Everything else that hits (arrows, thrown weapons, lightning) gets a dart tinted by its damage type
-                        : attack ? (VfxType.ProjectileStreak, EntityManager.GetComponentData<Attack>(e).Type == DamageType.Lightning ? VfxType.LightningHit : VfxType.SlingshotSpark)
-                        : (VfxType.None, VfxType.None);
+                        : EntityManager.HasComponent<CursedHammerProjectile>(e) ? (VfxType.CursedHammer, VfxType.None)   // Its bursts are attacks of their own
+                        : !attack ? (VfxType.None, VfxType.None)
+                        : damageType == DamageType.Fire ? (VfxType.FireballOrb, VfxType.FireballImpact)
+                        : damageType == DamageType.Poison ? (VfxType.PoisonDart, VfxType.None)
+                        : damageType == DamageType.Cold ? (VfxType.IceShard, VfxType.IceShardImpact)
+                        : damageType == DamageType.Physical ? (VfxType.Arrow, VfxType.SlingshotSpark)     // Multishot's and archers' arrows
+                        // Everything else that hits (lightning, thrown things) gets a dart tinted by its damage type
+                        : (VfxType.ProjectileStreak, damageType == DamageType.Lightning ? VfxType.LightningHit : VfxType.SlingshotSpark);
                     var look = new NetVfx { Type = type, Impact = impact };
                     if (type == VfxType.ProjectileStreak)
                     {
                         look.Tinted = true;
-                        look.Tint = EntityManager.GetComponentData<Attack>(e).Type;
+                        look.Tint = damageType;
                     }
-                    bindings.Add((e, Bind(vfx, look, t)));
+                    var binding = Bind(vfx, look, t);
+                    binding.Hostile = attack && EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Player;
+                    bindings.Add((e, binding));
                     standIns.Add((e, look));
                 }
             using (var entities = _newPeriodic.ToEntityArray(Allocator.Temp))
@@ -182,11 +245,58 @@ public partial class VfxSystem : SystemBase
                     var look = attack.Skill switch
                     {
                         SkillType.Tornado => new NetVfx { Type = VfxType.Tornado, Impact = VfxType.TornadoEnd },
-                        SkillType.FrozenOrb => new NetVfx { Type = VfxType.FrozenOrb },
-                        SkillType.Flamethrower => new NetVfx { Type = VfxType.Flame },
+                        SkillType.FrozenOrb => new NetVfx { Type = VfxType.FrozenOrb, Impact = VfxType.FrozenOrbEnd },
+                        // Drawn at radius 1, sized every frame to the flame's growing radius; embers where it dies
+                        SkillType.Flamethrower => new NetVfx { Type = VfxType.Flame, Impact = VfxType.FlameEmbers, Scale = attack.Radius, Uniform = true },
                         SkillType.TeslaCoil => new NetVfx { Type = VfxType.TeslaField, Scale = attack.Radius },
+                        SkillType.PlagueArrow => new NetVfx { Type = VfxType.PlagueArrow },
                         _ => default,
                     };
+                    bindings.Add((e, Bind(vfx, look, t)));
+                    standIns.Add((e, look));
+                }
+            // Waiting attacks: Upheaval's quake shows where it will heave, sized to its radius once the area of effect applies
+            using (var entities = _newDelayed.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var delayed = EntityManager.GetComponentData<DelayedAttack>(e);
+                    var look = delayed.Attack.Origin.Label == DamageLabel.Upheaval
+                        ? new NetVfx { Type = VfxType.UpheavalWarning, Scale = delayed.Attack.Radius * AreaOf(e) }
+                        : default;
+                    bindings.Add((e, Bind(vfx, look, EntityManager.GetComponentData<LocalTransform>(e))));
+                    standIns.Add((e, look));
+                }
+            // Meteors: the ring where each will land (its impact is an attack later, with its own look below)
+            using (var entities = _newMeteors.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var look = new NetVfx { Type = VfxType.MeteorWarning, Scale = EntityManager.GetComponentData<MeteorStrike>(e).Radius * AreaOf(e) };
+                    bindings.Add((e, Bind(vfx, look, EntityManager.GetComponentData<LocalTransform>(e))));
+                    standIns.Add((e, look));
+                }
+            // ...its rock, falling in for the last MeteorFallTime
+            using (var entities = _fallingMeteors.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    if (EntityManager.GetComponentData<MeteorStrike>(e).Delay > MeteorFallTime) continue;
+                    SharedBurst(vfx, VfxType.MeteorRock, EntityManager.GetComponentData<LocalTransform>(e).Position, quaternion.identity);
+                    EntityManager.AddComponent<VfxMeteorRock>(e);
+                }
+            // ...and the burning ground it leaves
+            using (var entities = _newHazards.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var hazard = EntityManager.GetComponentData<Hazard>(e);
+                    var look = hazard.Origin == DamageLabel.Meteor ? new NetVfx { Type = VfxType.BurningGround, Scale = hazard.Radius } : default;
+                    bindings.Add((e, Bind(vfx, look, EntityManager.GetComponentData<LocalTransform>(e))));
+                    standIns.Add((e, look));
+                }
+            // Earth Bending's wall: turned and sized like it (drawn for scale 1, its feet at its root), breaking when it goes
+            using (var entities = _newWalls.ToEntityArray(Allocator.Temp))
+                foreach (var e in entities)
+                {
+                    var t = EntityManager.GetComponentData<LocalTransform>(e);
+                    var look = new NetVfx { Type = VfxType.EarthWall, Impact = VfxType.EarthWallBreak, Scale = t.Scale, Uniform = true, Oriented = true };
                     bindings.Add((e, Bind(vfx, look, t)));
                     standIns.Add((e, look));
                 }
@@ -230,6 +340,12 @@ public partial class VfxSystem : SystemBase
             foreach (var player in _spawned)
                 if (EntityManager.Exists(player) && EntityManager.HasComponent<LocalTransform>(player))
                     vfx.Burst(VfxType.PlayerSpawn, EntityManager.GetComponentData<LocalTransform>(player).Position, Quaternion.identity);
+            // Companions as they arrive, on every machine (their ghosts reach the others)
+            using (var transforms = _newCompanions.ToComponentDataArray<LocalTransform>(Allocator.Temp))
+            {
+                foreach (var t in transforms) vfx.Burst(VfxType.CompanionSpawn, t.Position, t.Rotation);
+                EntityManager.AddComponent<VfxArrivalSeen>(_newCompanions);
+            }
             using (var entities = _newBodies.ToEntityArray(Allocator.Temp))
                 foreach (var e in entities)
                 {
@@ -247,6 +363,7 @@ public partial class VfxSystem : SystemBase
                         bindings.Add((e, Bind(vfx, EntityManager.GetComponentData<NetVfx>(e), EntityManager.GetComponentData<LocalTransform>(e))));
             int strikes = 0;
             using (var entities = _newAttacks.ToEntityArray(Allocator.Temp))
+            {
                 foreach (var e in entities)
                 {
                     // Single-frame lightning attacks are Fists of Thunder punches landing
@@ -267,30 +384,72 @@ public partial class VfxSystem : SystemBase
                         // Sized to the attack's area (Cold Snap's radius); drawn at radius 1
                         SharedBurst(vfx, VfxType.ColdNova, t.Position, quaternion.identity, math.max(attack.Radius, 0f));
                     }
-                    // Player-side area attacks land with a strike drawn from their shape, tinted by damage type
-                    if (strikes < StrikeCap && attack.Origin.Label != DamageLabel.Consecration && TargetsEnemies(e) && Strike(vfx, e, t, attack)) strikes++;
-                    bindings.Add((e, new VfxBinding { Position = t.Position, Rotation = quaternion.identity }));
+                    // Player-side area attacks land with a look of their own skill's, or a strike drawn from their shape, tinted by damage type
+                    if (strikes < StrikeCap && attack.Origin.Label != DamageLabel.Consecration && TargetsEnemies(e) && (SkillStrike(vfx, e, t, attack) || Strike(vfx, e, t, attack))) strikes++;
                 }
+                EntityManager.AddComponent<VfxAttackSeen>(_newAttacks);
+            }
         }
         _spawned.Clear();
         foreach (var (entity, binding) in bindings) EntityManager.AddComponentData(entity, binding);
         if (NetSession.IsHost) MakeStandIns(standIns);
 
-        // Follow, facing the way they move; the stand-ins follow along
-        var standInMoves = new NativeList<(Entity, float3)>(Allocator.Temp);
-        foreach (var (binding, transform) in SystemAPI.Query<RefRW<VfxBinding>, RefRO<LocalTransform>>())
+        // Follow, facing the way they move (or turned like their entity); the stand-ins follow along. On the host, shots
+        // that stop being aimed at players (turned, or blocked: their Attack taken away) spark, and Captain's Shields on hits.
+        var standInMoves = new NativeList<(Entity, LocalTransform)>(Allocator.Temp);
+        var growing = SystemAPI.GetComponentLookup<GrowingFlame>(true);
+        var periodic = SystemAPI.GetComponentLookup<PeriodicAttack>(true);
+        var projectiles = SystemAPI.GetComponentLookup<Projectile>(true);
+        var attacks = SystemAPI.GetComponentLookup<Attack>(true);
+        var targets = SystemAPI.GetComponentLookup<AttackTarget>(true);
+        var shields = SystemAPI.GetComponentLookup<ShieldProjectile>(true);
+        var looks = SystemAPI.GetComponentLookup<NetVfx>(true);
+        foreach (var (binding, transform, entity) in SystemAPI.Query<RefRW<VfxBinding>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            var position = transform.ValueRO.Position;
-            var moved = position - binding.ValueRO.Position;
-            if (math.lengthsq(moved) > 1e-6f) binding.ValueRW.Rotation = quaternion.LookRotationSafe(math.normalize(moved), math.up());
-            binding.ValueRW.Position = position;
-            if (vfx != null && binding.ValueRO.Handle != 0) vfx.Move(binding.ValueRO.Handle, position, binding.ValueRO.Rotation);
-            if (binding.ValueRO.Proxy != Entity.Null) standInMoves.Add((binding.ValueRO.Proxy, position));
-        }
-        foreach (var (standIn, position) in standInMoves)
-            if (EntityManager.HasComponent<LocalTransform>(standIn)) EntityManager.SetComponentData(standIn, LocalTransform.FromPosition(position));
+            ref var b = ref binding.ValueRW;
+            var t = transform.ValueRO;
+            if (b.Oriented) b.Rotation = t.Rotation;
+            else
+            {
+                var moved = t.Position - b.Position;
+                if (math.lengthsq(moved) > 1e-6f) b.Rotation = quaternion.LookRotationSafe(math.normalize(moved), math.up());
+            }
+            b.Position = t.Position;
+            if (b.Uniform)
+            {
+                // A growing flame's radius on the host, its stand-in's scale on the other machines (or a wall's scale).
+                // A stand-in never goes below the size it was made with: a ghost's transform can arrive a frame late (0),
+                // and a burst emitted at scale 0 never shows.
+                float size = growing.HasComponent(entity) && periodic.HasComponent(entity) ? periodic[entity].Radius
+                    : looks.HasComponent(entity) ? math.max(t.Scale, looks[entity].Scale) : t.Scale;
+                if (size > 1e-3f && math.abs(size - b.Scale) > 1e-3f)
+                {
+                    b.Scale = size;
+                    if (vfx != null) vfx.ScaleUniform(b.Handle, size);
+                }
+            }
+            if (vfx != null && b.Handle != 0) vfx.Move(b.Handle, t.Position, b.Rotation);
+            if (b.Proxy != Entity.Null)
+                standInMoves.Add((b.Proxy, new LocalTransform { Position = t.Position, Rotation = b.Oriented ? b.Rotation : quaternion.identity, Scale = b.Uniform ? b.Scale : 1f }));
 
-        // Gone: release, impact where it was, let the entity be removed (its stand-in with it)
+            if (b.Hostile && projectiles.HasComponent(entity) && (!attacks.HasComponent(entity) || (targets.HasComponent(entity) && targets[entity].TargetType != TargetType.Player)))
+            {
+                b.Hostile = false;
+                _deflects.Add((t.Position, b.Rotation));
+            }
+            if (shields.HasComponent(entity) && attacks.HasComponent(entity) && attacks[entity].Events.OnHit) _shieldHits.Add((t.Position, b.Rotation));
+        }
+        foreach (var (standIn, transform) in standInMoves)
+            if (EntityManager.HasComponent<LocalTransform>(standIn)) EntityManager.SetComponentData(standIn, transform);
+        if (vfx != null)
+        {
+            foreach (var (position, rotation) in _deflects) SharedBurst(vfx, VfxType.DeflectSpark, position, rotation);
+            foreach (var (position, rotation) in _shieldHits) SharedBurst(vfx, VfxType.ShieldHit, position, rotation);
+        }
+        _deflects.Clear();
+        _shieldHits.Clear();
+
+        // Gone: release, impact where it was (sized like the effect), let the entity be removed (its stand-in with it)
         using (var gone = _gone.ToEntityArray(Allocator.Temp))
         {
             foreach (var e in gone)
@@ -299,7 +458,13 @@ public partial class VfxSystem : SystemBase
                 if (binding.Proxy != Entity.Null && EntityManager.Exists(binding.Proxy)) EntityManager.DestroyEntity(binding.Proxy);
                 if (vfx == null) continue;
                 if (binding.Handle != 0) vfx.Release(binding.Handle);
-                if (binding.Impact != VfxType.None) vfx.Burst(binding.Impact, binding.Position, binding.Rotation);
+                if (binding.Impact == VfxType.None) continue;
+                int impact = vfx.Burst(binding.Impact, binding.Position, binding.Rotation);
+                if (binding.Scale > 0f)
+                {
+                    if (binding.Uniform) vfx.ScaleUniform(impact, binding.Scale);
+                    else vfx.Scale(impact, binding.Scale);
+                }
             }
             EntityManager.RemoveComponent<VfxBinding>(gone);
         }
@@ -309,6 +474,7 @@ public partial class VfxSystem : SystemBase
             UpdatePlayerEffects(vfx);
             UpdateUnitEffects(vfx);
             UpdateQuarryMarks(vfx);
+            UpdatePoisonMarks(vfx);
             UpdateStatusEffects(vfx);
             UpdateCombatEffects(vfx);
             PlayReceived(vfx);
@@ -320,6 +486,14 @@ public partial class VfxSystem : SystemBase
         _received.Clear();
         _dodges.Clear();
         _blocks.Clear();
+    }
+
+    // The area of effect of an entity's source (1 without one), for effects sized before the attack's own radius is
+    float AreaOf(Entity e)
+    {
+        if (!EntityManager.HasComponent<Source>(e)) return 1f;
+        var source = EntityManager.GetComponentData<Source>(e).Entity;
+        return EntityManager.HasComponent<CalculatedStats>(source) ? math.max(0f, EntityManager.GetComponentData<CalculatedStats>(source).Value.AreaMultiplier) : 1f;
     }
 
     void UpdateCombatEffects(VfxManager vfx)
@@ -370,6 +544,52 @@ public partial class VfxSystem : SystemBase
     }
 
     bool TargetsEnemies(Entity e) => EntityManager.HasComponent<AttackTarget>(e) && EntityManager.GetComponentData<AttackTarget>(e).TargetType == TargetType.Enemy;
+
+    /// <summary>
+    /// Skills whose hits have a look of their own: true when it replaces the generic Strike. Swipe's arc at the swinger,
+    /// over the swept angle and sized to its reach; Upheaval's slam and quake sized to their radius; Phantom Edge's slash
+    /// and the afterimage where its caster blinked to; Riposte's flash plays with its cast (CastLook); Meteor's impact
+    /// adds a fireball burst to the generic shockwave.
+    /// </summary>
+    bool SkillStrike(VfxManager vfx, Entity e, LocalTransform t, Attack attack)
+    {
+        switch (attack.Origin.Label)
+        {
+            case DamageLabel.Swipe:
+                if (!EntityManager.HasComponent<SweepingAttack>(e)) return true;
+                var sweep = EntityManager.GetComponentData<SweepingAttack>(e);
+                if (!EntityManager.HasComponent<LocalTransform>(sweep.Center)) return true;
+                // Drawn over the whole swept arc, the same for both swing directions
+                SharedBurst(vfx, VfxType.SwipeArc, EntityManager.GetComponentData<LocalTransform>(sweep.Center).Position, quaternion.LookRotationSafe(sweep.Forward, math.up()), sweep.Distance);
+                return true;
+            case DamageLabel.Upheaval:
+                // The quake turned like its warning (identity), so their cracks line up; the slam like its caster
+                bool quake = EntityManager.HasComponent<QuakeAttack>(e);
+                var slammer = EntityManager.HasComponent<Source>(e) ? EntityManager.GetComponentData<Source>(e).Entity : Entity.Null;
+                var facing = !quake && EntityManager.HasComponent<LocalTransform>(slammer) ? EntityManager.GetComponentData<LocalTransform>(slammer).Rotation : quaternion.identity;
+                SharedBurst(vfx, quake ? VfxType.UpheavalQuake : VfxType.UpheavalSlam, t.Position, facing, math.max(attack.Radius, 0.5f));
+                return true;
+            case DamageLabel.PhantomEdge:
+                var caster = EntityManager.HasComponent<Source>(e) ? EntityManager.GetComponentData<Source>(e).Entity : Entity.Null;
+                if (!EntityManager.HasComponent<LocalTransform>(caster))
+                {
+                    SharedBurst(vfx, VfxType.PhantomSlash, t.Position, quaternion.identity);
+                    return true;
+                }
+                // The caster has just blinked next to the enemy, facing it
+                var at = EntityManager.GetComponentData<LocalTransform>(caster);
+                SharedBurst(vfx, VfxType.PhantomSlash, t.Position, at.Rotation);
+                SharedBurst(vfx, VfxType.PhantomAfterimage, at.Position, at.Rotation);
+                return true;
+            case DamageLabel.Riposte:
+                return true;
+            case DamageLabel.Meteor:
+                SharedBurst(vfx, VfxType.FireballImpact, t.Position, quaternion.identity);
+                return false;
+            default:
+                return false;
+        }
+    }
 
     /// <summary>
     /// The generic look of an area attack: a slash arc for a cone (its reach), a thrust streak for a rectangle (its length),
@@ -464,11 +684,29 @@ public partial class VfxSystem : SystemBase
             t.Position.y += 1.6f * t.Scale;  // Over the head: the root is the capsule's centre
             Track(vfx, _quarryMarks, entity, marked, VfxType.QuarryMark, VfxType.None, t);
         }
+        ReleaseWithout<NetPlayerActions>(vfx, _quarryMarks);
+    }
 
+    // Poison Dart's marks: over the head of every marked unit (a NetUnitFeedback status bit), under a Quarry marker
+    void UpdatePoisonMarks(VfxManager vfx)
+    {
+        _present.Clear();
+        using (var entities = _charged.ToEntityArray(Allocator.Temp))
+        using (var feedbacks = _charged.ToComponentDataArray<NetUnitFeedback>(Allocator.Temp))
+        using (var transforms = _charged.ToComponentDataArray<LocalTransform>(Allocator.Temp))
+            for (int i = 0; i < entities.Length && _present.Count < MarkCap; i++)
+            {
+                if ((feedbacks[i].Statuses & NetUnitFeedback.PoisonMarked) == 0) continue;
+                var t = transforms[i];
+                t.Position.y += 1.3f * t.Scale;
+                t.Rotation = quaternion.identity;
+                Track(vfx, _poisonMarks, entities[i], true, VfxType.PoisonMark, VfxType.None, t);
+                _present.Add(entities[i]);
+            }
         _stale.Clear();
-        foreach (var (entity, handle) in _quarryMarks)
-            if (!EntityManager.HasComponent<NetPlayerActions>(entity)) { vfx.Release(handle); _stale.Add(entity); }
-        foreach (var entity in _stale) _quarryMarks.Remove(entity);
+        foreach (var (entity, handle) in _poisonMarks)
+            if (!_present.Contains(entity)) { vfx.Release(handle); _stale.Add(entity); }
+        foreach (var entity in _stale) _poisonMarks.Remove(entity);
     }
 
     // A burst when a unit's hit flash starts, and one when it starts dying (RigidDeath)
@@ -498,7 +736,19 @@ public partial class VfxSystem : SystemBase
     static VfxBinding Bind(VfxManager vfx, in NetVfx look, LocalTransform t)
     {
         var binding = Bind(vfx, look.Type, look.Impact, t);
-        if (look.Scale > 0f) vfx.Scale(binding.Handle, look.Scale);
+        binding.Scale = look.Scale;
+        binding.Uniform = look.Uniform;
+        binding.Oriented = look.Oriented;
+        if (look.Oriented)
+        {
+            binding.Rotation = t.Rotation;
+            vfx.Move(binding.Handle, t.Position, t.Rotation);
+        }
+        if (look.Scale > 0f)
+        {
+            if (look.Uniform) vfx.ScaleUniform(binding.Handle, look.Scale);
+            else vfx.Scale(binding.Handle, look.Scale);
+        }
         if (look.Tinted) vfx.Tint(binding.Handle, StrikeColor(look.Tint));
         return binding;
     }
@@ -510,8 +760,10 @@ public partial class VfxSystem : SystemBase
         foreach (var (entity, look) in standIns)
         {
             if (look.Type == VfxType.None) continue;
+            var t = EntityManager.GetComponentData<LocalTransform>(entity);
             var standIn = EntityManager.Instantiate(prefabs.Vfx);
-            EntityManager.SetComponentData(standIn, LocalTransform.FromPosition(EntityManager.GetComponentData<LocalTransform>(entity).Position));
+            // Turned and sized like its entity when the look says so; otherwise only where it is
+            EntityManager.SetComponentData(standIn, new LocalTransform { Position = t.Position, Rotation = look.Oriented ? t.Rotation : quaternion.identity, Scale = look.Uniform ? look.Scale : 1f });
             EntityManager.SetComponentData(standIn, look);
             var binding = EntityManager.GetComponentData<VfxBinding>(entity);
             binding.Proxy = standIn;
@@ -527,22 +779,132 @@ public partial class VfxSystem : SystemBase
         Rotation = quaternion.identity,
     };
 
-    // Whirlwind arc while spinning, dash trail (and a burst at the start) while dashing, on every machine (NetPlayerActions)
+    // Everything players show, on every machine (NetPlayerActions): PlayerLooks, the stance, the hook, casts and puffs
     void UpdatePlayerEffects(VfxManager vfx)
     {
+        float time = (float)SystemAPI.Time.ElapsedTime;
         foreach (var (actions, transform, entity) in SystemAPI.Query<RefRO<NetPlayerActions>, RefRO<LocalTransform>>().WithEntityAccess())
         {
-            Track(vfx, _whirlwinds, entity, actions.ValueRO.Has(NetPlayerActions.Spinning), VfxType.WhirlwindArc, VfxType.None, transform.ValueRO);
-            Track(vfx, _dashes, entity, actions.ValueRO.Has(NetPlayerActions.Dashing), VfxType.DashTrail, VfxType.DashBurst, transform.ValueRO);
+            var a = actions.ValueRO;
+            var t = transform.ValueRO;
+            for (int i = 0; i < PlayerLooks.Length; i++)
+            {
+                var look = PlayerLooks[i];
+                bool on = (a.States & look.States) != 0 || (a.Auras & look.Auras) != 0;
+                var at = t;
+                if (look.Spin != 0f) at.Rotation = quaternion.RotateY(math.radians(look.Spin * time * (a.HasAura(NetPlayerActions.GaleWardReversed) ? -1f : 1f)));
+                Track(vfx, _playerLooks[i], entity, on, look.Effect, look.Start, at);
+            }
+            UpdateStance(vfx, entity, a.Stance, t);
+            UpdateHook(vfx, entity, a, t);
+            UpdateCasts(vfx, entity, a, t);
         }
 
-        foreach (var map in new[] { _whirlwinds, _dashes })
+        foreach (var map in _playerLooks) ReleaseWithout<NetPlayerActions>(vfx, map);
+        ReleaseWithout<NetPlayerActions>(vfx, _hookHeads);
+        ReleaseWithout<NetPlayerActions>(vfx, _hookChains);
+        _stale.Clear();
+        foreach (var (entity, stance) in _stances)
+            if (!EntityManager.HasComponent<NetPlayerActions>(entity)) { vfx.Release(stance.Handle); _stale.Add(entity); }
+        foreach (var entity in _stale) _stances.Remove(entity);
+        _stale.Clear();
+        foreach (var entity in _players.Keys)
+            if (!EntityManager.HasComponent<NetPlayerActions>(entity)) _stale.Add(entity);
+        foreach (var entity in _stale) _players.Remove(entity);
+    }
+
+    // The stance's aura in its colour: Strength ruby, Agility teal, Intelligence sapphire; made again when it changes
+    void UpdateStance(VfxManager vfx, Entity entity, byte stance, LocalTransform t)
+    {
+        bool has = _stances.TryGetValue(entity, out var current);
+        if (has && current.Stance != stance)
         {
-            _stale.Clear();
-            foreach (var (entity, handle) in map)
-                if (!EntityManager.Exists(entity)) { vfx.Release(handle); _stale.Add(entity); }
-            foreach (var entity in _stale) map.Remove(entity);
+            vfx.Release(current.Handle);
+            _stances.Remove(entity);
+            has = false;
         }
+        if (stance == 0) return;
+        if (!has)
+        {
+            current = (vfx.Spawn(VfxType.StanceAura, t.Position, t.Rotation), stance);
+            vfx.Tint(current.Handle, stance == NetPlayerActions.StanceStrength ? new Color(0.88f, 0.21f, 0.31f)
+                : stance == NetPlayerActions.StanceAgility ? new Color(0.31f, 0.84f, 0.78f) : new Color(0.29f, 0.49f, 1f));
+            _stances[entity] = current;
+        }
+        vfx.Move(current.Handle, t.Position, t.Rotation);
+    }
+
+    // Hookshot Slash: the hook at HookPoint facing away from the player, and the chain from the player's hand to it
+    void UpdateHook(VfxManager vfx, Entity entity, in NetPlayerActions a, LocalTransform t)
+    {
+        bool hooking = a.Has(NetPlayerActions.Hooking);
+        var away = a.HookPoint - t.Position;
+        away.y = 0f;
+        var head = new LocalTransform { Position = a.HookPoint, Rotation = quaternion.LookRotationSafe(math.normalizesafe(away, t.Forward()), math.up()), Scale = 1f };
+        Track(vfx, _hookHeads, entity, hooking, VfxType.HookHead, VfxType.None, head);
+        Track(vfx, _hookChains, entity, hooking, VfxType.HookChain, VfxType.None, t);
+        if (hooking && _hookChains.TryGetValue(entity, out int chain))
+            vfx.SetEnds(chain, t.Position + math.rotate(t.Rotation, new float3(0f, 0.37f, 0.6f)), a.HookPoint);   // Both hands, held out (Channel clip)
+    }
+
+    // A burst for each skill use (Casts counts up), and puffs where the player vanishes and appears: Teleport (its cast),
+    // Phantom Edge (Phasing starting and ending) and Shadowstep's jumps (a jump while Shadowed). From last frame's spot.
+    void UpdateCasts(VfxManager vfx, Entity entity, in NetPlayerActions a, LocalTransform t)
+    {
+        if (_players.TryGetValue(entity, out var seen))
+        {
+            bool teleported = false;
+            if (a.Casts != seen.Casts)
+            {
+                var skill = (SkillType)a.CastSkill;
+                var (effect, tint) = CastLook(skill);
+                int handle = vfx.Burst(effect, t.Position, t.Rotation);
+                if (tint.a > 0f) vfx.Tint(handle, tint);
+                if (skill == SkillType.Teleport)
+                {
+                    vfx.Burst(VfxType.VanishPuff, seen.Position, t.Rotation);
+                    teleported = true;
+                }
+            }
+            bool phasing = a.Has(NetPlayerActions.Phasing), wasPhasing = (seen.States & NetPlayerActions.Phasing) != 0;
+            if (phasing && !wasPhasing) vfx.Burst(VfxType.VanishPuff, seen.Position, t.Rotation);
+            else if (!phasing && wasPhasing) vfx.Burst(VfxType.AppearPuff, t.Position, t.Rotation);
+            else if (!phasing && !teleported && a.HasAura(NetPlayerActions.Shadowed) && math.distance(seen.Position.xz, t.Position.xz) > JumpDistance)
+            {
+                vfx.Burst(VfxType.VanishPuff, seen.Position, t.Rotation);
+                vfx.Burst(VfxType.AppearPuff, t.Position, t.Rotation);
+            }
+        }
+        _players[entity] = new PlayerSeen { Casts = a.Casts, States = a.States, Position = t.Position };
+    }
+
+    /// <summary>
+    /// The burst at the player when it uses a skill, and its tint (clear: none). Spells flash in their element's colour,
+    /// summons draw a gold circle; the rest have their own (Teleport's appear puff, Blood Rite, Riposte) or none.
+    /// </summary>
+    static (VfxType Effect, Color Tint) CastLook(SkillType skill) => skill switch
+    {
+        SkillType.Teleport => (VfxType.AppearPuff, default),
+        SkillType.BloodRite => (VfxType.BloodBurst, default),
+        SkillType.Riposte => (VfxType.RiposteFlash, default),
+        SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.FireHydra or SkillType.RaiseThrall => (VfxType.SummonCircle, default),
+        SkillType.Meteor or SkillType.Immolation => (VfxType.CastFlash, new Color(1f, 0.48f, 0.1f)),                                   // Fire #FF7A1A
+        SkillType.FrozenOrb or SkillType.ColdSnap or SkillType.FrostLance or SkillType.Timezone => (VfxType.CastFlash, new Color(0.5f, 0.9f, 1f)),   // Frost #7FE6FF
+        SkillType.TeslaCoil or SkillType.CursedHammer or SkillType.Tornado => (VfxType.CastFlash, new Color(0.29f, 0.49f, 1f)),       // Lightning sapphire #4A7CFF
+        SkillType.PlagueArrow => (VfxType.CastFlash, new Color(0.55f, 1f, 0.23f)),                                                     // Poison #8CFF3A
+        SkillType.GaleWard => (VfxType.CastFlash, new Color(0.31f, 0.84f, 0.78f)),                                                     // Wind teal #4FD6C8
+        SkillType.MirrorImage or SkillType.Invulnerability => (VfxType.CastFlash, new Color(0.71f, 0.48f, 1f)),                        // Magic violet #B57BFF
+        SkillType.EarthBending => (VfxType.CastFlash, new Color(0.89f, 0.91f, 0.94f)),                                                 // Physical steel #E2E8F0
+        _ => (VfxType.None, default),
+    };
+
+    // Releases the effects of entities that no longer have T (gone, or the component taken off)
+    void ReleaseWithout<T>(VfxManager vfx, Dictionary<Entity, int> map) where T : unmanaged, IComponentData
+    {
+        _stale.Clear();
+        foreach (var (entity, handle) in map)
+            if (!EntityManager.HasComponent<T>(entity)) { vfx.Release(handle); _stale.Add(entity); }
+        foreach (var entity in _stale) map.Remove(entity);
     }
 
     // A discharge's bolt: from the charged unit to the nearest unit in reach, from there to the nearest one left, and so

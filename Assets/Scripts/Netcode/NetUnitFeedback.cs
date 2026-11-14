@@ -10,7 +10,8 @@ using Unity.NetCode;
 /// </summary>
 public struct NetUnitFeedback : IComponentData
 {
-    public const byte Burning = 1, Poisoned = 2, Chilled = 4, Bleeding = 8, Frozen = 16, Charged = 32;
+    /// <summary>PoisonMarked: Poison Dart's mark (PoisonMark), only shown (VfxSystem reads the bit on every machine).</summary>
+    public const byte Burning = 1, Poisoned = 2, Chilled = 4, Bleeding = 8, Frozen = 16, Charged = 32, PoisonMarked = 64;
 
     [GhostField] public byte Hits;
     [GhostField] public DamageType HitType;
@@ -36,6 +37,7 @@ public partial struct NetUnitFeedbackWriteSystem : ISystem
         var bleeding = SystemAPI.GetComponentLookup<Bleeding>(true);
         var frozen = SystemAPI.GetComponentLookup<Frozen>(true);
         var charged = SystemAPI.GetBufferLookup<ChargedInstance>(true);
+        var poisonMarks = SystemAPI.GetComponentLookup<PoisonMark>(true);
         foreach (var (feedback, entity) in SystemAPI.Query<RefRW<NetUnitFeedback>>().WithEntityAccess())
         {
             var value = feedback.ValueRO;
@@ -43,6 +45,7 @@ public partial struct NetUnitFeedbackWriteSystem : ISystem
             value.Dying = deaths.HasComponent(entity);
             value.Statuses = (byte)(Bit(burning, entity, NetUnitFeedback.Burning) | Bit(poisoned, entity, NetUnitFeedback.Poisoned)
                 | Bit(chilled, entity, NetUnitFeedback.Chilled) | Bit(bleeding, entity, NetUnitFeedback.Bleeding) | Bit(frozen, entity, NetUnitFeedback.Frozen)
+                | Bit(poisonMarks, entity, NetUnitFeedback.PoisonMarked)
                 | (charged.HasBuffer(entity) && charged[entity].Length > 0 ? NetUnitFeedback.Charged : 0));
             if (value.Attacks != feedback.ValueRO.Attacks || value.Dying != feedback.ValueRO.Dying || value.Statuses != feedback.ValueRO.Statuses)
                 feedback.ValueRW = value;

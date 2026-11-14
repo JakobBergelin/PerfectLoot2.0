@@ -110,7 +110,7 @@ public partial struct HazardSystem : ISystem
     }
 }
 
-/// <summary>Placeholder art: each hazard as a sphere in its damage type's color.</summary>
+/// <summary>Placeholder art: each hazard as a sphere in its damage type's color, but Meteor's (VfxSystem shows its burning ground).</summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 [BurstCompile]
 partial struct HazardUISystem : ISystem
@@ -119,7 +119,8 @@ partial struct HazardUISystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (hazard, transform) in SystemAPI.Query<RefRO<Hazard>, RefRO<LocalTransform>>())
-            ProgrammerArt.DrawSphere(transform.ValueRO.Position, hazard.ValueRO.Radius, TypeColor(hazard.ValueRO.Type));
+            if (hazard.ValueRO.Origin != DamageLabel.Meteor)
+                ProgrammerArt.DrawSphere(transform.ValueRO.Position, hazard.ValueRO.Radius, TypeColor(hazard.ValueRO.Type));
     }
 
     static Color TypeColor(DamageType type) => type switch

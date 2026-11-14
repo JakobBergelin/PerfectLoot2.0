@@ -43,7 +43,10 @@ public struct NetPlayerActions : IComponentData
     public bool HasAura(byte aura) => (Auras & aura) != 0;
 }
 
-/// <summary>The host: fills each player's NetPlayerActions from its Dash, Whirlwind, Fireball, skill uses and Quarry.</summary>
+/// <summary>
+/// The host: fills each player's NetPlayerActions from its skills' own state (read only), skill uses and Quarry. Phasing
+/// hides the Invulnerable aura: Phantom Edge keeps its caster invulnerable while it's gone.
+/// </summary>
 [UpdateInGroup(typeof(HealthAndResourceSystemGroup), OrderLast = true)]
 [WorldSystemFilter(GameWorlds.Server)]
 [BurstCompile]
@@ -55,6 +58,19 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
         var dashes = SystemAPI.GetComponentLookup<Dash>(true);
         var whirlwinds = SystemAPI.GetComponentLookup<Whirlwind>(true);
         var fireballs = SystemAPI.GetComponentLookup<FireBall>(true);
+        var flamethrowers = SystemAPI.GetComponentLookup<Flamethrower>(true);
+        var teslaCoils = SystemAPI.GetComponentLookup<TeslaCoil>(true);
+        var shieldWalls = SystemAPI.GetComponentLookup<ShieldWall>(true);
+        var sonicBalls = SystemAPI.GetComponentLookup<SonicBall>(true);
+        var ballLightnings = SystemAPI.GetComponentLookup<BallLightning>(true);
+        var flurries = SystemAPI.GetComponentLookup<PhantomEdgeFlurry>(true);
+        var hookshots = SystemAPI.GetComponentLookup<HookshotSlash>(true);
+        var invulnerables = SystemAPI.GetComponentLookup<Invulnerable>(true);
+        var immolations = SystemAPI.GetComponentLookup<Immolation>(true);
+        var galeWards = SystemAPI.GetComponentLookup<GaleWard>(true);
+        var barrages = SystemAPI.GetComponentLookup<Barrage>(true);
+        var bloodRites = SystemAPI.GetComponentLookup<BloodRiteBuff>(true);
+        var shadowsteps = SystemAPI.GetComponentLookup<ShadowstepBuff>(true);
         var quarries = SystemAPI.GetComponentLookup<Quarry>(true);
         var skills = SystemAPI.GetBufferLookup<Skill>(true);
         foreach (var (actions, entity) in SystemAPI.Query<RefRW<NetPlayerActions>>().WithEntityAccess())
@@ -64,10 +80,36 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
             if (dashes.HasComponent(entity) && dashes[entity].Dashing) value.States |= NetPlayerActions.Dashing;
             if (whirlwinds.HasComponent(entity) && whirlwinds[entity].Spinning) value.States |= NetPlayerActions.Spinning;
             if (fireballs.HasComponent(entity) && fireballs.IsComponentEnabled(entity)) value.States |= NetPlayerActions.Winding;
+            if (flamethrowers.HasComponent(entity) && flamethrowers[entity].Spraying || teslaCoils.HasComponent(entity) && teslaCoils[entity].Channeling)
+                value.States |= NetPlayerActions.Channeling;
+            if (shieldWalls.HasComponent(entity) && shieldWalls[entity].Raised) value.States |= NetPlayerActions.Guarding;
+            if (sonicBalls.HasComponent(entity) && sonicBalls[entity].Rolling) value.States |= NetPlayerActions.Rolling;
+            if (ballLightnings.HasComponent(entity) && ballLightnings[entity].Flying) value.States |= NetPlayerActions.Flying;
+            if (flurries.HasComponent(entity) && flurries[entity].Active) value.States |= NetPlayerActions.Phasing;
+            if (hookshots.HasComponent(entity) && hookshots[entity].State != HookshotState.Idle)
+            {
+                value.States |= NetPlayerActions.Hooking;
+                value.HookPoint = hookshots[entity].HookPosition;
+            }
 
+            value.Auras = 0;
+            if (Enabled(invulnerables, entity) && !value.Has(NetPlayerActions.Phasing)) value.Auras |= NetPlayerActions.Invulnerable;
+            if (immolations.HasComponent(entity) && immolations[entity].Active) value.Auras |= NetPlayerActions.Immolating;
+            // Direction: 1 clockwise, -1 counter-clockwise (the second press), 0 off or paused for lack of resource
+            float wind = galeWards.HasComponent(entity) ? galeWards[entity].Direction : 0f;
+            if (wind != 0f) value.Auras |= NetPlayerActions.GaleWard;
+            if (wind < 0f) value.Auras |= NetPlayerActions.GaleWardReversed;
+            if (barrages.HasComponent(entity) && barrages[entity].Active) value.Auras |= NetPlayerActions.BarrageOn;
+            if (Enabled(bloodRites, entity)) value.Auras |= NetPlayerActions.Empowered;
+            if (Enabled(shadowsteps, entity)) value.Auras |= NetPlayerActions.Shadowed;
+
+            value.Stance = 0;
             if (skills.HasBuffer(entity))
                 foreach (var skill in skills[entity])
                 {
+                    // Stances' Variant: 0 Strength, 1 Agility, 2 Intelligence; it gives its bonus while usable
+                    if (skill.Type == SkillType.Stances && skill.State.Usable)
+                        value.Stance = (byte)(NetPlayerActions.StanceStrength + math.clamp(skill.State.Variant, 0, 2));
                     if (!skill.events.OnUsed) continue;
                     value.Casts++;
                     value.CastSkill = (byte)skill.Type;
@@ -80,4 +122,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
                 actions.ValueRW = value;
         }
     }
+
+    static bool Enabled<T>(ComponentLookup<T> lookup, Entity entity) where T : unmanaged, IComponentData, IEnableableComponent =>
+        lookup.HasComponent(entity) && lookup.IsComponentEnabled(entity);
 }

@@ -11,8 +11,12 @@ public struct NetVfx : IComponentData
 {
     [GhostField] public VfxType Type;
     [GhostField] public VfxType Impact;
-    /// <summary>Above 0: the effect is sized sideways to it (a field's radius).</summary>
+    /// <summary>Above 0: the effect is sized sideways to it (a field's radius), or every way when Uniform.</summary>
     [GhostField(Quantization = 100)] public float Scale;
+    /// <summary>Sized every way to the stand-in's own LocalTransform.Scale, which the host keeps at its entity's size (a growing flame's radius, a wall's scale).</summary>
+    [GhostField] public bool Uniform;
+    /// <summary>Turned like the stand-in's LocalTransform (a wall), instead of facing where it moves.</summary>
+    [GhostField] public bool Oriented;
     [GhostField] public bool Tinted;
     /// <summary>Tinted: its colour is this damage type's (VfxSystem.StrikeColor).</summary>
     [GhostField] public DamageType Tint;

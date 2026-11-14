@@ -9,9 +9,10 @@ using Unity.Transforms;
 /// <summary>
 /// Picks each rigid model's clip from gameplay state and poses its bones: Death while RigidDeath, Hit when a hit flash
 /// starts, Attack when a melee attack fires (both play once), otherwise Move or Idle from how fast it moves.
-/// A player's skills come from its NetPlayerActions, on every machine: Dash while dashing, Spin while whirlwinding, a
-/// punch per Fists of Thunder hit, Release / Shoot / Sweep when a fireball, barrage bolt or tornado goes out (once each),
-/// Cast while Fireball is held. Clip changes cross-fade. Before transforms are calculated, like the other visual feedback.
+/// A player's skills come from its NetPlayerActions, on every machine: a held state's loop first (Dash, Spin, Tuck while
+/// rolling or flying, Guard, Channel while channeling or hooking), then the clip of a skill just used (SkillClips, once),
+/// and Cast while Fireball is held once nothing else plays. Clip changes cross-fade. Before transforms are calculated,
+/// like the other visual feedback.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup))]
 [BurstCompile]
@@ -69,10 +70,17 @@ public partial struct RigidAnimationSystem : ISystem
             // A skill used since last frame: its clip (SkillClips), Fists of Thunder alternating hands
             var cast = actions.Casts != animator.LastCasts ? SkillClips.For((SkillType)actions.CastSkill) : RigidClip.Idle;
             if (cast == RigidClip.PunchL && actions.Casts % 2 == 0) cast = RigidClip.PunchR;
+            // Barrage bolts keep coming while it's on: they don't cut another clip (or the last bolt's) short
+            if (cast == RigidClip.Shoot && PlayingOnce(ref animation, animator.Clip, animator.Time)) cast = RigidClip.Idle;
             animator.LastCasts = actions.Casts;
-            bool dashing = actions.Has(NetPlayerActions.Dashing);
-            bool spinning = actions.Has(NetPlayerActions.Spinning);
             bool winding = actions.Has(NetPlayerActions.Winding);
+            // The loop of what the player is doing, or Idle for nothing held
+            var held = actions.Has(NetPlayerActions.Dashing) ? RigidClip.Dash
+                : actions.Has(NetPlayerActions.Spinning) ? RigidClip.Spin
+                : actions.Has(NetPlayerActions.Rolling | NetPlayerActions.Flying) ? RigidClip.Tuck
+                : actions.Has(NetPlayerActions.Guarding) ? RigidClip.Guard
+                : actions.Has(NetPlayerActions.Channeling | NetPlayerActions.Hooking) ? RigidClip.Channel
+                : RigidClip.Idle;
 
             var wanted = animator.Clip;
             bool restart = false;
@@ -80,13 +88,9 @@ public partial struct RigidAnimationSystem : ISystem
             {
                 wanted = RigidClip.Death;
             }
-            else if (dashing && animation.Has(RigidClip.Dash))
+            else if (held != RigidClip.Idle && animation.Has(held))
             {
-                wanted = RigidClip.Dash;
-            }
-            else if (spinning && animation.Has(RigidClip.Spin))
-            {
-                wanted = RigidClip.Spin;
+                wanted = held;
             }
             else if (cast != RigidClip.Idle && animation.Has(cast))
             {
@@ -142,11 +146,9 @@ public partial struct RigidAnimationSystem : ISystem
         }
     }
 
-    // Attacks, hits, punches and casts play to their end before the unit goes back to Idle or Move
+    // Clips that don't loop (attacks, hits, punches, skill casts) play to their end before the unit goes back to Idle or Move
     static bool PlayingOnce(ref RigidAnimationBlob animation, RigidClip clip, float time) =>
-        (clip == RigidClip.Attack || clip == RigidClip.Hit || clip == RigidClip.PunchL || clip == RigidClip.PunchR ||
-         clip == RigidClip.Release || clip == RigidClip.Shoot || clip == RigidClip.Sweep) &&
-        animation.Has(clip) && time < animation.Clips[(int)clip].Length;
+        animation.Has(clip) && !animation.Clips[(int)clip].Loop && time < animation.Clips[(int)clip].Length;
 
     static LocalTransform Sample(ref RigidAnimationBlob animation, RigidClip kind, float time, int bone)
     {

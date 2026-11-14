@@ -42,13 +42,14 @@ public partial struct MeteorSystem : ISystem
             float cost = SkillUtil.Cost(m.ResourceCost, stats.ValueRO.Value);
             if (!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO) || !facing) continue;
 
-            // The cursor, at most Range away on the ground plane
+            // The cursor, at most Range away on the ground plane, at the caster's height (a unit's centre, like other
+            // attacks: its landing ring and burning ground are drawn from there)
             var origin = localTransform.ValueRO.Position;
             var target = inputs.ValueRO.MousePosition;
             var offset = new float2(target.x - origin.x, target.z - origin.z);
             float distance = math.length(offset);
             if (distance > m.Range) offset *= m.Range / distance;
-            var spot = new float3(origin.x + offset.x, target.y, origin.z + offset.y);
+            var spot = new float3(origin.x + offset.x, origin.y, origin.z + offset.y);
 
             var strike = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(strike, LocalTransform.FromPosition(spot));
@@ -115,37 +116,6 @@ public partial struct MeteorStrikeSystem : ISystem
                 TimeRemaining = m.HazardDuration, Origin = DamageLabel.Meteor,
             });
             commandBuffer.AddComponent(hazard, source.ValueRO);
-        }
-    }
-}
-
-/// <summary>Placeholder art: where each falling meteor will land, a circle of its impact radius that closes in as it falls.</summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-[BurstCompile]
-partial struct MeteorStrikeUISystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        var sourceStats = SystemAPI.GetComponentLookup<CalculatedStats>(true);
-        foreach (var (strike, transform, source) in SystemAPI.Query<RefRO<MeteorStrike>, RefRO<LocalTransform>, RefRO<Source>>())
-        {
-            float area = sourceStats.HasComponent(source.ValueRO.Entity) ? sourceStats[source.ValueRO.Entity].Value.AreaMultiplier : 1f;
-            float radius = strike.ValueRO.Radius * area;
-            var center = transform.ValueRO.Position;
-            DrawCircle(center, radius, Color.orangeRed);
-            DrawCircle(center, radius * math.saturate(strike.ValueRO.Delay / math.max(strike.ValueRO.FallTime, 1e-3f)), Color.yellow);
-        }
-    }
-
-    static void DrawCircle(float3 center, float radius, Color color)
-    {
-        const int Segments = 32;
-        for (int i = 0; i < Segments; i++)
-        {
-            float a = i * math.PI2 / Segments, b = (i + 1) * math.PI2 / Segments;
-            Debug.DrawLine(center + new float3(math.cos(a), 0.05f, math.sin(a)) * new float3(radius, 1f, radius),
-                           center + new float3(math.cos(b), 0.05f, math.sin(b)) * new float3(radius, 1f, radius), color);
         }
     }
 }

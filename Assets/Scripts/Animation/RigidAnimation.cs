@@ -20,17 +20,21 @@ public enum RigidClip : byte
     Sweep = 12,     // Tornado cast
     Slash = 13,     // Swipe, Riposte, Phantom Edge strikes
     Slam = 14,      // Upheaval, Earth Bending
-    Throw = 15,     // Cursed Hammer, Captain's Shield, Poison Dart, Hookshot
+    Throw = 15,     // Cursed Hammer, Captain's Shield, Poison Dart, Frozen Orb
     Thrust = 16,    // Frost Lance
     Nova = 17,      // Self casts: Cold Snap, Blood Rite, Invulnerability, Stances, Immolation, Gale Ward
     Summon = 18,    // Companions, Thrall, Hydra, Mirror Image, Meteor, Timezone, Teleport
     Bow = 19,       // Multishot, Plague Arrow
-    Channel = 20,   // Flamethrower, Tesla Coil (loops while channeling)
+    Channel = 20,   // Flamethrower, Tesla Coil, Hookshot Slash (loops while channeling or hooking)
     Guard = 21,     // Shield Wall (loops while raised)
     Tuck = 22,      // Ball Lightning, Sonic Ball (loops while flying or rolling)
 }
 
-/// <summary>The clip a player plays once when it uses a skill (NetPlayerActions.CastSkill), or Idle for none.</summary>
+/// <summary>
+/// The clip a player plays once when it uses a skill (NetPlayerActions.CastSkill), or Idle for none. Skills with a held
+/// state (Dash, Whirlwind, Flamethrower, Tesla Coil, Shield Wall, Sonic Ball, Ball Lightning, Hookshot Slash) play their
+/// loop from NetPlayerActions.States instead (RigidAnimationSystem).
+/// </summary>
 public static class SkillClips
 {
     public static RigidClip For(SkillType skill) => skill switch
@@ -41,7 +45,7 @@ public static class SkillClips
         SkillType.FistOfThunder => RigidClip.PunchL,    // PunchR on every other cast
         SkillType.Swipe or SkillType.Riposte or SkillType.PhantomEdge => RigidClip.Slash,
         SkillType.Upheaval or SkillType.EarthBending => RigidClip.Slam,
-        SkillType.CursedHammer or SkillType.CaptainsShield or SkillType.PoisonDart or SkillType.HookshotSlash or SkillType.FrozenOrb => RigidClip.Throw,
+        SkillType.CursedHammer or SkillType.CaptainsShield or SkillType.PoisonDart or SkillType.FrozenOrb => RigidClip.Throw,
         SkillType.FrostLance => RigidClip.Thrust,
         SkillType.ColdSnap or SkillType.BloodRite or SkillType.Invulnerability or SkillType.Stances or SkillType.Immolation or SkillType.GaleWard or SkillType.Shadowstep => RigidClip.Nova,
         SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.RaiseThrall or SkillType.FireHydra or SkillType.MirrorImage

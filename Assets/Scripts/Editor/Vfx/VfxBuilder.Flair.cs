@@ -56,17 +56,7 @@ public static partial class VfxBuilder
         });
         yield return (VfxType.PoisonDart, Save(dart));
 
-        // Flamethrower: many at once, so a few soft licks each
-        var flame = Root_("VFX_Flame", 0.5f, out _);
-        Ps(flame, "Lick", _additive, ps =>
-        {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.2f, 0.4f), new ParticleSystem.MinMaxCurve(0.2f, 0.7f), new ParticleSystem.MinMaxCurve(0.4f, 0.75f), Color.white, rate: 16f);
-            var m = ps.main; m.gravityModifier = -0.3f;
-            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f);
-            Fade(ps, Hex("#FFD24A", 0.8f), Hex("#FF7A1A", 0.6f), Hex("#B8301A", 0f));
-            Shrink(ps);
-        });
-        yield return (VfxType.Flame, Save(flame));
+        // Flamethrower's flames: VfxBuilder.Spells.cs (SpellLooks.Flame)
 
         var shield = Root_("VFX_ShieldDisc", 0.3f, out var shieldInstance);
         var disc = MeshPart(shield, "Disc", Ico("VFX_Ico"), ComicGlow("VFX_ShieldDisc", "#E2E8F0", "#BFD6FF", 0.8f, 0f), Vector3.zero, new Vector3(1f, 0.2f, 1f));

@@ -611,11 +611,6 @@ public struct PhantomEdgeMark : IBufferElementData
     public Entity Enemy;
 }
 
-/// <summary>A render part Phantom Edge hid on its caster (it gets DisableRendering back off when the flurry ends).</summary>
-public struct HiddenByFlurry : IComponentData
-{
-}
-
 /// <summary>
 /// Meteor: calls a meteor down on the cursor (at most Range away, clamped to it). Impact seconds later it hits everything
 /// within Radius for Damage fire, then leaves burning ground (a Hazard) for HazardDuration. Repeats while held.

@@ -143,16 +143,3 @@ public partial struct PoisonMarkExplosionSystem : ISystem
         }
     }
 }
-
-/// <summary>Placeholder art: a green sphere over each marked enemy.</summary>
-[UpdateInGroup(typeof(FeedbackSystemGroup))]
-[BurstCompile]
-partial struct PoisonMarkUISystem : ISystem
-{
-    [BurstCompile]
-    public void OnUpdate(ref SystemState state)
-    {
-        foreach (var transform in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<PoisonMark, Enemy>())
-            ProgrammerArt.DrawSphere(transform.ValueRO.Position + new float3(0f, 2f, 0f), 0.25f, Color.green);
-    }
-}
