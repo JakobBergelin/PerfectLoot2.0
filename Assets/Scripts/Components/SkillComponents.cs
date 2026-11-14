@@ -148,7 +148,7 @@ public class SkillUtil
     /// </summary>
     public static float Cost(float cost, in StatBlock stats) => cost * math.max(0f, 1f - stats.ResourceCostReduction);
 
-    /// <summary>Cost for a Channeled skill: also changed by the caster's ChannelCostChange (Crossfire).</summary>
+    /// <summary>Cost for a Channeled skill: also changed by the caster's ChannelCostChange (Afterburner).</summary>
     public static float ChannelCost(float cost, in StatBlock stats) => Cost(cost, stats) * math.max(0f, 1f + stats.ChannelCostChange);
 
     /// <summary>Cost or ChannelCost, going by the skill's tags.</summary>

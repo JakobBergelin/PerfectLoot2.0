@@ -6,6 +6,7 @@ Before creating, editing, moving or deleting any file, show a short plan: what w
 
 - Reading files and investigating is fine without asking.
 - For trivial one-line fixes, state what you will do and do it.
+- Don't test trivial changes in play mode. If you think a change needs a play-mode test, say so in the plan and ask first.
 
 ## Items
 

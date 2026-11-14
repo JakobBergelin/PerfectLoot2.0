@@ -63,7 +63,7 @@ public struct StatBlock
     [System.NonSerialized] public DamageType ConvertDamageTo;
 
     // Channeled skills cost this much more (0.3 = 30% more, negative: cheaper), see SkillUtil.ChannelCost.
-    // Set each frame by CrossfireStatsSystem, not by items' stats (Add leaves it alone).
+    // Set each frame by AfterburnerStatsSystem, not by items' stats (Add leaves it alone).
     [System.NonSerialized] public float ChannelCostChange;
 
     /// <summary>The damage type this unit's skills deal instead of type (type itself without a conversion).</summary>

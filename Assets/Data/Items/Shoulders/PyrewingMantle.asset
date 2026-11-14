@@ -9,9 +9,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: b1c9542551db49128725e0d60ab47c98, type: 3}
+  m_Script: {fileID: 11500000, guid: a79ebbdad3d88e44f82c706892102321, type: 3}
   m_Name: PyrewingMantle
-  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryShouldersItem
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueShouldersItem
   Name: Pyrewing Mantle
   Id: b95764eb1092013ab25f820994e7d185
   Icon: {fileID: 21300000, guid: f6c9e6bf68f640999a40e152ba1f01d9, type: 3}
