@@ -11,6 +11,8 @@
                 <ui:Button name="difficultyUp" text="&gt;" class="portal-arrow" />
             </ui:VisualElement>
             <ui:Button name="enterButton" text="Enter" class="portal-button" />
+            <!-- A dungeon's leaderboard (LeaderboardPanelHUD); the left stick click on a controller -->
+            <ui:Button name="leaderboardButton" text="Leaderboard" class="portal-button portal-button--quiet" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

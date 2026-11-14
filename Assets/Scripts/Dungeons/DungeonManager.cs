@@ -1,8 +1,10 @@
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using LevelGeneration;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
+using Unity.NetCode;
 using Unity.Physics;
 using Unity.Transforms;
 using UnityEngine;
@@ -77,6 +79,9 @@ public class DungeonManager : MonoBehaviour
     int _newDeaths;             // Since the last Update (CharacterManager.PlayerDied, NetPlayerSpawnSystem.RemotePlayerDied)
     float _statusTimer;         // Until the next status message to the clients
     DungeonStatusRpc _sentStatus;
+    float _elapsed;             // Seconds since the run started (the time used when there is no time limit)
+    // Everyone who played in the run (the host keeps it), by machine and couch player, with their class; who left stays
+    readonly Dictionary<int, DungeonGroupMemberRpc> _group = new Dictionary<int, DungeonGroupMemberRpc>();
 
     public RunState State => _state;
     public DungeonDefinition Dungeon => _dungeon;
@@ -101,6 +106,9 @@ public class DungeonManager : MonoBehaviour
 
     /// <summary>Seconds left of the time limit.</summary>
     public float TimeLeft => Mathf.Max(0f, _timeLeft);
+
+    /// <summary>The time the run used for the leaderboards: of the time limit, death costs included (the clock stops in Survive steps); without one, since it started.</summary>
+    public float TimeUsed => HasTimeLimit ? Mathf.Max(0f, _dungeon.TimeLimit - _timeLeft) : _elapsed;
 
     /// <summary>The time limit's clock runs now: running, and not in a Survive step (it has its own).</summary>
     public bool ClockRunning => HasTimeLimit && CurrentStep is { } step && step.Kind != DungeonStepKind.Survive;
@@ -165,7 +173,12 @@ public class DungeonManager : MonoBehaviour
         if (_state == RunState.None) return;
 
         ReadKills(entityManager);
-        if (_state == RunState.Running) UpdateSteps(entityManager);
+        if (_state == RunState.Running) 
+        {
+            _elapsed += Time.deltaTime;
+            TrackGroup(entityManager);
+            UpdateSteps(entityManager);
+        }
         _newDeaths = 0;
         if (_portalPending) OpenReturnPortal(entityManager);
         SendStatus(entityManager);
@@ -231,6 +244,8 @@ public class DungeonManager : MonoBehaviour
         _outOfTime = false;
         _deaths = 0;
         _newDeaths = 0;
+        _elapsed = 0f;
+        _group.Clear();
         _statusTimer = 0f;
         _sentStatus = default;
         ResetStep();
@@ -283,6 +298,8 @@ public class DungeonManager : MonoBehaviour
         _timeLeft = _dungeon.TimeLimit;
         _deaths = 0;
         _newDeaths = 0;
+        _elapsed = 0f;
+        _group.Clear();
         ResetStep();
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} started at difficulty {_difficulty}, {_totalEnemies} enemies in its spawners, " +
                   $"{_dungeon.Steps.Count} steps, {(HasTimeLimit ? $"{_dungeon.TimeLimit:0} s" : "no")} time limit. Returns to {_returnScene}.", this);
@@ -509,14 +526,111 @@ public class DungeonManager : MonoBehaviour
         if (account != null && !string.IsNullOrEmpty(_dungeon.Id))
             for (int i = 0; i < GameInput.PlayerCount; i++)
                 if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), _dungeon.Id, _difficulty);
-        // And for the other machines' characters (NetDungeonReceiveSystem)
+        // And for the other machines' characters (NetDungeonReceiveSystem), with the group for the leaderboards first
+        TrackGroup(entityManager);
+        var group = new List<DungeonGroupMemberRpc>(_group.Values);
+        int players = Mathf.Clamp(group.Count, 1, Leaderboards.MaxPlayers);
+        float seconds = TimeUsed;
         if (!string.IsNullOrEmpty(_dungeon.Id))
         {
             FixedString64Bytes id = default;
             id.CopyFromTruncated(_dungeon.Id);
-            NetPortal.Send(entityManager, new DungeonCompletedRpc { DungeonId = id, Difficulty = _difficulty });
+            foreach (var member in group) NetPortal.Send(entityManager, member);
+            NetPortal.Send(entityManager, new DungeonCompletedRpc
+            {
+                DungeonId = id, Difficulty = _difficulty, Seconds = seconds, Players = (byte)players, GroupSize = (byte)group.Count,
+            });
+            RecordLeaderboard(_dungeon.Id, _difficulty, seconds, players, group, OwnNetworkId(entityManager));
         }
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete at difficulty {_difficulty}.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete at difficulty {_difficulty} in {Leaderboards.FormatTime(seconds)}, " +
+                  $"{players} player(s).", this);
+    }
+
+    // ---------- Leaderboards ----------
+
+    // Everyone in the game now joins the run's group (or updates their class); Mirror Image copies have no owner
+    void TrackGroup(EntityManager entityManager)
+    {
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetPlayer>(), ComponentType.ReadOnly<GhostOwner>(), ComponentType.ReadOnly<UnitClass>());
+        using var players = query.ToEntityArray(Allocator.Temp);
+        if (players.Length == 0) return;
+        int mine = OwnNetworkId(entityManager);
+        foreach (var player in players)
+        {
+            int owner = entityManager.GetComponentData<GhostOwner>(player).NetworkId;
+            if (owner == 0) continue;
+            int localIndex = entityManager.GetComponentData<NetPlayer>(player).LocalIndex;
+            var characterClass = entityManager.GetComponentData<UnitClass>(player).Type;
+            int key = owner * GameInput.MaxPlayers + localIndex;
+            if (_group.TryGetValue(key, out var known))
+            {
+                if (characterClass != ClassType.None && known.Class != characterClass)
+                {
+                    known.Class = characterClass;
+                    _group[key] = known;
+                }
+                continue;
+            }
+            var member = new DungeonGroupMemberRpc { NetworkId = owner, LocalIndex = (byte)localIndex, Class = characterClass };
+            if (owner == mine)
+            {
+                member.PlatformId = Platform.Current.PlayerId;
+                member.Name.CopyFromTruncated(Leaderboards.MachineName());
+            }
+            else if (TryGetJoined(entityManager, owner, out var joined))
+            {
+                member.PlatformId = joined.PlatformId;
+                member.Name = joined.Name;
+            }
+            _group[key] = member;
+        }
+    }
+
+    // The host's own connection's id (its players' GhostOwner)
+    static int OwnNetworkId(EntityManager entityManager)
+    {
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>(), ComponentType.ReadOnly<LocalConnection>());
+        return query.IsEmpty ? 0 : query.GetSingleton<NetworkId>().Value;
+    }
+
+    // What a remote machine told the host when it joined
+    static bool TryGetJoined(EntityManager entityManager, int networkId, out JoinedPlayers joined)
+    {
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>(), ComponentType.ReadOnly<JoinedPlayers>());
+        using var ids = query.ToComponentDataArray<NetworkId>(Allocator.Temp);
+        using var joins = query.ToComponentDataArray<JoinedPlayers>(Allocator.Temp);
+        for (int i = 0; i < ids.Length; i++)
+            if (ids[i].Value == networkId) { joined = joins[i]; return true; }
+        joined = default;
+        return false;
+    }
+
+    /// <summary>
+    /// A finished run on this machine (the host's own, or a client's from DungeonCompletedRpc): recorded on the leaderboards
+    /// for this machine's account, with its own players first in the group, then shown on player 1's leaderboard panel.
+    /// </summary>
+    public static void RecordLeaderboard(string dungeonId, int difficulty, float seconds, int players, List<DungeonGroupMemberRpc> group, int mine)
+    {
+        if (string.IsNullOrEmpty(dungeonId)) return;
+        var result = new LeaderboardResult { DungeonId = dungeonId, Players = Mathf.Clamp(players, 1, Leaderboards.MaxPlayers), Difficulty = difficulty, Seconds = seconds };
+        var sorted = new List<DungeonGroupMemberRpc>(group);
+        sorted.Sort((a, b) =>
+        {
+            int order = (b.NetworkId == mine).CompareTo(a.NetworkId == mine);
+            if (order == 0) order = a.NetworkId.CompareTo(b.NetworkId);
+            return order != 0 ? order : a.LocalIndex.CompareTo(b.LocalIndex);
+        });
+        foreach (var member in sorted)
+            result.Members.Add(new LeaderboardMember
+            {
+                PlatformId = member.PlatformId,
+                LocalIndex = member.LocalIndex,
+                Class = member.Class,
+                Name = member.Name.ToString(),
+                Owner = member.NetworkId == mine,
+            });
+        string dungeonName = Instance != null && Instance._dungeon != null ? Instance._dungeon.DisplayName : "Dungeon";
+        Leaderboards.Record(result, newBest => LeaderboardPanelHUD.ShowAfterFinish(dungeonId, dungeonName, result.Players, newBest));
     }
 
     // Died in a Survive step, or out of time: every enemy disappears, the level's spawners that haven't triggered never

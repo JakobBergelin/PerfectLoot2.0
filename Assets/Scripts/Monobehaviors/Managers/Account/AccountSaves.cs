@@ -21,6 +21,49 @@ public static class AccountSaves
     const int CharactersVersion = 1;
     const string StatisticsFile = "Statistics.json";
     const int StatisticsVersion = 1;
+    const string LeaderboardsFile = "Leaderboards.json";
+    const int LeaderboardsVersion = 1;
+
+    [Serializable]
+    class LeaderboardsData
+    {
+        public int Version;
+        public List<LeaderboardResult> Bests = new List<LeaderboardResult>();
+    }
+
+    static string LeaderboardsPath(string accountId) => Path.Combine(FolderOf(accountId), LeaderboardsFile);
+
+    /// <summary>Writes the account's best dungeon finishes (LocalLeaderboard).</summary>
+    public static void WriteLeaderboards(string accountId, List<LeaderboardResult> bests) =>
+        Write(LeaderboardsPath(accountId), JsonUtility.ToJson(new LeaderboardsData { Version = LeaderboardsVersion, Bests = bests }, true));
+
+    /// <summary>Fills bests from the account's save (nothing when it has none, or it can't be read: then it's copied aside).</summary>
+    public static void ReadLeaderboards(string accountId, List<LeaderboardResult> bests)
+    {
+        bests.Clear();
+        string path = LeaderboardsPath(accountId);
+        if (!File.Exists(path)) return;
+        LeaderboardsData data = null;
+        try
+        {
+            data = JsonUtility.FromJson<LeaderboardsData>(File.ReadAllText(path));
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Couldn't read {path}: {exception.Message}");
+        }
+        if (data?.Bests == null)
+        {
+            CopyAside(path);
+            return;
+        }
+        foreach (var best in data.Bests)
+            if (best != null && !string.IsNullOrEmpty(best.DungeonId) && best.Players >= 1 && best.Difficulty >= 1)
+            {
+                best.Members ??= new List<LeaderboardMember>();
+                bests.Add(best);
+            }
+    }
 
     [Serializable]
     class CharactersData

@@ -18,7 +18,8 @@ using UnityEngine.UIElements;
 /// a menu panel open. Interact goes to the portal before any loot in reach (AtPortal).
 /// A portal to a dungeon shows its difficulty (DungeonDifficulty): the host's player 1 picks it with the arrows (a controller:
 /// X), from 1 to what their character has unlocked, and a change makes everyone choose the portal again. The other
-/// machines show the host's pick, which the host sends them every second.
+/// machines show the host's pick, which the host sends them every second. Its Leaderboard button (a controller: the left
+/// stick click) opens that player's leaderboard panel for the dungeon (LeaderboardPanelHUD).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
@@ -43,7 +44,7 @@ public class PortalHUD : MonoBehaviour
     int _boundVersion = -1;
     VisualElement _card;
     Label _name, _status, _difficulty;
-    Button _enter, _difficultyDown, _difficultyUp;
+    Button _enter, _difficultyDown, _difficultyUp, _leaderboard;
     VisualElement _difficultyRow;
 
     bool _hovered;
@@ -92,8 +93,9 @@ public class PortalHUD : MonoBehaviour
         _difficulty = root.Q<Label>("difficulty");
         _difficultyDown = root.Q<Button>("difficultyDown");
         _difficultyUp = root.Q<Button>("difficultyUp");
+        _leaderboard = root.Q<Button>("leaderboardButton");
         _boundVersion = version;
-        if (_card == null || _name == null || _enter == null || _difficultyRow == null || _difficulty == null || _difficultyDown == null || _difficultyUp == null)
+        if (_card == null || _name == null || _enter == null || _difficultyRow == null || _difficulty == null || _difficultyDown == null || _difficultyUp == null || _leaderboard == null)
         {
             Debug.LogError("PortalHUD: PortalHUD.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             _card = null;
@@ -108,6 +110,7 @@ public class PortalHUD : MonoBehaviour
         _enter.clicked += () => Choose(GameInput.MouseOwner);
         _difficultyDown.clicked += () => ChangeDifficulty(_dungeon, -1);
         _difficultyUp.clicked += () => ChangeDifficulty(_dungeon, 1);
+        _leaderboard.clicked += () => OpenLeaderboard(GameInput.MouseOwner, _dungeon, _name.text);
         _labelVersion = -1;
         // Clicking the button mustn't also use a skill
         _card.RegisterCallback<PointerEnterEvent>(_ => SetHovered(true));
@@ -132,6 +135,7 @@ public class PortalHUD : MonoBehaviour
                 Choose(i);
         }
         PickDifficultyWithGamepad();
+        OpenLeaderboardWithGamepad();
 
         // The card: the first player's portal (player 1's, else player 2's)
         int shown = AtPortal(0) ? 0 : AtPortal(1) ? 1 : -1;
@@ -152,6 +156,9 @@ public class PortalHUD : MonoBehaviour
         _dungeon = _portalDungeons[shown];
         _name.text = _portalNames[shown].ToString();
         ShowDifficulty();
+        _leaderboard.style.display = _dungeon.IsEmpty ? DisplayStyle.None : DisplayStyle.Flex;
+        string leaderboardText = GameInput.For(shown) != null && GameInput.For(shown).UsingGamepad ? "Leaderboard (LS)" : "Leaderboard";
+        if (_leaderboard.text != leaderboardText) _leaderboard.text = leaderboardText;
         Vector2 panelPosition = RuntimePanelUtils.CameraTransformWorldToPanel(_card.panel, anchor, camera);
         _card.style.left = panelPosition.x;
         _card.style.top = panelPosition.y;
@@ -336,6 +343,36 @@ public class PortalHUD : MonoBehaviour
         string id = _portalDungeons[0].ToString();
         int next = DungeonDifficulty.Of(id) + 1;
         ChangeDifficulty(_portalDungeons[0], next > DungeonDifficulty.Unlocked(id) ? 1 - DungeonDifficulty.Of(id) : 1);
+    }
+
+    // ---------- Leaderboard ----------
+
+    // A player with a controller at a dungeon's portal: the left stick click opens its leaderboard on their panel
+    void OpenLeaderboardWithGamepad()
+    {
+        if (_entering) return;
+        for (int i = 0; i < GameInput.PlayerCount; i++)
+        {
+            var controls = GameInput.For(i);
+            var menus = MenuPanels.For(i);
+            var gamepad = controls?.GamepadDevice;
+            if (!AtPortal(i) || _portalDungeons[i].IsEmpty || gamepad == null || !controls.UsingGamepad || menus.IsPanelOpen || menus.IsTyping) continue;
+            if (gamepad.leftStickButton.wasPressedThisFrame) OpenLeaderboard(i, _portalDungeons[i], _portalNames[i].ToString());
+        }
+    }
+
+    // On the tab for as many players as are in the game now
+    static void OpenLeaderboard(int playerIndex, FixedString64Bytes dungeon, string dungeonName)
+    {
+        if (dungeon.IsEmpty) return;
+        int players = 1;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world != null && world.IsCreated)
+        {
+            using var all = Players(world.EntityManager);
+            players = Mathf.Clamp(all.Length, 1, Leaderboards.MaxPlayers);
+        }
+        LeaderboardPanelHUD.Open(playerIndex, dungeon.ToString(), dungeonName, players);
     }
 
     // The host: steps up or down; everyone has to choose the portal again for the new difficulty

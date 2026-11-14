@@ -35,6 +35,13 @@ public class LocalPlatform : IPlatform
 
     public void ClearPresence() => _presence.Clear();
     public IReadOnlyList<PlatformFriend> FriendsPlaying() => NoFriends;
+
+    // No accounts or leaderboards: Leaderboards keeps the account's own bests instead
+    public ulong PlayerId => 0;
+    public string NameOf(ulong playerId) => null;
+    public bool HasLeaderboards => false;
+    public void SubmitScore(string board, int score, int[] details, System.Action<bool> done) => done?.Invoke(false);
+    public void ReadScores(string board, System.Action<List<PlatformScore>> done) => done?.Invoke(null);
     public void Update() { }
     public void Shutdown() => _presence.Clear();
 }

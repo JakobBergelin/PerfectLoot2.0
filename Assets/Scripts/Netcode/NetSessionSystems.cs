@@ -10,6 +10,8 @@ public struct JoinRequest : IRpcCommand
 {
     public int LocalPlayers;
     public FixedString64Bytes Scene;
+    public ulong PlatformId;            // The client's Steam account (0: none), for the leaderboards
+    public FixedString32Bytes Name;     // Leaderboards.MachineName
 }
 
 public enum JoinRefusal : byte { Full, NotInTown }
@@ -24,6 +26,8 @@ public struct JoinRefused : IRpcCommand
 public struct JoinedPlayers : IComponentData
 {
     public int Count;
+    public ulong PlatformId;            // From its JoinRequest
+    public FixedString32Bytes Name;
 }
 
 /// <summary>
@@ -56,8 +60,8 @@ public partial struct NetStartSystem : ISystem
 
 /// <summary>
 /// Joining. A client, once connected and its scene's ghost prefabs are loaded, goes in game and sends a JoinRequest with
-/// its local player count and scene (again after every scene change). The host takes its own local connection in game at
-/// once. A remote one that is new to the game is turned down (JoinRefused) when it would make more than
+/// its local player count and scene (again after every scene change), and its Steam account and name for the
+/// leaderboards (kept on its connection, JoinedPlayers). The host takes its own local connection in game at once. A remote one that is new to the game is turned down (JoinRefused) when it would make more than
 /// NetSession.MaxPlayers, or when the host isn't in town; one in another scene is sent the host's (LoadSceneRequest) and
 /// asks again from there. Otherwise it goes in game. Netcode only runs its prediction loop, and with it physics, once a
 /// connection is in game.
@@ -115,9 +119,16 @@ public partial struct NetJoinSystem : ISystem
             var ack = SystemAPI.GetComponentRW<NetworkSnapshotAck>(connection);
             ack.ValueRW.NumLoadedPrefabs = 0;
             commandBuffer.AddComponent<NetworkStreamInGame>(connection);
-            commandBuffer.AddComponent(connection, new JoinedPlayers { Count = players });
+            commandBuffer.AddComponent(connection, new JoinedPlayers { Count = players, PlatformId = request.ValueRO.PlatformId, Name = request.ValueRO.Name });
             if (!member) remotePlayers += players;
         }
+    }
+
+    static FixedString32Bytes Truncated(string text)
+    {
+        FixedString32Bytes fixedText = default;
+        fixedText.CopyFromTruncated(text ?? "");
+        return fixedText;
     }
 
     static void Refuse(EntityCommandBuffer commandBuffer, Entity connection, JoinRefusal reason) =>
@@ -166,6 +177,8 @@ public partial struct NetJoinSystem : ISystem
             {
                 LocalPlayers = math.max(1, GameInput.PlayerCount),
                 Scene = SceneManager.GetActiveScene().name,
+                PlatformId = Platform.Current.PlayerId,
+                Name = Truncated(Leaderboards.MachineName()),
             });
         }
     }

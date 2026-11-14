@@ -109,3 +109,23 @@
 .portal-button:active {
     background-color: #B88010;
 }
+
+/* The leaderboard, under Enter */
+.portal-button--quiet {
+    height: 26px;
+    margin-top: 6px;
+    font-size: 13px;
+    -unity-font-style: normal;
+    color: var(--text-color);
+    background-color: rgba(42, 46, 56, 0.9);
+    border-width: 1px;
+    border-color: #4A5060;
+}
+
+.portal-button--quiet:hover {
+    background-color: #383D4A;
+}
+
+.portal-button--quiet:active {
+    background-color: #2A2E38;
+}

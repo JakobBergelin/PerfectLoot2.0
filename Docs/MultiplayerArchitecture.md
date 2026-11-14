@@ -84,6 +84,14 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
   only its pick matters: enemies get their definition's stats, skills and passives for it, and groups grow by the
   dungeon's `ExtraEnemiesPerDifficulty`. Every machine's characters remember the run's difficulty (from the status) and
   unlock the next one when it's finished (`DungeonCompletedRpc` carries it).
+- **Leaderboards** (`Leaderboards`, `LeaderboardPanelHUD`): one per dungeon and player count (1 to 4), each account's
+  best; a higher difficulty always beats a faster time. The host tracks the run's group (`DungeonManager`: everyone who
+  played in it, by machine and couch player, with their class; the category is the most players at once) and its time
+  (of the time limit, death costs included). Clients send their Steam account and name in `JoinRequest`. On a finish
+  the host sends each member (`DungeonGroupMemberRpc`) and the result (`DungeonCompletedRpc`); every machine records it
+  for its own account (Steam's leaderboard through `IPlatform.SubmitScore`, and the account's own best in its save),
+  then opens player 1's panel. The panel reads the player's and their Steam friends' entries, or the own best without
+  Steam. A portal card's Leaderboard button (left stick click) opens it too.
 - **The dungeon card on clients**: the host sends how the run stands (`DungeonStatusRpc`: state, step, difficulty, kills,
   time left, deaths) whenever it changes and every second; the client's `DungeonManager.ApplyStatus` fills the same fields its
   `DungeonHUD` reads, and runs the clocks on in between. Leaving is the host's (a client leaves the game from its menu).

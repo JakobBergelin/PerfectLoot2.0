@@ -8,7 +8,8 @@ using Unity.Networking.Transport;
 using UnityEngine;
 
 /// <summary>
-/// Steam, through Steamworks.NET: the persona name, Rich Presence, the friends playing this game, and joining them.
+/// Steam, through Steamworks.NET: the persona name, Rich Presence, the friends playing this game, joining them, and
+/// leaderboards (made on first use; read for the player and their friends).
 /// A game is joined by its host's SteamID (JoinId): the host listens on Steam (SteamNetworkInterface, added by
 /// NetDriverConstructor), and a client connects to the host's SteamID through Steam's relays. Steam's Join Game in the
 /// friends list and invites hand over the connect string ("+connect_host &lt;SteamID&gt;") as JoinRequested.
@@ -103,6 +104,97 @@ public class SteamPlatform : IPlatform
             });
         }
         return _friends;
+    }
+
+    // ---------- Accounts and leaderboards ----------
+
+    public ulong PlayerId => SteamUser.GetSteamID().m_SteamID;
+
+    public string NameOf(ulong playerId)
+    {
+        if (playerId == 0) return null;
+        if (playerId == PlayerId) return SteamFriends.GetPersonaName();
+        var id = new CSteamID(playerId);
+        // Someone who isn't a friend: Steam fetches their name first (true while it does)
+        if (SteamFriends.RequestUserInformation(id, true)) return null;
+        string name = SteamFriends.GetFriendPersonaName(id);
+        return string.IsNullOrEmpty(name) || name == "[unknown]" ? null : name;
+    }
+
+    public bool HasLeaderboards => true;
+
+    // Leaderboards found so far, by name, and the calls waiting for Steam's answer (kept so they aren't collected)
+    readonly Dictionary<string, SteamLeaderboard_t> _boards = new Dictionary<string, SteamLeaderboard_t>();
+    readonly List<object> _pending = new List<object>();
+
+    public void SubmitScore(string board, int score, int[] details, Action<bool> done)
+    {
+        FindBoard(board, handle =>
+        {
+            if (handle == null) { done?.Invoke(false); return; }
+            var call = SteamUserStats.UploadLeaderboardScore(handle.Value, ELeaderboardUploadScoreMethod.k_ELeaderboardUploadScoreMethodKeepBest,
+                score, details, details?.Length ?? 0);
+            Await<LeaderboardScoreUploaded_t>(call, (uploaded, failed) =>
+            {
+                bool ok = !failed && uploaded.m_bSuccess != 0;
+                if (!ok) Debug.LogWarning($"SteamPlatform: couldn't send the score to {board}.");
+                done?.Invoke(ok && uploaded.m_bScoreChanged != 0);
+            });
+        });
+    }
+
+    public void ReadScores(string board, Action<List<PlatformScore>> done)
+    {
+        FindBoard(board, handle =>
+        {
+            if (handle == null) { done?.Invoke(null); return; }
+            var call = SteamUserStats.DownloadLeaderboardEntries(handle.Value, ELeaderboardDataRequest.k_ELeaderboardDataRequestFriends, 0, 0);
+            Await<LeaderboardScoresDownloaded_t>(call, (downloaded, failed) =>
+            {
+                if (failed) { done?.Invoke(null); return; }
+                var scores = new List<PlatformScore>();
+                for (int i = 0; i < downloaded.m_cEntryCount; i++)
+                {
+                    var details = new int[Leaderboards.MaxDetails];
+                    if (!SteamUserStats.GetDownloadedLeaderboardEntry(downloaded.m_hSteamLeaderboardEntries, i, out var entry, details, details.Length)) continue;
+                    Array.Resize(ref details, Mathf.Clamp(entry.m_cDetails, 0, details.Length));
+                    scores.Add(new PlatformScore { PlayerId = entry.m_steamIDUser.m_SteamID, Score = entry.m_nScore, Details = details });
+                }
+                done?.Invoke(scores);
+            });
+        });
+    }
+
+    // The leaderboard's handle (made when missing: higher scores first), or null when Steam couldn't find or make it
+    void FindBoard(string board, Action<SteamLeaderboard_t?> then)
+    {
+        if (_boards.TryGetValue(board, out var known)) { then(known); return; }
+        var call = SteamUserStats.FindOrCreateLeaderboard(board, ELeaderboardSortMethod.k_ELeaderboardSortMethodDescending,
+            ELeaderboardDisplayType.k_ELeaderboardDisplayTypeNumeric);
+        Await<LeaderboardFindResult_t>(call, (found, failed) =>
+        {
+            if (failed || found.m_bLeaderboardFound == 0)
+            {
+                Debug.LogWarning($"SteamPlatform: couldn't find or make the leaderboard {board}.");
+                then(null);
+                return;
+            }
+            _boards[board] = found.m_hSteamLeaderboard;
+            then(found.m_hSteamLeaderboard);
+        });
+    }
+
+    // Runs then with Steam's answer to an asynchronous call (from RunCallbacks, on the main thread)
+    void Await<T>(SteamAPICall_t call, Action<T, bool> then) where T : struct
+    {
+        CallResult<T> result = null;
+        result = CallResult<T>.Create((answer, failed) =>
+        {
+            _pending.Remove(result);
+            then(answer, failed);
+        });
+        result.Set(call);
+        _pending.Add(result);
     }
 
     public void Update() => SteamAPI.RunCallbacks();

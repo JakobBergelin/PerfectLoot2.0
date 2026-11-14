@@ -4,7 +4,7 @@ using Unity.Networking.Transport;
 
 /// <summary>
 /// What the game needs from the platform it runs on: who the player is, the Rich Presence friends see, which friends are
-/// playing, and how to reach their games. Two versions: LocalPlatform (no platform: development, join by IP) and
+/// playing, how to reach their games, and leaderboards (Leaderboards). Two versions: LocalPlatform (no platform: development, join by IP) and
 /// SteamPlatform. Gameplay never calls Steam directly; it goes through Platform.Current.
 /// </summary>
 public interface IPlatform
@@ -39,11 +39,37 @@ public interface IPlatform
     /// <summary>Friends playing this game now, with what their Rich Presence says. Empty without a platform.</summary>
     IReadOnlyList<PlatformFriend> FriendsPlaying();
 
+    /// <summary>The player's account on the platform (a SteamID), or 0 without one.</summary>
+    ulong PlayerId { get; }
+
+    /// <summary>The name of a player's account on the platform; null while it's being asked for, or without a platform.</summary>
+    string NameOf(ulong playerId);
+
+    /// <summary>The platform keeps leaderboards (Steam); without, Leaderboards shows the account's own bests.</summary>
+    bool HasLeaderboards { get; }
+
+    /// <summary>
+    /// Sends a score to a leaderboard (made when missing; higher is better, each player's best is kept), with details
+    /// to read back. done: whether it became the player's best; false when it failed.
+    /// </summary>
+    void SubmitScore(string board, int score, int[] details, Action<bool> done);
+
+    /// <summary>A leaderboard's scores of the player and their friends; null when it couldn't be read.</summary>
+    void ReadScores(string board, Action<List<PlatformScore>> done);
+
     /// <summary>Every frame: lets the platform run its callbacks.</summary>
     void Update();
 
     /// <summary>On quit.</summary>
     void Shutdown();
+}
+
+/// <summary>One player's score on a platform leaderboard.</summary>
+public struct PlatformScore
+{
+    public ulong PlayerId;
+    public int Score;
+    public int[] Details;
 }
 
 /// <summary>A friend playing this game, as their Rich Presence describes it (PresenceKeys).</summary>

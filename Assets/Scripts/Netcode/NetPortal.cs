@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Unity.Collections;
 using Unity.Entities;
 using Unity.Mathematics;
@@ -12,11 +13,27 @@ public struct PortalChoiceRpc : IRpcCommand
     public FixedString64Bytes Scene;
 }
 
-/// <summary>The host to a client: the dungeon is finished at this difficulty; its players' characters record it (AccountManager).</summary>
+/// <summary>
+/// The host to a client: the dungeon is finished at this difficulty; its players' characters record it (AccountManager),
+/// and it records the result on the leaderboards (Leaderboards), with the group sent just before (DungeonGroupMemberRpc).
+/// </summary>
 public struct DungeonCompletedRpc : IRpcCommand
 {
     public FixedString64Bytes DungeonId;
     public int Difficulty;
+    public float Seconds;       // DungeonManager.TimeUsed
+    public byte Players;        // The leaderboard's category
+    public byte GroupSize;      // DungeonGroupMemberRpcs that belong to it (they may arrive after it)
+}
+
+/// <summary>The host to a client: one player of the group that finished the dungeon, sent just before its DungeonCompletedRpc.</summary>
+public struct DungeonGroupMemberRpc : IRpcCommand
+{
+    public int NetworkId;       // Their machine's connection (GhostOwner)
+    public byte LocalIndex;
+    public ulong PlatformId;
+    public ClassType Class;
+    public FixedString32Bytes Name;
 }
 
 /// <summary>The host to a client: the difficulty the host's player 1 picked for a dungeon, shown on its portal card (DungeonDifficulty).</summary>
@@ -199,15 +216,20 @@ public partial class NetPortalReceiveSystem : SystemBase
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 public partial class NetDungeonReceiveSystem : SystemBase
 {
-    EntityQuery _status, _completed, _portals, _difficulties;
+    EntityQuery _status, _completed, _members, _portals, _difficulties;
+    // The group of the next DungeonCompletedRpc, and that message while its group isn't all here (RPCs of different
+    // types may come in either order)
+    readonly List<DungeonGroupMemberRpc> _group = new List<DungeonGroupMemberRpc>();
+    DungeonCompletedRpc? _waiting;
 
     protected override void OnCreate()
     {
         _status = SystemAPI.QueryBuilder().WithAll<DungeonStatusRpc, ReceiveRpcCommandRequest>().Build();
         _completed = SystemAPI.QueryBuilder().WithAll<DungeonCompletedRpc, ReceiveRpcCommandRequest>().Build();
+        _members = SystemAPI.QueryBuilder().WithAll<DungeonGroupMemberRpc, ReceiveRpcCommandRequest>().Build();
         _portals = SystemAPI.QueryBuilder().WithAll<ReturnPortalRpc, ReceiveRpcCommandRequest>().Build();
         _difficulties = SystemAPI.QueryBuilder().WithAll<PortalDifficultyRpc, ReceiveRpcCommandRequest>().Build();
-        RequireAnyForUpdate(_status, _completed, _portals, _difficulties);
+        RequireAnyForUpdate(_status, _completed, _members, _portals, _difficulties);
     }
 
     protected override void OnUpdate()
@@ -219,15 +241,33 @@ public partial class NetDungeonReceiveSystem : SystemBase
             if (statuses.Length > 0 && DungeonManager.Instance != null) DungeonManager.Instance.ApplyStatus(statuses[statuses.Length - 1]);
         }
 
+        using (var members = _members.ToComponentDataArray<DungeonGroupMemberRpc>(Allocator.Temp))
+        {
+            EntityManager.DestroyEntity(_members);
+            if (!NetSession.IsHost) foreach (var member in members) _group.Add(member);
+        }
+
         using (var completed = _completed.ToComponentDataArray<DungeonCompletedRpc>(Allocator.Temp))
         {
             EntityManager.DestroyEntity(_completed);
-            var account = AccountManager.Instance;
-            foreach (var message in completed)
-                if (account != null && !NetSession.IsHost)
-                    for (int i = 0; i < GameInput.PlayerCount; i++)
-                        if (account.SelectedCharacterOf(i) != null)
-                            account.RecordDungeonCompleted(account.SelectedCharacterOf(i), message.DungeonId.ToString(), message.Difficulty);
+            if (!NetSession.IsHost)
+                foreach (var message in completed)
+                {
+                    _waiting = message;
+                    var account = AccountManager.Instance;
+                    if (account != null)
+                        for (int i = 0; i < GameInput.PlayerCount; i++)
+                            if (account.SelectedCharacterOf(i) != null)
+                                account.RecordDungeonCompleted(account.SelectedCharacterOf(i), message.DungeonId.ToString(), message.Difficulty);
+                }
+        }
+        // On the leaderboards once its whole group is here
+        if (_waiting is { } finished && _group.Count >= finished.GroupSize)
+        {
+            int mine = SystemAPI.TryGetSingleton<NetworkId>(out var networkId) ? networkId.Value : 0;
+            DungeonManager.RecordLeaderboard(finished.DungeonId.ToString(), finished.Difficulty, finished.Seconds, finished.Players, _group, mine);
+            _group.Clear();
+            _waiting = null;
         }
 
         using (var difficulties = _difficulties.ToComponentDataArray<PortalDifficultyRpc>(Allocator.Temp))
