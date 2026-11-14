@@ -101,9 +101,9 @@ public class EnemyManager : MonoBehaviour
         }
 
         // Template: the baked visual prefab plus the definition's gameplay components, turned back into a prefab
-        // (on the whole linked group, so its health bar isn't simulated or drawn either)
+        // (on the whole linked group, so its health bar isn't simulated or drawn either), as strong as the dungeon's difficulty
         var template = entityManager.Instantiate(prefab);
-        EnemyEntitySetup.AddGameplayComponents(entityManager, template, definition);
+        EnemyEntitySetup.AddGameplayComponents(entityManager, template, definition, DungeonDifficulty.Current);
 
         // Rising out of the ground: start a body height under the spawn point; it doesn't move or act until risen (SpawnRiseSystem)
         float riseDepth = 2f * Mathf.Max(0.01f, definition.Scale);

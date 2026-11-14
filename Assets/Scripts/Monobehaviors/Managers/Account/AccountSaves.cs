@@ -58,6 +58,8 @@ public static class AccountSaves
     {
         public string DungeonId;
         public int Count;
+        public int Highest;     // Saves from before difficulties have 0
+        public int Last;
     }
 
     [Serializable]
@@ -187,7 +189,10 @@ public static class AccountSaves
             saved.ActiveSkills.AddRange(character.ActiveSkills);
             saved.Passives.AddRange(character.Passives);
             foreach (var completed in character.CompletedDungeons)
-                saved.CompletedDungeons.Add(new CompletedDungeonData { DungeonId = completed.DungeonId, Count = completed.Count });
+                saved.CompletedDungeons.Add(new CompletedDungeonData
+                {
+                    DungeonId = completed.DungeonId, Count = completed.Count, Highest = completed.Highest, Last = completed.Last,
+                });
             data.Characters.Add(saved);
         }
         Write(CharactersPath(accountId), JsonUtility.ToJson(data, true));
@@ -254,11 +259,18 @@ public static class AccountSaves
             // Saves from before skills were saved have none; unknown names are skipped when they're equipped
             if (saved.ActiveSkills != null) character.ActiveSkills.AddRange(saved.ActiveSkills);
             if (saved.Passives != null) character.Passives.AddRange(saved.Passives);
-            // Saves from before dungeons have none
+            // Saves from before dungeons have none. A dungeon finished before difficulties was finished at 1.
             foreach (var completed in saved.CompletedDungeons ?? new List<CompletedDungeonData>())
             {
-                if (completed == null || string.IsNullOrEmpty(completed.DungeonId) || completed.Count <= 0) continue;
-                character.CompletedDungeons.Add(new AccountCharacter.CompletedDungeon { DungeonId = completed.DungeonId, Count = completed.Count });
+                if (completed == null || string.IsNullOrEmpty(completed.DungeonId) || (completed.Count <= 0 && completed.Last <= 0)) continue;
+                int count = Mathf.Max(0, completed.Count);
+                character.CompletedDungeons.Add(new AccountCharacter.CompletedDungeon
+                {
+                    DungeonId = completed.DungeonId,
+                    Count = count,
+                    Highest = count > 0 ? Mathf.Max(1, completed.Highest) : Mathf.Max(0, completed.Highest),
+                    Last = Mathf.Max(1, completed.Last),
+                });
             }
             characters.Add(character);
         }

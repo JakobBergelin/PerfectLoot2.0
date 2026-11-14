@@ -12,10 +12,18 @@ public struct PortalChoiceRpc : IRpcCommand
     public FixedString64Bytes Scene;
 }
 
-/// <summary>The host to a client: the dungeon is finished; its players' characters record it (AccountManager).</summary>
+/// <summary>The host to a client: the dungeon is finished at this difficulty; its players' characters record it (AccountManager).</summary>
 public struct DungeonCompletedRpc : IRpcCommand
 {
     public FixedString64Bytes DungeonId;
+    public int Difficulty;
+}
+
+/// <summary>The host to a client: the difficulty the host's player 1 picked for a dungeon, shown on its portal card (DungeonDifficulty).</summary>
+public struct PortalDifficultyRpc : IRpcCommand
+{
+    public FixedString64Bytes DungeonId;
+    public int Difficulty;
 }
 
 /// <summary>The host to a client: how the dungeon run stands, for its DungeonHUD (DungeonManager.ApplyStatus).</summary>
@@ -23,6 +31,7 @@ public struct DungeonStatusRpc : IRpcCommand
 {
     public byte State;          // DungeonManager.RunState
     public byte Step;
+    public int Difficulty;
     public int Kills;
     public int TotalEnemies;
     public int Deaths;
@@ -190,14 +199,15 @@ public partial class NetPortalReceiveSystem : SystemBase
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
 public partial class NetDungeonReceiveSystem : SystemBase
 {
-    EntityQuery _status, _completed, _portals;
+    EntityQuery _status, _completed, _portals, _difficulties;
 
     protected override void OnCreate()
     {
         _status = SystemAPI.QueryBuilder().WithAll<DungeonStatusRpc, ReceiveRpcCommandRequest>().Build();
         _completed = SystemAPI.QueryBuilder().WithAll<DungeonCompletedRpc, ReceiveRpcCommandRequest>().Build();
         _portals = SystemAPI.QueryBuilder().WithAll<ReturnPortalRpc, ReceiveRpcCommandRequest>().Build();
-        RequireAnyForUpdate(_status, _completed, _portals);
+        _difficulties = SystemAPI.QueryBuilder().WithAll<PortalDifficultyRpc, ReceiveRpcCommandRequest>().Build();
+        RequireAnyForUpdate(_status, _completed, _portals, _difficulties);
     }
 
     protected override void OnUpdate()
@@ -216,7 +226,14 @@ public partial class NetDungeonReceiveSystem : SystemBase
             foreach (var message in completed)
                 if (account != null && !NetSession.IsHost)
                     for (int i = 0; i < GameInput.PlayerCount; i++)
-                        if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), message.DungeonId.ToString());
+                        if (account.SelectedCharacterOf(i) != null)
+                            account.RecordDungeonCompleted(account.SelectedCharacterOf(i), message.DungeonId.ToString(), message.Difficulty);
+        }
+
+        using (var difficulties = _difficulties.ToComponentDataArray<PortalDifficultyRpc>(Allocator.Temp))
+        {
+            EntityManager.DestroyEntity(_difficulties);
+            foreach (var message in difficulties) DungeonDifficulty.Receive(message);
         }
 
         using (var portals = _portals.ToComponentDataArray<ReturnPortalRpc>(Allocator.Temp))

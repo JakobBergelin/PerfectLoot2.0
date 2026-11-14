@@ -17,6 +17,9 @@ using UnityEngine.SceneManagement;
 /// at the player (they always know where it is). Leave goes back without finishing; the next visit is a new run with a
 /// new layout (every scene load makes a new world). Kept between scenes (GameBootstrap's rig); DungeonHUD shows it.
 ///
+/// A run is at the difficulty picked at the dungeon's portal (DungeonDifficulty): its enemies spawn stronger and in larger
+/// numbers, its Kill Enemies target counts them, and finishing it unlocks the next difficulty for the players' characters.
+///
 /// The dungeon's TimeLimit runs out (Fail, no further step starts) unless it's finished first; its clock stops in
 /// Survive steps, which have their own. What a death of any player (this machine's or another's) does depends on the
 /// step: in Kill steps it takes DeathPenalty × (1 + the run's earlier deaths) seconds off the clock, in Reach Exit
@@ -59,6 +62,7 @@ public class DungeonManager : MonoBehaviour
 
     DungeonDefinition _dungeon;
     RunState _state;
+    int _difficulty = 1;
     int _step;
     int _kills;                 // Non-boss enemies killed since the run started
     int _totalEnemies;          // In the level's spawners
@@ -76,6 +80,8 @@ public class DungeonManager : MonoBehaviour
 
     public RunState State => _state;
     public DungeonDefinition Dungeon => _dungeon;
+    /// <summary>The run's difficulty (DungeonDifficulty), set when it starts.</summary>
+    public int Difficulty => _difficulty;
     public int StepIndex => _step;
     public int StepCount => _dungeon != null ? _dungeon.Steps.Count : 0;
     public int Kills => _kills;
@@ -170,7 +176,7 @@ public class DungeonManager : MonoBehaviour
     {
         var status = new DungeonStatusRpc
         {
-            State = (byte)_state, Step = (byte)_step, Kills = _kills, TotalEnemies = _totalEnemies, Deaths = _deaths,
+            State = (byte)_state, Step = (byte)_step, Difficulty = _difficulty, Kills = _kills, TotalEnemies = _totalEnemies, Deaths = _deaths,
             OutOfTime = _outOfTime, TimeLeft = _timeLeft, Survived = _survived,
         };
         _statusTimer -= Time.deltaTime;
@@ -186,9 +192,12 @@ public class DungeonManager : MonoBehaviour
     public void ApplyStatus(DungeonStatusRpc status)
     {
         if (NetSession.IsHost || !GameArea.TryGet(out var area) || area.Kind != AreaKind.Dungeon || area.Dungeon.Value == null) return;
+        // This machine's characters remember the run's difficulty too
+        if (!_checked) RecordStarted(area.Dungeon.Value, Mathf.Max(1, status.Difficulty));
         _checked = true;
         _dungeon = area.Dungeon.Value;
         _state = (RunState)status.State;
+        _difficulty = Mathf.Max(1, status.Difficulty);
         _step = status.Step;
         _kills = status.Kills;
         _totalEnemies = status.TotalEnemies;
@@ -214,6 +223,7 @@ public class DungeonManager : MonoBehaviour
         _portalPending = false;
         _dungeon = null;
         _state = RunState.None;
+        _difficulty = 1;
         _step = 0;
         _kills = 0;
         _totalEnemies = 0;
@@ -254,11 +264,14 @@ public class DungeonManager : MonoBehaviour
             return;
         }
 
+        // The difficulty picked at its portal: as many enemies as the spawners will make at it (LevelEnemySpawnerSystem)
+        _difficulty = DungeonDifficulty.Current;
         using var spawners = entityManager.CreateEntityQuery(ComponentType.ReadOnly<LevelEnemySpawner>(), ComponentType.ReadOnly<LevelEnemySpawnerEntry>());
         using var spawnerEntities = spawners.ToEntityArray(Allocator.Temp);
         foreach (var spawner in spawnerEntities)
             foreach (var entry in entityManager.GetBuffer<LevelEnemySpawnerEntry>(spawner, isReadOnly: true))
-                _totalEnemies += math.max(0, entry.Count);
+                _totalEnemies += math.max(0, _dungeon.EnemyCount(entry.Count, _difficulty));
+        RecordStarted(_dungeon, _difficulty);
 
         _run = entityManager.CreateEntity(typeof(DungeonRun));
         entityManager.AddBuffer<DungeonKill>(_run);
@@ -271,8 +284,17 @@ public class DungeonManager : MonoBehaviour
         _deaths = 0;
         _newDeaths = 0;
         ResetStep();
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} started, {_totalEnemies} enemies in its spawners, {_dungeon.Steps.Count} steps, " +
-                  $"{(HasTimeLimit ? $"{_dungeon.TimeLimit:0} s" : "no")} time limit. Returns to {_returnScene}.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} started at difficulty {_difficulty}, {_totalEnemies} enemies in its spawners, " +
+                  $"{_dungeon.Steps.Count} steps, {(HasTimeLimit ? $"{_dungeon.TimeLimit:0} s" : "no")} time limit. Returns to {_returnScene}.", this);
+    }
+
+    // This machine's players' characters remember the difficulty they last ran the dungeon at
+    static void RecordStarted(DungeonDefinition dungeon, int difficulty)
+    {
+        var account = AccountManager.Instance;
+        if (account == null || dungeon == null || string.IsNullOrEmpty(dungeon.Id)) return;
+        for (int i = 0; i < GameInput.PlayerCount; i++)
+            if (account.SelectedCharacterOf(i) != null) account.RecordDungeonStarted(account.SelectedCharacterOf(i), dungeon.Id, difficulty);
     }
 
     static string FindReturnScene()
@@ -430,15 +452,16 @@ public class DungeonManager : MonoBehaviour
         if (enemyManager == null || !enemyManager.IsReady || !TryGetPlayer(entityManager, out var player)) return;
         _nextWave = step.WaveInterval;
 
+        // More of them at higher difficulties, and more may be alive at once
         using var alive = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Enemy>());
-        if (step.MaxAlive > 0 && alive.CalculateEntityCount() >= step.MaxAlive) return;
+        if (step.MaxAlive > 0 && alive.CalculateEntityCount() >= _dungeon.EnemyCount(step.MaxAlive, _difficulty)) return;
         var wave = PickWave(step);
         if (wave == null) return;
 
         var point = AroundPlayer(entityManager, player, step.WaveDistance, UnityEngine.Random.value * math.PI * 2f);
         foreach (var entry in wave.Enemies)
             if (entry?.Definition != null && entry.Count > 0)
-                enemyManager.SpawnGroup(entry.Definition, point, entry.Count, step.WaveSpread, riseIn: true, huntPlayer: true);
+                enemyManager.SpawnGroup(entry.Definition, point, _dungeon.EnemyCount(entry.Count, _difficulty), step.WaveSpread, riseIn: true, huntPlayer: true);
     }
 
     static PlacementEnemyGroup PickWave(DungeonStep step)
@@ -481,19 +504,19 @@ public class DungeonManager : MonoBehaviour
         OpenReturnPortal(entityManager);
         Experience.GiveAllPlayers(entityManager, _dungeon.CompletionExperience);
 
-        // Finished for every player's character
+        // Finished for every player's character, which unlocks the next difficulty
         var account = AccountManager.Instance;
         if (account != null && !string.IsNullOrEmpty(_dungeon.Id))
             for (int i = 0; i < GameInput.PlayerCount; i++)
-                if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), _dungeon.Id);
+                if (account.SelectedCharacterOf(i) != null) account.RecordDungeonCompleted(account.SelectedCharacterOf(i), _dungeon.Id, _difficulty);
         // And for the other machines' characters (NetDungeonReceiveSystem)
         if (!string.IsNullOrEmpty(_dungeon.Id))
         {
             FixedString64Bytes id = default;
             id.CopyFromTruncated(_dungeon.Id);
-            NetPortal.Send(entityManager, new DungeonCompletedRpc { DungeonId = id });
+            NetPortal.Send(entityManager, new DungeonCompletedRpc { DungeonId = id, Difficulty = _difficulty });
         }
-        Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete.", this);
+        Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete at difficulty {_difficulty}.", this);
     }
 
     // Died in a Survive step, or out of time: every enemy disappears, the level's spawners that haven't triggered never

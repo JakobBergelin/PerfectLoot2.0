@@ -61,7 +61,24 @@ public class DungeonDefinition : ScriptableObject
     [Tooltip("Spawned next to the player when the dungeon is finished (the Portal prefab). Leads back where the player came from.")]
     public GameObject ReturnPortal;
 
+    [Header("Difficulty")]
+    [Tooltip("More enemies for each difficulty above 1, as a share of the level's spawner groups, the Survive waves and their " +
+             "Max Alive: 0.15 = +15% per difficulty (difficulty 3: +30%). The enemies themselves grow by their own definitions.")]
+    [Min(0f)] public float ExtraEnemiesPerDifficulty = 0.15f;
+    [Tooltip("The most the enemy count can be multiplied by, so high difficulties don't slow the game down; past it only the " +
+             "enemies grow stronger. 0: no limit.")]
+    [Min(0f)] public float MaxEnemyMultiplier = 3f;
+
     public string DisplayName => string.IsNullOrWhiteSpace(Name) ? name : Name;
+
+    /// <summary>How many enemies a group of count has at a difficulty (at least one of a group that has any).</summary>
+    public int EnemyCount(int count, int difficulty)
+    {
+        if (count <= 0) return count;
+        float multiplier = 1f + ExtraEnemiesPerDifficulty * Mathf.Max(0, difficulty - 1);
+        if (MaxEnemyMultiplier > 0f) multiplier = Mathf.Min(multiplier, Mathf.Max(1f, MaxEnemyMultiplier));
+        return Mathf.Max(1, Mathf.RoundToInt(count * multiplier));
+    }
 
 #if UNITY_EDITOR
     void OnValidate()

@@ -16,11 +16,15 @@ using UnityEngine.UIElements;
 /// it waits for. The host enters once everyone is ready, and takes the other machines along. Going into a dungeon it
 /// also warns about equipped skills whose requirements aren't met (they can't be used there). Hidden while player 1 has
 /// a menu panel open. Interact goes to the portal before any loot in reach (AtPortal).
+/// A portal to a dungeon shows its difficulty (DungeonDifficulty): the host's player 1 picks it with the arrows (a controller:
+/// X), from 1 to what their character has unlocked, and a change makes everyone choose the portal again. The other
+/// machines show the host's pick, which the host sends them every second.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class PortalHUD : MonoBehaviour
 {
     const string HiddenClass = "portal-card--hidden";
+    const float DifficultyInterval = 1f;    // Seconds between the host's difficulty picks to the clients
 
     [Tooltip("Height above the portal's origin where the card's bottom edge sits, in meters")]
     public float CardHeight = 3f;
@@ -29,6 +33,7 @@ public class PortalHUD : MonoBehaviour
     static readonly FixedString64Bytes[] _at = new FixedString64Bytes[GameInput.MaxPlayers];
     readonly float3[] _portalPositions = new float3[GameInput.MaxPlayers];
     readonly FixedString64Bytes[] _portalNames = new FixedString64Bytes[GameInput.MaxPlayers];
+    readonly FixedString64Bytes[] _portalDungeons = new FixedString64Bytes[GameInput.MaxPlayers];
 
     /// <summary>True while this player stands at a portal: their Interact is for it (GroundLootHUD leaves the loot alone).</summary>
     public static bool AtPortal(int playerIndex) =>
@@ -37,12 +42,15 @@ public class PortalHUD : MonoBehaviour
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _card;
-    Label _name, _status;
-    Button _enter;
+    Label _name, _status, _difficulty;
+    Button _enter, _difficultyDown, _difficultyUp;
+    VisualElement _difficultyRow;
 
     bool _hovered;
     bool _entering;
     FixedString64Bytes _scene;      // Of the portal the card shows; empty while hidden
+    FixedString64Bytes _dungeon;    // Its dungeon's id, or empty
+    float _difficultyTimer;         // The host: until it sends its difficulty picks again
     int _labelVersion = -1;         // GameInput.Version the Enter button's key label is from
 
     void OnEnable()
@@ -80,8 +88,12 @@ public class PortalHUD : MonoBehaviour
         _card = root.Q<VisualElement>("portalCard");
         _name = root.Q<Label>("portalName");
         _enter = root.Q<Button>("enterButton");
+        _difficultyRow = root.Q<VisualElement>("difficultyRow");
+        _difficulty = root.Q<Label>("difficulty");
+        _difficultyDown = root.Q<Button>("difficultyDown");
+        _difficultyUp = root.Q<Button>("difficultyUp");
         _boundVersion = version;
-        if (_card == null || _name == null || _enter == null)
+        if (_card == null || _name == null || _enter == null || _difficultyRow == null || _difficulty == null || _difficultyDown == null || _difficultyUp == null)
         {
             Debug.LogError("PortalHUD: PortalHUD.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             _card = null;
@@ -94,6 +106,8 @@ public class PortalHUD : MonoBehaviour
         _card.Insert(_card.IndexOf(_name) + 1, _status);
 
         _enter.clicked += () => Choose(GameInput.MouseOwner);
+        _difficultyDown.clicked += () => ChangeDifficulty(_dungeon, -1);
+        _difficultyUp.clicked += () => ChangeDifficulty(_dungeon, 1);
         _labelVersion = -1;
         // Clicking the button mustn't also use a skill
         _card.RegisterCallback<PointerEnterEvent>(_ => SetHovered(true));
@@ -106,6 +120,7 @@ public class PortalHUD : MonoBehaviour
         if (_card == null || _card.panel == null) return;
         var camera = Camera.main;
         FindPortals();
+        if (NetSession.IsHost) SendDifficulties();
         if (NetSession.IsHost && !_entering) EnterWhenEveryoneIsReady();
 
         // Each player's Interact chooses the portal they stand at
@@ -116,6 +131,7 @@ public class PortalHUD : MonoBehaviour
                 GameInput.For(i).Actions.Player.Interact.WasPressedThisFrame())
                 Choose(i);
         }
+        PickDifficultyWithGamepad();
 
         // The card: the first player's portal (player 1's, else player 2's)
         int shown = AtPortal(0) ? 0 : AtPortal(1) ? 1 : -1;
@@ -133,7 +149,9 @@ public class PortalHUD : MonoBehaviour
         }
 
         _scene = _at[shown];
+        _dungeon = _portalDungeons[shown];
         _name.text = _portalNames[shown].ToString();
+        ShowDifficulty();
         Vector2 panelPosition = RuntimePanelUtils.CameraTransformWorldToPanel(_card.panel, anchor, camera);
         _card.style.left = panelPosition.x;
         _card.style.top = panelPosition.y;
@@ -163,6 +181,7 @@ public class PortalHUD : MonoBehaviour
             if (!NetPortal.TryFindPortal(entityManager, entityManager.GetComponentData<LocalToWorld>(player).Position, out var portal, out var position)) continue;
             _at[i] = portal.Scene;
             _portalNames[i] = portal.DisplayName;
+            _portalDungeons[i] = portal.DungeonId;
             _portalPositions[i] = position;
         }
     }
@@ -281,9 +300,75 @@ public class PortalHUD : MonoBehaviour
         return string.Join("\n", lines);
     }
 
+    // ---------- Difficulty ----------
+
+    // "Difficulty 3" between the arrows: the host's player 1 can pick from 1 to what they unlocked; elsewhere it's the
+    // host's pick, without arrows
+    void ShowDifficulty()
+    {
+        bool dungeon = !_dungeon.IsEmpty;
+        _difficultyRow.EnableInClassList(HiddenClass, !dungeon);
+        if (!dungeon) return;
+        string id = _dungeon.ToString();
+        int difficulty = DungeonDifficulty.Of(id);
+        bool picks = NetSession.IsHost;
+        string text = difficulty > 0 ? $"Difficulty {difficulty}" : "Difficulty ...";
+        // Player 1's controller changes it with X
+        if (picks && GameInput.For(0) != null && GameInput.For(0).UsingGamepad && DungeonDifficulty.Unlocked(id) > 1) text += "  (X)";
+        if (picks && difficulty >= DungeonDifficulty.Unlocked(id)) text += $"\n<size=11>Finish it to unlock {difficulty + 1}</size>";
+        if (_difficulty.text != text) _difficulty.text = text;
+        _difficultyDown.style.display = picks ? DisplayStyle.Flex : DisplayStyle.None;
+        _difficultyUp.style.display = picks ? DisplayStyle.Flex : DisplayStyle.None;
+        _difficultyDown.SetEnabled(difficulty > 1);
+        _difficultyUp.SetEnabled(difficulty < DungeonDifficulty.Unlocked(id));
+    }
+
+    // The host's player 1 with a controller at a dungeon's portal: X steps up, and from the highest unlocked back to 1
+    // (the D-pad opens the menus)
+    void PickDifficultyWithGamepad()
+    {
+        if (!NetSession.IsHost || _entering || !AtPortal(0) || _portalDungeons[0].IsEmpty) return;
+        var controls = GameInput.For(0);
+        var menus = MenuPanels.For(0);
+        var gamepad = controls?.GamepadDevice;
+        if (gamepad == null || !controls.UsingGamepad || menus.IsPanelOpen || menus.IsTyping || UiNav.For(0).HasGamepadInput) return;
+        if (!gamepad.buttonWest.wasPressedThisFrame) return;
+        string id = _portalDungeons[0].ToString();
+        int next = DungeonDifficulty.Of(id) + 1;
+        ChangeDifficulty(_portalDungeons[0], next > DungeonDifficulty.Unlocked(id) ? 1 - DungeonDifficulty.Of(id) : 1);
+    }
+
+    // The host: steps up or down; everyone has to choose the portal again for the new difficulty
+    void ChangeDifficulty(FixedString64Bytes dungeon, int step)
+    {
+        if (!NetSession.IsHost || _entering || dungeon.IsEmpty) return;
+        string id = dungeon.ToString();
+        if (!DungeonDifficulty.Pick(id, DungeonDifficulty.Of(id) + step)) return;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated) return;
+        using var players = Players(world.EntityManager);
+        foreach (var (_, player, _, _) in players) NetPortal.SetChoice(world.EntityManager, player, default);
+    }
+
+    // The host: every second, its pick for each dungeon portal in the level to the clients (ones that joined since too)
+    void SendDifficulties()
+    {
+        _difficultyTimer -= Time.unscaledDeltaTime;
+        if (_difficultyTimer > 0f) return;
+        _difficultyTimer = DifficultyInterval;
+        var world = World.DefaultGameObjectInjectionWorld;
+        if (world == null || !world.IsCreated || !NetSceneSync.HasRemoteClients(world)) return;
+        var entityManager = world.EntityManager;
+        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<Portal>());
+        using var portals = query.ToComponentDataArray<Portal>(Allocator.Temp);
+        foreach (var portal in portals)
+            if (!portal.DungeonId.IsEmpty) DungeonDifficulty.Send(entityManager, portal.DungeonId.ToString());
+    }
+
     void Hide()
     {
         _scene = default;
+        _dungeon = default;
         if (_card != null) _card.AddToClassList(HiddenClass);
         SetHovered(false);
     }

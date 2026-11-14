@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Top of the screen while in a dungeon (DungeonManager): its name, the time left (and what a death just cost), the
+/// Top of the screen while in a dungeon (DungeonManager): its name and difficulty, the time left (and what a death just cost), the
 /// current step and its progress with what dying does in it, or that it's complete or failed and the return portal is
 /// open; how many items were picked up. Leave dungeon (the host's only: a client leaves the game from its menu) asks first
 /// when something would be lost: an unfinished run, or items still on the ground.
@@ -22,7 +22,7 @@ public class DungeonHUD : MonoBehaviour
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _card;
-    Label _name, _stepCount, _objective, _note, _found, _confirmText, _timer, _penalty;
+    Label _name, _difficulty, _stepCount, _objective, _note, _found, _confirmText, _timer, _penalty;
     VisualElement _progressBar, _progressFill, _leaveRow, _confirmRow, _timerRow;
 
     bool _hovered;
@@ -63,6 +63,7 @@ public class DungeonHUD : MonoBehaviour
 
         _card = root.Q<VisualElement>("card");
         _name = root.Q<Label>("dungeonName");
+        _difficulty = root.Q<Label>("difficulty");
         _stepCount = root.Q<Label>("stepCount");
         _objective = root.Q<Label>("objective");
         _found = root.Q<Label>("found");
@@ -79,7 +80,7 @@ public class DungeonHUD : MonoBehaviour
         var confirmLeave = root.Q<Button>("confirmLeaveButton");
         var stay = root.Q<Button>("stayButton");
         _boundVersion = version;
-        if (_card == null || _name == null || _stepCount == null || _objective == null || _note == null || _found == null || _progressBar == null || _progressFill == null ||
+        if (_card == null || _name == null || _difficulty == null || _stepCount == null || _objective == null || _note == null || _found == null || _progressBar == null || _progressFill == null ||
             _leaveRow == null || _confirmRow == null || _confirmText == null || _timerRow == null || _timer == null || _penalty == null ||
             leave == null || confirmLeave == null || stay == null)
         {
@@ -116,6 +117,7 @@ public class DungeonHUD : MonoBehaviour
         _card.EnableInClassList(CompleteClass, complete);
         _card.EnableInClassList(FailedClass, failed);
         _name.text = manager.Dungeon.DisplayName;
+        _difficulty.text = $"Difficulty {manager.Difficulty}";
         // Leaving someone else's game is in the game menu
         _leaveRow.style.display = NetSession.IsHost ? DisplayStyle.Flex : DisplayStyle.None;
         UpdateTimer(manager);

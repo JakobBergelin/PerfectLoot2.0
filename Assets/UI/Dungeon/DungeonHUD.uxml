@@ -4,6 +4,7 @@
         <!-- Top center while in a dungeon; filled by DungeonHUD from DungeonManager -->
         <ui:VisualElement name="card" class="dh-card dh-card--hidden">
             <ui:Label name="dungeonName" class="dh-name" />
+            <ui:Label name="difficulty" class="dh-difficulty" />
             <ui:VisualElement name="timerRow" class="dh-timer-row">
                 <ui:Label name="timer" class="dh-timer" />
                 <ui:Label name="penalty" class="dh-penalty" />

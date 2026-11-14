@@ -10,11 +10,12 @@ using static UnitEntitySetup;
 
 /// <summary>
 /// Adds every gameplay component an enemy needs to a spawned visual-only entity:
-/// the shared unit combat components plus its AI, its skills (Swarm: a fixed melee attack) and its passives, all from its EnemyDefinition.
+/// the shared unit combat components plus its AI, its skills (Swarm: a fixed melee attack) and its passives, all from its EnemyDefinition
+/// at the difficulty it spawns at (its stats, skills and passives grow with it; see EnemyDefinition.StatsAt).
 /// </summary>
 public static class EnemyEntitySetup
 {
-    public static void AddGameplayComponents(EntityManager entityManager, Entity entity, EnemyDefinition definition)
+    public static void AddGameplayComponents(EntityManager entityManager, Entity entity, EnemyDefinition definition, int difficulty = 1)
     {
         AddOrSet(entityManager, entity, new Enemy());
         AddOrSet(entityManager, entity, new UnitInfo { Source = definition });
@@ -22,7 +23,8 @@ public static class EnemyEntitySetup
         AddOrSet(entityManager, entity, new ExperienceReward { Value = definition.Experience });
 
         // Stats, health, damage buffers, status effects, knockback, smoothing, rotation lock
-        AddCombatComponents(entityManager, entity, definition.Stats);
+        var stats = definition.StatsAt(difficulty);
+        AddCombatComponents(entityManager, entity, stats);
 
         // Size (the collider scales with the transform) and weight
         var transform = entityManager.GetComponentData<LocalTransform>(entity);
@@ -72,24 +74,24 @@ public static class EnemyEntitySetup
                     FacingAngle = definition.AttackFacingAngle,
                 });
             else
-                AddSkills(entityManager, entity, definition);
+                AddSkills(entityManager, entity, stats, definition.SkillsAt(difficulty));
         }
 
-        AddPassives(entityManager, entity, definition.Passives);
+        AddPassives(entityManager, entity, definition.PassivesAt(difficulty));
 
         if (definition.OverrideColor) ApplyTint(entityManager, entity, definition.Tint);
     }
 
-    static void AddSkills(EntityManager entityManager, Entity entity, EnemyDefinition definition)
+    static void AddSkills(EntityManager entityManager, Entity entity, StatBlock stats, List<EnemySkill> skills)
     {
         // Its amount and regeneration come from the stats
-        if (definition.Stats.Resource > 0f)
+        if (stats.Resource > 0f)
         {
             AddOrSet(entityManager, entity, new Resource());
             AddBuffer<ResourceChanger>(entityManager, entity);
         }
 
-        AddSkillList(entityManager, entity, definition.Skills);
+        AddSkillList(entityManager, entity, skills);
     }
 
     /// <summary>What EnemySkillCastSystem needs to use these skills on an enemy or a companion.</summary>

@@ -92,6 +92,54 @@ namespace Enemies
         [Tooltip("Attacks only once it faces within this many degrees of the player")]
         public float AttackFacingAngle = 60f;
 
+        [Header("Difficulty (dungeons)")]
+        [Tooltip("Added to Stats once for each difficulty above 1: difficulty 3 adds it twice. Every stat grows the same, linear way.")]
+        public StatBlock StatsPerDifficulty;
+        [Tooltip("Skills and passives it gains from a difficulty on. A skill replaces the one of the same kind, or else goes first " +
+                 "(highest priority). Swarm enemies only use the passives.")]
+        public List<DifficultyUnlock> Unlocks = new List<DifficultyUnlock>();
+
+        [System.Serializable]
+        public class DifficultyUnlock
+        {
+            [Min(2)] public int FromDifficulty = 2;
+            [Tooltip("Optional")]
+            public EnemySkill Skill;
+            [Tooltip("Optional")]
+            public PassiveSkill Passive;
+        }
+
+        /// <summary>Stats at a difficulty (1 and below: Stats as they are).</summary>
+        public StatBlock StatsAt(int difficulty)
+        {
+            var stats = Stats;
+            for (int i = 1; i < difficulty; i++) stats.Add(StatsPerDifficulty);
+            return stats;
+        }
+
+        /// <summary>Skills at a difficulty, in priority order: Skills with the unlocked ones replacing or going first.</summary>
+        public List<EnemySkill> SkillsAt(int difficulty)
+        {
+            var skills = new List<EnemySkill>(Skills);
+            foreach (var unlock in Unlocks)
+            {
+                if (unlock?.Skill == null || difficulty < unlock.FromDifficulty) continue;
+                int same = skills.FindIndex(skill => skill != null && skill.Type == unlock.Skill.Type);
+                if (same >= 0) skills[same] = unlock.Skill;
+                else skills.Insert(0, unlock.Skill);
+            }
+            return skills;
+        }
+
+        /// <summary>Passives at a difficulty: Passives plus the unlocked ones.</summary>
+        public List<PassiveSkill> PassivesAt(int difficulty)
+        {
+            var passives = new List<PassiveSkill>(Passives);
+            foreach (var unlock in Unlocks)
+                if (unlock?.Passive != null && difficulty >= unlock.FromDifficulty && !passives.Contains(unlock.Passive)) passives.Add(unlock.Passive);
+            return passives;
+        }
+
         public string DisplayName => string.IsNullOrEmpty(Name) ? name : Name;
         List<PassiveSkill> IUnitDescription.Passives => Passives;
         List<EnemySkill> IUnitDescription.Skills => Skills;

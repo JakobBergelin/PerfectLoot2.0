@@ -17,6 +17,7 @@ MonoBehaviour:
   KillLootTable: {fileID: 11400000, guid: 468b1846f25e4a279b7aed368459754a, type: 2}
   CompletionLootTable: {fileID: 11400000, guid: f764a92f648e45709bb720f6dab20b61, type: 2}
   CompletionExperience: 1000
+  TimeLimit: 300
   Steps:
   - Kind: 1
     KillPercent: 90
@@ -28,3 +29,5 @@ MonoBehaviour:
     WaveSpread: 3
     MaxAlive: 40
   ReturnPortal: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+  ExtraEnemiesPerDifficulty: 0.15
+  MaxEnemyMultiplier: 3

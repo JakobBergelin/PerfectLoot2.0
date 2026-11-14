@@ -10,4 +10,5 @@ public struct Portal : IComponentData
     public FixedString64Bytes Scene;        // Scene name, as in Build Settings
     public FixedString64Bytes DisplayName;  // Shown above the Enter button
     public float Range;                     // Meters, measured along the ground
+    public FixedString64Bytes DungeonId;    // The dungeon it leads to (DungeonDefinition.Id), whose difficulty is picked here; empty for none
 }

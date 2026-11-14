@@ -183,14 +183,33 @@ public class AccountManager : MonoBehaviour
         SaveCharacters();
     }
 
-    /// <summary>Counts a finished dungeon on the character and saves (DungeonManager).</summary>
-    public void RecordDungeonCompleted(AccountCharacter character, string dungeonId)
+    /// <summary>A dungeon run started at this difficulty: the character remembers it for next time, and saves (DungeonManager).</summary>
+    public void RecordDungeonStarted(AccountCharacter character, string dungeonId, int difficulty)
     {
-        if (character == null || !_characters.Contains(character) || string.IsNullOrEmpty(dungeonId)) return;
-        var completed = character.CompletedDungeons.Find(entry => entry.DungeonId == dungeonId);
-        if (completed == null) character.CompletedDungeons.Add(completed = new AccountCharacter.CompletedDungeon { DungeonId = dungeonId });
-        completed.Count++;
+        var record = DungeonRecord(character, dungeonId);
+        if (record == null || record.Last == difficulty) return;
+        record.Last = Mathf.Max(1, difficulty);
         SaveCharacters();
+    }
+
+    /// <summary>Counts a finished dungeon on the character, unlocks the next difficulty, and saves (DungeonManager).</summary>
+    public void RecordDungeonCompleted(AccountCharacter character, string dungeonId, int difficulty)
+    {
+        var record = DungeonRecord(character, dungeonId);
+        if (record == null) return;
+        record.Count++;
+        record.Last = Mathf.Max(1, difficulty);
+        record.Highest = Mathf.Max(record.Highest, record.Last);
+        SaveCharacters();
+    }
+
+    // The character's record of the dungeon, made when missing; null for no character or dungeon
+    AccountCharacter.CompletedDungeon DungeonRecord(AccountCharacter character, string dungeonId)
+    {
+        if (character == null || !_characters.Contains(character) || string.IsNullOrEmpty(dungeonId)) return null;
+        var record = character.CompletedDungeons.Find(entry => entry.DungeonId == dungeonId);
+        if (record == null) character.CompletedDungeons.Add(record = new AccountCharacter.CompletedDungeon { DungeonId = dungeonId });
+        return record;
     }
 
     /// <summary>Sets the character's level and experience (CharacterManager). Saves now when save is true, otherwise with the next save.</summary>

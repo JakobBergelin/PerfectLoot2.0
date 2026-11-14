@@ -4,6 +4,12 @@
     <ui:VisualElement name="portalRoot" class="portal-root" picking-mode="Ignore">
         <ui:VisualElement name="portalCard" class="portal-card portal-card--hidden">
             <ui:Label name="portalName" class="portal-name" />
+            <!-- A dungeon's difficulty: the host's player 1 picks it with the arrows (or X on a controller) -->
+            <ui:VisualElement name="difficultyRow" class="portal-difficulty">
+                <ui:Button name="difficultyDown" text="&lt;" class="portal-arrow" />
+                <ui:Label name="difficulty" class="portal-difficulty__label" />
+                <ui:Button name="difficultyUp" text="&gt;" class="portal-arrow" />
+            </ui:VisualElement>
             <ui:Button name="enterButton" text="Enter" class="portal-button" />
         </ui:VisualElement>
     </ui:VisualElement>

@@ -46,6 +46,47 @@
     margin: -4px 0 8px 0;
 }
 
+/* A dungeon's difficulty, between the arrows the host's player 1 picks it with */
+.portal-difficulty {
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    margin: -4px 0 8px 0;
+}
+
+.portal-difficulty__label {
+    min-width: 96px;
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 0 6px;
+}
+
+.portal-arrow {
+    width: 26px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    font-size: 14px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: rgba(42, 46, 56, 0.9);
+    border-width: 1px;
+    border-color: #4A5060;
+    border-radius: 5px;
+}
+
+.portal-arrow:hover {
+    background-color: #383D4A;
+}
+
+.portal-arrow:disabled {
+    opacity: 0.35;
+}
+
 .portal-button {
     min-width: 120px;
     height: 34px;

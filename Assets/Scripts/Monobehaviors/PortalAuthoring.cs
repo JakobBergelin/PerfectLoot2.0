@@ -20,6 +20,8 @@ public class PortalAuthoring : MonoBehaviour
     public float Range = 3f;
     [Tooltip("Scaled to Range, so the ring on the ground shows where Enter appears. Its mesh has a radius of 1.")]
     public Transform RangeRing;
+    [Tooltip("The dungeon the scene is, if it is one: its difficulty is picked on the portal's card")]
+    public DungeonDefinition Dungeon;
 
 #if UNITY_EDITOR
     void OnValidate()
@@ -38,6 +40,7 @@ public class PortalAuthoring : MonoBehaviour
         public override void Bake(PortalAuthoring authoring)
         {
             DependsOn(authoring.Scene);
+            DependsOn(authoring.Dungeon);
             Entity entity = GetEntity(TransformUsageFlags.Dynamic);
 
             string sceneName = authoring.Scene != null ? authoring.Scene.name : "";
@@ -53,6 +56,7 @@ public class PortalAuthoring : MonoBehaviour
             var portal = new Portal { Range = authoring.Range };
             portal.Scene.CopyFromTruncated(sceneName);
             portal.DisplayName.CopyFromTruncated(displayName);
+            if (authoring.Dungeon != null) portal.DungeonId.CopyFromTruncated(authoring.Dungeon.Id);
             if (portal.Scene.ToString() != sceneName)
                 Debug.LogWarning($"Portal {authoring.name}: the scene name {sceneName} is too long for a Portal.", authoring);
             AddComponent(entity, portal);

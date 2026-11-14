@@ -15,11 +15,13 @@ public class AccountCharacter
         public Rarity Rarity;
     }
 
-    /// <summary>How often the character has finished a dungeon.</summary>
+    /// <summary>A dungeon the character has run: how often it finished it, and its difficulties (DungeonDifficulty).</summary>
     public class CompletedDungeon
     {
         public string DungeonId;    // DungeonDefinition.Id
-        public int Count;
+        public int Count;           // Finished
+        public int Highest;         // The highest difficulty finished (0: none); Highest + 1 is unlocked
+        public int Last = 1;        // The difficulty of its last run
     }
 
     public string Guid;

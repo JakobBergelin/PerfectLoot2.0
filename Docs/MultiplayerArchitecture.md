@@ -78,8 +78,14 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
   seconds off the clock (`DeathPenalty`), in Reach Exit steps the player respawns at the level's start
   (`DungeonManager.RespawnAtStart`, read by `CharacterManager` and `NetPlayerSpawnSystem`), and in Survive steps it
   fails the dungeon. Every player respawns after `CharacterManager.RespawnDelay` (2 s).
-- **The dungeon card on clients**: the host sends how the run stands (`DungeonStatusRpc`: state, step, kills, time left,
-  deaths) whenever it changes and every second; the client's `DungeonManager.ApplyStatus` fills the same fields its
+- **Difficulty** (`DungeonDifficulty`): the host's player 1 picks it on a dungeon portal's card (arrows, or X on a
+  controller), from 1 up to one above the highest their character finished; a change clears everyone's choice. The host
+  sends its picks to the clients every second (`PortalDifficultyRpc`), so their cards show it. Only the host spawns, so
+  only its pick matters: enemies get their definition's stats, skills and passives for it, and groups grow by the
+  dungeon's `ExtraEnemiesPerDifficulty`. Every machine's characters remember the run's difficulty (from the status) and
+  unlock the next one when it's finished (`DungeonCompletedRpc` carries it).
+- **The dungeon card on clients**: the host sends how the run stands (`DungeonStatusRpc`: state, step, difficulty, kills,
+  time left, deaths) whenever it changes and every second; the client's `DungeonManager.ApplyStatus` fills the same fields its
   `DungeonHUD` reads, and runs the clocks on in between. Leaving is the host's (a client leaves the game from its menu).
 - **The return portal** only exists on the host; it tells the clients where (`ReturnPortalRpc`) and each places its
   own copy from the level's prefab (`NetPortal.PlaceReturnPortal`). Completing a dungeon is recorded on every machine's

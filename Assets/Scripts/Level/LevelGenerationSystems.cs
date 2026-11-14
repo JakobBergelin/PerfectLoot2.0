@@ -533,7 +533,8 @@ namespace LevelGeneration
                 foreach (var entry in entries)
                 {
                     var definition = entry.Definition.Value;
-                    if (definition != null) enemyManager.SpawnGroup(definition, spawner.Position, entry.Count, spawner.SpawnRadius, riseIn: true);
+                    // More of them at a dungeon's higher difficulties
+                    if (definition != null) enemyManager.SpawnGroup(definition, spawner.Position, DungeonDifficulty.EnemyCount(entry.Count), spawner.SpawnRadius, riseIn: true);
                 }
                 entries.Dispose();
             }
