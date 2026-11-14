@@ -197,10 +197,11 @@ public class SkillsPanelHUD : MonoBehaviour
             var node = _wheel.TurnSpoke(Menus.PagePressed);
             if (node != null) Nav.Focus(node);
         }
-        // A skill waiting for a slot: that slot's key puts it there (keyboard; a controller's A is the slot it's on)
+        // A skill waiting for a slot: that slot's key puts it there (keyboard; a controller's A is the slot it's on). Not a
+        // mouse button: those click the slot cards (a left click on a card would otherwise be the left-click slot's key)
         if (_pending != null && !gamepad && Controls != null)
             for (int i = 0; i < _activeSlots.Count; i++)
-                if (Controls.Skills[i].WasPressedThisFrame())
+                if (Controls.Skills[i].WasPressedThisFrame() && Controls.Skills[i].activeControl?.device is not Mouse)
                 {
                     EquipPending(i);
                     break;
