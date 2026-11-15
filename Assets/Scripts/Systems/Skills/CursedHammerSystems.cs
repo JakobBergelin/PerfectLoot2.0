@@ -45,7 +45,7 @@ public partial struct CursedHammerSystem : ISystem
                     available = math.max(0f, available - cost);
                     resourceChanges.Add(new ResourceChanger { Value = -cost });
                 }
-                Spawn(commandBuffer, entity, hammer.ValueRO, transform.ValueRO.Position, request.Direction);
+                Spawn(commandBuffer, entity, hammer.ValueRO, request.From(transform.ValueRO.Position), request.Direction);
                 SkillUtil.MarkUsed(skills, SkillType.CursedHammer, request.AutoCast);
             }
         }

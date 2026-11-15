@@ -4925,7 +4925,7 @@ GameObject:
   - component: {fileID: 9214833379602659762}
   - component: {fileID: 2792173465560846113}
   m_Layer: 0
-  m_Name: VFX_FireHydra
+  m_Name: VFX_ElementalHydra
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0

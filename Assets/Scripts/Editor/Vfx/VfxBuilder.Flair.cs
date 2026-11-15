@@ -70,7 +70,7 @@ public static partial class VfxBuilder
         yield return (VfxType.ShieldDisc, Save(shield));
 
         // Three small flame heads turning around one point
-        var hydra = Root_("VFX_FireHydra", 0.8f, out var hydraInstance);
+        var hydra = Root_("VFX_ElementalHydra", 0.8f, out var hydraInstance);
         var heads = new GameObject("Heads");
         heads.transform.SetParent(hydra.transform, false);
         heads.AddComponent<VfxSpin>().DegreesPerSecond = 90f;
@@ -91,7 +91,7 @@ public static partial class VfxBuilder
             Fade(ps, Hex("#FFD24A"), Hex("#FF7A1A"), Hex("#B8301A"));
             Shrink(ps);
         });
-        yield return (VfxType.FireHydra, Save(hydra));
+        yield return (VfxType.ElementalHydra, Save(hydra));
 
         // Both fields sit at unit height (1.05), so -1 puts the ring just above the floor
         yield return (VfxType.TeslaField, Save(Field("VFX_TeslaField", "VFX_TeslaRing", Sapphire, -1f, 2f)));

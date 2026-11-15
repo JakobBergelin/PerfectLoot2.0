@@ -41,7 +41,7 @@ How cursor skills then behave: [V code, A feel]
 | Skill | Reads | On gamepad |
 |---|---|---|
 | Teleport (`TeleportSystems.cs:64`) | point, clamped to Range | Full range along the aim, or shorter with a part tilt. Lands next to a locked enemy, as with mouse hover. |
-| Fire Hydra (`FireHydraSystems.cs:50`) | point, clamped to Range | Same. With no stick input it lands at full range ahead, which may feel too far (question 3). |
+| Elemental Hydra (`ElementalHydraSystems.cs:50`) | point, clamped to Range | Same. With no stick input it lands at full range ahead, which may feel too far (question 3). |
 | Ball Lightning (`BallLightningSystems.cs:120`) | point, no range limit | Flight length is the aim distance, so `AimDefault` sets it. Mouse reach is limited only by the screen. |
 | Hookshot Slash (`HookshotSlashSystems.cs:62`) | point, distance clamped | Works. |
 | Captain's Shield (`CaptainsShieldSystems.cs:72`) | point | Works, best with lock. |
@@ -169,7 +169,7 @@ Do C0 to C3 first: that gets the pad into combat and looting, and shows how the 
 
 1. Should stick tilt control speed? Today any tilt is full speed. Changing it is a gameplay change, so it stays out of this plan unless you want it.
 2. Is the trigger and bumper layout right, or do you prefer the Diablo console style with skills on face buttons and auto-aim?
-3. With no stick input, should placed skills (Fire Hydra) use full range, a shorter default, or the locked enemy only?
+3. With no stick input, should placed skills (Elemental Hydra) use full range, a shorter default, or the locked enemy only?
 4. Gamepad name entry: on-screen keyboard, generated names, or keyboard required for first setup?
 5. Does the Item Database need gamepad support, or is it a keyboard tool?
 6. Effect tooltips on pad: worth a mode on the D-pad, or a list in the character panel?

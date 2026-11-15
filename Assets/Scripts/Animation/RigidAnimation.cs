@@ -48,7 +48,7 @@ public static class SkillClips
         SkillType.CursedHammer or SkillType.CaptainsShield or SkillType.PoisonDart or SkillType.FrozenOrb => RigidClip.Throw,
         SkillType.FrostLance => RigidClip.Thrust,
         SkillType.ColdSnap or SkillType.BloodRite or SkillType.Invulnerability or SkillType.Stances or SkillType.Immolation or SkillType.GaleWard or SkillType.Shadowstep => RigidClip.Nova,
-        SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.RaiseThrall or SkillType.FireHydra or SkillType.MirrorImage
+        SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.RaiseThrall or SkillType.ElementalHydra or SkillType.MirrorImage
             or SkillType.Meteor or SkillType.Timezone or SkillType.Teleport => RigidClip.Summon,
         SkillType.Multishot or SkillType.PlagueArrow => RigidClip.Bow,
         _ => RigidClip.Idle,

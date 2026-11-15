@@ -46,7 +46,7 @@ public partial struct MultishotSystem : ISystem
                     available = math.max(0f, available - cost);
                     resourceChanges.Add(new ResourceChanger { Value = -cost });
                 }
-                Volley(commandBuffer, entity, multishot.ValueRO, stats.Value, ref random, transform.ValueRO.Position, request.Direction);
+                Volley(commandBuffer, entity, multishot.ValueRO, RingOf(ref state, entity), stats.Value, ref random, transform.ValueRO.Position, request.Direction);
                 SkillUtil.MarkUsed(skills, SkillType.Multishot, request.AutoCast);
             }
         }
@@ -62,23 +62,32 @@ public partial struct MultishotSystem : ISystem
             if (!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats)) continue;
 
             // Fires as soon as it faces the cursor; the wait comes after (shared with the other repeated attacks)
-            Volley(commandBuffer, entity, multishot.ValueRO, stats.Value, ref random, transform.ValueRO.Position, desiredDirection.ValueRO.Direction);
+            Volley(commandBuffer, entity, multishot.ValueRO, RingOf(ref state, entity), stats.Value, ref random, transform.ValueRO.Position, desiredDirection.ValueRO.Direction);
             recovery.ValueRW.Remaining += multishot.ValueRO.AttackSpeed;
             SystemAPI.GetBuffer<ResourceChanger>(entity).Add(new ResourceChanger { Value = -cost });
             SkillUtil.MarkUsed(skills, SkillType.Multishot);
         }
     }
 
-    /// <summary>The arrows, evenly from one edge of the cone to the other (a single arrow flies straight).</summary>
-    static void Volley(EntityCommandBuffer commandBuffer, Entity caster, in Multishot multishot, in StatBlock stats, ref Random random, float3 casterPosition, float3 direction)
+    /// <summary>The caster's Arrow Ring power: its extra arrows, or -1 without it.</summary>
+    int RingOf(ref SystemState state, Entity entity) =>
+        SystemAPI.HasComponent<ArrowRing>(entity) ? math.max(0, SystemAPI.GetComponent<ArrowRing>(entity).ExtraArrows) : -1;
+
+    /// <summary>
+    /// The arrows, evenly from one edge of the cone to the other (a single arrow flies straight). With Arrow Ring
+    /// (ringArrows 0 or more), that many more arrows, all spread evenly around the whole circle starting with the aim.
+    /// </summary>
+    static void Volley(EntityCommandBuffer commandBuffer, Entity caster, in Multishot multishot, int ringArrows, in StatBlock stats, ref Random random, float3 casterPosition, float3 direction)
     {
         direction.y = 0f;
         direction = math.normalizesafe(direction, new float3(0f, 0f, 1f));
-        int count = math.max(1, multishot.ArrowCount);
+        bool ring = ringArrows >= 0;
+        int count = math.max(1, multishot.ArrowCount + math.max(0, ringArrows));
         float halfAngle = math.radians(multishot.HalfAngle);
         for (int i = 0; i < count; i++)
         {
-            float angle = count == 1 ? 0f : math.lerp(-halfAngle, halfAngle, i / (float)(count - 1));
+            float angle = ring ? 2f * math.PI * i / count
+                        : count == 1 ? 0f : math.lerp(-halfAngle, halfAngle, i / (float)(count - 1));
             var arrowDirection = math.rotate(quaternion.RotateY(angle), direction);
             float weaponDamage = stats.WeaponDamage + random.NextFloat(-stats.WeaponDamageRange, stats.WeaponDamageRange);
             var start = casterPosition + arrowDirection;

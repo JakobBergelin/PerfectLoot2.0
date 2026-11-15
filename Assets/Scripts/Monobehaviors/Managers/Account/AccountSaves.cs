@@ -212,6 +212,9 @@ public static class AccountSaves
 
     static string CharactersPath(string accountId) => Path.Combine(FolderOf(accountId), CharactersFile);
 
+    // Skills saved under an old SkillType name, by their new one
+    static readonly Dictionary<string, string> RenamedSkills = new Dictionary<string, string> { { "FireHydra", "ElementalHydra" } };
+
     /// <summary>Writes the account's characters and which of them was played last (null for none).</summary>
     public static void WriteCharacters(string accountId, IReadOnlyList<AccountCharacter> characters, string lastPlayedGuid)
     {
@@ -300,7 +303,9 @@ public static class AccountSaves
                 character.Equipped.Add(new AccountCharacter.EquippedItem { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = rarity });
             }
             // Saves from before skills were saved have none; unknown names are skipped when they're equipped
-            if (saved.ActiveSkills != null) character.ActiveSkills.AddRange(saved.ActiveSkills);
+            if (saved.ActiveSkills != null)
+                foreach (var skill in saved.ActiveSkills)
+                    character.ActiveSkills.Add(skill != null && RenamedSkills.TryGetValue(skill, out var renamed) ? renamed : skill);
             if (saved.Passives != null) character.Passives.AddRange(saved.Passives);
             // Saves from before dungeons have none. A dungeon finished before difficulties was finished at 1.
             foreach (var completed in saved.CompletedDungeons ?? new List<CompletedDungeonData>())

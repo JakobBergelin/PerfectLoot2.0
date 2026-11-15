@@ -39,7 +39,7 @@ public partial class FireballSystem : SystemBase
                     available = Mathf.Max(0f, available - cost);
                     resourceChanges.Add(new ResourceChanger{Value = -cost});
                 }
-                Spawn(commandBuffer, entity, fireball.ValueRO, localTransform.ValueRO.Position, request.Direction);
+                Spawn(commandBuffer, entity, fireball.ValueRO, request.From(localTransform.ValueRO.Position), request.Direction);
                 SkillUtil.MarkUsed(skills, SkillType.Fireball, request.AutoCast);
             }
         }

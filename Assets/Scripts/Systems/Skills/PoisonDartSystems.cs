@@ -37,7 +37,7 @@ public partial struct PoisonDartSystem : ISystem
         {
             while (SkillUtil.TryTakeRequest(requests, SkillType.PoisonDart, out var request))
             {
-                Spawn(commandBuffer, entity, dart.ValueRO, stats.ValueRO.Value, ref random, transform.ValueRO.Position, request.Direction);
+                Spawn(commandBuffer, entity, dart.ValueRO, stats.ValueRO.Value, ref random, request.From(transform.ValueRO.Position), request.Direction);
                 SkillUtil.MarkUsed(skills, SkillType.PoisonDart, request.AutoCast);
             }
         }

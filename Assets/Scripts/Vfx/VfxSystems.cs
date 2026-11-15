@@ -139,7 +139,7 @@ public partial class VfxSystem : SystemBase
         _newPeriodic = SystemAPI.QueryBuilder().WithAll<PeriodicAttack, LocalTransform>().WithNone<VfxBinding>().Build();
         _newAttacks = SystemAPI.QueryBuilder().WithAll<Attack, LocalTransform>().WithNone<VfxAttackSeen, Projectile>().Build();
         _newSouls = SystemAPI.QueryBuilder().WithAll<Soul, LocalTransform>().WithNone<VfxBinding>().Build();
-        _newBodies = SystemAPI.QueryBuilder().WithAny<FireHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
+        _newBodies = SystemAPI.QueryBuilder().WithAny<ElementalHydraUnit, TimezoneField>().WithAll<LocalTransform>().WithNone<VfxBinding>().Build();
         _newPortals = SystemAPI.QueryBuilder().WithAll<Portal, LocalTransform>().WithNone<VfxBinding>().Build();
         _newMirrors = SystemAPI.QueryBuilder().WithAll<MirrorImageUnit, LocalTransform>().WithNone<VfxBinding>().Build();
         _newStandIns = SystemAPI.QueryBuilder().WithAll<NetVfx, LocalTransform>().WithNone<VfxBinding>().Build();
@@ -352,7 +352,7 @@ public partial class VfxSystem : SystemBase
                     var t = EntityManager.GetComponentData<LocalTransform>(e);
                     var look = EntityManager.HasComponent<TimezoneField>(e)
                         ? new NetVfx { Type = VfxType.TimezoneField, Scale = EntityManager.GetComponentData<TimezoneField>(e).Radius }
-                        : new NetVfx { Type = VfxType.FireHydra };
+                        : new NetVfx { Type = VfxType.ElementalHydra };
                     bindings.Add((e, Bind(vfx, look, t)));
                     standIns.Add((e, look));
                 }
@@ -887,7 +887,7 @@ public partial class VfxSystem : SystemBase
         SkillType.Teleport => (VfxType.AppearPuff, default),
         SkillType.BloodRite => (VfxType.BloodBurst, default),
         SkillType.Riposte => (VfxType.RiposteFlash, default),
-        SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.FireHydra or SkillType.RaiseThrall => (VfxType.SummonCircle, default),
+        SkillType.StoneGuardian or SkillType.Wolf or SkillType.Wisp or SkillType.ElementalHydra or SkillType.RaiseThrall => (VfxType.SummonCircle, default),
         SkillType.Meteor or SkillType.Immolation => (VfxType.CastFlash, new Color(1f, 0.48f, 0.1f)),                                   // Fire #FF7A1A
         SkillType.FrozenOrb or SkillType.ColdSnap or SkillType.FrostLance or SkillType.Timezone => (VfxType.CastFlash, new Color(0.5f, 0.9f, 1f)),   // Frost #7FE6FF
         SkillType.TeslaCoil or SkillType.CursedHammer or SkillType.Tornado => (VfxType.CastFlash, new Color(0.29f, 0.49f, 1f)),       // Lightning sapphire #4A7CFF

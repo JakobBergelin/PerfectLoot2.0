@@ -21,7 +21,7 @@ public enum VfxType
     PoisonDart = 17,
     Flame = 18,
     ShieldDisc = 19,
-    FireHydra = 20,
+    ElementalHydra = 20,
     TeslaField = 21,
     TimezoneField = 22,
     ColdNova = 23,

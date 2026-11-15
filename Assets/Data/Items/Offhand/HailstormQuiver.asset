@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a55686650adcc894d986b417fd0d60b3, type: 3}
+  m_Name: HailstormQuiver
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueOffhandItem
+  Name: Hailstorm Quiver
+  Id: 9979b78acb3748869c6b5e3294a35e49
+  Icon: {fileID: 21300000, guid: eace39b70d454cebb6d351778d31fd33, type: 3}
+  Flavor: Aim is for people with only one direction to worry about.
+  BaseAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 2
+      Max: 4
+  RollableAffixes:
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 9
+    RollRange:
+      Min: 0.03
+      Max: 0.05
+  LegendaryPower: {fileID: 11400000, guid: 1ec876055ec845038f23e46c5b6399c5, type: 2}

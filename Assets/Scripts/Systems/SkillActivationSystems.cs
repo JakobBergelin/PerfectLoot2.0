@@ -197,8 +197,8 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.PoisonDart:
                 if (SystemAPI.HasComponent<PoisonDart>(entity)) SystemAPI.SetComponentEnabled<PoisonDart>(entity, enabled);
                 break;
-            case SkillType.FireHydra:
-                if (SystemAPI.HasComponent<FireHydra>(entity)) SystemAPI.SetComponentEnabled<FireHydra>(entity, enabled);
+            case SkillType.ElementalHydra:
+                if (SystemAPI.HasComponent<ElementalHydra>(entity)) SystemAPI.SetComponentEnabled<ElementalHydra>(entity, enabled);
                 break;
             case SkillType.MirrorImage:
                 if (SystemAPI.HasComponent<MirrorImage>(entity)) SystemAPI.SetComponentEnabled<MirrorImage>(entity, enabled);

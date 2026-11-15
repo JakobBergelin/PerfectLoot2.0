@@ -75,3 +75,9 @@ public struct EventHorizon : IComponentData
     public float TurnSpeed;         // Radians per second the orbit can turn a projectile
     public uint NextOrder;          // Capture counter: lower Orbiting.Order is older
 }
+
+/// <summary>Arrow Ring: Multishot fires its volley in a full circle around the wearer, with ExtraArrows more arrows (MultishotSystem).</summary>
+public struct ArrowRing : IComponentData
+{
+    public int ExtraArrows;
+}

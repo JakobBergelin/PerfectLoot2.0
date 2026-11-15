@@ -73,7 +73,7 @@ public enum SkillType
     Timezone,
     TeslaCoil,
     PoisonDart,
-    FireHydra,
+    ElementalHydra,
     StoneGuardian,
     Wolf,
     Wisp,
@@ -138,6 +138,11 @@ public struct SkillCastRequest : IBufferElementData
     public float3 Direction;
     public bool AutoCast;
     public bool Free;       // Costs no resource (e.g. Cascade)
+    public bool HasOrigin;  // Cast from Origin instead of the caster (e.g. an Elemental Hydra's shot); only projectile skills that a Hydra can fire use it
+    public float3 Origin;
+
+    /// <summary>Where the skill is cast from: Origin when it has one, else the caster's position.</summary>
+    public float3 From(float3 casterPosition) => HasOrigin ? Origin : casterPosition;
 }
 
 public class SkillUtil
@@ -407,20 +412,22 @@ public struct PoisonDartHit : IComponentData
     public float ExplosionRadius;
 }
 
-public struct FireHydra : IComponentData, IEnableableComponent
+public struct ElementalHydra : IComponentData, IEnableableComponent
 {
     public float Cooldown;
     public float ResourceCost;
     public float Range;
     public float Duration;      // Seconds a Hydra stays
     public float Elapsed;       // Since the last cast, up to Cooldown
-    public Entity Prefab;       // The Hydra to copy, made by FireHydraSkill
+    public Entity Prefab;       // The Hydra to copy, made by ElementalHydraSkill
 }
 
-/// <summary>On a placed Hydra, which also has Companion. Goes away when TimeRemaining runs out (FireHydraSystem).</summary>
-public struct FireHydraUnit : IComponentData
+/// <summary>On a placed Hydra, which also has Companion. Fires its owner's Elemental Projectile skills when it has any (ElementalHydraShotSystem). Goes away when TimeRemaining runs out (ElementalHydraSystem).</summary>
+public struct ElementalHydraUnit : IComponentData
 {
     public float TimeRemaining;
+    public bool ShotPending;    // A shot taken from its own skill this frame, for its owner to cast (ElementalHydraShotSystem)
+    public float3 ShotDirection;
 }
 
 public struct MirrorImage : IComponentData, IEnableableComponent
