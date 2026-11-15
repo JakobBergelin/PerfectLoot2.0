@@ -1,0 +1,41 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9426cb20e3297eb4cb601567b1883b14, type: 3}
+  m_Name: WindherdersCharm
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueAmuletItem
+  Name: Windherder's Charm
+  Id: 072ab326893a4557aa48eb275e954a6a
+  Icon: {fileID: 21300000, guid: 3bada103eeea4049830bf9d3a2d945ee, type: 3}
+  Flavor: The storm goes where it is told. Mostly.
+  BaseAffixes:
+  - Affix: 36
+    RollRange:
+      Min: 0.05
+      Max: 0.1
+  RollableAffixes:
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 6
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 19
+    RollRange:
+      Min: 10
+      Max: 20
+  LegendaryPower: {fileID: 11400000, guid: f08b2f17613f4001afaaf9ff98e35fca, type: 2}

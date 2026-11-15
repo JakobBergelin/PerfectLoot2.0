@@ -74,6 +74,7 @@ public enum DamageLabel
     ShadowPriest,   // Shadow Priest's healing orbs
     Riposte,        // Riposte's hit and the projectiles it turns
     Multishot,
+    Stampede,       // Rushwind Treads' dash hits
 }
 
 public static class SkillDamageLabel

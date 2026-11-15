@@ -1,0 +1,44 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2988d21d2f3d9c84781f2bf97fffeec6, type: 3}
+  m_Name: RushwindTreads
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableUniqueBootsItem
+  Name: Rushwind Treads
+  Id: 54e74c13d6af4630b7c5f63f79395434
+  Icon: {fileID: 21300000, guid: 9c4bf8639783405c82128b7f0a87cbb4, type: 3}
+  Flavor: Whoever is in the way can catch up later.
+  BaseAffixes:
+  - Affix: 22
+    RollRange:
+      Min: 1
+      Max: 2
+  RollableAffixes:
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 4
+    RollRange:
+      Min: 3
+      Max: 6
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  - Affix: 8
+    RollRange:
+      Min: 0.02
+      Max: 0.04
+  MovementSpeed:
+    Min: 0.1
+    Max: 0.2
+  LegendaryPower: {fileID: 11400000, guid: 3349920162fc48fcab4e9d6941954665, type: 2}
