@@ -70,7 +70,9 @@ public partial struct EventHorizonCaptureSystem : ISystem
 
 /// <summary>
 /// Steers orbiting projectiles around their center: toward the circle's tangent (all orbits turn the same way) plus a
-/// pull toward their radius (from their current speed, every frame), turned at most TurnSpeed per second and keeping their speed. A new projectile spirals out
+/// pull toward their radius (from their current speed, every frame), turned at most TurnSpeed per second and keeping their speed. Each
+/// wearer's projectiles spread evenly around the circle: one out of its place orbits a little further out or in until
+/// it's back (SpreadStrength, SpreadError). A new projectile spirals out
 /// from the wearer. After homing and wandering, which keep steering too (they work against each other), and before
 /// ProjectileSystem moves them.
 /// </summary>
@@ -90,6 +92,11 @@ public partial struct OrbitSteeringSystem : ISystem
         var horizons = SystemAPI.GetComponentLookup<EventHorizon>(true);
         float deltaTime = SystemAPI.Time.DeltaTime;
 
+        // Every orbiting projectile, to find each one's place among its wearer's (oldest first) for the spreading
+        var all = SystemAPI.QueryBuilder().WithAll<Orbiting, Projectile>().Build();
+        var allEntities = all.ToEntityArray(Allocator.Temp);
+        var allOrbits = all.ToComponentDataArray<Orbiting>(Allocator.Temp);
+
         foreach (var (projectile, orbit, entity) in SystemAPI.Query<RefRW<Projectile>, RefRO<Orbiting>>().WithEntityAccess())
         {
             var center = orbit.ValueRO.Center;
@@ -107,6 +114,7 @@ public partial struct OrbitSteeringSystem : ISystem
 
             // Faster projectiles orbit further out, by their speed right now (slows included), so one that speeds up drifts outward
             float radius = math.max(math.clamp(projectile.ValueRO.CurrentSpeed * horizon.RadiusPerSpeed, horizon.MinRadius, horizon.MaxRadius), 0.1f);
+            radius *= 1f + horizon.SpreadStrength * SpreadError(entity, orbit.ValueRO, allEntities, allOrbits, transforms, transforms[center].Position) / math.PI;
             float error = (radius - distance) / radius;
             var desired = math.normalizesafe(tangent + radial * math.clamp(error * horizon.PullStrength, -1f, 1f), tangent);
 
@@ -114,4 +122,48 @@ public partial struct OrbitSteeringSystem : ISystem
             projectile.ValueRW.Direction = Vector3.RotateTowards(direction, desired * speed, horizon.TurnSpeed * deltaTime, 0f);
         }
     }
+
+    /// <summary>
+    /// How far ahead (positive, radians) a projectile is of its even-spaced place in its wearer's orbit: a full turn / their count apart, in
+    /// the order they already are around the circle (counted back from the oldest), centered on where they are now. Radius changes from this make
+    /// one ahead orbit further out (slower around) and one behind further in (faster around), as the speed stays the same.
+    /// </summary>
+    static float SpreadError(Entity entity, in Orbiting orbit, NativeArray<Entity> entities, NativeArray<Orbiting> orbits,
+                             in ComponentLookup<LocalTransform> transforms, float3 center)
+    {
+        int oldest = -1;
+        for (int i = 0; i < entities.Length; i++)
+            if (orbits[i].Center == orbit.Center && transforms.HasComponent(entities[i]) && (oldest < 0 || orbits[i].Order < orbits[oldest].Order)) oldest = i;
+        if (oldest < 0) return 0f;
+
+        // Its place in line is how many are between it and the oldest, going back around the circle, so none pass each other
+        float anchor = AngleAround(transforms[entities[oldest]].Position, center);
+        float behind = Behind(anchor, AngleAround(transforms[entity].Position, center));
+        int rank = 0, count = 0;
+        float sumBehind = 0f;
+        for (int i = 0; i < entities.Length; i++)
+        {
+            if (orbits[i].Center != orbit.Center || !transforms.HasComponent(entities[i])) continue;
+            count++;
+            float other = Behind(anchor, AngleAround(transforms[entities[i]].Position, center));
+            sumBehind += other;
+            if (other < behind || (other == behind && orbits[i].Order < orbit.Order)) rank++;
+        }
+
+        // Ahead of its place: it's less far behind the oldest than it should be. The places are shifted so the errors
+        // average out (the places' average is π(count - 1)/count behind), so half move forward and half back.
+        float spacing = 2f * math.PI / count;
+        float shift = math.PI * (count - 1) / count - sumBehind / count;
+        return rank * spacing - behind - shift;
+    }
+
+    // How far angle is behind anchor, going back around the circle: 0 to 2π
+    static float Behind(float anchor, float angle)
+    {
+        float behind = anchor - angle;
+        return behind - 2f * math.PI * math.floor(behind / (2f * math.PI));
+    }
+
+    // Angle around center, increasing the way the orbits turn
+    static float AngleAround(float3 position, float3 center) => math.atan2(position.z - center.z, position.x - center.x);
 }

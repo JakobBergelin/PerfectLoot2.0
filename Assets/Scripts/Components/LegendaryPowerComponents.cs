@@ -73,6 +73,7 @@ public struct EventHorizon : IComponentData
     public float MaxRadius;
     public float PullStrength;      // How hard a projectile is steered toward its radius
     public float TurnSpeed;         // Radians per second the orbit can turn a projectile
+    public float SpreadStrength;    // Radius change for a projectile half a turn from its even-spaced place (OrbitSteeringSystem)
     public uint NextOrder;          // Capture counter: lower Orbiting.Order is older
 }
 

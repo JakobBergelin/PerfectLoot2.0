@@ -21,3 +21,4 @@ MonoBehaviour:
   MaxRadius: 14
   PullStrength: 2
   TurnSpeed: 12
+  SpreadStrength: 0.5

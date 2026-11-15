@@ -16,6 +16,8 @@ namespace Equipment
         [Min(0f)] public float PullStrength = 2f;
         [Tooltip("Radians per second the orbit can turn a projectile. Must be faster than the orbit itself (1 / Radius Per Speed).")]
         [Min(0f)] public float TurnSpeed = 12f;
+        [Tooltip("Spreads the projectiles evenly around the orbit: one half a turn from its place orbits this much further out (ahead) or in (behind), so it falls back or catches up. 0: no spreading.")]
+        [Range(0f, 0.5f)] public float SpreadStrength = 0.5f;
 
         protected override EventHorizon Configure(EventHorizon component, bool isNew)
         {
@@ -25,6 +27,7 @@ namespace Equipment
             component.MaxRadius = Mathf.Max(MinRadius, MaxRadius);
             component.PullStrength = PullStrength;
             component.TurnSpeed = TurnSpeed;
+            component.SpreadStrength = SpreadStrength;
             return component;
         }
     }
