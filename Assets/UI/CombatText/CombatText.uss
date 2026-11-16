@@ -60,3 +60,9 @@
 .combat-text--heal {
     color: #7CFC00;
 }
+
+/* "+5 gold": a drop gave the account gold. Softer than crit yellow, so it does not read as a big hit */
+.combat-text--gold {
+    font-size: 20px;
+    color: #F2C14E;
+}

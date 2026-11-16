@@ -5,6 +5,7 @@
             <ui:VisualElement class="cp-equipment">
                 <ui:Label text="Character" class="cp-title" />
                 <ui:Label name="header" class="cp-header" />
+                <ui:Label name="gold" class="cp-gold" />
                 <!-- Slots are created by CharacterPanelHUD -->
                 <ui:VisualElement name="slotGrid" class="cp-slot-grid" />
                 <ui:Label name="hint" text="Click a slot to swap · Press I to close" class="cp-hint" />

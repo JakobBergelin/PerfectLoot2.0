@@ -10,6 +10,7 @@
                 <ui:Label name="value" class="experience-bar__value" picking-mode="Ignore" />
             </ui:VisualElement>
             <ui:Label name="level" class="experience-row__level" picking-mode="Ignore" />
+            <ui:Label name="gold" class="experience-row__gold" picking-mode="Ignore" />
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

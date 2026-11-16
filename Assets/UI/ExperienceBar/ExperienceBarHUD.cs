@@ -12,13 +12,13 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
     /// <summary>Whose HUD this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
     public int PlayerIndex { get; set; }
 
-    const string HoveredClass = "experience-bar--hovered", LevelUpClass = "experience-row--level-up";
+    const string HoveredClass = "experience-bar--hovered", LevelUpClass = "experience-row--level-up", GoldShownClass = "experience-row__gold--shown";
     const float LevelUpSeconds = 1.8f;  // How long "Level up!" shows
 
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _row, _fill;
-    Label _level, _value;
+    Label _level, _value, _gold;
 
     // Last shown values, so the UI is only touched when something changes
     Entity _shownPlayer;
@@ -56,7 +56,8 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
         _fill = root.Q<VisualElement>("fill");
         _level = root.Q<Label>("level");
         _value = root.Q<Label>("value");
-        if (_row == null || bar == null || _fill == null || _level == null || _value == null)
+        _gold = root.Q<Label>("gold");
+        if (_row == null || bar == null || _fill == null || _level == null || _value == null || _gold == null)
         {
             Debug.LogError("ExperienceBarHUD: elements missing. Is ExperienceBar.uxml assigned as the Panel Renderer's Source Asset?", this);
             _row = null;
@@ -88,6 +89,16 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
         }
         if (level.Value != _shownLevel || level.Experience != _shownExperience) Show(level);
         _row.EnableInClassList(LevelUpClass, Time.unscaledTime < _levelUpEnd);
+
+        // The account's gold, in town on player 1's HUD
+        var account = AccountManager.Instance;
+        bool showGold = PlayerIndex == 0 && account != null && GameArea.IsTown;
+        _gold.EnableInClassList(GoldShownClass, showGold);
+        if (showGold)
+        {
+            string gold = $"{account.Gold:N0} gold";
+            if (_gold.text != gold) _gold.text = gold;
+        }
     }
 
     // The fill (full at the max level), the numbers and the badge; a flash when the level went up

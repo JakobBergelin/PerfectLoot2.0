@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 [RequireComponent(typeof(PanelRenderer))]
 public class CombatTextHUD : MonoBehaviour
 {
-    enum Kind { Damage, Crit, Blocked, Bleed, Burn, Poison, Heal, Dodged, Absorbed }
+    enum Kind { Damage, Crit, Blocked, Bleed, Burn, Poison, Heal, Dodged, Absorbed, Gold }
 
     static readonly string[] KindClasses =
     {
@@ -24,6 +24,7 @@ public class CombatTextHUD : MonoBehaviour
         "combat-text--heal",
         "combat-text--dodged",
         "combat-text--absorbed",
+        "combat-text--gold",
     };
     const string LabelClass = "combat-text";
     const string HiddenClass = "combat-text--hidden";
@@ -72,6 +73,7 @@ public class CombatTextHUD : MonoBehaviour
     EffectDamageTextSystem _effectDamageTextSystem;
     ApplyHealingSystem _healingSystem;
     NetFeedbackReceiveSystem _receiveSystem;   // In someone else's game: the host's numbers
+    GroundLootManager _groundLoot;             // "+5 gold" where a drop gave the account gold
 
     void Awake() => _random = Unity.Mathematics.Random.CreateFromIndex((uint)System.Environment.TickCount);
 
@@ -173,6 +175,8 @@ public class CombatTextHUD : MonoBehaviour
             _effectDamageTextSystem.OnPoisoned -= OnPoisoned;
         }
         if (_healingSystem != null) _healingSystem.OnHealingReceived -= OnHealing;
+        if (_groundLoot != null) _groundLoot.GoldGained -= OnGold;
+        _groundLoot = null;
         if (_receiveSystem != null)
         {
             _receiveSystem.OnDamageTaken -= OnDamageTaken;
@@ -194,12 +198,21 @@ public class CombatTextHUD : MonoBehaviour
     void OnBurning(float amount, float3 position) => Queue(amount, position, Kind.Burn);
     void OnPoisoned(float amount, float3 position) => Queue(amount, position, Kind.Poison);
     void OnHealing(float amount, float3 position) => Queue(amount, position, Kind.Heal);
+    void OnGold(long amount, Vector3 position) => Queue(amount, position, Kind.Gold);
 
     void Queue(float amount, float3 position, Kind kind) =>
         _pending.Add(new Pending { Amount = amount, Position = position, Kind = kind });
 
     void LateUpdate()
     {
+        // Kept between scenes, but may come after this
+        if (_groundLoot != GroundLootManager.Instance)
+        {
+            if (_groundLoot != null) _groundLoot.GoldGained -= OnGold;
+            _groundLoot = GroundLootManager.Instance;
+            if (_groundLoot != null) _groundLoot.GoldGained += OnGold;
+        }
+
         var camera = Camera.main;
         if (_layer == null || camera == null || _layer.panel == null)
         {
@@ -263,7 +276,13 @@ public class CombatTextHUD : MonoBehaviour
         entry.Age = 0f;
 
         SetKind(entry, pending.Kind);
-        entry.Label.text = pending.Kind == Kind.Dodged ? DodgedText : pending.Kind == Kind.Absorbed ? AbsorbedText : Format(pending.Amount);
+        entry.Label.text = pending.Kind switch
+        {
+            Kind.Dodged => DodgedText,
+            Kind.Absorbed => AbsorbedText,
+            Kind.Gold => $"+{pending.Amount:F0} gold",
+            _ => Format(pending.Amount),
+        };
         entry.Label.style.opacity = 1f;
         entry.Label.RemoveFromClassList(HiddenClass);
         // Newest on top

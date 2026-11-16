@@ -136,3 +136,25 @@
 .experience-row--level-up .experience-bar {
     border-color: #FFE27A;
 }
+
+/* The account's gold, right of the bar: only in town, on player 1's HUD (it's the account's, not a character's) */
+.experience-row__gold {
+    position: absolute;
+    left: 100%;
+    top: 0;
+    height: 32px;
+    margin-left: 10px;
+    font-size: 16px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-left;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #F2C14E;
+    padding: 0;
+    white-space: nowrap;
+    display: none;
+}
+
+.experience-row__gold--shown {
+    display: flex;
+}

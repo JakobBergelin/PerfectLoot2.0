@@ -94,6 +94,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
     VisualElement _root;
     VisualElement _panel;
     Label _header;
+    Label _gold;    // The account's gold, shared by its characters
     Label _hint;
     VisualElement _tooltip;
     Label _tooltipTitle, _tooltipSubtitle;
@@ -175,6 +176,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         _root = root.Q<VisualElement>("characterPanelRoot");
         _panel = root.Q<VisualElement>("panel");
         _header = root.Q<Label>("header");
+        _gold = root.Q<Label>("gold");
         _hint = root.Q<Label>("hint");
         var slotGrid = root.Q<VisualElement>("slotGrid");
         _statList = root.Q<VisualElement>("statList");
@@ -188,7 +190,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         _pickerList = root.Q<VisualElement>("pickerList");
         _previewHeader = root.Q<VisualElement>("previewHeader");
         _previewTitle = root.Q<Label>("previewTitle");
-        if (_root == null || _panel == null || _header == null || _hint == null || slotGrid == null || _statList == null || _tooltip == null ||
+        if (_root == null || _panel == null || _header == null || _gold == null || _hint == null || slotGrid == null || _statList == null || _tooltip == null ||
             _picker == null || _pickerTitle == null || _pickerFilters == null || _pickerList == null ||
             _previewHeader == null || _previewTitle == null)
         {
@@ -235,6 +237,10 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         bool gamepad = Nav.UsingGamepad;
         _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
         if (!town && _pickerSlot != null) ClosePicker();
+
+        var account = AccountManager.Instance;
+        string gold = account != null ? $"{account.Gold:N0} gold" : "";
+        if (_gold.text != gold) _gold.text = gold;
 
         Subscribe();
         if (_slotsDirty) RefreshSlots();

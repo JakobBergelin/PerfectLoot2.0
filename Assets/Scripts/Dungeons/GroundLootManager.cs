@@ -71,7 +71,13 @@ public class GroundLootManager : MonoBehaviour
         Version++;
     }
 
-    /// <summary>Rolls the table and drops every item it gives around the point. Gold isn't dropped yet.</summary>
+    /// <summary>Raised when a drop gave the account gold, with where it dropped (CombatTextHUD shows "+5 gold" there).</summary>
+    public event System.Action<long, Vector3> GoldGained;
+
+    /// <summary>
+    /// Rolls the table: drops every item it gives around the point, and its gold goes straight to the account (shared by
+    /// the machine's players; every machine rolls its own drops).
+    /// </summary>
     public void DropFromTable(LootTable table, Vector3 point)
     {
         if (table == null) return;
@@ -83,7 +89,17 @@ public class GroundLootManager : MonoBehaviour
             return;
         }
 
-        foreach (var candidate in table.Explore().OfType<Item>())
+        var rolled = table.Explore();
+        long gold = 0;
+        foreach (var drop in rolled)
+            if (drop.LootType == LootType.Gold) gold += Mathf.Max(0, drop.Quantity);
+        if (gold > 0)
+        {
+            account.AddGold(gold);
+            GoldGained?.Invoke(gold, point);
+        }
+
+        foreach (var candidate in rolled.OfType<Item>())
         {
             if (candidate.BaseItem == null) continue;
             var item = loot.RollItem(candidate.BaseItem);

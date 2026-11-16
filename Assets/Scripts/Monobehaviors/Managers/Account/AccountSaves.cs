@@ -23,6 +23,43 @@ public static class AccountSaves
     const int StatisticsVersion = 1;
     const string LeaderboardsFile = "Leaderboards.json";
     const int LeaderboardsVersion = 1;
+    const string WalletFile = "Wallet.json";
+    const int WalletVersion = 1;
+
+    [Serializable]
+    class WalletData
+    {
+        public int Version;
+        public long Gold;
+    }
+
+    static string WalletPath(string accountId) => Path.Combine(FolderOf(accountId), WalletFile);
+
+    /// <summary>Writes the account's gold (shared by all its characters).</summary>
+    public static void WriteWallet(string accountId, long gold) =>
+        Write(WalletPath(accountId), JsonUtility.ToJson(new WalletData { Version = WalletVersion, Gold = gold }, true));
+
+    /// <summary>The account's gold: 0 when it has none saved, or it can't be read (then it's copied aside).</summary>
+    public static long ReadWallet(string accountId)
+    {
+        string path = WalletPath(accountId);
+        if (!File.Exists(path)) return 0;
+        WalletData data = null;
+        try
+        {
+            data = JsonUtility.FromJson<WalletData>(File.ReadAllText(path));
+        }
+        catch (Exception exception)
+        {
+            Debug.LogError($"Couldn't read {path}: {exception.Message}");
+        }
+        if (data == null)
+        {
+            CopyAside(path);
+            return 0;
+        }
+        return Math.Max(0, data.Gold);
+    }
 
     [Serializable]
     class LeaderboardsData

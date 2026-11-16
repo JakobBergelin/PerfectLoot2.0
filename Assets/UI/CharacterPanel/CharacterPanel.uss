@@ -103,6 +103,15 @@
     white-space: nowrap;
 }
 
+/* The account's gold, under the header */
+.cp-gold {
+    font-size: 14px;
+    -unity-font-style: bold;
+    color: #F2C14E;
+    margin: -8px 0 12px 4px;    /* Pulled up into the header's bottom margin */
+    padding: 0;
+}
+
 /* Stats column */
 .cp-stats-column {
     margin-left: 20px;

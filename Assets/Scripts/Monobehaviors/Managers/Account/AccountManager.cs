@@ -86,8 +86,10 @@ public class AccountManager : MonoBehaviour
         _charactersLoaded = false;
         _characters.Clear();
         _statistics = null;
+        _goldLoaded = false;
         System.Array.Clear(_selected, 0, _selected.Length);
         AccountChanged?.Invoke();
+        GoldChanged?.Invoke();
         PendingDropsChanged?.Invoke();
         CharactersChanged?.Invoke();
         return true;
@@ -332,6 +334,37 @@ public class AccountManager : MonoBehaviour
     public void SaveStatistics()
     {
         if (_statistics != null) AccountSaves.WriteStatistics(AccountId, _statistics);
+    }
+
+    // ---------- Gold ----------
+
+    long _gold;
+    bool _goldLoaded;
+
+    /// <summary>The account's gold, shared by all its characters. Loaded from its save on first use.</summary>
+    public long Gold
+    {
+        get
+        {
+            if (!_goldLoaded)
+            {
+                _goldLoaded = true;
+                _gold = AccountSaves.ReadWallet(AccountId);
+            }
+            return _gold;
+        }
+    }
+
+    /// <summary>Raised after the gold changed, or the account did.</summary>
+    public event Action GoldChanged;
+
+    /// <summary>Adds gold to the account and saves it. Nothing for 0 or less.</summary>
+    public void AddGold(long amount)
+    {
+        if (amount <= 0) return;
+        _gold = Gold + amount;
+        AccountSaves.WriteWallet(AccountId, _gold);
+        GoldChanged?.Invoke();
     }
 
     [SerializeField, Tooltip("Read-only: one entry per item kind and rarity, empty until found")]
