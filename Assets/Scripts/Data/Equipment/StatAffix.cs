@@ -49,6 +49,7 @@ namespace Equipment
                 case Affix.WeaponReach: block.WeaponReach += value; break;
                 case Affix.ArmorPierce: block.ArmorPierce += value; break;
                 case Affix.BuffDuration: block.BuffDuration += value; break;
+                case Affix.PickupRange: block.PickupRange += value; break;
             }
         }
     }

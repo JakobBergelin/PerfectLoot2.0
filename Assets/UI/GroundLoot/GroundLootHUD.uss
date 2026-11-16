@@ -34,6 +34,13 @@
     border-width: 2px;
 }
 
+/* A gold pile: picked up by walking over it, so no hover and no border */
+.gl-label--gold {
+    font-size: 12px;
+    color: #F2C14E;
+    border-width: 0;
+}
+
 /* Too far to pick up */
 .gl-label--far {
     opacity: 0.5;

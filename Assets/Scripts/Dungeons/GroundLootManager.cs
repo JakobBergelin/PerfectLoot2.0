@@ -11,10 +11,11 @@ using UnityEngine;
 using Random = UnityEngine.Random;
 
 /// <summary>
-/// Items lying on the ground (dungeon kills and completion, DungeonManager). GroundLootHUD shows a label for each;
+/// Items and gold lying on the ground (dungeon kills and completion, DungeonManager). GroundLootHUD shows a label for each;
 /// clicking it within PickupRange, or Interact for the nearest one, picks the item up: it's given to AccountManager right
 /// away and waits in its drop queue for review in town. Items left on the ground are lost when the scene changes (every
 /// scene load makes a new world).
+/// Gold is picked up by walking over it: within GoldPickupRange plus the player's Pickup Range stat, it goes to the account.
 /// Kept between scenes (GameBootstrap's rig).
 /// </summary>
 public class GroundLootManager : MonoBehaviour
@@ -25,22 +26,34 @@ public class GroundLootManager : MonoBehaviour
         public Vector3 Position;
     }
 
+    public class GroundGold
+    {
+        public long Amount;
+        public Vector3 Position;
+    }
+
     public static GroundLootManager Instance;
 
     [Tooltip("Meters (along the ground) from the player within which a dropped item can be picked up")]
     public float PickupRange = 6f;
+    [Tooltip("Meters (along the ground) from the player within which gold is picked up by walking over it, before their Pickup Range stat")]
+    public float GoldPickupRange = 1.5f;
     [Tooltip("Items from one drop land this many meters around its point, at least")]
     public float ScatterMin = 0.4f;
     [Tooltip("Items from one drop land this many meters around its point, at most")]
     public float ScatterMax = 1.6f;
 
     readonly List<GroundItem> _items = new List<GroundItem>();
+    readonly List<GroundGold> _gold = new List<GroundGold>();
     World _world;
 
     /// <summary>The items on the ground, oldest first.</summary>
     public IReadOnlyList<GroundItem> Items => _items;
 
-    /// <summary>Changes whenever an item lands or is picked up (GroundLootHUD rebuilds its labels).</summary>
+    /// <summary>The gold piles on the ground, oldest first.</summary>
+    public IReadOnlyList<GroundGold> Gold => _gold;
+
+    /// <summary>Changes whenever an item or gold lands or is picked up (GroundLootHUD rebuilds its labels).</summary>
     public int Version { get; private set; }
 
     /// <summary>Items picked up in this scene.</summary>
@@ -48,6 +61,9 @@ public class GroundLootManager : MonoBehaviour
 
     /// <summary>Raised when an item is picked up, after it's off the ground (GroundLootVfx bursts there).</summary>
     public event System.Action<GroundItem> ItemPickedUp;
+
+    /// <summary>Raised when gold is picked up, after it's off the ground (GroundLootVfx bursts there).</summary>
+    public event System.Action<GroundGold> GoldPickedUp;
 
     void Awake()
     {
@@ -60,23 +76,47 @@ public class GroundLootManager : MonoBehaviour
         if (Instance == this) Instance = null;
     }
 
-    // A new world is a new scene: what was left on the ground is gone
     void Update()
     {
+        // A new world is a new scene: what was left on the ground is gone
         var world = World.DefaultGameObjectInjectionWorld;
-        if (world == _world) return;
-        _world = world;
-        _items.Clear();
-        PickedUp = 0;
-        Version++;
+        if (world != _world)
+        {
+            _world = world;
+            _items.Clear();
+            _gold.Clear();
+            PickedUp = 0;
+            Version++;
+        }
+        for (int i = 0; i < GameInput.MaxPlayers; i++) PickUpGold(i);
     }
 
-    /// <summary>Raised when a drop gave the account gold, with where it dropped (CombatTextHUD shows "+5 gold" there).</summary>
+    // Every gold pile within this local player's gold pickup range goes to the account
+    void PickUpGold(int playerIndex)
+    {
+        if (_gold.Count == 0 || !TryGetPlayer(playerIndex, out var player, out var stats)) return;
+        var account = AccountManager.Instance;
+        if (account == null) return;
+        float range = Mathf.Max(0f, GoldPickupRange + stats.PickupRange);
+        for (int i = _gold.Count - 1; i >= 0; i--)
+        {
+            var gold = _gold[i];
+            var offset = new Vector2(gold.Position.x - player.x, gold.Position.z - player.z);
+            if (offset.sqrMagnitude > range * range) continue;
+            _gold.RemoveAt(i);
+            Version++;
+            account.AddGold(gold.Amount);
+            GoldGained?.Invoke(gold.Amount, gold.Position);
+            GoldPickedUp?.Invoke(gold);
+        }
+    }
+
+    /// <summary>Raised when gold is picked up, with where it lay (CombatTextHUD shows "+5 gold" there).</summary>
     public event System.Action<long, Vector3> GoldGained;
 
     /// <summary>
-    /// Rolls the table: drops every item it gives around the point, and its gold goes straight to the account (shared by
-    /// the machine's players; every machine rolls its own drops).
+    /// Rolls the table: drops every item it gives around the point, and its gold in one pile there (picked up by walking
+    /// over it, for the account shared by the machine's players; every machine rolls its own drops).
     /// </summary>
     public void DropFromTable(LootTable table, Vector3 point)
     {
@@ -95,8 +135,8 @@ public class GroundLootManager : MonoBehaviour
             if (drop.LootType == LootType.Gold) gold += Mathf.Max(0, drop.Quantity);
         if (gold > 0)
         {
-            account.AddGold(gold);
-            GoldGained?.Invoke(gold, point);
+            _gold.Add(new GroundGold { Amount = gold, Position = LandingSpot(point) });
+            Version++;
         }
 
         foreach (var candidate in rolled.OfType<Item>())
@@ -118,20 +158,24 @@ public class GroundLootManager : MonoBehaviour
     public void Drop(Item item, Vector3 point)
     {
         if (item == null) return;
+        _items.Add(new GroundItem { Item = item, Position = LandingSpot(point) });
+        Version++;
+    }
+
+    // A random spot around the point, on the floor there; the point's height where there's none (over a wall or water)
+    Vector3 LandingSpot(Vector3 point)
+    {
         float angle = Random.value * Mathf.PI * 2f;
         float distance = Mathf.Lerp(ScatterMin, Mathf.Max(ScatterMin, ScatterMax), Mathf.Sqrt(Random.value));
         var position = point + new Vector3(Mathf.Cos(angle), 0f, Mathf.Sin(angle)) * distance;
 
-        // On the floor there; the point's height where there's none (over a wall or water)
         var world = World.DefaultGameObjectInjectionWorld;
         if (world != null && world.IsCreated && GroundPlacement.TryGetCollisionWorld(world.EntityManager, out CollisionWorld collisionWorld) &&
             GroundPlacement.TryFindGround(collisionWorld, position, out var ground) && Mathf.Abs(ground.y - point.y) < 2f)
             position = ground;
         else
             position.y = point.y;
-
-        _items.Add(new GroundItem { Item = item, Position = position });
-        Version++;
+        return position;
     }
 
     /// <summary>Puts the item on the ground near a local player (player 1 by default), if they're in the level.</summary>
@@ -189,9 +233,12 @@ public class GroundLootManager : MonoBehaviour
         return true;
     }
 
-    static bool TryGetPlayer(int playerIndex, out float3 position)
+    static bool TryGetPlayer(int playerIndex, out float3 position) => TryGetPlayer(playerIndex, out position, out _);
+
+    static bool TryGetPlayer(int playerIndex, out float3 position, out StatBlock stats)
     {
         position = default;
+        stats = default;
         var characterManager = CharacterManager.For(playerIndex);
         var world = World.DefaultGameObjectInjectionWorld;
         if (characterManager == null || world == null || !world.IsCreated) return false;
@@ -199,6 +246,7 @@ public class GroundLootManager : MonoBehaviour
         var player = characterManager.Player;
         if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<LocalTransform>(player)) return false;
         position = entityManager.GetComponentData<LocalTransform>(player).Position;
+        if (entityManager.HasComponent<CalculatedStats>(player)) stats = entityManager.GetComponentData<CalculatedStats>(player).Value;
         return true;
     }
 }

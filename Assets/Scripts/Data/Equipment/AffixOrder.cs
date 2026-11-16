@@ -26,7 +26,7 @@ namespace Equipment
             // Resistances
             Affix.AllResistance, Affix.FireResistance, Affix.ColdResistance, Affix.LightningResistance, Affix.PoisonResistance,
             // Other
-            Affix.MovementSpeed, Affix.BuffDuration,
+            Affix.MovementSpeed, Affix.BuffDuration, Affix.PickupRange,
         };
 
         static readonly Dictionary<Affix, int> _index = BuildIndex();

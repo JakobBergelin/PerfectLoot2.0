@@ -46,5 +46,6 @@ namespace Equipment
         PoisonDamage = 37,
         ProjectileDamageReduction = 38,
         MeleeDamageReduction = 39,
+        PickupRange = 40,
     }
 }

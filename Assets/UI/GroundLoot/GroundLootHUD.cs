@@ -8,7 +8,8 @@ using UnityEngine.UIElements;
 /// the item up when the mouse's player is within reach; labels out of everyone's reach are dimmed. Each player's
 /// Interact action picks up the item in reach nearest them, whose label is marked and shows their key (unless a portal
 /// in reach takes their Interact, PortalHUD). Picked-up items are the account's, so both players share them. Labels that
-/// would overlap on screen are stacked upward.
+/// would overlap on screen are stacked upward. Gold piles get a gold "12 gold" label that takes no clicks (walking over
+/// the pile picks it up).
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class GroundLootHUD : MonoBehaviour
@@ -17,6 +18,7 @@ public class GroundLootHUD : MonoBehaviour
     const string FarClass = "gl-label--far";
     const string HiddenClass = "gl-label--hidden";
     const string NextClass = "gl-label--next";
+    const string GoldClass = "gl-label--gold";
     const float StackGap = 2f;
 
     [Tooltip("Height above the item where the label's bottom edge sits, in meters")]
@@ -24,7 +26,9 @@ public class GroundLootHUD : MonoBehaviour
 
     class View
     {
-        public GroundLootManager.GroundItem Item;
+        public GroundLootManager.GroundItem Item;   // Null for a gold pile
+        public GroundLootManager.GroundGold Gold;   // Null for an item
+        public Vector3 Position => Item != null ? Item.Position : Gold.Position;
         public string Name;
         public Label Label;
         public Rect Rect;           // Where it goes this frame, in panel space
@@ -98,6 +102,7 @@ public class GroundLootHUD : MonoBehaviour
         }
         foreach (var view in _views)
         {
+            if (view.Item == null) continue;
             int player = System.Array.IndexOf(_next, view.Item);
             view.Label.EnableInClassList(NextClass, player >= 0);
             string text = player >= 0 && _keys[player].Length > 0 ? $"{view.Name} ({_keys[player]})" : view.Name;
@@ -114,7 +119,7 @@ public class GroundLootHUD : MonoBehaviour
         var camera = Camera.main;
         foreach (var view in _views)
         {
-            var anchor = view.Item.Position + Vector3.up * LabelHeight;
+            var anchor = view.Position + Vector3.up * LabelHeight;
             view.Visible = camera != null && camera.WorldToViewportPoint(anchor).z > 0f;
             view.Label.EnableInClassList(HiddenClass, !view.Visible);
             if (!view.Visible) continue;
@@ -124,7 +129,7 @@ public class GroundLootHUD : MonoBehaviour
             float width = float.IsNaN(view.Label.resolvedStyle.width) ? 0f : view.Label.resolvedStyle.width;
             float height = float.IsNaN(view.Label.resolvedStyle.height) ? 0f : view.Label.resolvedStyle.height;
             view.Rect = new Rect(point.x - width * 0.5f, point.y - height, width, height);
-            view.Label.EnableInClassList(FarClass, !manager.InReachOfAnyone(view.Item));
+            if (view.Item != null) view.Label.EnableInClassList(FarClass, !manager.InReachOfAnyone(view.Item));
         }
 
         Stack();
@@ -191,6 +196,16 @@ public class GroundLootHUD : MonoBehaviour
 
             _root.Add(label);
             _views.Add(new View { Item = item, Name = name, Label = label });
+        }
+
+        foreach (var gold in manager.Gold)
+        {
+            string name = $"{gold.Amount:N0} gold";
+            var label = new Label(name) { pickingMode = PickingMode.Ignore };
+            label.AddToClassList(LabelClass);
+            label.AddToClassList(GoldClass);
+            _root.Add(label);
+            _views.Add(new View { Gold = gold, Name = name, Label = label });
         }
     }
 

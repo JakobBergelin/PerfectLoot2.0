@@ -42,6 +42,7 @@ public struct StatBlock
     public float AreaOfEffect;
     public float CooldownReduction;     // Shorter skill cooldowns (Dash, Teleport...); repeated attacks (Fireball...) use AttackSpeed. See SkillUtil.Cooldown
     public float BuffDuration;          // Buffs received last this much longer (negative: shorter); see EffectApply.BuffDuration
+    public float PickupRange;           // Meters added to how far away gold is picked up (GroundLootManager); not scaled by AreaOfEffect
 
     public float ColdResistance;
     public float FireResistance;
@@ -125,6 +126,7 @@ public struct StatBlock
         AreaOfEffect += other.AreaOfEffect;
         CooldownReduction += other.CooldownReduction;
         BuffDuration += other.BuffDuration;
+        PickupRange += other.PickupRange;
 
         ColdResistance += other.ColdResistance;
         FireResistance += other.FireResistance;
@@ -178,6 +180,7 @@ public struct StatBlock
         AreaOfEffect -= other.AreaOfEffect;
         CooldownReduction -= other.CooldownReduction;
         BuffDuration -= other.BuffDuration;
+        PickupRange -= other.PickupRange;
 
         ColdResistance -= other.ColdResistance;
         FireResistance -= other.FireResistance;

@@ -736,6 +736,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         section = AddSection(list, "Other");
         AddRow(section, Affix.MovementSpeed, "Movement Speed", s => s.Stats.MovementSpeed, Pct, plus: true);
         AddRow(section, Affix.BuffDuration, "Buff Duration", s => s.Stats.BuffDuration, Pct, plus: true);
+        AddRow(section, Affix.PickupRange, "Pickup Range", s => s.Stats.PickupRange, Flat, plus: true);
 
         // Pages of whole sections
         _statPager.Reset();
