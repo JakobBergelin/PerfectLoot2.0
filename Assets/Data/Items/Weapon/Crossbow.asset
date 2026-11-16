@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 891292c906744eefa9e01442dcec83d6
   Icon: {fileID: 21300000, guid: bb96b3d0afd14c618bbceb1fc2f0488d, type: 3}
   Flavor: Patience, wound up and ready.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 13
     RollRange:
@@ -42,6 +43,7 @@ MonoBehaviour:
     RollRange:
       Min: 5
       Max: 12
+  Kind: 2
   WeaponDamage:
     Min: 4
     Max: 8

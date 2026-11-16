@@ -27,7 +27,20 @@ public static class SkillTooltip
         return entityManager.GetComponentData<CalculatedStats>(player).Value;
     }
 
-    public static void Fill(VisualElement container, ActiveSkill skill, StatBlock? stats)
+    /// <summary>The kinds of a local player's equipped weapon and offhand (player 1's by default), or null without them.</summary>
+    public static GearKinds? CurrentGear(int playerIndex = 0)
+    {
+        var world = World.DefaultGameObjectInjectionWorld;
+        var characterManager = CharacterManager.For(playerIndex);
+        if (world == null || !world.IsCreated || characterManager == null) return null;
+        var entityManager = world.EntityManager;
+        var player = characterManager.Player;
+        if (player == Entity.Null || !entityManager.Exists(player) || !entityManager.HasComponent<EquippedGear>(player)) return null;
+        return entityManager.GetComponentData<EquippedGear>(player).Kinds;
+    }
+
+    /// <summary>gear: the caster's equipped gear kinds, to color the gear requirement, or null.</summary>
+    public static void Fill(VisualElement container, ActiveSkill skill, StatBlock? stats, GearKinds? gear = null)
     {
         container.Clear();
 
@@ -52,6 +65,12 @@ public static class SkillTooltip
                 parts.Add(part);
             }
             container.Add(Text("Requires " + string.Join(" · ", parts)));
+        }
+        if (skill.RequiredGear != GearKinds.None)
+        {
+            string part = Gear.Text(skill.RequiredGear);
+            if (gear is GearKinds g) part = $"<color={(Gear.Meets(skill.RequiredGear, g) ? "#7FD07F" : "#E05050")}>{part}</color>";
+            container.Add(Text("Requires " + part));
         }
 
         // Cost and cooldown, after the caster's reductions

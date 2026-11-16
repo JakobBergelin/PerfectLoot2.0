@@ -26,6 +26,7 @@ public sealed class ActiveSkillPicker
     CharacterClass _class;
     ActiveSkill _highlighted;
     StatBlock? _stats;
+    Equipment.GearKinds? _gear;
 
     public ActiveSkillPicker()
     {
@@ -61,12 +62,14 @@ public sealed class ActiveSkillPicker
 
     /// <summary>
     /// Shows every skill. badge: the key of the slot a skill is equipped in, or null. attributes: the character's
-    /// Strength, Agility and Intelligence now; characterClass for "reached at level". stats: for the tooltip, or null.
+    /// Strength, Agility and Intelligence now; characterClass for "reached at level". stats: for the tooltip, or null. gear: the
+    /// equipped weapon and offhand kinds, or null (gear requirements then count as met).
     /// Keeps the highlighted skill.
     /// </summary>
-    public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, string> badge, float3 attributes, CharacterClass characterClass, StatBlock? stats)
+    public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, string> badge, float3 attributes, CharacterClass characterClass, StatBlock? stats, Equipment.GearKinds? gear = null)
     {
         _skills = skills ?? Array.Empty<ActiveSkill>();
+        _gear = gear;
         _attributes = attributes;
         _class = characterClass;
         _stats = stats;
@@ -104,7 +107,9 @@ public sealed class ActiveSkillPicker
         return null;
     }
 
-    bool Usable(ActiveSkill skill) => SkillRequirements.Meets(skill.Requirements, _attributes);
+    bool Usable(ActiveSkill skill) => SkillRequirements.Meets(skill.Requirements, _attributes) && HasGear(skill);
+
+    bool HasGear(ActiveSkill skill) => _gear is not Equipment.GearKinds gear || Equipment.Gear.Meets(skill.RequiredGear, gear);
 
     bool Contains(ActiveSkill skill)
     {
@@ -144,10 +149,12 @@ public sealed class ActiveSkillPicker
         _bars.Clear();
         for (int i = 0; i < 3; i++)
             if (requirements[i] > 0) _bars.Add(Bar(SkillRequirements.Names[i], requirements[i], _attributes[i]));
+        if (skill.RequiredGear != Equipment.GearKinds.None)
+            _bars.Add(NewLabel("sw-card__unlock", $"<color={(HasGear(skill) ? "#7FD07F" : "#E05050")}>Requires {Equipment.Gear.Text(skill.RequiredGear)}</color>"));
         if (_bars.childCount == 0) _bars.Add(NewLabel("sw-card__unlock", "No requirements"));
 
-        _unlock.text = UnlockText(requirements);
-        SkillTooltip.Fill(_body, skill, _stats);
+        _unlock.text = UnlockText(skill);
+        SkillTooltip.Fill(_body, skill, _stats, _gear);
     }
 
     VisualElement Bar(string attribute, int required, float have)
@@ -171,9 +178,11 @@ public sealed class ActiveSkillPicker
         return row;
     }
 
-    string UnlockText(int3 requirements)
+    string UnlockText(ActiveSkill skill)
     {
-        if (SkillRequirements.Meets(requirements, _attributes)) return "Usable now";
+        var requirements = skill.Requirements;
+        if (SkillRequirements.Meets(requirements, _attributes))
+            return HasGear(skill) ? "Usable now" : $"Equip a {Equipment.Gear.Text(skill.RequiredGear)} to use it in dungeons";
         if (_class == null) return "Needs more attributes";
         string className = string.IsNullOrWhiteSpace(_class.Name) ? _class.name : _class.Name;
         int level = SkillRequirements.UnlockLevel(requirements, _class);

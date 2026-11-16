@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: c6c2ab5b57a34b98bdff098abff77482
   Icon: {fileID: 21300000, guid: 88ddf5dfc1704a5c8f1b732556fc0fe6, type: 3}
   Flavor: Mind your pockets.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -42,4 +43,5 @@ MonoBehaviour:
     RollRange:
       Min: 10
       Max: 20
+  Kind: 128
   LegendaryPower: {fileID: 11400000, guid: 76f49f7a8bf244fcab94b10630811bae, type: 2}

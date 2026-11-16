@@ -253,6 +253,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         Label = SkillDamageLabel.Of(skill.Type),
         CritShake = skill.CritShake,
         Requirements = skill.Requirements,
+        RequiredGear = skill.RequiredGear,
         Priority = skill.Priority,
         State = new SkillState
         {
@@ -283,7 +284,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
                 slots[i].SetState(skill.State);
                 // The asset's requirements or priority were edited (e.g. in Play mode): push them again. Only where
                 // they're on the entity: in someone else's game only the type, slot and state arrive
-                if (NetSession.IsHost && !slots[i].IsEmpty && (!skill.Requirements.Equals(slots[i].EquippedSkill.Requirements) || skill.Priority != slots[i].EquippedSkill.Priority)) _dirty = true;
+                if (NetSession.IsHost && !slots[i].IsEmpty && (!skill.Requirements.Equals(slots[i].EquippedSkill.Requirements) || skill.RequiredGear != slots[i].EquippedSkill.RequiredGear || skill.Priority != slots[i].EquippedSkill.Priority)) _dirty = true;
                 found = true;
                 break;
             }

@@ -606,7 +606,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
         var entry = tile.Entry;
         _detailTitle.text = entry.Key.BaseItem.Name;
         _detailTitle.style.color = RarityColors.Get(entry.Key.Rarity) ?? Color.white;
-        _detailSubtitle.text = $"{entry.Key.Rarity} {entry.Key.BaseItem.ItemType}";
+        _detailSubtitle.text = $"{entry.Key.Rarity} {entry.Key.BaseItem.TypeName}";
 
         var sb = new StringBuilder();
         if (entry.IsEmpty)

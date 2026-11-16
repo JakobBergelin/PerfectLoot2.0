@@ -24,6 +24,7 @@ public struct Skill : IBufferElementData
     [GhostField(SendData = false)] public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
     [GhostField(SendData = false)] public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
     [GhostField(SendData = false)] public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
+    [GhostField(SendData = false)] public Equipment.GearKinds RequiredGear; // Weapon or offhand kinds it needs, any one of them (ActiveSkill.RequiredGear)
     [GhostField(SendData = false)] public int Priority;            // With several keys held, the highest is cast (ActiveSkill.Priority)
     [GhostField(SendData = false)] public double LastPressed;      // When its key was last pressed: between equal priorities the latest press wins
 
@@ -47,7 +48,7 @@ public struct SkillState
     public float ResourceCost;          // Static, from the ActiveSkill asset
     public float ResourceCostPerSecond;
     public bool HasEnoughResource;      // Set by SkillActivationSystem
-    public bool MeetsRequirements;      // The unit's attributes cover Skill.Requirements (SkillActivationSystem)
+    public bool MeetsRequirements;      // The unit's attributes cover Skill.Requirements and its gear Skill.RequiredGear (SkillActivationSystem)
     public bool Usable;                 // MeetsRequirements, or anywhere but a dungeon: else it can't be used (SkillActivationSystem)
     public int Variant;                 // A skill's own mode, kept by its slot through deaths and scenes (Stances: 0 Strength, 1 Agility, 2 Intelligence)
 }

@@ -16,6 +16,7 @@ public static class UnitEntitySetup
         // Stats. CalculatedStats starts at the base values so the first frame before stats are calculated is sane.
         AddOrSet(entityManager, entity, new BaseStats { Value = baseStats });
         AddOrSet(entityManager, entity, new EquipmentStats());
+        AddOrSet(entityManager, entity, new EquippedGear());
         AddOrSet(entityManager, entity, new CalculatedStats { Value = baseStats });
         AddOrSet(entityManager, entity, new MovementSpeed { Value = baseStats.MovementSpeed });
         AddOrSet(entityManager, entity, new Armor { Value = baseStats.Armor });

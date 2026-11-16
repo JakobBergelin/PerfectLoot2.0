@@ -21,6 +21,7 @@ MonoBehaviour:
   StrengthRequirement: 0
   AgilityRequirement: 7
   IntelligenceRequirement: 0
+  RequiredGear: 3
   AttackSpeed: 0.6
   resourceCost: 8
   ArrowCount: 6

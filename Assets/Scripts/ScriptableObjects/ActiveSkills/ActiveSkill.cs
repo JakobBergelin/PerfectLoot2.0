@@ -23,6 +23,9 @@ namespace ActiveSkills
         [Min(0)] public int AgilityRequirement;
         [Min(0)] public int IntelligenceRequirement;
 
+        [Tooltip("Weapon or offhand kinds it needs, any one of them (Nothing: none). Like attributes, only in dungeons.")]
+        public GearKinds RequiredGear;
+
         /// <summary>Strength, Agility and Intelligence it needs (SkillRequirements).</summary>
         public int3 Requirements => new int3(StrengthRequirement, AgilityRequirement, IntelligenceRequirement);
 

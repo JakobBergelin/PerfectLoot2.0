@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 2fd5bb6cfc6b4f81a73125235bfbcf74
   Icon: {fileID: 21300000, guid: 9d4c835c733244d8b8d5c0700138e4a4, type: 3}
   Flavor: The first cut is the only one they see.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 3
     RollRange:
@@ -46,6 +47,7 @@ MonoBehaviour:
     RollRange:
       Min: 5
       Max: 10
+  Kind: 4
   WeaponDamage:
     Min: 3
     Max: 5

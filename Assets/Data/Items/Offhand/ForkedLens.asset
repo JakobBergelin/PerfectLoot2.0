@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: db06b5ad179e3bc24fee7dfbb9abb282
   Icon: {fileID: 21300000, guid: f965456b0ea047baa0962d28a9c9870d, type: 3}
   Flavor: One thing goes in. Two come out. Nobody knows why.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -42,4 +43,5 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.06
+  Kind: 128
   LegendaryPower: {fileID: 11400000, guid: 37840932066cee7dc459822c63c08eba, type: 2}

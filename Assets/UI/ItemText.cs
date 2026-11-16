@@ -17,7 +17,7 @@ public static class ItemText
 
     public static Color TitleColor(Item item) => RarityColors.Get(item.Rarity) ?? Color.white;
 
-    public static string Subtitle(Item item) => $"{item.Rarity} {item.ItemType}";
+    public static string Subtitle(Item item) => $"{item.Rarity} {item.BaseItem.TypeName}";
 
     /// <summary>One line of an item's stats: rich text, and the affix it's about (for its icon; null for other lines).</summary>
     public struct StatLine

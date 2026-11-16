@@ -277,7 +277,7 @@ public class PortalHUD : MonoBehaviour
         _status.EnableInClassList(HiddenClass, text.Length == 0);
     }
 
-    // Leaving the Hub: "Fireball needs 2 Int" for each equipped skill whose requirements aren't met, since it can't be
+    // Leaving the Hub: "Fireball needs 2 Int" (or "Multishot needs a Bow or Crossbow") for each equipped skill whose requirements aren't met, since it can't be
     // used there (ActiveSkillSlot.MeetsRequirements; entering still works). In co-op each player's own, named
     string RequirementWarnings()
     {
@@ -299,6 +299,8 @@ public class PortalHUD : MonoBehaviour
                     float have = stats is StatBlock s ? ActiveSkills.SkillRequirements.Attributes(s)[k] : 0f;
                     if (requirements[k] > have) missing.Add($"{requirements[k]} {ActiveSkills.SkillRequirements.Short[k]}");
                 }
+                if (SkillTooltip.CurrentGear(i) is Equipment.GearKinds gear && !Equipment.Gear.Meets(skill.RequiredGear, gear))
+                    missing.Add("a " + Equipment.Gear.Text(skill.RequiredGear));
                 string name = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
                 string who = GameInput.PlayerCount > 1 ? $"Player {i + 1}: " : "";
                 lines.Add($"<color=#E05050>{who}{name} needs {string.Join(" and ", missing)}</color>");

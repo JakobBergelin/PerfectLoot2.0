@@ -19,6 +19,12 @@ namespace Equipment
         public RollableItem VisualBase;
         public abstract ItemType ItemType { get; }
 
+        /// <summary>What kind of weapon or offhand it is, for skills that need one (ActiveSkill.RequiredGear); None for the other slots.</summary>
+        public virtual GearKinds Gear => GearKinds.None;
+
+        /// <summary>The type shown under its name: its gear kind (Bow, Shield), else its slot.</summary>
+        public string TypeName => Gear != GearKinds.None ? Gear.ToString() : ItemType.ToString();
+
         /// <summary>The asset name of the item whose 3D model this one shows (EquipmentVisual.Item).</summary>
         public string VisualKey => VisualBase != null ? VisualBase.name : name;
 

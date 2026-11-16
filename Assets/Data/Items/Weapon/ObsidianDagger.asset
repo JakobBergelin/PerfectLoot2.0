@@ -43,6 +43,7 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.06
+  Kind: 4
   WeaponDamage:
     Min: 2
     Max: 3

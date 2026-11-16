@@ -133,6 +133,8 @@ public partial struct MirrorImageInputSystem : ISystem
             ownerInputs.Move = float2.zero;
             inputs.ValueRW = ownerInputs;
             SystemAPI.SetComponent(entity, SystemAPI.GetComponent<CalculatedStats>(owner));
+            if (SystemAPI.HasComponent<EquippedGear>(owner) && SystemAPI.HasComponent<EquippedGear>(entity))
+                SystemAPI.SetComponent(entity, SystemAPI.GetComponent<EquippedGear>(owner));
             SystemAPI.SetComponent(entity, SystemAPI.GetComponent<MovementSpeed>(owner));
             SystemAPI.SetComponent(entity, SystemAPI.GetComponent<Resource>(owner));
 

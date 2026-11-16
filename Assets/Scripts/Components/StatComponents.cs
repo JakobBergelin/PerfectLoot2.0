@@ -207,6 +207,15 @@ public struct EquipmentStats : IComponentData
 }
 
 /// <summary>
+/// The kinds of the equipped weapon and offhand, for skills that need one (Skill.RequiredGear, SkillActivationSystem).
+/// Written by InventoryManager with EquipmentStats; Mirror Image copies get their owner's.
+/// </summary>
+public struct EquippedGear : IComponentData
+{
+    public Equipment.GearKinds Kinds;
+}
+
+/// <summary>
 /// Reset to BaseStats every frame, then built up by the systems in CalculateStatsSystemGroup. A player's are sent to every
 /// machine, for its character panel and the unit panel.
 /// </summary>

@@ -308,6 +308,7 @@ public class InventoryManager : MonoBehaviour, IPerPlayer
         foreach (var item in items) item.BaseItem.AddFixedStats(ref block);
 
         entityManager.SetComponentData(player, new EquipmentStats { Value = block });
+        UnitEntitySetup.AddOrSet(entityManager, player, new EquippedGear { Kinds = Gear.Of(items) });
         SyncLegendaryPowers(entityManager, player, items, appliedPowers);
         SyncVisuals(entityManager, player, items);
     }

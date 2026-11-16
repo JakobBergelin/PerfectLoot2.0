@@ -75,6 +75,7 @@ public class SkillsPanelHUD : MonoBehaviour
     ActiveSkill _pending;       // The skill clicked on the wheel, waiting for a slot
     bool _wheelDirty = true;
     float3 _shownAttributes;
+    Equipment.GearKinds? _shownGear;
 
     int _keyVersion = -1;           // GameInput.Version the key labels are from
 
@@ -232,7 +233,7 @@ public class SkillsPanelHUD : MonoBehaviour
             _resource.Icon.style.backgroundColor = ResourceColors.Of(resource.Type);
 
         // The wheel again when a slot changed or the attributes did
-        if (math.any(CurrentAttributes() != _shownAttributes)) _wheelDirty = true;
+        if (math.any(CurrentAttributes() != _shownAttributes) || SkillTooltip.CurrentGear(_owner) != _shownGear) _wheelDirty = true;
         if (_wheelDirty) BuildWheel();
     }
 
@@ -435,8 +436,9 @@ public class SkillsPanelHUD : MonoBehaviour
         var manager = ActiveSkillManager.For(_owner);
         var characters = CharacterManager.For(_owner);
         _shownAttributes = CurrentAttributes();
+        _shownGear = SkillTooltip.CurrentGear(_owner);
         _wheel.Show(manager != null ? manager.AllSkills : null, KeyOfSlot, _shownAttributes,
-                    characters != null ? characters.Class : null, SkillTooltip.CurrentStats(_owner));
+                    characters != null ? characters.Class : null, SkillTooltip.CurrentStats(_owner), _shownGear);
         _wheel.Wheel.SetPending(_pending);
     }
 

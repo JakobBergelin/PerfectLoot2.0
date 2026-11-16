@@ -126,7 +126,7 @@ public class SkillBarHUD : MonoBehaviour, IPerPlayer
         }
 
         _tooltipTitle.text = string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
-        SkillTooltip.Fill(_tooltipBody, skill, SkillTooltip.CurrentStats(PlayerIndex));
+        SkillTooltip.Fill(_tooltipBody, skill, SkillTooltip.CurrentStats(PlayerIndex), SkillTooltip.CurrentGear(PlayerIndex));
 
         var slot = _views[index].Slot;
         var position = slot.ChangeCoordinatesTo(_barRoot, Vector2.zero);

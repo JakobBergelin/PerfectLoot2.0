@@ -4,7 +4,7 @@ using Unity.Mathematics;
 /// <summary>
 /// Enables the skill component of one held slot: the highest Priority, and between equal ones the latest pressed (same
 /// frame, no command buffer: enabling isn't a structural change), and fills in the input/resource parts of each Skill's SkillState. In a dungeon a skill whose
-/// requirements (Skill.Requirements) the unit's attributes don't meet isn't usable: it can't be pressed, effects can't cast
+/// requirements (Skill.Requirements) the unit's attributes don't meet, or whose gear (Skill.RequiredGear) it hasn't equipped, isn't usable: it can't be pressed, effects can't cast
 /// it, and toggles stay off (their systems check SkillState.Usable). The Hub and other areas ignore requirements.
 /// Skill components themselves are added/removed by ActiveSkillManager.
 /// </summary>
@@ -37,7 +37,8 @@ public partial class SkillActivationSystem : SystemBase
             // Sonic Ball rolling: only Sonic Ball itself stays usable (held keeps it rolling)
             var calculatedStats = SystemAPI.HasComponent<CalculatedStats>(entity) ? SystemAPI.GetComponent<CalculatedStats>(entity) : default;
             var stats = calculatedStats.Value;
-            UpdateUsable(entity, skills, ActiveSkills.SkillRequirements.Attributes(stats), enforceRequirements);
+            var gear = SystemAPI.HasComponent<EquippedGear>(entity) ? SystemAPI.GetComponent<EquippedGear>(entity).Kinds : Equipment.GearKinds.None;
+            UpdateUsable(entity, skills, ActiveSkills.SkillRequirements.Attributes(stats), gear, enforceRequirements);
 
             bool rolling = SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling;
             // Hookshot Slash out or pulling: no skills (its own system carries on without being held)
@@ -80,12 +81,12 @@ public partial class SkillActivationSystem : SystemBase
     }
 
     // Whether each skill's requirements are met and it can be used; casts effects requested for one that can't are dropped
-    void UpdateUsable(Entity entity, DynamicBuffer<Skill> skills, float3 attributes, bool enforceRequirements)
+    void UpdateUsable(Entity entity, DynamicBuffer<Skill> skills, float3 attributes, Equipment.GearKinds gear, bool enforceRequirements)
     {
         for (int i = 0; i < skills.Length; i++)
         {
             ref var skill = ref skills.ElementAt(i);
-            skill.State.MeetsRequirements = math.all(attributes >= skill.Requirements);
+            skill.State.MeetsRequirements = math.all(attributes >= skill.Requirements) && Equipment.Gear.Meets(skill.RequiredGear, gear);
             skill.State.Usable = skill.State.MeetsRequirements || !enforceRequirements;
         }
         if (!SystemAPI.HasBuffer<SkillCastRequest>(entity)) return;

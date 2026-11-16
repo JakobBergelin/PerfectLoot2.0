@@ -7,6 +7,9 @@ namespace Equipment
     public class RollableWeaponItem : RollableItem
     {
         public override ItemType ItemType => ItemType.Weapon;
+        [Tooltip("What kind of weapon it is (one kind), for skills that need one. Uniques and legendaries: the kind of their base item.")]
+        public GearKinds Kind;
+        public override GearKinds Gear => Kind;
         public RollRange WeaponDamage;
         [Tooltip("Multiplies the time between attacks: 0.9 is faster, 1.1 is slower")]
         public float WeaponCooldown = 1f;

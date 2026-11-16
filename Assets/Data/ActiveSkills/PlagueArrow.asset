@@ -21,6 +21,7 @@ MonoBehaviour:
   StrengthRequirement: 0
   AgilityRequirement: 4
   IntelligenceRequirement: 2
+  RequiredGear: 3
   AttackSpeed: 1.1
   resourceCost: 20
   DamagePerSecond: 4

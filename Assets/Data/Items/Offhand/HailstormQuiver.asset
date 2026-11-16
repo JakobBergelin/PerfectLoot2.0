@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 9979b78acb3748869c6b5e3294a35e49
   Icon: {fileID: 21300000, guid: eace39b70d454cebb6d351778d31fd33, type: 3}
   Flavor: Aim is for people with only one direction to worry about.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -38,4 +39,5 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.05
+  Kind: 256
   LegendaryPower: {fileID: 11400000, guid: 1ec876055ec845038f23e46c5b6399c5, type: 2}

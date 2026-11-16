@@ -21,6 +21,7 @@ MonoBehaviour:
   StrengthRequirement: 16
   AgilityRequirement: 0
   IntelligenceRequirement: 0
+  RequiredGear: 64
   Reach: 2.5
   HalfAngle: 60
   Slow: 0.5
