@@ -54,7 +54,7 @@ public static class ItemText
         if (compareTo != null)
         {
             foreach (var rolled in Sorted(AllAffixes(compareTo).Where(rolled => Total(item, rolled.Affix) == null)))
-                lines.Add(new StatLine { Text = $"<color={WorseColor}>Missing: +{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}</color>", Affix = rolled.Affix });
+                lines.Add(new StatLine { Text = $"<color={WorseColor}>Missing: {Signed(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}</color>", Affix = rolled.Affix });
         }
 
         // Legendary/Unique power: name in the item's rarity color, then its description with the numbers filled in
@@ -89,7 +89,7 @@ public static class ItemText
     {
         foreach (var rolled in affixes)
         {
-            var sb = new StringBuilder($"+{Format(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}");
+            var sb = new StringBuilder($"{Signed(rolled.Affix, rolled.Value)} {AffixName(rolled.Affix)}");
             if (item.BaseItem.TryGetRollRange(rolled.Affix, isBaseAffix, item.Rarity, settings, out float min, out float max))
                 sb.Append($"  <color={RangeColor}>[{Format(rolled.Affix, min)} – {Format(rolled.Affix, max)}]</color>");
             // The difference goes on the affix's first line; totals cover affixes that appear more than once
@@ -140,6 +140,9 @@ public static class ItemText
 
     public static string Format(Affix affix, float value) =>
         IsPercentAffix(affix) ? (value * 100f).ToString("0.#") + "%" : value.ToString("0.#");
+
+    /// <summary>The value with its sign: "+5" or "-5".</summary>
+    public static string Signed(Affix affix, float value) => (value < 0f ? "" : "+") + Format(affix, value);
 
     public static string AffixName(Affix affix) => SplitWords(affix.ToString());
 

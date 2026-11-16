@@ -13,6 +13,7 @@ using UnityEngine.UIElements;
 public class DropPopupHUD : MonoBehaviour
 {
     const string HiddenClass = "dp-root--hidden";
+    const string EmptyTitleClass = "dp-card__title--empty";
 
     PanelRenderer _panelRenderer;
     bool _bound;
@@ -172,9 +173,11 @@ public class DropPopupHUD : MonoBehaviour
         bool compare = current != null;
 
         _heading.text = compare ? "Item dropped" : "New item found!";
-        // New item: only its own card, with OK under it
-        _currentColumn.style.display = compare ? DisplayStyle.Flex : DisplayStyle.None;
+        // New item: the current card says so and its button is hidden but keeps its space, so OK sits where Take new does
         if (compare) Fill(current, _currentTitle, _currentSubtitle, _currentBody, _currentCard, compareTo: null);
+        else FillEmpty();
+        _keepButton.style.visibility = compare ? Visibility.Visible : Visibility.Hidden;
+        _keepButton.SetEnabled(compare);
         _newLabel.text = compare ? "New" : "Added to your item database";
         Fill(drop.Item, _newTitle, _newSubtitle, _newBody, _newCard, compareTo: current);
 
@@ -183,9 +186,24 @@ public class DropPopupHUD : MonoBehaviour
         SetVisible(true);
     }
 
+    // No current item yet: a muted note, and the card's usual border
+    void FillEmpty()
+    {
+        _currentTitle.text = "Nothing yet";
+        _currentTitle.style.color = StyleKeyword.Null;
+        _currentTitle.EnableInClassList(EmptyTitleClass, true);
+        _currentSubtitle.text = "";
+        _currentBody.Clear();
+        _currentCard.style.borderTopColor = StyleKeyword.Null;
+        _currentCard.style.borderBottomColor = StyleKeyword.Null;
+        _currentCard.style.borderLeftColor = StyleKeyword.Null;
+        _currentCard.style.borderRightColor = StyleKeyword.Null;
+    }
+
     static void Fill(Item item, Label title, Label subtitle, VisualElement body, VisualElement card, Item compareTo)
     {
         title.text = item.BaseItem.Name;
+        title.RemoveFromClassList(EmptyTitleClass);
         title.style.color = ItemText.TitleColor(item);
         subtitle.text = ItemText.Subtitle(item);
         ItemStatRows.Fill(body, item, compareTo);

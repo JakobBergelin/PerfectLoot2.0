@@ -62,8 +62,10 @@
     margin: 0 5px;
 }
 
+/* Tall enough for nearly every item, so the buttons under the cards stay in place between items */
 .dp-card {
     flex-grow: 1;
+    min-height: 400px;
     padding: 10px;
     background-color: var(--card-bg);
     border-width: 2px;
@@ -86,6 +88,12 @@
     white-space: normal;
     padding: 0;
     margin: 0;
+}
+
+/* The current card when there's no current item yet */
+.dp-card__title--empty {
+    color: var(--text-muted);
+    -unity-font-style: italic;
 }
 
 .dp-card__subtitle {
