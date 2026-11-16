@@ -8,6 +8,7 @@ using UnityEngine;
 /// <summary>
 /// Meteor: once the caster faces the cursor, has recovered and can pay, it calls a meteor down on the cursor, clamped to
 /// Range from the caster (a MeteorStrike there). Repeats while held, AttackSpeed apart (the shared AttackRecovery).
+/// Starfall wearers channel it instead (StarfallSystem).
 /// </summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [BurstCompile]
@@ -33,7 +34,7 @@ public partial struct MeteorSystem : ISystem
         var skills = SystemAPI.GetBufferLookup<Skill>();
         foreach (var (meteor, localTransform, desiredDirection, inputs, resource, stats, recovery, entity) in
                  SystemAPI.Query<RefRO<Meteor>, RefRW<LocalTransform>, RefRO<DesiredDirection>, RefRO<InputsData>, RefRO<Resource>, RefRO<CalculatedStats>,
-                     RefRW<AttackRecovery>>().WithEntityAccess())
+                     RefRW<AttackRecovery>>().WithNone<Starfall>().WithEntityAccess())
         {
             bool facing = SkillUtil.TurnToward(ref localTransform.ValueRW, desiredDirection.ValueRO, movementConfig, deltaTime);
             if (recovery.ValueRO.Remaining > 0f) continue;

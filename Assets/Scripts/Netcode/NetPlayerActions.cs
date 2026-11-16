@@ -60,6 +60,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
         var fireballs = SystemAPI.GetComponentLookup<FireBall>(true);
         var flamethrowers = SystemAPI.GetComponentLookup<Flamethrower>(true);
         var teslaCoils = SystemAPI.GetComponentLookup<TeslaCoil>(true);
+        var starfalls = SystemAPI.GetComponentLookup<Starfall>(true);
         var shieldWalls = SystemAPI.GetComponentLookup<ShieldWall>(true);
         var sonicBalls = SystemAPI.GetComponentLookup<SonicBall>(true);
         var ballLightnings = SystemAPI.GetComponentLookup<BallLightning>(true);
@@ -80,7 +81,8 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
             if (dashes.HasComponent(entity) && dashes[entity].Dashing) value.States |= NetPlayerActions.Dashing;
             if (whirlwinds.HasComponent(entity) && whirlwinds[entity].Spinning) value.States |= NetPlayerActions.Spinning;
             if (fireballs.HasComponent(entity) && fireballs.IsComponentEnabled(entity)) value.States |= NetPlayerActions.Winding;
-            if (flamethrowers.HasComponent(entity) && flamethrowers[entity].Spraying || teslaCoils.HasComponent(entity) && teslaCoils[entity].Channeling)
+            if (flamethrowers.HasComponent(entity) && flamethrowers[entity].Spraying || teslaCoils.HasComponent(entity) && teslaCoils[entity].Channeling
+                || starfalls.HasComponent(entity) && starfalls[entity].Channeling)
                 value.States |= NetPlayerActions.Channeling;
             if (shieldWalls.HasComponent(entity) && shieldWalls[entity].Raised) value.States |= NetPlayerActions.Guarding;
             if (sonicBalls.HasComponent(entity) && sonicBalls[entity].Rolling) value.States |= NetPlayerActions.Rolling;
