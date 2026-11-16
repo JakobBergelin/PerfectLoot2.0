@@ -183,6 +183,22 @@ public partial class VfxSystem : SystemBase
 
     protected override void OnDestroy()
     {
+        // The world is going away (a new scene): its effects would stay where they are, since VfxManager lives on
+        var vfx = VfxManager.Instance;
+        if (vfx != null)
+        {
+            foreach (var query in new[] { _bound, _gone })
+                using (var bindings = query.ToComponentDataArray<VfxBinding>(Allocator.Temp))
+                    foreach (var binding in bindings) vfx.Release(binding.Handle);
+            foreach (var map in _playerLooks) foreach (var handle in map.Values) vfx.Release(handle);
+            foreach (var handle in _hookHeads.Values) vfx.Release(handle);
+            foreach (var handle in _hookChains.Values) vfx.Release(handle);
+            foreach (var handle in _quarryMarks.Values) vfx.Release(handle);
+            foreach (var handle in _poisonMarks.Values) vfx.Release(handle);
+            foreach (var stance in _stances.Values) vfx.Release(stance.Handle);
+            foreach (var block in _iceBlocks.Values) vfx.Release(block.Handle);
+        }
+
         CharacterManager.PlayerSpawned -= OnPlayerSpawned;
         _damaging.OnDamageTaken -= OnDamageTaken;
         _calculateDamage.OnDamageDodged -= OnDodged;
