@@ -10,9 +10,11 @@ using Unity.Transforms;
 /// beside or around its owner, seen from the way the owner walks, and picks a new one now and then. It sets off once its
 /// spot is more than its Slack away, so it follows a moment after its owner, and runs faster the further it has to go.
 /// Companions walking together match each other a little and pull together. A target within Leash of the owner is chased
-/// instead; enemies within FleeDistance send it to a spot on the safe side of its area. Walks along the owner's FlowField,
-/// steers away from nearby units and teleports back past TeleportDistance. Stands still while casting or when it can't
-/// act. Only writes the wanted horizontal velocity (UnitMotion); UnitMoverSystem moves it.
+/// instead; enemies within FleeDistance send it to a spot on the safe side of its area. Standing in an enemy's telegraph,
+/// it dodges out the shortest way after a moment (ReactionTime), and it waits at the edge of one over where it wants to go.
+/// Walks along the owner's FlowField, steers away from nearby units and teleports back past TeleportDistance. Stands still
+/// while casting (even in a telegraph) or when it can't act. Only writes the wanted horizontal velocity (UnitMotion);
+/// UnitMoverSystem moves it.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]
 [UpdateAfter(typeof(UnitSpatialGridSystem))]
@@ -37,6 +39,9 @@ public partial struct BoidSystem : ISystem
     const float MaxSpotTime = 7f;
     const float FleeMargin = 1.5f;      // Meters beyond FleeDistance where it stops fleeing
     const float FleeSpotTime = 1f;      // Seconds it keeps a spot while fleeing
+    const float DodgeMargin = 0.4f;     // Meters past a telegraph's edge (beyond its body) it dodges to
+    const float MinReactionTime = 0.2f; // Seconds in a telegraph before it dodges
+    const float MaxReactionTime = 0.4f;
 
     /// <summary>One owner's companions that aren't chasing anything, added up.</summary>
     struct Flock
@@ -69,6 +74,11 @@ public partial struct BoidSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         state.CompleteDependency();  // The flow fields and the grid are used here on the main thread
 
+        // Enemies' telegraphs on the ground (companions' own casts have none)
+        var markerQuery = SystemAPI.QueryBuilder().WithAll<TelegraphMarker, LocalTransform, TelegraphParams>().Build();
+        var markers = markerQuery.ToComponentDataArray<LocalTransform>(Allocator.Temp);
+        var markerParams = markerQuery.ToComponentDataArray<TelegraphParams>(Allocator.Temp);
+
         var flocks = new NativeHashMap<Entity, Flock>(8, Allocator.Temp);
         foreach (var (boid, companion, transform, motion) in SystemAPI.Query<RefRO<Boid>, RefRO<Companion>, RefRO<LocalTransform>, RefRO<UnitMotion>>().WithNone<SpawnRise, RigidDeath>())
         {
@@ -95,7 +105,11 @@ public partial struct BoidSystem : ISystem
                 continue;
             }
 
-            if (boid.Random.state == 0) boid.Random = Random.CreateFromIndex((uint)entity.Index);
+            if (boid.Random.state == 0)
+            {
+                boid.Random = Random.CreateFromIndex((uint)entity.Index);
+                boid.ReactionTime = boid.Random.NextFloat(MinReactionTime, MaxReactionTime);
+            }
             var settings = boid.Settings;
             var position = transform.Position;
             var ownerTransform = SystemAPI.GetComponent<LocalTransform>(owner);
@@ -130,22 +144,36 @@ public partial struct BoidSystem : ISystem
                 continue;
             }
 
+            // In a telegraph: out the shortest way, once it has noticed
+            float margin = steering.ValueRO.Radius + DodgeMargin;
+            var wayOut = TelegraphUtil.WayOut(markers, markerParams, position, margin);
+            if (math.lengthsq(wayOut) > 0f) boid.InTelegraph += deltaTime;
+            else
+            {
+                if (boid.InTelegraph > 0f) boid.ReactionTime = boid.Random.NextFloat(MinReactionTime, MaxReactionTime);
+                boid.InTelegraph = 0f;
+            }
+            bool dodging = boid.InTelegraph > 0f && boid.InTelegraph >= boid.ReactionTime;
+
             var unit = target.ValueRO.Unit;
             var unitPosition = SystemAPI.HasComponent<LocalTransform>(unit) ? SystemAPI.GetComponent<LocalTransform>(unit).Position : float3.zero;
-            bool chasing = unit != Entity.Null && math.distancesq(unitPosition.xz, ownerPosition.xz) <= settings.Leash * settings.Leash;
+            bool chasing = !dodging && unit != Entity.Null && math.distancesq(unitPosition.xz, ownerPosition.xz) <= settings.Leash * settings.Leash;
             boid.Chasing = chasing;
-            var destination = chasing ? unitPosition : spot;
-            float stopDistance = chasing ? settings.AttackDistance : ArriveDistance;
+            // Where it wants to go, but not into a telegraph: to the edge of it instead
+            var destination = dodging ? position + wayOut : chasing ? unitPosition : spot;
+            var toEdge = dodging ? float3.zero : TelegraphUtil.WayOut(markers, markerParams, destination, margin);
+            destination += toEdge;
+            float stopDistance = dodging ? 0f : chasing && math.lengthsq(toEdge) == 0f ? settings.AttackDistance : ArriveDistance;
             float distance = math.distance(position.xz, destination.xz);
 
             // Following: it lets its spot get away first, then goes all the way
             if (distance > boid.Slack || fleeing) boid.Moving = true;
             else if (distance <= ArriveDistance) boid.Moving = false;
-            bool moving = chasing ? distance > stopDistance : boid.Moving;
+            bool moving = dodging || (chasing ? distance > stopDistance : boid.Moving);
 
             // Its own stat is a bonus on the base speed, as for players
             float speed = config.MovementSpeed * (1f + SystemAPI.GetComponent<MovementSpeed>(entity).Value) * modifiers.SpeedMultiplier;
-            float nearPace = chasing || fleeing ? 1f : StrollPace;
+            float nearPace = chasing || fleeing || dodging ? 1f : StrollPace;
             float topSpeed = speed * math.lerp(nearPace, settings.CatchUpMultiplier, math.saturate(distance / CatchUpDistance));
 
             var desired = float3.zero;
@@ -153,9 +181,10 @@ public partial struct BoidSystem : ISystem
             var facing = chasing ? math.normalizesafe(new float3(destination.x - position.x, 0f, destination.z - position.z), heading) : heading;
             if (moving)
             {
-                facing = fields[targetables[owner].FieldSlot].Direction(position, destination);
-                desired = facing * topSpeed * math.saturate((distance - stopDistance) / SlowDistance);
-                if (!chasing && !fleeing && flocks.TryGetValue(owner, out var flock))
+                // Dodging goes straight out: the way around walls doesn't matter for a step or two
+                facing = dodging ? math.normalizesafe(wayOut, heading) : fields[targetables[owner].FieldSlot].Direction(position, destination);
+                desired = facing * topSpeed * (dodging ? 1f : math.saturate((distance - stopDistance) / SlowDistance));
+                if (!chasing && !fleeing && !dodging && flocks.TryGetValue(owner, out var flock))
                     desired += FlockPull(flock, position);
             }
             if (!behavior.IsAiming) transform.Rotation = math.slerp(transform.Rotation, quaternion.LookRotationSafe(facing, math.up()), math.saturate(TurnRate * deltaTime));

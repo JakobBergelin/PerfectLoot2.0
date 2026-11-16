@@ -66,5 +66,7 @@ public struct Boid : IComponentData
     public bool Moving;         // On its way to its spot
     public bool Chasing;        // Out of the flock, after its target
     public bool Fleeing;        // Enemies are close
+    public float InTelegraph;   // Seconds it has stood in an enemy's telegraph; it dodges out once this reaches ReactionTime
+    public float ReactionTime;  // Picked anew each time it gets out
     public Unity.Mathematics.Random Random;     // Seeded by BoidSystem
 }
