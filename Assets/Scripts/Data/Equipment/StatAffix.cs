@@ -41,6 +41,7 @@ namespace Equipment
                 case Affix.CriticalDamage: block.CriticalDamage += value; break;
                 case Affix.Armor: block.Armor += (int)math.round(value); break;
                 case Affix.ResourceOnHit: block.ResourceOnHit += value; break;
+                case Affix.ResourceOnCrit: block.ResourceOnCrit += value; break;
                 case Affix.Health: block.Health += value; break;
                 case Affix.HealthRegeneration: block.HealthRegeneration += value; break;
                 case Affix.Resource: block.Resource += value; break;

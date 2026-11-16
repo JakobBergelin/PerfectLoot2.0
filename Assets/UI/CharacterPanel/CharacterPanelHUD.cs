@@ -711,6 +711,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         AddRow(section, Affix.ResourceCostReduction, "Resource Cost Reduction", s => s.Stats.ResourceCostReduction, Pct);
         AddRow(section, Affix.LifeOnHit, "Life on Hit", s => s.Stats.LifeOnHit, Flat);
         AddRow(section, Affix.ResourceOnHit, "Resource on Hit", s => s.Stats.ResourceOnHit, Flat);
+        AddRow(section, Affix.ResourceOnCrit, "Resource on Crit", s => s.Stats.ResourceOnCrit, Flat);
         AddRow(section, Affix.ProjectilePierces, "Pierce", s => s.Stats.Pierce, Whole);
         AddRow(section, Affix.ProjectileBounces, "Bounces", s => s.Stats.Bounces, Whole);
         AddRow(section, Affix.ProjectileSpeed, "Projectile Speed", s => s.Stats.ProjectileSpeed, Pct, plus: true);

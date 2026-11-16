@@ -30,6 +30,7 @@ public struct StatBlock
     public float ResourceRegeneration;
     public float ResourceCostReduction;
     public float ResourceOnHit;
+    public float ResourceOnCrit;        // Resource gained on every critical main hit (OnHitSystem); not taken from the target
     public float LifeOnHit;
 
     public int Pierce;
@@ -114,6 +115,7 @@ public struct StatBlock
         ResourceRegeneration += other.ResourceRegeneration;
         ResourceCostReduction += other.ResourceCostReduction;
         ResourceOnHit += other.ResourceOnHit;
+        ResourceOnCrit += other.ResourceOnCrit;
         LifeOnHit += other.LifeOnHit;
 
         Pierce += other.Pierce;
@@ -168,6 +170,7 @@ public struct StatBlock
         ResourceRegeneration -= other.ResourceRegeneration;
         ResourceCostReduction -= other.ResourceCostReduction;
         ResourceOnHit -= other.ResourceOnHit;
+        ResourceOnCrit -= other.ResourceOnCrit;
         LifeOnHit -= other.LifeOnHit;
 
         Pierce -= other.Pierce;

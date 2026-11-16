@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6e87dd6caace4278a8e2d51322ba0159, type: 3}
+  m_Name: FlintsparkBand
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryRingItem
+  Name: Flintspark Band
+  Id: 4052b9001cebb654d8e4c9c56004a00f
+  Icon: {fileID: 21300000, guid: 201c3597b18d49a4acd3f4f7823b15c6, type: 3}
+  Flavor: Strike true, and the well fills itself.
+  VisualBase: {fileID: 0}
+  BaseAffixes:
+  - Affix: 41
+    RollRange:
+      Min: 1
+      Max: 1
+  - Affix: 26
+    RollRange:
+      Min: -10
+      Max: -5
+  RollableAffixes:
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.04
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 5
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 10
+  LegendaryPower: {fileID: 11400000, guid: 89e410ea1d0d4c346b33f44de3688e53, type: 2}

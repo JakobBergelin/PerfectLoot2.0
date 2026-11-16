@@ -47,5 +47,6 @@ namespace Equipment
         ProjectileDamageReduction = 38,
         MeleeDamageReduction = 39,
         PickupRange = 40,
+        ResourceOnCrit = 41,
     }
 }

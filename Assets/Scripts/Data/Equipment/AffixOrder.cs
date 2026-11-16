@@ -19,7 +19,7 @@ namespace Equipment
             // Offense
             Affix.Damage, Affix.ElementalDamage, Affix.FireDamage, Affix.ColdDamage, Affix.LightningDamage, Affix.PoisonDamage,
             Affix.CriticalChance, Affix.CriticalDamage, Affix.ArmorPierce, Affix.AreaOfEffect, Affix.CooldownReduction,
-            Affix.ResourceCostReduction, Affix.LifeOnHit, Affix.ResourceOnHit, Affix.ProjectilePierces, Affix.ProjectileBounces,
+            Affix.ResourceCostReduction, Affix.LifeOnHit, Affix.ResourceOnHit, Affix.ResourceOnCrit, Affix.ProjectilePierces, Affix.ProjectileBounces,
             Affix.ProjectileSpeed,
             // Defense
             Affix.Armor, Affix.BlockChance, Affix.DodgeChance, Affix.ProjectileDamageReduction, Affix.MeleeDamageReduction,
