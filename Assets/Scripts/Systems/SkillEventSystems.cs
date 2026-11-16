@@ -2,7 +2,7 @@ using Unity.Burst;
 using Unity.Entities;
 
 /// <summary>
-/// Turns this frame's skill uses into events by tag: a used Melee skill enables MeleeAttackUsed, a used Mobility skill
+/// Turns this frame's skill uses into events by tag: a used Melee skill enables MeleeAttackUsed (with its element), a used Mobility skill
 /// MobilitySkillUsed (only the tags its uses were marked as, see SkillUtil.MarkUsed). First in SkillReactionSystemGroup,
 /// so every reaction sees them.
 /// </summary>
@@ -19,13 +19,31 @@ public partial struct SkillTagEventSystem : ISystem
         foreach (var (skills, entity) in SystemAPI.Query<DynamicBuffer<Skill>>().WithEntityAccess())
         {
             var used = SkillTags.None;
+            var meleeType = DamageType.Physical;
             foreach (var skill in skills)
-                if (skill.events.OnUsed) used |= skill.Tags & skill.events.UsedAs;
+            {
+                if (!skill.events.OnUsed) continue;
+                var tags = skill.Tags & skill.events.UsedAs;
+                if ((tags & SkillTags.Melee) != 0 && (used & SkillTags.Melee) == 0) meleeType = ElementOf(skill.Tags);
+                used |= tags;
+            }
 
-            if ((used & SkillTags.Melee) != 0 && melee.HasComponent(entity)) melee.SetComponentEnabled(entity, true);
+            if ((used & SkillTags.Melee) != 0 && melee.HasComponent(entity))
+            {
+                melee[entity] = new MeleeAttackUsed { Type = meleeType };
+                melee.SetComponentEnabled(entity, true);
+            }
             if ((used & SkillTags.Mobility) != 0 && mobility.HasComponent(entity)) mobility.SetComponentEnabled(entity, true);
         }
     }
+
+    /// <summary>A skill's element from its element tags (the asset's own element, before conversion); Physical without one.</summary>
+    static DamageType ElementOf(SkillTags tags) =>
+        (tags & SkillTags.Fire) != 0 ? DamageType.Fire :
+        (tags & SkillTags.Cold) != 0 ? DamageType.Cold :
+        (tags & SkillTags.Lightning) != 0 ? DamageType.Lightning :
+        (tags & SkillTags.Poison) != 0 ? DamageType.Poison :
+        DamageType.Physical;
 }
 
 /// <summary>

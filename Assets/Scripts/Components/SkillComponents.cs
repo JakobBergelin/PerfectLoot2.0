@@ -95,6 +95,7 @@ public enum SkillType
     EarthBending,
     GaleWard,
     Multishot,
+    Frenzy,
 }
 
 /// <summary>
@@ -666,6 +667,22 @@ public struct Immolation : IComponentData, IEnableableComponent
 }
 
 /// <summary>
+/// Frenzy, a toggle: FrenzySystem reads its key, so the component stays disabled and On says whether it's switched on.
+/// While on, the buff (Active) starts each time the resource is full, drains it, and ends when it runs low. While the buff
+/// is active each melee attack also strikes a second enemy (FrenzyStrikeSystem).
+/// </summary>
+public struct Frenzy : IComponentData, IEnableableComponent
+{
+    public float DrainPerSecond;            // Share of max resource drained per second while the buff is active (0.25 = 25%)
+    public float EndThreshold;              // The buff ends when the resource drops below this share of max (0.05 = 5%)
+    public float StrikeRange;               // Meters from the caster the second enemy can be
+    public float StrikeRadius;              // The extra strike's hit radius, scaled by area of effect
+    public float WeaponDamageMultiplier;    // The extra strike's damage: weapon damage times this
+    public bool On;
+    public bool Active;
+}
+
+/// <summary>
 /// Cursed Hammer: throws a tumbling hammer toward the cursor that starts slow and keeps speeding up. It deals no damage
 /// itself: where it hits an enemy or a wall it bursts, hitting everything within Radius for Damage lightning. Repeats while held.
 /// </summary>
@@ -770,9 +787,13 @@ public struct MobilitySkillUsed : IComponentData, IEnableableComponent {}
 
 /// <summary>
 /// One-frame event on every unit, like MobilitySkillUsed: enabled when a skill tagged Melee is used (each Fists of Thunder
-/// punch, each Whirlwind tick), read by reactions such as Echoing Blade.
+/// punch, each Whirlwind tick), read by reactions such as Echoing Blade. Type is the element of the skill used, from its
+/// element tags (Physical without one); with several used in one frame, the first one's.
 /// </summary>
-public struct MeleeAttackUsed : IComponentData, IEnableableComponent {}
+public struct MeleeAttackUsed : IComponentData, IEnableableComponent
+{
+    public DamageType Type;
+}
 
 /// <summary>
 /// Flamethrower: channeled while held. Pays ResourceCost when the spray starts, then drains ResourceCostPerSecond and

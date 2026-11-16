@@ -17,7 +17,7 @@ public struct NetPlayerActions : IComponentData
         Phasing = 128, Hooking = 256;
     // Auras: lasting effects on the player
     public const byte Invulnerable = 1, Immolating = 2, GaleWard = 4, GaleWardReversed = 8, BarrageOn = 16, Empowered = 32,
-        Shadowed = 64;
+        Shadowed = 64, Frenzied = 128;
     // Stance values (Stances skill); 0 is none
     public const byte StanceStrength = 1, StanceAgility = 2, StanceIntelligence = 3;
 
@@ -26,7 +26,7 @@ public struct NetPlayerActions : IComponentData
     /// Hooking (Hookshot Slash: hook out or pulling).</summary>
     [GhostField] public ushort States;
     /// <summary>Invulnerable, Immolating, GaleWard (with GaleWardReversed when it turns the other way), BarrageOn (toggle),
-    /// Empowered (Blood Rite buff), Shadowed (Shadowstep buff).</summary>
+    /// Empowered (Blood Rite buff), Shadowed (Shadowstep buff), Frenzied (Frenzy buff).</summary>
     [GhostField] public byte Auras;
     [GhostField] public byte Stance;
     /// <summary>Counts up each time the player uses a skill; CastSkill is the last one used (a SkillType).</summary>
@@ -72,6 +72,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
         var barrages = SystemAPI.GetComponentLookup<Barrage>(true);
         var bloodRites = SystemAPI.GetComponentLookup<BloodRiteBuff>(true);
         var shadowsteps = SystemAPI.GetComponentLookup<ShadowstepBuff>(true);
+        var frenzies = SystemAPI.GetComponentLookup<Frenzy>(true);
         var quarries = SystemAPI.GetComponentLookup<Quarry>(true);
         var skills = SystemAPI.GetBufferLookup<Skill>(true);
         foreach (var (actions, entity) in SystemAPI.Query<RefRW<NetPlayerActions>>().WithEntityAccess())
@@ -104,6 +105,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
             if (barrages.HasComponent(entity) && barrages[entity].Active) value.Auras |= NetPlayerActions.BarrageOn;
             if (Enabled(bloodRites, entity)) value.Auras |= NetPlayerActions.Empowered;
             if (Enabled(shadowsteps, entity)) value.Auras |= NetPlayerActions.Shadowed;
+            if (frenzies.HasComponent(entity) && frenzies[entity].Active) value.Auras |= NetPlayerActions.Frenzied;
 
             value.Stance = 0;
             if (skills.HasBuffer(entity))

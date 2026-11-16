@@ -88,7 +88,7 @@ public partial class VfxSystem : SystemBase
         (0, NetPlayerActions.Invulnerable, VfxType.InvulnerableBubble, VfxType.None, 0f),
         (0, NetPlayerActions.Immolating, VfxType.ImmolationAura, VfxType.None, 0f),
         (0, NetPlayerActions.BarrageOn, VfxType.BarrageAura, VfxType.None, 0f),
-        (0, NetPlayerActions.Empowered | NetPlayerActions.Shadowed, VfxType.EmpoweredAura, VfxType.None, 0f),
+        (0, NetPlayerActions.Empowered | NetPlayerActions.Shadowed | NetPlayerActions.Frenzied, VfxType.EmpoweredAura, VfxType.None, 0f),
         (0, NetPlayerActions.GaleWard, VfxType.GaleWardBand, VfxType.None, 120f),
     };
 

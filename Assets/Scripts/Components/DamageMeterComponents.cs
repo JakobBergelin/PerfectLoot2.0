@@ -75,6 +75,7 @@ public enum DamageLabel
     Riposte,        // Riposte's hit and the projectiles it turns
     Multishot,
     Stampede,       // Rushwind Treads' dash hits
+    Frenzy,         // Frenzy's extra strikes on a second enemy
 }
 
 public static class SkillDamageLabel
@@ -106,6 +107,7 @@ public static class SkillDamageLabel
         SkillType.FrostLance => DamageLabel.FrostLance,
         SkillType.Riposte => DamageLabel.Riposte,
         SkillType.Multishot => DamageLabel.Multishot,
+        SkillType.Frenzy => DamageLabel.Frenzy,
         _ => DamageLabel.None,
     };
 }
