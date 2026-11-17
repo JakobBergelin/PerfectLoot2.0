@@ -16,11 +16,12 @@ MonoBehaviour:
   Id: 08666eded96942acb4e5b9b88fad9c8e
   Icon: {fileID: 21300000, guid: 0e0dbbfbb0fd4cad92d9db64eb8d1196, type: 3}
   Flavor: Never quite goes out, no matter how hard you blow.
+  VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 34
+  - Affix: 16
     RollRange:
-      Min: 0.1
-      Max: 0.2
+      Min: 0.08
+      Max: 0.15
   - Affix: 18
     RollRange:
       Min: -20
@@ -35,10 +36,6 @@ MonoBehaviour:
       Min: 5
       Max: 10
   - Affix: 20
-    RollRange:
-      Min: 0.03
-      Max: 0.06
-  - Affix: 16
     RollRange:
       Min: 0.03
       Max: 0.06

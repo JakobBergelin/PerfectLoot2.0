@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: f657e8b4b9d84ba393310e327fdc1e68
   Icon: {fileID: 21300000, guid: 60b6ef3e1d3940f3a8cd8ad029e9d641, type: 3}
   Flavor: The flowers don't come back.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -27,8 +28,8 @@ MonoBehaviour:
       Max: 0.1
   - Affix: 28
     RollRange:
-      Min: 20
-      Max: 40
+      Min: 15
+      Max: 30
   - Affix: 25
     RollRange:
       Min: -1.5

@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 0e968d4062c1c67a9f6372a764ed8651
   Icon: {fileID: 21300000, guid: 86ebe4cb91ba48219d61a6e220f5f2ef, type: 3}
   Flavor: Light enough to forget. Not light enough to lose.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 2
     RollRange:
@@ -28,8 +29,8 @@ MonoBehaviour:
   RollableAffixes:
   - Affix: 33
     RollRange:
-      Min: 0.04
-      Max: 0.2
+      Min: 0.03
+      Max: 0.1
   - Affix: 31
     RollRange:
       Min: 0.05

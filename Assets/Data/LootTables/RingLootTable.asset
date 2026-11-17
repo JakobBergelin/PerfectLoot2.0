@@ -27,3 +27,13 @@ MonoBehaviour:
     Value: 10
   - Entry: {fileID: 11400000, guid: 4052b9001cebb654d8e4c9c56004a00f, type: 2}
     Value: 10
+  - Entry: {fileID: 11400000, guid: 308f745d14376f648af65c9c0dccb9b1, type: 2}
+    Value: 20
+  - Entry: {fileID: 11400000, guid: fc0f4985f5176ca439241675210b9b4c, type: 2}
+    Value: 20
+  - Entry: {fileID: 11400000, guid: c062cae3c79c30743b8bca403c54fc96, type: 2}
+    Value: 20
+  - Entry: {fileID: 11400000, guid: f15608f927620f946bfb66c9762d77a3, type: 2}
+    Value: 20
+  - Entry: {fileID: 11400000, guid: d44600ca60eb08d428725562407680cb, type: 2}
+    Value: 20

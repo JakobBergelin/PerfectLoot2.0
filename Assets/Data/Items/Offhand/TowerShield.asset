@@ -45,6 +45,6 @@ MonoBehaviour:
       Max: 8
   - Affix: 18
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 20
   Kind: 64

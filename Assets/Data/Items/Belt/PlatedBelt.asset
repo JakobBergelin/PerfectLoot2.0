@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 9f850d9dc03e4038a43a8a53c66b14d2
   Icon: {fileID: 21300000, guid: 33ae8eda37fa4e87afc552e982c3df78, type: 3}
   Flavor: For adventurers who've been stabbed in the middle before.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -40,8 +41,8 @@ MonoBehaviour:
       Max: 0.05
   - Affix: 18
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 20
   HealthRegeneration:
     Min: 1.5
     Max: 2.5

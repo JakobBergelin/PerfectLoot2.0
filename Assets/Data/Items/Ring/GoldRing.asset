@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 2d64619da4bf42f288851d66520d7298
   Icon: {fileID: 21300000, guid: ac98613ae7b54cc1b90aee9a025fcf8e, type: 3}
   Flavor: Someone's promise. Yours now.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 4
     RollRange:
@@ -46,3 +47,7 @@ MonoBehaviour:
     RollRange:
       Min: 0.03
       Max: 0.12
+  - Affix: 34
+    RollRange:
+      Min: 0.04
+      Max: 0.1

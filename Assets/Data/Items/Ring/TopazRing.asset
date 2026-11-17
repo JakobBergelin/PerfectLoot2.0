@@ -1,0 +1,49 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b02aa7f0f7ba4b79a6f1c1bbbcc51b11, type: 3}
+  m_Name: TopazRing
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableRingItem
+  Name: Topaz Ring
+  Id: c062cae3c79c30743b8bca403c54fc96
+  Icon: {fileID: 21300000, guid: ac98613ae7b54cc1b90aee9a025fcf8e, type: 3}
+  Flavor: Your hair stands up when you put it on.
+  VisualBase: {fileID: 0}
+  BaseAffixes:
+  - Affix: 36
+    RollRange:
+      Min: 0.08
+      Max: 0.2
+  RollableAffixes:
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 1
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 8
+  - Affix: 24
+    RollRange:
+      Min: 5
+      Max: 15
+  - Affix: 20
+    RollRange:
+      Min: 0.03
+      Max: 0.12
+  - Affix: 26
+    RollRange:
+      Min: 10
+      Max: 30

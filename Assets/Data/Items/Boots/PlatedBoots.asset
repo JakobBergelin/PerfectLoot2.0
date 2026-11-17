@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: c4c3aecd912d425fba3fc2d142d49bb8
   Icon: {fileID: 21300000, guid: 296f5d8e69df4912ab529399e216dd47, type: 3}
   Flavor: Everyone hears you coming. That's the idea.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
@@ -32,12 +33,12 @@ MonoBehaviour:
       Max: 8
   - Affix: 18
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 20
   - Affix: 17
     RollRange:
-      Min: 10
-      Max: 40
+      Min: 5
+      Max: 20
   - Affix: 24
     RollRange:
       Min: 5

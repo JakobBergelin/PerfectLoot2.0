@@ -19,6 +19,7 @@ namespace Equipment
         Shield = 1 << 6,
         Focus = 1 << 7,
         Quiver = 1 << 8,
+        Axe = 1 << 9,
     }
 
     public static class Gear
