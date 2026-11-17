@@ -24,7 +24,7 @@ public partial struct SkillTagEventSystem : ISystem
             {
                 if (!skill.events.OnUsed) continue;
                 var tags = skill.Tags & skill.events.UsedAs;
-                if ((tags & SkillTags.Melee) != 0 && (used & SkillTags.Melee) == 0) meleeType = ElementOf(skill.Tags);
+                if ((tags & SkillTags.Melee) != 0 && (used & SkillTags.Melee) == 0) meleeType = SkillUtil.ElementOf(skill.Tags);
                 used |= tags;
             }
 
@@ -36,14 +36,6 @@ public partial struct SkillTagEventSystem : ISystem
             if ((used & SkillTags.Mobility) != 0 && mobility.HasComponent(entity)) mobility.SetComponentEnabled(entity, true);
         }
     }
-
-    /// <summary>A skill's element from its element tags (the asset's own element, before conversion); Physical without one.</summary>
-    static DamageType ElementOf(SkillTags tags) =>
-        (tags & SkillTags.Fire) != 0 ? DamageType.Fire :
-        (tags & SkillTags.Cold) != 0 ? DamageType.Cold :
-        (tags & SkillTags.Lightning) != 0 ? DamageType.Lightning :
-        (tags & SkillTags.Poison) != 0 ? DamageType.Poison :
-        DamageType.Physical;
 }
 
 /// <summary>

@@ -15,17 +15,18 @@ MonoBehaviour:
   Name: Wolf
   Icon: {fileID: 21300000, guid: b66fb373b8094bb882ca447cfc559613, type: 3}
   Description: Summons a fast Wolf that roams around you. Allies near it have +10% critical chance. The cooldown starts when it dies.
-  Tags: 18432
+  Tags: 542720
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 15
   IntelligenceRequirement: 0
+  RequiredGear: 0
   cooldown: 20
   resourceCost: 20
   Body: {fileID: 7900000000000000001, guid: 4fa12f947369b1165fa7995a1d95e332, type: 3}
   Scale: 0.8
   Mass: 1
-  Tint: {r: 0.45, g: 0.3, b: 0.18, a: 1}
   Stats:
     Strength: 0
     Agility: 0
@@ -47,6 +48,7 @@ MonoBehaviour:
     ResourceRegeneration: 0
     ResourceCostReduction: 0
     ResourceOnHit: 0
+    ResourceOnCrit: 0
     LifeOnHit: 0
     Pierce: 0
     Bounces: 0
@@ -57,6 +59,7 @@ MonoBehaviour:
     AreaOfEffect: 0
     CooldownReduction: 0
     BuffDuration: 0
+    PickupRange: 0
     ColdResistance: 0
     FireResistance: 0
     PoisonResistance: 0
@@ -66,6 +69,9 @@ MonoBehaviour:
     CriticalDamage: 0
     BlockChance: 0
     DodgeChance: 0
+    ProjectileDamageReduction: 0
+    MeleeDamageReduction: 0
+    AgilityForStrength: 0
   Threat: 3
   SightRadius: 12
   Movement:

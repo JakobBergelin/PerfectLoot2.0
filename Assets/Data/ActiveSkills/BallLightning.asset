@@ -15,12 +15,13 @@ MonoBehaviour:
   Name: Ball Lightning
   Icon: {fileID: 21300000, guid: 56e9020584af4ea0b933b09340ca2869, type: 3}
   Description: Fly in a straight line as a ball of lightning for as long as you hold the skill, over walls and out of harm's way. The more resource the flight burns, the harder you land.
-  Tags: 1124
+  Tags: 1140
   CritShake: 0.35
   Priority: 1
   StrengthRequirement: 0
   AgilityRequirement: 5
   IntelligenceRequirement: 20
+  RequiredGear: 0
   cooldown: 2
   resourceCost: 10
   resourceCostPerSecond: 10

@@ -15,12 +15,13 @@ MonoBehaviour:
   Name: Swipe
   Icon: {fileID: 21300000, guid: 342eae545b30474aa140447df2a9e804, type: 3}
   Description: 'A heavy, sweeping swing in front of you: right to left, then back. Every enemy it hits builds resource.'
-  Tags: 8194
+  Tags: 532482
   CritShake: 0
   Priority: 0
   StrengthRequirement: 2
   AgilityRequirement: 0
   IntelligenceRequirement: 0
+  RequiredGear: 0
   AttackSpeed: 0.9
   Damage: 1
   WeaponDamageMultiplier: 0.6

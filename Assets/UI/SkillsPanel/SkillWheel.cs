@@ -10,10 +10,11 @@ using UnityEngine.UIElements;
 /// Strength, Agility and Intelligence, and between them the skills that need two of them; the further out, the more
 /// they need in total, on a log scale so the many low ones get room (rings at 5, 10, 20 and 30). Skills that need all
 /// three sit inside the middle circle, placed by which way they lean. Skills that would overlap move sideways within
-/// their spoke's sector, then outward. Each skill is a node with its icon and name: usable ones lit, the others greyed,
-/// equipped ones with their slot's key. A green fill shows the character's attributes: on a one-attribute spoke out to
+/// their spoke's sector, then outward. Each skill is a node with its icon and name, all alike (the panel's Available
+/// filter shows which can be used), equipped ones with their slot's key. A green fill shows the character's attributes: on a one-attribute spoke out to
 /// its value, on a two-attribute spoke up to the first skill they can't use yet. Pointer or controller focus highlights
-/// a node, a click or A picks it. Always the same size; nothing moves when the highlight changes.
+/// a node, a click or A picks it. Skills the panel's filters leave out are dimmed in place (SetFilter). Always the same
+/// size; nothing moves when the highlight or the filters change.
 /// </summary>
 public sealed class SkillWheel : VisualElement
 {
@@ -102,6 +103,21 @@ public sealed class SkillWheel : VisualElement
     /// <summary>The node of a skill on the wheel, or null.</summary>
     public VisualElement NodeOf(ActiveSkill skill) => skill != null && _nodeOf.TryGetValue(skill, out var node) ? node : null;
 
+    /// <summary>
+    /// Dims the skills that don't match the panel's filters, in place so nothing moves; dimmed ones can't be clicked,
+    /// highlighted or focused with a controller.
+    /// </summary>
+    public void SetFilter(Func<ActiveSkill, bool> matches)
+    {
+        foreach (var pair in _nodeOf)
+        {
+            bool match = matches == null || matches(pair.Key);
+            pair.Value.SetEnabled(match);
+            pair.Value.EnableInClassList("sw-node--filtered", !match);
+            if (!match) pair.Value.RemoveFromClassList("sw-node--highlighted");
+        }
+    }
+
     /// <summary>Marks the skill waiting for a slot (null: none).</summary>
     public void SetPending(ActiveSkill skill)
     {
@@ -109,7 +125,7 @@ public sealed class SkillWheel : VisualElement
     }
 
     /// <summary>
-    /// Places the skills. usable: whether the character can use one (lit, else greyed); badge: the key of the slot it's
+    /// Places the skills. usable: whether the character can use one (for the green fill); badge: the key of the slot it's
     /// equipped in, or null. attributes: the character's Strength, Agility and Intelligence, for the green fill.
     /// </summary>
     public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, bool> usable, Func<ActiveSkill, string> badge, float3 attributes)
@@ -133,7 +149,7 @@ public sealed class SkillWheel : VisualElement
                                       : PlaceOnSpoke(Spokes[spoke].Degrees, RadiusOf(SkillRequirements.Total(skill.Requirements)), placed);
                 placed.Add(position);
                 bool canUse = usable(skill);
-                AddNode(skill, position, canUse, badge(skill));
+                AddNode(skill, position, badge(skill));
 
                 // Two-attribute spokes: the fill reaches past every usable skill up to the first one that isn't
                 if (middle || blocked) continue;
@@ -160,11 +176,10 @@ public sealed class SkillWheel : VisualElement
         MarkDirtyRepaint();
     }
 
-    void AddNode(ActiveSkill skill, Vector2 position, bool usable, string badge)
+    void AddNode(ActiveSkill skill, Vector2 position, string badge)
     {
         var node = new VisualElement();
         node.AddToClassList("sw-node");
-        node.AddToClassList(usable ? "sw-node--usable" : "sw-node--locked");
         node.style.left = position.x - NodeSize * 0.5f;
         node.style.top = position.y - NodeSize * 0.5f;
 

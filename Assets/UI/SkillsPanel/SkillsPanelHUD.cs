@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using ActiveSkills;
 using Passives;
 using UnityEngine;
@@ -12,7 +13,9 @@ using UnityEngine.UIElements;
 /// the skill wheel (ActiveSkillPicker: every skill by its requirements, equipped ones with their slot's key) in the
 /// middle and the highlighted skill's card on the right. In town, clicking a skill and then an active slot (or pressing
 /// that slot's key) equips it there, swapping with the slot that had it; clicking a passive slot opens a list of the
-/// passives that aren't in another slot. Elsewhere it's look-only. One for both players: whoever opens it has it (their
+/// passives that aren't in another slot. Elsewhere it's look-only. Filter chips over it dim the wheel's skills that
+/// don't match: Show (All, Available, Equipped), Element (any of the chosen), Type (all of the chosen tags) and a name
+/// search; they reset to Available each time it opens. One for both players: whoever opens it has it (their
 /// buttons, focus and skills) until they close it; the other player can't open it meanwhile.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
@@ -37,6 +40,15 @@ public class SkillsPanelHUD : MonoBehaviour
     const string GamepadChooseHint = "A Equip in slot · B Cancel";
     const string GamepadLookOnlyHint = "Change skills in town · LT/RT Spokes · LB/RB Panels · B Close";
     static readonly string[] StanceClasses = { "sp-card--stance-str", "sp-card--stance-agi", "sp-card--stance-int" };
+
+    // Filters: Show picks one, Element any of the chosen element tags, Type all of the chosen tags
+    const string ChipClass = "sp-chip";
+    const string ChipSelectedClass = "sp-chip--selected";
+    enum ShowFilter { All, Available, Equipped }
+    static readonly SkillTags[] FilterElements = { SkillTags.Physical, SkillTags.Fire, SkillTags.Cold, SkillTags.Lightning, SkillTags.Poison };
+    const SkillTags ElementTags = SkillTags.Elemental | SkillTags.Physical | SkillTags.Fire | SkillTags.Cold | SkillTags.Lightning | SkillTags.Poison;
+    static readonly SkillTags[] FilterTypes =
+        ((SkillTags[])Enum.GetValues(typeof(SkillTags))).Where(tag => tag != SkillTags.None && (tag & ElementTags) == 0).ToArray();
 
     /// <summary>One slot in the panel; active and passive slots only differ in these delegates and their look.</summary>
     class SlotView
@@ -78,6 +90,15 @@ public class SkillsPanelHUD : MonoBehaviour
     Equipment.GearKinds? _shownGear;
 
     int _keyVersion = -1;           // GameInput.Version the key labels are from
+
+    ShowFilter _show = ShowFilter.Available;
+    SkillTags _elements;
+    SkillTags _types;
+    readonly Dictionary<ShowFilter, Label> _showChips = new Dictionary<ShowFilter, Label>();
+    readonly Dictionary<SkillTags, Label> _elementChips = new Dictionary<SkillTags, Label>();
+    readonly Dictionary<SkillTags, Label> _typeChips = new Dictionary<SkillTags, Label>();
+    TextField _search;
+    Label _count;
 
     void Awake()
     {
@@ -137,12 +158,13 @@ public class SkillsPanelHUD : MonoBehaviour
         var passivePicker = root.Q<VisualElement>("passivePicker");
         var wheelHolder = root.Q<VisualElement>("wheelHolder");
         var cardHolder = root.Q<VisualElement>("cardHolder");
+        var filters = root.Q<VisualElement>("filters");
         _tooltip = root.Q<VisualElement>("tooltip");
         _tooltipTitle = root.Q<Label>("tooltipTitle");
         _tooltipBody = root.Q<VisualElement>("tooltipBody");
         _hint = root.Q<Label>("hint");
         if (_root == null || _panel == null || activeContainer == null || passiveContainer == null || passivePicker == null || _tooltip == null ||
-            _hint == null || wheelHolder == null || cardHolder == null)
+            _hint == null || wheelHolder == null || cardHolder == null || filters == null)
         {
             Debug.LogError("SkillsPanelHUD: SkillsPanel.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -154,9 +176,11 @@ public class SkillsPanelHUD : MonoBehaviour
         if (_wheel == null) _wheel = new ActiveSkillPicker();
         wheelHolder.Clear();
         wheelHolder.Add(_wheel.Wheel);
+        wheelHolder.RegisterCallback<GeometryChangedEvent>(_ => FitWheel(wheelHolder));
         cardHolder.Clear();
         cardHolder.Add(_wheel.Card);
         _wheel.Picked = PickOnWheel;
+        BuildFilters(filters);
         BuildActiveSlots(activeContainer);
         BuildPassiveSlots(passiveContainer, passivePicker);
         _wheelDirty = true;
@@ -272,12 +296,13 @@ public class SkillsPanelHUD : MonoBehaviour
         if (open) Nav.Register(_root);
         Nav.SetScope(this, _panel, open);
         if (!open) return;
+        ResetFilters();
         _wheelDirty = true;
         BuildWheel();
-        // A controller starts on the first slot's skill
+        // A controller starts on the first slot's skill (when the filters show it), else the first skill they show
         var first = ActiveSlot(0)?.EquippedSkill;
-        if (first != null) _wheel.Highlight(first);
-        var node = _wheel.NodeOf(first);
+        if (first != null && Matches(first)) _wheel.Highlight(first);
+        var node = _wheel.NodeOf(_wheel.Highlighted);
         if (node != null) Nav.Focus(node);
     }
 
@@ -427,9 +452,138 @@ public class SkillsPanelHUD : MonoBehaviour
         if (_selected == view) BuildPassivePicker(view);
     }
 
+    // ---------- Filters ----------
+
+    void BuildFilters(VisualElement container)
+    {
+        container.Clear();
+        _showChips.Clear();
+        _elementChips.Clear();
+        _typeChips.Clear();
+
+        var row = AddFilterRow(container, "Show");
+        foreach (ShowFilter show in Enum.GetValues(typeof(ShowFilter)))
+            _showChips[show] = AddChip(row, show.ToString(), () => { _show = show; FiltersChanged(); });
+        AddSpacer(row);
+        var searchTitle = new Label("Search");
+        searchTitle.AddToClassList("sp-filter-title");
+        row.Add(searchTitle);
+        _search = new TextField();
+        _search.AddToClassList("sp-search");
+        _search.RegisterValueChangedCallback(_ => FiltersChanged());
+        MenuPanels.TrackTyping(_search);
+        row.Add(_search);
+        AddSpacer(row);
+        _count = new Label { pickingMode = PickingMode.Ignore };
+        _count.AddToClassList("sp-filter-count");
+        row.Add(_count);
+
+        row = AddFilterRow(container, "Element");
+        foreach (var element in FilterElements)
+            _elementChips[element] = AddChip(row, element.ToString(), () =>
+            {
+                _elements ^= element;
+                FiltersChanged();
+            });
+
+        row = AddFilterRow(container, "Type");
+        foreach (var tag in FilterTypes)
+            _typeChips[tag] = AddChip(row, ItemText.SplitWords(tag.ToString()), () =>
+            {
+                _types ^= tag;
+                FiltersChanged();
+            });
+
+        ResetFilters();
+    }
+
+    static VisualElement AddFilterRow(VisualElement container, string title)
+    {
+        var row = new VisualElement();
+        row.AddToClassList("sp-filter-row");
+        var label = new Label(title) { pickingMode = PickingMode.Ignore };
+        label.AddToClassList("sp-filter-title");
+        row.Add(label);
+        container.Add(row);
+        return row;
+    }
+
+    static void AddSpacer(VisualElement row)
+    {
+        var spacer = new VisualElement { pickingMode = PickingMode.Ignore };
+        spacer.AddToClassList("sp-filter-spacer");
+        row.Add(spacer);
+    }
+
+    static Label AddChip(VisualElement row, string text, Action onClick)
+    {
+        var chip = new Label(text);
+        chip.AddToClassList(ChipClass);
+        chip.RegisterCallback<ClickEvent>(_ => onClick());
+        UiNav.Clickable(chip, onClick);
+        row.Add(chip);
+        return chip;
+    }
+
+    // Each time the panel opens: only the skills the character can use now
+    void ResetFilters()
+    {
+        _show = ShowFilter.Available;
+        _elements = SkillTags.None;
+        _types = SkillTags.None;
+        _search?.SetValueWithoutNotify("");
+        FiltersChanged();
+    }
+
+    void FiltersChanged()
+    {
+        foreach (var pair in _showChips) pair.Value.EnableInClassList(ChipSelectedClass, pair.Key == _show);
+        foreach (var pair in _elementChips) pair.Value.EnableInClassList(ChipSelectedClass, (_elements & pair.Key) != 0);
+        foreach (var pair in _typeChips) pair.Value.EnableInClassList(ChipSelectedClass, (_types & pair.Key) != 0);
+        _wheel?.SetFilter(Matches);
+        UpdateCount();
+    }
+
+    bool Matches(ActiveSkill skill)
+    {
+        if (_show == ShowFilter.Available && !_wheel.Usable(skill)) return false;
+        if (_show == ShowFilter.Equipped && KeyOfSlot(skill) == null) return false;
+        if (_elements != SkillTags.None && (skill.Tags & _elements) == 0) return false;
+        if ((skill.Tags & _types) != _types) return false;
+        var search = _search != null ? _search.value?.Trim() : null;
+        if (string.IsNullOrEmpty(search)) return true;
+        Describe(skill, out var name, out _, out _);
+        return name.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+    }
+
+    // "12 of 41 skills"
+    void UpdateCount()
+    {
+        if (_count == null || _wheel == null) return;
+        var skills = ActiveSkillManager.For(_owner)?.AllSkills;
+        int total = 0, shown = 0;
+        if (skills != null)
+            foreach (var skill in skills)
+            {
+                if (skill == null) continue;
+                total++;
+                if (Matches(skill)) shown++;
+            }
+        _count.text = $"{shown} of {total} skills";
+    }
+
     // ---------- Skill wheel ----------
 
-    // Every skill, lit when the character's attributes meet its requirements now; equipped ones show their slot's key
+    // The wheel as big as its space allows (it's laid out at SkillWheel.Size and scaled around its centre)
+    void FitWheel(VisualElement holder)
+    {
+        var size = holder.contentRect.size;
+        if (size.x <= 0f || size.y <= 0f) return;
+        float scale = Mathf.Clamp(Mathf.Min(size.x, size.y) / SkillWheel.Size, 0.5f, 1.6f);
+        _wheel.Wheel.style.scale = new Scale(new Vector3(scale, scale, 1f));
+    }
+
+    // Every skill; equipped ones show their slot's key
     void BuildWheel()
     {
         _wheelDirty = false;
@@ -440,6 +594,7 @@ public class SkillsPanelHUD : MonoBehaviour
         _wheel.Show(manager != null ? manager.AllSkills : null, KeyOfSlot, _shownAttributes,
                     characters != null ? characters.Class : null, SkillTooltip.CurrentStats(_owner), _shownGear);
         _wheel.Wheel.SetPending(_pending);
+        UpdateCount();     // Available and Equipped change with the attributes and slots
     }
 
     float3 CurrentAttributes()

@@ -15,7 +15,7 @@ MonoBehaviour:
   Name: Multishot
   Icon: {fileID: 21300000, guid: 3bb6a1ccd67a462c8aa3bf658984d804, type: 3}
   Description: Loose a fan of arrows toward the cursor. Each arrow strikes with your weapon, so up close several can hit the same enemy.
-  Tags: 1
+  Tags: 524289
   CritShake: 0
   Priority: 0
   StrengthRequirement: 0

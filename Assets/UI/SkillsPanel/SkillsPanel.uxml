@@ -3,6 +3,8 @@
     <ui:VisualElement name="skillsPanelRoot" class="skills-panel-root skills-panel-root--hidden" picking-mode="Ignore">
         <ui:VisualElement name="panel" class="skills-panel">
             <ui:Label name="title" text="Skills" class="sp-title" />
+            <!-- Filter chips for the wheel, created by SkillsPanelHUD -->
+            <ui:VisualElement name="filters" class="sp-filters" />
 
             <ui:VisualElement class="sp-main">
                 <!-- Slots and picker options are created by SkillsPanelHUD -->

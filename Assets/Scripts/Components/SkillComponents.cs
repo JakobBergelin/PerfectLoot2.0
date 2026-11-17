@@ -126,6 +126,7 @@ public enum SkillTags
     Periodic = 1 << 16,     // Damages over time through a PeriodicAttack
     Area = 1 << 17,         // Hits everything in an area (a field, a burst or a moving zone) rather than one target
     Toggle = 1 << 18,       // Its key switches it on or off; it stays on until pressed again
+    Physical = 1 << 19,     // Its own hits deal Physical damage (before conversion)
 }
 
 /// <summary>
@@ -154,6 +155,14 @@ public class SkillUtil
     /// (0.25 = 25% cheaper, negative: dearer), never below 0. Use it for both the check and the payment.
     /// </summary>
     public static float Cost(float cost, in StatBlock stats) => cost * math.max(0f, 1f - stats.ResourceCostReduction);
+
+    /// <summary>A skill's element from its element tags (the asset's own element, before conversion); Physical without one (also for skills that deal no damage).</summary>
+    public static DamageType ElementOf(SkillTags tags) =>
+        (tags & SkillTags.Fire) != 0 ? DamageType.Fire :
+        (tags & SkillTags.Cold) != 0 ? DamageType.Cold :
+        (tags & SkillTags.Lightning) != 0 ? DamageType.Lightning :
+        (tags & SkillTags.Poison) != 0 ? DamageType.Poison :
+        DamageType.Physical;
 
     /// <summary>Cost for a Channeled skill: also changed by the caster's ChannelCostChange (Afterburner).</summary>
     public static float ChannelCost(float cost, in StatBlock stats) => Cost(cost, stats) * math.max(0f, 1f + stats.ChannelCostChange);

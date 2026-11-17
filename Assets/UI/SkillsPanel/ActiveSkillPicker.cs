@@ -27,6 +27,7 @@ public sealed class ActiveSkillPicker
     ActiveSkill _highlighted;
     StatBlock? _stats;
     Equipment.GearKinds? _gear;
+    Func<ActiveSkill, bool> _matches;   // The panel's filters (null: every skill)
 
     public ActiveSkillPicker()
     {
@@ -74,13 +75,29 @@ public sealed class ActiveSkillPicker
         _class = characterClass;
         _stats = stats;
         Wheel.Show(_skills, Usable, badge, attributes);
+        Wheel.SetFilter(_matches);
 
         var start = _highlighted;
-        if (start == null || !Contains(start))
+        if (start == null || !Contains(start) || !Matches(start))
             foreach (var skill in _skills)
-                if (skill != null) { start = skill; break; }
+                if (skill != null && Matches(skill)) { start = skill; break; }
         Highlight(start);
     }
+
+    /// <summary>
+    /// The panel's filters: skills they leave out are dimmed on the wheel and skipped by LT/RT (null: every skill). The
+    /// card moves to the first matching skill when the highlighted one is left out.
+    /// </summary>
+    public void SetFilter(Func<ActiveSkill, bool> matches)
+    {
+        _matches = matches;
+        Wheel.SetFilter(matches);
+        if (_highlighted != null && Matches(_highlighted)) return;
+        foreach (var skill in _skills)
+            if (skill != null && Matches(skill)) { Highlight(skill); return; }
+    }
+
+    bool Matches(ActiveSkill skill) => _matches == null || _matches(skill);
 
     /// <summary>The node of a skill on the wheel, or null.</summary>
     public VisualElement NodeOf(ActiveSkill skill) => Wheel.NodeOf(skill);
@@ -92,7 +109,7 @@ public sealed class ActiveSkillPicker
         _status.style.display = string.IsNullOrEmpty(text) ? DisplayStyle.None : DisplayStyle.Flex;
     }
 
-    /// <summary>LT/RT: the first skill on the next (1) or previous (-1) spoke that has any; returns its node to focus.</summary>
+    /// <summary>LT/RT: the first matching skill on the next (1) or previous (-1) spoke that has any; returns its node to focus.</summary>
     public VisualElement TurnSpoke(int step)
     {
         int from = _highlighted != null ? SkillWheel.SpokeOf(_highlighted) : 0;
@@ -107,7 +124,8 @@ public sealed class ActiveSkillPicker
         return null;
     }
 
-    bool Usable(ActiveSkill skill) => SkillRequirements.Meets(skill.Requirements, _attributes) && HasGear(skill);
+    /// <summary>The character's attributes and gear meet the skill's requirements now (lit on the wheel).</summary>
+    public bool Usable(ActiveSkill skill) => SkillRequirements.Meets(skill.Requirements, _attributes) && HasGear(skill);
 
     bool HasGear(ActiveSkill skill) => _gear is not Equipment.GearKinds gear || Equipment.Gear.Meets(skill.RequiredGear, gear);
 
@@ -121,7 +139,7 @@ public sealed class ActiveSkillPicker
     {
         var skills = new List<ActiveSkill>();
         foreach (var skill in _skills)
-            if (skill != null && SkillWheel.SpokeOf(skill) == spoke) skills.Add(skill);
+            if (skill != null && Matches(skill) && SkillWheel.SpokeOf(skill) == spoke) skills.Add(skill);
         skills.Sort((a, b) => SkillRequirements.Total(a.Requirements).CompareTo(SkillRequirements.Total(b.Requirements)));
         return skills;
     }

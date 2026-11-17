@@ -16,6 +16,9 @@
     --text-color: #F2F2F2;
     --text-muted: #A8ADB8;
     --accent: #E0A020;
+    --chip-bg: #2A2E38;
+    --chip-hover: #383D4A;
+    --chip-border: #4A5060;
     -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
 }
 
@@ -68,6 +71,92 @@
     padding: 0;
 }
 
+/* Filter chips over the page, like the item database's */
+.sp-filters {
+    padding-bottom: 6px;
+    margin-bottom: 6px;
+    border-bottom-width: 1px;
+    border-color: var(--divider);
+}
+
+.sp-filter-row {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    margin-bottom: 2px;
+}
+
+.sp-filter-title {
+    width: 60px;
+    font-size: 12px;
+    -unity-font-style: bold;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 4px 0 4px;
+}
+
+.sp-filter-spacer {
+    width: 18px;
+}
+
+.sp-filter-count {
+    font-size: 12px;
+    color: var(--text-muted);
+    padding: 0;
+    margin: 0 4px;
+}
+
+.sp-chip {
+    font-size: 11px;
+    color: var(--text-color);
+    background-color: var(--chip-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    margin: 1px 2px;
+    -unity-text-align: middle-center;
+}
+
+.sp-chip:hover {
+    background-color: var(--chip-hover);
+}
+
+.sp-chip--selected {
+    background-color: var(--accent);
+    border-color: var(--accent);
+    color: #14161C;
+    -unity-font-style: bold;
+}
+
+.sp-chip--selected:hover {
+    background-color: #F0B030;
+}
+
+/* Search box: the TextField's own label isn't used; its input is styled here */
+.sp-search {
+    width: 200px;
+    margin: 2px 3px;
+    padding: 0;
+    --unity-cursor-color: #F2F2F2;
+    --unity-selection-color: rgba(224, 160, 32, 0.5);
+}
+
+.sp-search .unity-base-text-field__input {
+    font-size: 12px;
+    color: var(--text-color);
+    background-color: var(--card-bg);
+    border-width: 1px;
+    border-color: var(--chip-border);
+    border-radius: 3px;
+    padding: 2px 6px;
+    min-height: 20px;
+}
+
+.sp-search:focus .unity-base-text-field__input {
+    border-color: var(--accent);
+}
+
 /* The page: slots on the left, the wheel in the middle, the highlighted skill's card on the right */
 .sp-main {
     flex-grow: 1;
@@ -82,8 +171,10 @@
     justify-content: center;
 }
 
+/* All the height there is: SkillsPanelHUD scales the wheel to fit it */
 .sp-wheel-holder {
     flex-grow: 1;
+    align-self: stretch;
     align-items: center;
     justify-content: center;
 }
@@ -342,18 +433,6 @@
     -unity-background-scale-mode: scale-to-fit;
 }
 
-.sw-node--usable {
-    border-color: #1D9E75;
-}
-
-.sw-node--locked .sw-node__icon {
-    -unity-background-image-tint-color: #5A5A5A;
-}
-
-.sw-node--locked {
-    opacity: 0.6;
-}
-
 .sw-node--equipped {
     border-color: var(--accent);
 }
@@ -361,6 +440,11 @@
 .sw-node--highlighted, .sw-node:hover {
     border-color: #F0C050;
     background-color: var(--card-bg-hover);
+}
+
+/* Left out by the filters: faint, and not clickable (disabled) */
+.sw-node--filtered {
+    opacity: 0.15;
 }
 
 /* The skill waiting for a slot */

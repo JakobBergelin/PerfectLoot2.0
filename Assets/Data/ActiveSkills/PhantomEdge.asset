@@ -15,12 +15,13 @@ MonoBehaviour:
   Name: Phantom Edge
   Icon: {fileID: 21300000, guid: 6530f37b3e5549a6a600570db8aa1205, type: 3}
   Description: Mark every enemy around you, then vanish and strike each of them in turn, unseen and untouchable. The cooldown starts as the strikes begin.
-  Tags: 54
+  Tags: 524342
   CritShake: 0
   Priority: 1
   StrengthRequirement: 0
   AgilityRequirement: 25
   IntelligenceRequirement: 0
+  RequiredGear: 0
   Radius: 10
   StrikeInterval: 0.3
   WeaponDamageMultiplier: 1.3

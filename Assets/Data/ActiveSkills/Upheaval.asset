@@ -15,12 +15,13 @@ MonoBehaviour:
   Name: Upheaval
   Icon: {fileID: 21300000, guid: 16dfba625dbb4a40abeadf36d9afcb29, type: 3}
   Description: Slam the ground in front of you. A moment later the ground heaves around the impact, throwing enemies away.
-  Tags: 2
+  Tags: 524290
   CritShake: 0
   Priority: 0
   StrengthRequirement: 5
   AgilityRequirement: 0
   IntelligenceRequirement: 0
+  RequiredGear: 0
   AttackSpeed: 1.2
   resourceCost: 25
   SlamDamage: 2
