@@ -20,8 +20,8 @@ MonoBehaviour:
   BaseAffixes:
   - Affix: 22
     RollRange:
-      Min: 3
-      Max: 5
+      Min: 1
+      Max: 3
   - Affix: 34
     RollRange:
       Min: 0.05
@@ -35,16 +35,16 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 6
   - Affix: 24
     RollRange:
-      Min: 4
-      Max: 8
-  - Affix: 6
+      Min: 5
+      Max: 12
+  - Affix: 31
     RollRange:
-      Min: 0.03
-      Max: 0.06
+      Min: 0.05
+      Max: 0.12
+  - Affix: 8
+    RollRange:
+      Min: 0.01
+      Max: 0.03
   LegendaryPower: {fileID: 11400000, guid: 7389770f1e5f738279218389ff893737, type: 2}

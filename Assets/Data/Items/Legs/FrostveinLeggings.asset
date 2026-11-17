@@ -16,15 +16,16 @@ MonoBehaviour:
   Id: 8ef90ea7e2194b95b539aa9865a99b38
   Icon: {fileID: 21300000, guid: 4210db138b2244b9bb28a5479fee0dcf, type: 3}
   Flavor: The chill climbs up to meet you.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 35
     RollRange:
-      Min: 0.1
-      Max: 0.2
+      Min: 0.03
+      Max: 0.06
   - Affix: 25
     RollRange:
-      Min: 1.5
-      Max: 3
+      Min: 0.5
+      Max: 1
   RollableAffixes:
   - Affix: 2
     RollRange:
@@ -34,18 +35,14 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 16
-    RollRange:
-      Min: 0.03
-      Max: 0.08
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 6
   - Affix: 24
     RollRange:
       Min: 5
-      Max: 10
+      Max: 12
+  - Affix: 8
+    RollRange:
+      Min: 0.01
+      Max: 0.03
   Armor:
     Min: 2
     Max: 4

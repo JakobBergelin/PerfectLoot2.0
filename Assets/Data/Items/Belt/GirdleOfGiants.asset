@@ -18,35 +18,35 @@ MonoBehaviour:
   Flavor: Let out to the last notch, and still roomy.
   VisualBase: {fileID: 11400000, guid: 9f850d9dc03e4038a43a8a53c66b14d2, type: 2}
   BaseAffixes:
-  - Affix: 24
-    RollRange:
-      Min: 15
-      Max: 25
   - Affix: 0
     RollRange:
-      Min: 5
-      Max: 10
+      Min: 2
+      Max: 4
+  - Affix: 39
+    RollRange:
+      Min: 0.06
+      Max: 0.1
   - Affix: 9
     RollRange:
       Min: -0.1
       Max: -0.05
   RollableAffixes:
-  - Affix: 22
+  - Affix: 4
     RollRange:
       Min: 2
       Max: 6
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.06
+  - Affix: 38
+    RollRange:
+      Min: 0.03
+      Max: 0.06
   - Affix: 16
     RollRange:
-      Min: 0.05
-      Max: 0.1
-  - Affix: 21
-    RollRange:
-      Min: 0.1
-      Max: 0.2
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 6
+      Min: 0.03
+      Max: 0.05
   HealthRegeneration:
     Min: 1
     Max: 2

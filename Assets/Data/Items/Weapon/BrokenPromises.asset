@@ -18,39 +18,27 @@ MonoBehaviour:
   Flavor: It said it would be different this time.
   VisualBase: {fileID: 11400000, guid: 6ea140b3ec25425cab9bd845cd16d438, type: 2}
   BaseAffixes:
-  - Affix: 1
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 2
-    RollRange:
-      Min: 2
-      Max: 5
-  RollableAffixes:
-  - Affix: 0
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 21
-    RollRange:
-      Min: 0.1
-      Max: 0.15
-  - Affix: 12
-    RollRange:
-      Min: 0.2
-      Max: 0.5
   - Affix: 9
     RollRange:
       Min: 0.05
       Max: 0.1
+  RollableAffixes:
   - Affix: 20
     RollRange:
       Min: -0.2
       Max: -0.05
   - Affix: 7
     RollRange:
-      Min: 0.03
-      Max: 0.06
+      Min: 0.02
+      Max: 0.05
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 15
+  - Affix: 23
+    RollRange:
+      Min: 0.2
+      Max: 0.5
   Kind: 4
   WeaponDamage:
     Min: 3

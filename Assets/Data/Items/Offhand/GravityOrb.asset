@@ -18,30 +18,30 @@ MonoBehaviour:
   Flavor: Mind your pockets.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 4
   - Affix: 13
     RollRange:
       Min: 2
       Max: 3
   RollableAffixes:
-  - Affix: 2
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 17
-    RollRange:
-      Min: 5
-      Max: 15
-  - Affix: 6
+  - Affix: 32
     RollRange:
       Min: 0.03
       Max: 0.06
-  - Affix: 26
+  - Affix: 20
     RollRange:
-      Min: 10
-      Max: 20
+      Min: 0.02
+      Max: 0.06
+  - Affix: 15
+    RollRange:
+      Min: 0.02
+      Max: 0.07
+  - Affix: 6
+    RollRange:
+      Min: 0.02
+      Max: 0.05
+  - Affix: 9
+    RollRange:
+      Min: 0.03
+      Max: 0.07
   Kind: 128
   LegendaryPower: {fileID: 11400000, guid: 76f49f7a8bf244fcab94b10630811bae, type: 2}

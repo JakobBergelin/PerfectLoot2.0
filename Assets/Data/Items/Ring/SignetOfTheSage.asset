@@ -18,10 +18,6 @@ MonoBehaviour:
   Flavor: Press it into wax, and the wax remembers.
   VisualBase: {fileID: 11400000, guid: 2d64619da4bf42f288851d66520d7298, type: 2}
   BaseAffixes:
-  - Affix: 2
-    RollRange:
-      Min: 6
-      Max: 10
   - Affix: 7
     RollRange:
       Min: 0.06
@@ -33,18 +29,18 @@ MonoBehaviour:
   RollableAffixes:
   - Affix: 26
     RollRange:
-      Min: 10
-      Max: 20
+      Min: 5
+      Max: 15
   - Affix: 23
     RollRange:
       Min: 0.2
-      Max: 0.6
+      Max: 0.5
   - Affix: 6
     RollRange:
-      Min: 0.03
-      Max: 0.06
+      Min: 0.02
+      Max: 0.05
   - Affix: 20
     RollRange:
-      Min: 0.03
+      Min: 0.02
       Max: 0.06
   LegendaryPower: {fileID: 11400000, guid: d55b445b09ad9e8f6b6fb5da5b186ebe, type: 2}

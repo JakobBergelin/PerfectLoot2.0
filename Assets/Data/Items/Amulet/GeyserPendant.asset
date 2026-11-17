@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 4406ff02a4be827e697abee662740b59
   Icon: {fileID: 21300000, guid: ac41fd03c3544ca08faf9134cf1cdfd0, type: 3}
   Flavor: It hums before it boils.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 34
     RollRange:
@@ -30,20 +31,20 @@ MonoBehaviour:
       Min: -40
       Max: -20
   RollableAffixes:
-  - Affix: 2
+  - Affix: 20
     RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 6
+      Min: 0.02
+      Max: 0.06
+  - Affix: 27
+    RollRange:
+      Min: 0.3
+      Max: 0.8
+  - Affix: 7
+    RollRange:
+      Min: 0.02
+      Max: 0.05
+  - Affix: 16
     RollRange:
       Min: 0.03
-      Max: 0.06
-  - Affix: 9
-    RollRange:
-      Min: 0.05
-      Max: 0.1
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
+      Max: 0.08
   LegendaryPower: {fileID: 11400000, guid: e22ba33e48d4def36e574501b29892d6, type: 2}

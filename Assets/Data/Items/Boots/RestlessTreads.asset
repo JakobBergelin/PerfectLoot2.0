@@ -16,29 +16,38 @@ MonoBehaviour:
   Id: c084288706b4909beda68800327c46c8
   Icon: {fileID: 21300000, guid: 151f815c8fd7434e87c3c4cd1aae2b57, type: 3}
   Flavor: They're already by the door.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 22
     RollRange:
       Min: -3
       Max: -1
   RollableAffixes:
+  - Affix: 0
+    RollRange:
+      Min: 2
+      Max: 5
   - Affix: 1
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 9
-    RollRange:
-      Min: 0.05
-      Max: 0.1
   - Affix: 24
     RollRange:
       Min: 5
-      Max: 10
+      Max: 12
   - Affix: 8
     RollRange:
+      Min: 0.01
+      Max: 0.03
+  - Affix: 7
+    RollRange:
       Min: 0.02
-      Max: 0.04
+      Max: 0.05
+  - Affix: 17
+    RollRange:
+      Min: 5
+      Max: 20
   MovementSpeed:
-    Min: 0.3
-    Max: 0.4
+    Min: 0.1
+    Max: 0.2
   LegendaryPower: {fileID: 11400000, guid: efa22013853c06e67207986bee609d04, type: 2}

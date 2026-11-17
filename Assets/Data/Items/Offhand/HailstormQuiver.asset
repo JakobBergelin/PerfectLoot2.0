@@ -18,26 +18,30 @@ MonoBehaviour:
   Flavor: Aim is for people with only one direction to worry about.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
+  - Affix: 13
     RollRange:
       Min: 1
-      Max: 2
+      Max: 1
   RollableAffixes:
-  - Affix: 1
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
-  - Affix: 6
-    RollRange:
-      Min: 0.03
-      Max: 0.06
   - Affix: 9
     RollRange:
       Min: 0.03
+      Max: 0.07
+  - Affix: 6
+    RollRange:
+      Min: 0.02
       Max: 0.05
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.06
+  - Affix: 21
+    RollRange:
+      Min: 0.05
+      Max: 0.15
+  - Affix: 15
+    RollRange:
+      Min: 0.02
+      Max: 0.07
   Kind: 256
   LegendaryPower: {fileID: 11400000, guid: 1ec876055ec845038f23e46c5b6399c5, type: 2}

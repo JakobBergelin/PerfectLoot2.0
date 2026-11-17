@@ -18,35 +18,35 @@ MonoBehaviour:
   Flavor: It saw them before you did.
   VisualBase: {fileID: 0}
   BaseAffixes:
+  - Affix: 20
+    RollRange:
+      Min: 0.05
+      Max: 0.1
   - Affix: 9
     RollRange:
       Min: -0.1
       Max: -0.05
   RollableAffixes:
-  - Affix: 1
+  - Affix: 26
     RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 21
+      Min: 5
+      Max: 15
+  - Affix: 23
     RollRange:
-      Min: 0.1
-      Max: 0.15
-  - Affix: 20
+      Min: 0.2
+      Max: 0.5
+  - Affix: 7
     RollRange:
-      Min: 0.03
-      Max: 0.06
-  - Affix: 13
-    RollRange:
-      Min: 1
-      Max: 1
-  - Affix: 3
+      Min: 0.02
+      Max: 0.05
+  - Affix: 16
     RollRange:
       Min: 0.03
-      Max: 0.06
+      Max: 0.08
   Kind: 1
   WeaponDamage:
-    Min: 5
-    Max: 7
+    Min: 3
+    Max: 5
   WeaponCooldown: 1
   WeaponDamageRange: 0.5
   WeaponReach: 1

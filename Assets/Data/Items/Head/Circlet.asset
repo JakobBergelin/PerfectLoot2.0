@@ -18,32 +18,28 @@ MonoBehaviour:
   Flavor: Light enough to forget. Not light enough to lose.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 2
-    RollRange:
-      Min: 6
-      Max: 14
   - Affix: 26
     RollRange:
       Min: 15
       Max: 35
+  - Affix: 2
+    RollRange:
+      Min: 2
+      Max: 8
   RollableAffixes:
-  - Affix: 33
+  - Affix: 16
     RollRange:
       Min: 0.03
-      Max: 0.1
-  - Affix: 31
+      Max: 0.08
+  - Affix: 21
     RollRange:
       Min: 0.05
-      Max: 0.25
-  - Affix: 6
-    RollRange:
-      Min: 0.03
-      Max: 0.1
+      Max: 0.15
   - Affix: 24
     RollRange:
       Min: 5
-      Max: 15
-  - Affix: 4
+      Max: 12
+  - Affix: 8
     RollRange:
-      Min: 3
-      Max: 10
+      Min: 0.01
+      Max: 0.03

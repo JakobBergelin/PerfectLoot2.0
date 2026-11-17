@@ -16,11 +16,12 @@ MonoBehaviour:
   Id: e930e3488a8249d59a93803d5e314e42
   Icon: {fileID: 21300000, guid: ab6e2f782c54428db1d2be8e5800ad30, type: 3}
   Flavor: Kick first. Apologize with the other foot.
+  VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 16
+  - Affix: 39
     RollRange:
-      Min: 0.1
-      Max: 0.2
+      Min: 0.06
+      Max: 0.1
   - Affix: 8
     RollRange:
       Min: -0.06
@@ -33,15 +34,15 @@ MonoBehaviour:
   - Affix: 24
     RollRange:
       Min: 5
-      Max: 10
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 6
+      Max: 12
   - Affix: 25
     RollRange:
       Min: 0.5
       Max: 1.5
+  - Affix: 16
+    RollRange:
+      Min: 0.03
+      Max: 0.06
   Armor:
     Min: 4
     Max: 7

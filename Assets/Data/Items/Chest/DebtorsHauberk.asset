@@ -31,14 +31,14 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
   - Affix: 4
     RollRange:
-      Min: 3
+      Min: 2
       Max: 6
+  - Affix: 25
+    RollRange:
+      Min: 0.5
+      Max: 1.5
   Armor:
     Min: 6
     Max: 9

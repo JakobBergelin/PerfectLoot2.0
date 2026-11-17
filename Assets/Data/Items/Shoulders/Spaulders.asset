@@ -16,37 +16,30 @@ MonoBehaviour:
   Id: 9e3a4d1a02263b8aa1a8b602b142715a
   Icon: {fileID: 21300000, guid: adc7b88b4cf64b7989e8cd8ee584125f, type: 3}
   Flavor: Layered like a good pastry, and nearly as forgiving.
+  VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
+  - Affix: 25
     RollRange:
-      Min: 3
-      Max: 5
+      Min: 1.5
+      Max: 3
+  RollableAffixes:
+  - Affix: 41
+    RollRange:
+      Min: 1
+      Max: 3
   - Affix: 1
     RollRange:
-      Min: 6
-      Max: 14
-  - Affix: 0
-    RollRange:
-      Min: -5
-      Max: -2
-  RollableAffixes:
+      Min: 2
+      Max: 5
   - Affix: 8
     RollRange:
-      Min: 0.02
-      Max: 0.1
-  - Affix: 3
+      Min: 0.01
+      Max: 0.03
+  - Affix: 22
     RollRange:
-      Min: 0.02
-      Max: 0.06
-  - Affix: 21
+      Min: 1
+      Max: 3
+  - Affix: 40
     RollRange:
-      Min: 0.1
-      Max: 0.3
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 15
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 10
+      Min: 1
+      Max: 3

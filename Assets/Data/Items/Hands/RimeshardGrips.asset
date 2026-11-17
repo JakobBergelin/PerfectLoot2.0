@@ -18,10 +18,6 @@ MonoBehaviour:
   Flavor: Shake hands at your own risk.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 1
-      Max: 3
   - Affix: 32
     RollRange:
       Min: 0.1
@@ -39,16 +35,20 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 20
+  - Affix: 1
     RollRange:
-      Min: 0.03
-      Max: 0.06
-  - Affix: 24
+      Min: 2
+      Max: 5
+  - Affix: 21
     RollRange:
-      Min: 5
-      Max: 10
+      Min: 0.05
+      Max: 0.15
   - Affix: 6
     RollRange:
-      Min: 0.03
-      Max: 0.06
+      Min: 0.02
+      Max: 0.05
+  - Affix: 28
+    RollRange:
+      Min: 5
+      Max: 20
   LegendaryPower: {fileID: 11400000, guid: 0c6e7358f0fc406d999dc3937bbd937c, type: 2}

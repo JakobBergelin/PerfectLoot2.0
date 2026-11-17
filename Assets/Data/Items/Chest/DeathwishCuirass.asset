@@ -16,6 +16,7 @@ MonoBehaviour:
   Id: 471ce364b09f4fdfb255025d643d8e97
   Icon: {fileID: 21300000, guid: 8ba3e03812054f379ec11026a955c40a, type: 3}
   Flavor: The skull was here before you. It's smiling for a reason.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 21
     RollRange:
@@ -30,14 +31,18 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
   - Affix: 4
     RollRange:
-      Min: 3
+      Min: 2
       Max: 6
+  - Affix: 7
+    RollRange:
+      Min: 0.02
+      Max: 0.05
+  - Affix: 5
+    RollRange:
+      Min: 0.02
+      Max: 0.05
   Armor:
     Min: 2
     Max: 4

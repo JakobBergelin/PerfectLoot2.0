@@ -16,36 +16,33 @@ MonoBehaviour:
   Id: e893a748bbcc4bdfbb2b89e62cc3ef40
   Icon: {fileID: 21300000, guid: 75ec7ebdaa7244eea00a7c4f22ee0cf4, type: 3}
   Flavor: Stitched by someone who hoped you'd come home.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 8
-    RollRange:
-      Min: 0.03
-      Max: 0.06
-  - Affix: 3
     RollRange:
       Min: 0.03
       Max: 0.06
   RollableAffixes:
   - Affix: 24
     RollRange:
-      Min: 5
-      Max: 15
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 10
+      Min: 15
+      Max: 30
   - Affix: 1
     RollRange:
       Min: 2
-      Max: 8
+      Max: 5
+  - Affix: 4
+    RollRange:
+      Min: 2
+      Max: 6
   - Affix: 25
     RollRange:
       Min: 0.5
-      Max: 2
+      Max: 1.5
   - Affix: 7
     RollRange:
-      Min: 0.03
-      Max: 0.1
+      Min: 0.02
+      Max: 0.05
   Armor:
     Min: 4
     Max: 6

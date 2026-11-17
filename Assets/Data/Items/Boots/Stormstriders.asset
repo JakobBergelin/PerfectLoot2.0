@@ -18,14 +18,10 @@ MonoBehaviour:
   Flavor: Static on every doorknob from here to the coast.
   VisualBase: {fileID: 11400000, guid: 15fe6c59dd6f44f28425b4991082b045, type: 2}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 4
   - Affix: 6
     RollRange:
-      Min: 0.08
-      Max: 0.12
+      Min: 0.05
+      Max: 0.08
   - Affix: 19
     RollRange:
       Min: 15
@@ -41,17 +37,17 @@ MonoBehaviour:
       Max: 5
   - Affix: 7
     RollRange:
-      Min: 0.03
-      Max: 0.06
-  - Affix: 4
+      Min: 0.02
+      Max: 0.05
+  - Affix: 17
     RollRange:
-      Min: 3
-      Max: 6
+      Min: 5
+      Max: 20
   - Affix: 8
     RollRange:
-      Min: 0.02
-      Max: 0.04
+      Min: 0.01
+      Max: 0.03
   MovementSpeed:
-    Min: 0.2
-    Max: 0.35
+    Min: 0.1
+    Max: 0.2
   LegendaryPower: {fileID: 11400000, guid: f5581e465a2b48987fab6d9da8f09f83, type: 2}

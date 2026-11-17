@@ -18,30 +18,26 @@ MonoBehaviour:
   Flavor: One thing goes in. Two come out. Nobody knows why.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 2
-      Max: 4
-  - Affix: 32
+  - Affix: 21
     RollRange:
       Min: 0.1
       Max: 0.2
   RollableAffixes:
-  - Affix: 1
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 2
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
   - Affix: 6
     RollRange:
+      Min: 0.02
+      Max: 0.05
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.06
+  - Affix: 9
+    RollRange:
       Min: 0.03
+      Max: 0.07
+  - Affix: 33
+    RollRange:
+      Min: 0.02
       Max: 0.06
   Kind: 128
   LegendaryPower: {fileID: 11400000, guid: 37840932066cee7dc459822c63c08eba, type: 2}

@@ -18,10 +18,6 @@ MonoBehaviour:
   Flavor: Every spark wants to be a storm.
   VisualBase: {fileID: 11400000, guid: 25922c2cb59d4f42a6ed0be5bbf05a65, type: 2}
   BaseAffixes:
-  - Affix: 22
-    RollRange:
-      Min: 1
-      Max: 3
   - Affix: 4
     RollRange:
       Min: 6
@@ -39,12 +35,16 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 5
-  - Affix: 24
+  - Affix: 6
     RollRange:
-      Min: 5
-      Max: 10
-  - Affix: 5
+      Min: 0.02
+      Max: 0.05
+  - Affix: 20
     RollRange:
       Min: 0.02
       Max: 0.04
+  - Affix: 16
+    RollRange:
+      Min: 0.03
+      Max: 0.05
   LegendaryPower: {fileID: 11400000, guid: 7cdd18da184207245bda831e34686056, type: 2}

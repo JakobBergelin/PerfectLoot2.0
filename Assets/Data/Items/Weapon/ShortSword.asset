@@ -23,30 +23,30 @@ MonoBehaviour:
       Min: 1
       Max: 5
   RollableAffixes:
-  - Affix: 0
-    RollRange:
-      Min: 2
-      Max: 8
   - Affix: 9
     RollRange:
-      Min: 0.05
-      Max: 0.2
+      Min: 0.03
+      Max: 0.07
   - Affix: 20
     RollRange:
-      Min: 0.03
-      Max: 0.12
+      Min: 0.02
+      Max: 0.06
   - Affix: 26
     RollRange:
       Min: 5
-      Max: 12
+      Max: 15
   - Affix: 7
     RollRange:
-      Min: 0.03
-      Max: 0.1
-  - Affix: 1
+      Min: 0.02
+      Max: 0.05
+  - Affix: 23
     RollRange:
-      Min: 2
-      Max: 8
+      Min: 0.2
+      Max: 0.5
+  - Affix: 16
+    RollRange:
+      Min: 0.03
+      Max: 0.08
   Kind: 8
   WeaponDamage:
     Min: 3

@@ -16,28 +16,33 @@ MonoBehaviour:
   Id: 796f95a46fb0d0e38dd42958c737fe3a
   Icon: {fileID: 21300000, guid: f802ce18863847c6b57ab0fc53d0ac3c, type: 3}
   Flavor: Tied with a knot the sea taught somebody.
+  VisualBase: {fileID: 0}
   BaseAffixes:
   - Affix: 16
     RollRange:
       Min: 0.08
       Max: 0.15
   RollableAffixes:
-  - Affix: 0
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 1
-    RollRange:
-      Min: 2
-      Max: 5
-  - Affix: 24
-    RollRange:
-      Min: 5
-      Max: 10
   - Affix: 4
     RollRange:
-      Min: 3
+      Min: 2
       Max: 6
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.06
+  - Affix: 38
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  - Affix: 40
+    RollRange:
+      Min: 1
+      Max: 3
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 15
   HealthRegeneration:
     Min: 1
     Max: 1.5

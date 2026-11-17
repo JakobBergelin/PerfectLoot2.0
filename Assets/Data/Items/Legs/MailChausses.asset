@@ -18,10 +18,6 @@ MonoBehaviour:
   Flavor: Cold in the morning. Worth it by noon.
   VisualBase: {fileID: 0}
   BaseAffixes:
-  - Affix: 5
-    RollRange:
-      Min: 0.03
-      Max: 0.05
   - Affix: 3
     RollRange:
       Min: -0.04
@@ -30,19 +26,15 @@ MonoBehaviour:
   - Affix: 0
     RollRange:
       Min: 2
-      Max: 8
+      Max: 5
   - Affix: 24
     RollRange:
       Min: 5
-      Max: 15
-  - Affix: 4
-    RollRange:
-      Min: 3
-      Max: 10
+      Max: 12
   - Affix: 25
     RollRange:
       Min: 0.5
-      Max: 2
+      Max: 1.5
   - Affix: 18
     RollRange:
       Min: 20

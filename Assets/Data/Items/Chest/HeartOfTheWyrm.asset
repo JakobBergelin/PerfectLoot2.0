@@ -26,10 +26,6 @@ MonoBehaviour:
     RollRange:
       Min: 2
       Max: 4
-  - Affix: 24
-    RollRange:
-      Min: 8
-      Max: 15
   - Affix: 17
     RollRange:
       Min: -20
@@ -49,9 +45,9 @@ MonoBehaviour:
       Max: 5
   - Affix: 4
     RollRange:
-      Min: 3
+      Min: 2
       Max: 6
   Armor:
-    Min: 8
-    Max: 12
+    Min: 6
+    Max: 9
   LegendaryPower: {fileID: 11400000, guid: 882902f4c747f8ec9352e178622c4fa7, type: 2}
