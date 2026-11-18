@@ -141,6 +141,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.SonicBall:
                 if (SystemAPI.HasComponent<SonicBall>(entity)) SystemAPI.SetComponentEnabled<SonicBall>(entity, enabled);
                 break;
+            case SkillType.Trample:
+                if (SystemAPI.HasComponent<Trample>(entity)) SystemAPI.SetComponentEnabled<Trample>(entity, enabled);
+                break;
             case SkillType.HookshotSlash:
                 if (SystemAPI.HasComponent<HookshotSlash>(entity)) SystemAPI.SetComponentEnabled<HookshotSlash>(entity, enabled);
                 break;

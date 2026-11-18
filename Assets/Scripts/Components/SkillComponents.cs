@@ -96,6 +96,7 @@ public enum SkillType
     GaleWard,
     Multishot,
     Frenzy,
+    Trample,
 }
 
 /// <summary>

@@ -563,7 +563,8 @@ public partial class VfxSystem : SystemBase
 
     /// <summary>
     /// Skills whose hits have a look of their own: true when it replaces the generic Strike. Swipe's arc at the swinger,
-    /// over the swept angle and sized to its reach; Upheaval's slam and quake sized to their radius; Phantom Edge's slash
+    /// over the swept angle and sized to its reach; Upheaval's slam and quake and Trample's stomps (as the quake) sized to
+    /// their radius; Phantom Edge's slash
     /// and the afterimage where its caster blinked to; Riposte's flash plays with its cast (CastLook); Meteor's impact
     /// adds a fireball burst to the generic shockwave.
     /// </summary>
@@ -584,6 +585,9 @@ public partial class VfxSystem : SystemBase
                 var slammer = EntityManager.HasComponent<Source>(e) ? EntityManager.GetComponentData<Source>(e).Entity : Entity.Null;
                 var facing = !quake && EntityManager.HasComponent<LocalTransform>(slammer) ? EntityManager.GetComponentData<LocalTransform>(slammer).Rotation : quaternion.identity;
                 SharedBurst(vfx, quake ? VfxType.UpheavalQuake : VfxType.UpheavalSlam, t.Position, facing, math.max(attack.Radius, 0.5f));
+                return true;
+            case DamageLabel.Trample:
+                SharedBurst(vfx, VfxType.UpheavalQuake, t.Position, quaternion.identity, math.max(attack.Radius, 0.5f));
                 return true;
             case DamageLabel.PhantomEdge:
                 var caster = EntityManager.HasComponent<Source>(e) ? EntityManager.GetComponentData<Source>(e).Entity : Entity.Null;

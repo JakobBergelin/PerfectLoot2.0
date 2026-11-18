@@ -76,6 +76,7 @@ public enum DamageLabel
     Multishot,
     Stampede,       // Rushwind Treads' dash hits
     Frenzy,         // Frenzy's extra strikes on a second enemy
+    Trample,
 }
 
 public static class SkillDamageLabel
@@ -108,6 +109,7 @@ public static class SkillDamageLabel
         SkillType.Riposte => DamageLabel.Riposte,
         SkillType.Multishot => DamageLabel.Multishot,
         SkillType.Frenzy => DamageLabel.Frenzy,
+        SkillType.Trample => DamageLabel.Trample,
         _ => DamageLabel.None,
     };
 }

@@ -1,0 +1,30 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5c52f498ddb404f4cacf9c6ccd0fb7c8, type: 3}
+  m_Name: Trample
+  m_EditorClassIdentifier: Assembly-CSharp::ActiveSkills.TrampleSkill
+  Name: Trample
+  Icon: {fileID: 21300000, guid: 16dfba625dbb4a40abeadf36d9afcb29, type: 3}
+  Description: Hold to stomp forward at half speed. Every few steps you stomp the ground around you, harder the more health you have left. The cooldown starts when you let go.
+  Tags: 655392
+  CritShake: 0
+  Priority: 0
+  StrengthRequirement: 25
+  AgilityRequirement: 0
+  IntelligenceRequirement: 0
+  RequiredGear: 0
+  cooldown: 4
+  SpeedMultiplier: 0.5
+  Stride: 1.5
+  DamagePerCurrentHealth: 0.05
+  Radius: 2
+  HitForce: 2
