@@ -118,6 +118,9 @@ public sealed class SkillWheel : VisualElement
         }
     }
 
+    /// <summary>The badge of a skill that's new to the character (ActiveSkillManager.IsNew), in green instead of a slot's key.</summary>
+    public const string NewBadge = "New";
+
     /// <summary>Marks the skill waiting for a slot (null: none).</summary>
     public void SetPending(ActiveSkill skill)
     {
@@ -126,7 +129,7 @@ public sealed class SkillWheel : VisualElement
 
     /// <summary>
     /// Places the skills. usable: whether the character can use one (for the green fill); badge: the key of the slot it's
-    /// equipped in, or null. attributes: the character's Strength, Agility and Intelligence, for the green fill.
+    /// equipped in, NewBadge for a new skill, or null. attributes: the character's Strength, Agility and Intelligence, for the green fill.
     /// </summary>
     public void Show(IReadOnlyList<ActiveSkill> skills, Func<ActiveSkill, bool> usable, Func<ActiveSkill, string> badge, float3 attributes)
     {
@@ -194,9 +197,11 @@ public sealed class SkillWheel : VisualElement
 
         if (!string.IsNullOrEmpty(badge))
         {
-            node.AddToClassList("sw-node--equipped");
+            bool isNew = badge == NewBadge;
+            node.AddToClassList(isNew ? "sw-node--new" : "sw-node--equipped");
             var key = new Label(badge) { pickingMode = PickingMode.Ignore };
             key.AddToClassList("sw-node__badge");
+            if (isNew) key.AddToClassList("sw-node__badge--new");
             node.Add(key);
         }
 

@@ -485,8 +485,9 @@ public class CharacterSelectScreen
         UpdateCreateButton();
     }
 
-    // The skills a new character of this class starts with (SkillRequirements.StartingSkills); hidden without a class.
-    // Shown for the picked class, and for the one under the pointer or controller focus while choosing
+    // The skill a new character of this class starts with and the one it gets later (the class's StartingSkill and
+    // SecondSkill); hidden without a class. Shown for the picked class, and for the one under the pointer or controller
+    // focus while choosing
     void ShowStartingSkills(ClassType type)
     {
         HideSkillTooltip();
@@ -495,8 +496,9 @@ public class CharacterSelectScreen
         _startingSkills.EnableInClassList(HiddenClass, classAsset == null);
         _startingSkillsLabel.EnableInClassList(HiddenClass, classAsset == null);
         if (classAsset == null) return;
-        foreach (var skill in ActiveSkills.SkillRequirements.StartingSkills(AllActiveSkills(), classAsset))
-            AddActiveIcon(_startingSkills, skill);
+        if (classAsset.StartingSkill != null) AddActiveIcon(_startingSkills, classAsset.StartingSkill);
+        if (classAsset.SecondSkill != null) AddActiveIcon(_startingSkills, classAsset.SecondSkill);
+        _startingSkillsLabel.text = $"Starting skill · Level {classAsset.SecondSkillLevel}";
     }
 
     void PickResource(ResourceType type)
@@ -530,9 +532,9 @@ public class CharacterSelectScreen
             UpdateCreateButton();
             return;
         }
-        // The first skills its class reaches: equipped from the start
-        if (classAsset != null)
-            Account.SetSkills(character, ActiveSkills.SkillRequirements.StartingSkills(AllActiveSkills(), classAsset).ConvertAll(skill => skill.Type.ToString()), null);
+        // Only its class's starting skill: the others come with levels (ActiveSkillManager)
+        if (classAsset != null && classAsset.StartingSkill != null)
+            Account.SetSkills(character, new[] { classAsset.StartingSkill.Type.ToString(), "", "", "" }, null);
         _nameField.Blur();
         RebuildList();
         Select(character.Guid);

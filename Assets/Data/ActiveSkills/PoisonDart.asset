@@ -17,9 +17,11 @@ MonoBehaviour:
   Description: Throw a dart that marks the enemy it hits. A marked enemy explodes in poison when it dies.
   Tags: 577
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
-  AgilityRequirement: 3
+  AgilityRequirement: 1
   IntelligenceRequirement: 0
+  RequiredGear: 0
   AttackSpeed: 0.5
   WeaponDamageMultiplier: 0.25
   ProjectileSpeed: 15

@@ -20,6 +20,8 @@ MonoBehaviour:
   AgilityPerLevel: 1
   IntelligencePerLevel: 0
   ClassPassive: {fileID: 11400000, guid: 244b319ff6748d14ebbf61cd17e03f0b, type: 2}
+  StartingSkill: {fileID: 11400000, guid: c85175f272a63904cbcb1e8e0a3875d6, type: 2}
+  SecondSkill: {fileID: 11400000, guid: 9d6ec9bfd76dff2c67545d5d5f5998ea, type: 2}
   StartingItems:
   - {fileID: 11400000, guid: 67bb9dcccf9e4824bb0b8dfedf5e0bbf, type: 2}
   - {fileID: 11400000, guid: 281ace68cb604966ad4663377aaac89f, type: 2}

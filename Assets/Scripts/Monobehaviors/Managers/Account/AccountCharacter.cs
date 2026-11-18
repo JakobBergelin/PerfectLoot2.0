@@ -35,5 +35,9 @@ public class AccountCharacter
     // was first played (ActiveSkillManager and PassiveSkillManager fill and save them then).
     public List<string> ActiveSkills = new List<string>();
     public List<string> Passives = new List<string>();
+    // Easing into skills (ActiveSkillManager): the class's SecondSkill was given, and the SkillType names the player has
+    // seen in the Skills panel since they became usable (the rest show "New" there)
+    public bool GotSecondSkill;
+    public List<string> SeenSkills = new List<string>();
     public List<CompletedDungeon> CompletedDungeons = new List<CompletedDungeon>();
 }

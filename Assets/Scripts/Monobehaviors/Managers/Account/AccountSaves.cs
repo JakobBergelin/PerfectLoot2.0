@@ -122,6 +122,8 @@ public static class AccountSaves
         public List<EquippedData> Equipped = new List<EquippedData>();
         public List<string> ActiveSkills = new List<string>();     // SkillType names by slot, "" for empty
         public List<string> Passives = new List<string>();         // PassiveType names by slot, "" for empty
+        public bool GotSecondSkill;
+        public List<string> SeenSkills = new List<string>();       // SkillType names
         public List<CompletedDungeonData> CompletedDungeons = new List<CompletedDungeonData>();
     }
 
@@ -266,7 +268,9 @@ public static class AccountSaves
                 Resource = character.Resource.ToString(),
                 Level = character.Level,
                 Experience = character.Experience,
+                GotSecondSkill = character.GotSecondSkill,
             };
+            saved.SeenSkills.AddRange(character.SeenSkills);
             foreach (var equipped in character.Equipped)
                 saved.Equipped.Add(new EquippedData { Slot = equipped.Slot, BaseItemId = equipped.BaseItemId, Rarity = equipped.Rarity.ToString() });
             saved.ActiveSkills.AddRange(character.ActiveSkills);
@@ -327,7 +331,9 @@ public static class AccountSaves
                 Resource = resourceType,
                 Level = Mathf.Clamp(saved.Level, 1, global::Experience.MaxLevel),
                 Experience = Mathf.Max(0, saved.Experience),
+                GotSecondSkill = saved.GotSecondSkill,
             };
+            if (saved.SeenSkills != null) character.SeenSkills.AddRange(saved.SeenSkills);
             // Saves from before equipment have none; whether the items still exist is checked when they're equipped
             foreach (var equipped in saved.Equipped ?? new List<EquippedData>())
             {

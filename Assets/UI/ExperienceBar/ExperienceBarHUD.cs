@@ -4,7 +4,7 @@ using UnityEngine.UIElements;
 
 /// <summary>
 /// The player's experience bar and level between the skill bar and the buff row (ExperienceBar.uxml), with the numbers
-/// while the pointer is over the bar and a "Level up!" flash. Shows its player (CharacterManager). Read-only: never changes ECS.
+/// while the pointer is over the bar, a "Level up!" flash and the player's PlayerNotices above it. Shows its player (CharacterManager). Read-only: never changes ECS.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
@@ -13,12 +13,13 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
     public int PlayerIndex { get; set; }
 
     const string HoveredClass = "experience-bar--hovered", LevelUpClass = "experience-row--level-up", GoldShownClass = "experience-row__gold--shown";
+    const string NoticeShownClass = "experience-row__notice--shown";
     const float LevelUpSeconds = 1.8f;  // How long "Level up!" shows
 
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _row, _fill;
-    Label _level, _value, _gold;
+    Label _level, _value, _gold, _notice;
 
     // Last shown values, so the UI is only touched when something changes
     Entity _shownPlayer;
@@ -57,7 +58,8 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
         _level = root.Q<Label>("level");
         _value = root.Q<Label>("value");
         _gold = root.Q<Label>("gold");
-        if (_row == null || bar == null || _fill == null || _level == null || _value == null || _gold == null)
+        _notice = root.Q<Label>("notice");
+        if (_row == null || bar == null || _fill == null || _level == null || _value == null || _gold == null || _notice == null)
         {
             Debug.LogError("ExperienceBarHUD: elements missing. Is ExperienceBar.uxml assigned as the Panel Renderer's Source Asset?", this);
             _row = null;
@@ -89,6 +91,11 @@ public class ExperienceBarHUD : MonoBehaviour, IPerPlayer
         }
         if (level.Value != _shownLevel || level.Experience != _shownExperience) Show(level);
         _row.EnableInClassList(LevelUpClass, Time.unscaledTime < _levelUpEnd);
+
+        // A message for this player (PlayerNotices); the last text stays while it fades out
+        var notice = PlayerNotices.Current(PlayerIndex);
+        if (notice != null && _notice.text != notice) _notice.text = notice;
+        _notice.EnableInClassList(NoticeShownClass, notice != null);
 
         // The account's gold, in town on player 1's HUD
         var account = AccountManager.Instance;

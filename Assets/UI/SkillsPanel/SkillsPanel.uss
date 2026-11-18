@@ -588,3 +588,26 @@
 .sp-card--stance-int {
     border-color: #4A90E2;
 }
+
+/* A passive slot the character's level hasn't opened yet: faint, a dashed ring, "Unlocks at level 5" */
+.sp-passive--locked {
+    opacity: 0.45;
+}
+
+.sp-passive--locked:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+
+.sp-passive--locked .sp-passive__icon {
+    border-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(0, 0, 0, 0.25);
+}
+
+/* A skill the character's level reached that isn't equipped and wasn't seen here yet (ActiveSkillManager.IsNew) */
+.sw-node--new {
+    border-color: #7FD07F;
+}
+
+.sw-node__badge--new {
+    background-color: #7FD07F;
+}

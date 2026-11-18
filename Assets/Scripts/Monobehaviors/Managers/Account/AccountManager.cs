@@ -121,7 +121,7 @@ public class AccountManager : MonoBehaviour
         playerIndex >= 0 && playerIndex < _selected.Length ? _selected[playerIndex] : null;
 
     /// <summary>The character the account last went on an adventure with, or null.</summary>
-    public AccountCharacter LastPlayedCharacter => FindCharacter(_lastPlayedGuid);
+    public AccountCharacter LastPlayedCharacter => Characters != null ? FindCharacter(_lastPlayedGuid) : null;  // Characters loads _lastPlayedGuid first
 
     /// <summary>Raised after a character was created or deleted, or the account changed.</summary>
     public event Action CharactersChanged;
@@ -182,6 +182,13 @@ public class AccountManager : MonoBehaviour
         if (character == null || !_characters.Contains(character)) return;
         if (activeSkills != null) character.ActiveSkills = new List<string>(activeSkills);
         if (passives != null) character.Passives = new List<string>(passives);
+        SaveCharacters();
+    }
+
+    /// <summary>Saves the character's GotSecondSkill and SeenSkills after ActiveSkillManager changed them.</summary>
+    public void SaveSkillProgress(AccountCharacter character)
+    {
+        if (character == null || !_characters.Contains(character)) return;
         SaveCharacters();
     }
 

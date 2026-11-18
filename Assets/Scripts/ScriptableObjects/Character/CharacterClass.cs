@@ -21,6 +21,15 @@ namespace Characters
         [Tooltip("Always on for this class, outside the passive slots. Its PlayerSelectable should be off.")]
         public Passives.PassiveSkill ClassPassive;
 
+        [Header("Skills a new character is eased into")]
+        [Tooltip("The only skill a new character has equipped. Should be usable at level 1.")]
+        public ActiveSkills.ActiveSkill StartingSkill;
+        [Tooltip("Given once, into the first empty slot, at the level this class can use it (SecondSkillLevel, at least 2). Usually a Mobility skill.")]
+        public ActiveSkills.ActiveSkill SecondSkill;
+
+        /// <summary>The level a new character gets its SecondSkill: when its requirements are met, at least level 2.</summary>
+        public int SecondSkillLevel => SecondSkill != null ? Mathf.Max(2, ActiveSkills.SkillRequirements.UnlockLevel(SecondSkill.Requirements, this)) : 2;
+
         [Tooltip("Equipped (Normal) on a new character of this class: taken from the account database, or rolled into it")]
         public List<Equipment.RollableItem> StartingItems = new List<Equipment.RollableItem>();
 

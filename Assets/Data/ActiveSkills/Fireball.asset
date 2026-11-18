@@ -17,9 +17,11 @@ MonoBehaviour:
   Description: Hurl a ball of fire where you aim. An old favorite for a reason.
   Tags: 193
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
   AgilityRequirement: 0
-  IntelligenceRequirement: 2
+  IntelligenceRequirement: 1
+  RequiredGear: 0
   AttackSpeed: 0.5
   resourceCost: 2
   Damage: 2

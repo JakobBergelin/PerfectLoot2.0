@@ -13,7 +13,8 @@ using UnityEngine.UIElements;
 /// the skill wheel (ActiveSkillPicker: every skill by its requirements, equipped ones with their slot's key) in the
 /// middle and the highlighted skill's card on the right. In town, clicking a skill and then an active slot (or pressing
 /// that slot's key) equips it there, swapping with the slot that had it; clicking a passive slot opens a list of the
-/// passives that aren't in another slot. Elsewhere it's look-only. Filter chips over it dim the wheel's skills that
+/// passives that aren't in another slot; passive slots the character's level hasn't opened show their unlock level.
+/// Skills new to the character have a green "New" badge until the panel closes. Elsewhere it's look-only. Filter chips over it dim the wheel's skills that
 /// don't match: Show (All, Available, Equipped), Element (any of the chosen), Type (all of the chosen tags) and a name
 /// search; they reset to Available each time it opens. One for both players: whoever opens it has it (their
 /// buttons, focus and skills) until they close it; the other player can't open it meanwhile.
@@ -64,7 +65,10 @@ public class SkillsPanelHUD : MonoBehaviour
         public Func<IEnumerable<ScriptableObject>> GetPool;
         public Func<ScriptableObject, int> TypeOf;      // Skills of the same type can't be in two slots
         public List<SlotView> Group;                    // The slots sharing this picker
+        public int UnlockLevel;                         // Passive slots: the level that opens it (0: always open)
+        public Func<bool> IsLocked;                     // Passive slots: not open at the character's level yet
         public ScriptableObject Shown;
+        public bool ShownLocked;
         public bool ShownOnce;
     }
 
@@ -286,6 +290,8 @@ public class SkillsPanelHUD : MonoBehaviour
 
     void SetOpen(bool open)
     {
+        // Closing: the skills marked "New" were seen
+        if (_open && !open && ActiveSkillManager.For(_owner) != null) ActiveSkillManager.For(_owner).MarkNewSkillsSeen();
         _open = open;
         Menus.SetOpen(this, open);
         if (!_bound) return;
@@ -371,6 +377,8 @@ public class SkillsPanelHUD : MonoBehaviour
                 Equip = passive => PassiveSlot(index)?.EquipPassive((PassiveSkill)passive),
                 GetPool = () => PassiveSkillManager.For(_owner) != null ? PassiveSkillManager.For(_owner).SelectablePassives : null,
                 TypeOf = passive => (int)((PassiveSkill)passive).Type,
+                UnlockLevel = PassiveSkillManager.SlotUnlockLevels[index],
+                IsLocked = () => PassiveSkillManager.For(_owner) != null && !PassiveSkillManager.For(_owner).IsUnlocked(index),
             };
 
             view.Element = new VisualElement();
@@ -382,10 +390,10 @@ public class SkillsPanelHUD : MonoBehaviour
             view.Element.Add(view.Icon);
             view.Element.Add(view.Name);
 
-            Action click = () => SelectPassive(_selected == view || !GameArea.IsTown ? null : view);
+            Action click = () => SelectPassive(_selected == view || !GameArea.IsTown || view.IsLocked() ? null : view);
             view.Element.RegisterCallback<ClickEvent>(_ => click());
             UiNav.Clickable(view.Element, click);
-            UiNav.Hover(view.Element, () => ShowTooltip(view.GetEquipped(), view.Element), HideTooltip);
+            UiNav.Hover(view.Element, () => ShowTooltip(view.IsLocked() ? null : view.GetEquipped(), view.Element), HideTooltip);
             container.Add(view.Element);
             _passiveSlots.Add(view);
         }
@@ -439,13 +447,18 @@ public class SkillsPanelHUD : MonoBehaviour
     void RefreshSlot(SlotView view)
     {
         var skill = view.GetEquipped();
-        if (view.ShownOnce && skill == view.Shown) return;
+        bool locked = view.IsLocked != null && view.IsLocked();
+        if (view.ShownOnce && skill == view.Shown && locked == view.ShownLocked) return;
         view.Shown = skill;
+        view.ShownLocked = locked;
         view.ShownOnce = true;
 
-        Describe(skill, out var name, out var icon, out _);
-        view.Name.text = skill == null ? "Empty" : name;
+        // A locked passive slot keeps a passive saved from before, but doesn't show (or apply) it
+        Describe(locked ? null : skill, out var name, out var icon, out _);
+        view.Name.text = locked ? $"Unlocks at level {view.UnlockLevel}" : skill == null ? "Empty" : name;
         view.Icon.style.backgroundImage = icon != null ? new StyleBackground(icon) : new StyleBackground(StyleKeyword.None);
+        view.Element.EnableInClassList("sp-passive--locked", locked);
+        if (locked && _selected == view) SelectPassive(null);
 
         // An active slot changed: the wheel's keys; a passive slot's picker that's open: its choices
         if (view.Group == _activeSlots) _wheelDirty = true;
@@ -591,7 +604,7 @@ public class SkillsPanelHUD : MonoBehaviour
         var characters = CharacterManager.For(_owner);
         _shownAttributes = CurrentAttributes();
         _shownGear = SkillTooltip.CurrentGear(_owner);
-        _wheel.Show(manager != null ? manager.AllSkills : null, KeyOfSlot, _shownAttributes,
+        _wheel.Show(manager != null ? manager.AllSkills : null, Badge, _shownAttributes,
                     characters != null ? characters.Class : null, SkillTooltip.CurrentStats(_owner), _shownGear);
         _wheel.Wheel.SetPending(_pending);
         UpdateCount();     // Available and Equipped change with the attributes and slots
@@ -609,6 +622,15 @@ public class SkillsPanelHUD : MonoBehaviour
         if (characters == null || characters.Class == null) return float3.zero;
         var characterClass = characters.Class;
         return new float3(characterClass.StrengthPerLevel, characterClass.AgilityPerLevel, characterClass.IntelligencePerLevel) * characters.StartingLevel;
+    }
+
+    // On the wheel: the key of the slot it's in, or "New" for a skill the character's level reached since it last looked
+    string Badge(ActiveSkill skill)
+    {
+        var key = KeyOfSlot(skill);
+        if (key != null) return key;
+        var manager = ActiveSkillManager.For(_owner);
+        return manager != null && manager.IsNew(skill) ? SkillWheel.NewBadge : null;
     }
 
     string KeyOfSlot(ActiveSkill skill)

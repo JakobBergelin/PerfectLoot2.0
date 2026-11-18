@@ -7,12 +7,11 @@ namespace ActiveSkills
     /// <summary>
     /// The Strength, Agility and Intelligence active skills need (ActiveSkill.Requirements). An equipped skill whose
     /// requirements the character's current attributes (class levels, items, buffs) don't meet is greyed out and can't be
-    /// used in a dungeon (SkillActivationSystem); the Hub ignores them. A new character starts with the first four skills
-    /// its class reaches on its own (StartingSkills).
+    /// used in a dungeon (SkillActivationSystem); the Hub ignores them. A new character starts with its class's
+    /// StartingSkill and gets its SecondSkill at CharacterClass.SecondSkillLevel (ActiveSkillManager).
     /// </summary>
     public static class SkillRequirements
     {
-        public const int StartingSkillCount = 4;
         public static readonly string[] Names = { "Strength", "Agility", "Intelligence" };
         public static readonly string[] Short = { "Str", "Agi", "Int" };
 
@@ -62,14 +61,6 @@ namespace ActiveSkills
                 int byTotal = Total(a.Requirements).CompareTo(Total(b.Requirements));
                 return byTotal != 0 ? byTotal : ((int)a.Type).CompareTo((int)b.Type);
             });
-            return ordered;
-        }
-
-        /// <summary>A new character's skills: the first StartingSkillCount its class reaches.</summary>
-        public static List<ActiveSkill> StartingSkills(IEnumerable<ActiveSkill> skills, CharacterClass characterClass)
-        {
-            var ordered = InUnlockOrder(skills, characterClass);
-            if (ordered.Count > StartingSkillCount) ordered.RemoveRange(StartingSkillCount, ordered.Count - StartingSkillCount);
             return ordered;
         }
 

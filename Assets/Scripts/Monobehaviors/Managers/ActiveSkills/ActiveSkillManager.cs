@@ -7,8 +7,10 @@ using UnityEngine;
 /// <summary>
 /// Pushes the skills in Slot1..Slot4 to the player (Skill buffer + skill components) and mirrors each
 /// skill's SkillState back into its slot every frame for UI. Activation itself is SkillActivationSystem.
-/// The slots start with the selected character's saved skills (random ones where it has none) and every change is saved
-/// with the character (AccountManager.SetSkills). PassiveSkillManager does the same for passives.
+/// The slots start with the selected character's saved skills and every change is saved with the character
+/// (AccountManager.SetSkills); PassiveSkillManager does the same for passives. A new character is eased in: it starts
+/// with its class's StartingSkill, gets its SecondSkill at the class's SecondSkillLevel, and after that is nudged to the Skills panel
+/// (PlayerNotices, "New" on the wheel) while skills its level reached wait for an empty slot.
 /// </summary>
 public class ActiveSkillManager : MonoBehaviour, IPerPlayer
 {
@@ -48,14 +50,117 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
     // without the main menu (the rig's own slots, not saved)
     AccountCharacter _character;
 
-    // The character's saved skills, then the class's first ones in the slots still empty (saved too, so they stay)
+    // The character's saved skills (only its class's StartingSkill when it has none yet), and its SecondSkill when it's
+    // reached the class's SecondSkillLevel without it. Its empty slots stay empty: the player fills them in the Skills panel. Without a
+    // character every slot is filled.
     void Start()
     {
         LoadCharacterSkills();
-        FillEmptySlots();
+        if (_character == null) FillEmptySlots();
+        else
+        {
+            if (_character.ActiveSkills.Count == 0) GiveStartingSkill();
+            _shownLevel = _character.Level;
+            GiveSecondSkill(announce: false);
+        }
         SaveCharacterSkills();
         PushSkills();
     }
+
+    // ---------- Easing a new character into its skills ----------
+
+    // The character's level the slots were last checked at
+    int _shownLevel;
+
+    void GiveStartingSkill()
+    {
+        var characterClass = CharacterClass();
+        var skill = characterClass != null ? characterClass.StartingSkill : null;
+        if (skill == null && characterClass != null)
+        {
+            var ordered = SkillRequirements.InUnlockOrder(AllSkills, characterClass);
+            if (ordered.Count > 0) skill = ordered[0];
+        }
+        if (skill != null && Slot1 != null) Slot1.EquippedSkill = skill;
+    }
+
+    // Once, at the class's SecondSkillLevel: its SecondSkill in the first empty slot (not when it's equipped already or no
+    // slot is free)
+    void GiveSecondSkill(bool announce)
+    {
+        var characterClass = CharacterClass();
+        if (_character == null || _character.GotSecondSkill || _character.Level < SecondSkillLevel()) return;
+        _character.GotSecondSkill = true;
+        var skill = characterClass != null ? characterClass.SecondSkill : null;
+        var empty = System.Array.Find(Slots, slot => slot != null && slot.IsEmpty);
+        if (skill != null && empty != null && !IsEquipped(skill))
+        {
+            if (announce)
+            {
+                empty.EquipSkill(skill);    // Pushed and saved by OnSlotChanged
+                PlayerNotices.Post(PlayerIndex, $"New skill: {NameOf(skill)}");
+            }
+            else empty.EquippedSkill = skill;
+        }
+        if (AccountManager.Instance != null) AccountManager.Instance.SaveSkillProgress(_character);
+    }
+
+    // The level the class's SecondSkill is given at (2 without a class)
+    int SecondSkillLevel()
+    {
+        var characterClass = CharacterClass();
+        return characterClass != null ? characterClass.SecondSkillLevel : 2;
+    }
+
+    // A level up: the second skill, and after its level a nudge to the Skills panel while new skills wait for an empty slot
+    void CheckLevel()
+    {
+        if (_character == null || _character.Level == _shownLevel) return;
+        bool levelledUp = _character.Level > _shownLevel;
+        _shownLevel = _character.Level;
+        if (!levelledUp) return;
+        GiveSecondSkill(announce: true);
+        if (_character.Level <= SecondSkillLevel() ||!System.Array.Exists(Slots, slot => slot != null && slot.IsEmpty)) return;
+
+        var names = new List<string>();
+        foreach (var skill in AllSkills)
+            if (IsNew(skill)) names.Add(NameOf(skill));
+        if (names.Count == 0) return;
+        const int MaxNames = 3;
+        string list = names.Count <= MaxNames ? string.Join(", ", names)
+                    : $"{string.Join(", ", names.GetRange(0, MaxNames))} and {names.Count - MaxNames} more";
+        PlayerNotices.Post(PlayerIndex, $"New skill{(names.Count > 1 ? "s" : "")} to equip: {list}\n" +
+                                        $"Open Skills ({PlayerNotices.SkillsKey(PlayerIndex)}) in town");
+    }
+
+    /// <summary>
+    /// A skill the character's class reaches by its level that isn't equipped and the player hasn't seen in the Skills
+    /// panel yet (MarkNewSkillsSeen). False without a character.
+    /// </summary>
+    public bool IsNew(ActiveSkill skill)
+    {
+        if (skill == null || _character == null || IsEquipped(skill) || _character.SeenSkills.Contains(skill.Type.ToString())) return false;
+        var characterClass = CharacterClass();
+        return characterClass != null && SkillRequirements.UnlockLevel(skill.Requirements, characterClass) <= _character.Level;
+    }
+
+    /// <summary>The Skills panel was looked at: its new skills aren't new anymore.</summary>
+    public void MarkNewSkillsSeen()
+    {
+        if (_character == null) return;
+        bool changed = false;
+        foreach (var skill in AllSkills)
+            if (IsNew(skill))
+            {
+                _character.SeenSkills.Add(skill.Type.ToString());
+                changed = true;
+            }
+        if (changed && AccountManager.Instance != null) AccountManager.Instance.SaveSkillProgress(_character);
+    }
+
+    bool IsEquipped(ActiveSkill skill) => System.Array.Exists(Slots, slot => slot != null && slot.EquippedSkill == skill);
+
+    static string NameOf(ActiveSkill skill) => string.IsNullOrEmpty(skill.Name) ? skill.name : skill.Name;
 
     // Set directly instead of EquipSkill so Start pushes once instead of once per slot
     void LoadCharacterSkills()
@@ -68,7 +173,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
             string type = _character.ActiveSkills[i];
             if (slots[i] == null || string.IsNullOrEmpty(type)) continue;
             var skill = AllSkills.Find(candidate => candidate != null && candidate.Type.ToString() == type);
-            if (skill == null) Debug.LogWarning($"{_character.Name}'s skill '{type}' doesn't exist anymore, so the slot is filled at random.", this);
+            if (skill == null) Debug.LogWarning($"{_character.Name}'s skill '{type}' doesn't exist anymore, so the slot is left empty.", this);
             slots[i].EquippedSkill = skill;
         }
     }
@@ -147,6 +252,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
     {
         // The player entity may not exist yet (subscene still loading), so retry until it does.
         if (_dirty) TryPushSkills();
+        CheckLevel();
     }
 
     // After the simulation has run, so the slots show this frame's state

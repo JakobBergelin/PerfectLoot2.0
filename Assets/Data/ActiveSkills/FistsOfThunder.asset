@@ -17,9 +17,11 @@ MonoBehaviour:
   Description: A fast combo of lightning punches that builds resource with every blow.
   Tags: 9282
   CritShake: 0
+  Priority: 0
   StrengthRequirement: 0
-  AgilityRequirement: 2
+  AgilityRequirement: 1
   IntelligenceRequirement: 0
+  RequiredGear: 0
   ResourceGeneration: 1
   WeaponDamageMultiplier: 0.1
   Radius: 0.5

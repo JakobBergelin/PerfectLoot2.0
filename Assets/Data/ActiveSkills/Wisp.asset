@@ -17,9 +17,9 @@ MonoBehaviour:
   Description: Summons a Wisp that stays close and runs from enemies. It shares its Health regeneration and the heals it receives with the player with the lowest Health. The cooldown starts when it dies.
   Tags: 22528
   CritShake: 0
-  StrengthRequirement: 6
+  StrengthRequirement: 3
   AgilityRequirement: 3
-  IntelligenceRequirement: 6
+  IntelligenceRequirement: 3
   cooldown: 20
   resourceCost: 20
   Body: {fileID: 7900000000000000001, guid: 45df3b5118ab4ada127e09d0c3d71403, type: 3}

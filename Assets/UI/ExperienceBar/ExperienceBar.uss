@@ -158,3 +158,30 @@
 .experience-row__gold--shown {
     display: flex;
 }
+
+/* A short message for the player above "Level up!", e.g. "New skill: Teleport" (PlayerNotices), shown while
+   experience-row__notice--shown is on */
+.experience-row__notice {
+    position: absolute;
+    left: -100px;
+    right: -100px;
+    bottom: 100%;
+    margin-bottom: 34px;
+    font-size: 18px;
+    -unity-font-style: bold;
+    -unity-text-align: lower-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #FFFFFF;
+    white-space: normal;
+    padding: 0;
+    opacity: 0;
+    translate: 0 8px;
+    transition-property: opacity, translate;
+    transition-duration: 0.3s;
+}
+
+.experience-row__notice--shown {
+    opacity: 1;
+    translate: 0 0;
+}
