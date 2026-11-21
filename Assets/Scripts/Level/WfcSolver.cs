@@ -6,24 +6,29 @@ using Unity.Mathematics;
 namespace LevelGeneration
 {
     /// <summary>
-    /// Wave function collapse over corner-described tiles. Every cell keeps the tile variants it can still become (a
-    /// bit set), every corner the terrains it can still be (a bit mask). A variant stays possible only while each of
-    /// its corners can still be its terrain, and a corner keeps only terrains some remaining variant next to it needs.
-    /// The cell with the fewest options is collapsed (weighted random) and that spreads until nothing changes. On a
-    /// contradiction the whole grid restarts with the next seed. Used by the editor preview and at runtime, so the
-    /// same inputs and seed give the same level. Run it through WfcSolveJob (Burst).
+    /// Wave function collapse over tiles described by connections. Every cell has 8 slots it shares with its neighbors:
+    /// its 4 corners and its 4 edges. Every slot keeps the connections it can still be (a bit mask), every cell the tile
+    /// variants it can still become (a bit set). A variant stays possible only while each of its slots can still be its
+    /// connection there, and a slot keeps only connections some remaining variant next to it has. The cell with the fewest
+    /// options is collapsed (weighted random) and that spreads until nothing changes. On a contradiction the whole grid
+    /// restarts with the next seed. Used by the editor preview and at runtime, so the same inputs and seed give the same
+    /// level. Run it through WfcSolveJob (Burst).
     /// </summary>
     public struct WfcSolver
     {
         public const int Free = -1;
         public const int Occupied = -2;
+        /// <summary>Slots per cell: corners SW, SE, NE, NW, then edges S, E, N, W.</summary>
+        public const int SlotsPerCell = 8;
 
         public int Width, Height;
-        /// <summary>4 terrains per variant: SouthWest, SouthEast, NorthEast, NorthWest.</summary>
-        public NativeArray<byte> VariantCorners;
+        /// <summary>8 connection indices per variant: corners SW, SE, NE, NW, then edges S, E, N, W.</summary>
+        public NativeArray<byte> VariantSlots;
         public NativeArray<float> VariantWeights;
-        /// <summary>(Width + 1) * (Height + 1) terrain bit masks, row by row from the south-west.</summary>
-        public NativeArray<byte> InitialCornerMasks;
+        /// <summary>(Width + 1) * (Height + 1) corner connection masks, row by row from the south-west.</summary>
+        public NativeArray<ulong> InitialCornerMasks;
+        /// <summary>Edge connection masks: Width * (Height + 1) edges running east-west (row by row), then (Width + 1) * Height running north-south.</summary>
+        public NativeArray<ulong> InitialEdgeMasks;
         /// <summary>Per cell: Free, Occupied (covered by a piece) or a forced variant index.</summary>
         public NativeArray<int> InitialCells;
         public uint Seed;
@@ -33,9 +38,11 @@ namespace LevelGeneration
         public bool Connect;
         /// <summary>A walkable corner every walkable area must connect to (the player start), or -1.</summary>
         public int StartCorner;
+        /// <summary>Corner connections that are Walkable / NotWalkable (bits by index).</summary>
+        public ulong WalkableCorners, NotWalkableCorners;
         /// <summary>Per corner: 1 when the repair may never change it (painted rules, pieces, forced tiles, start, border).</summary>
         public NativeArray<byte> LockedCorners;
-        /// <summary>Pockets with fewer walkable corners than this (and none locked) are filled with wall; larger ones are carved to.</summary>
+        /// <summary>Pockets with fewer walkable corners than this (and none locked) are filled with not walkable; larger ones are carved to.</summary>
         public int FillPocketsSmallerThan;
         /// <summary>Output per corner: RepairNone, RepairCarved or RepairFilled.</summary>
         public NativeArray<byte> Repairs;
@@ -45,10 +52,10 @@ namespace LevelGeneration
         public const byte RepairNone = 0, RepairCarved = 1, RepairFilled = 2;
         const int MaxRepairRounds = 4;
 
-        int _variants, _words, _cornerWidth;
-        NativeArray<ulong> _support;    // [corner k][terrain t][word]: variants with terrain t at corner k
+        int _variants, _words, _cornerWidth, _corners, _edgesAcross;
+        NativeArray<ulong> _support;    // [slot s][connection][word]: variants with that connection in slot s
         NativeArray<ulong> _domains;    // [cell][word]
-        NativeArray<byte> _cornerMasks;
+        NativeArray<ulong> _slotMasks;  // corners, then edges running east-west, then edges running north-south
         NativeList<int> _queue;
         NativeArray<bool> _queued;
 
@@ -62,25 +69,30 @@ namespace LevelGeneration
             _variants = VariantWeights.Length;
             _words = math.max(1, (_variants + 63) / 64);
             _cornerWidth = Width + 1;
+            _corners = InitialCornerMasks.Length;
+            _edgesAcross = Width * (Height + 1);
             if (_variants == 0 || cells == 0) return 0;
 
-            _support = new NativeArray<ulong>(4 * WfcTerrains.Count * _words, Allocator.Temp);
+            _support = new NativeArray<ulong>(SlotsPerCell * WfcConnections.Max * _words, Allocator.Temp);
             for (int v = 0; v < _variants; v++)
-                for (int k = 0; k < 4; k++)
+                for (int s = 0; s < SlotsPerCell; s++)
                 {
-                    int t = VariantCorners[v * 4 + k];
-                    _support[(k * WfcTerrains.Count + t) * _words + v / 64] |= 1ul << (v % 64);
+                    int connection = VariantSlots[v * SlotsPerCell + s];
+                    _support[(s * WfcConnections.Max + connection) * _words + v / 64] |= 1ul << (v % 64);
                 }
 
+            var initialMasks = new NativeArray<ulong>(_corners + InitialEdgeMasks.Length, Allocator.Temp);
+            NativeArray<ulong>.Copy(InitialCornerMasks, 0, initialMasks, 0, _corners);
+            NativeArray<ulong>.Copy(InitialEdgeMasks, 0, initialMasks, _corners, InitialEdgeMasks.Length);
             _domains = new NativeArray<ulong>(cells * _words, Allocator.Temp);
-            _cornerMasks = new NativeArray<byte>(InitialCornerMasks.Length, Allocator.Temp);
+            _slotMasks = new NativeArray<ulong>(initialMasks.Length, Allocator.Temp);
             _queue = new NativeList<int>(cells, Allocator.Temp);
             _queued = new NativeArray<bool>(cells, Allocator.Temp);
 
             for (int attempt = 0; attempt < math.max(1, MaxAttempts); attempt++)
             {
                 var random = new Random(math.max(1u, math.hash(new uint2(Seed, (uint)attempt))));
-                if (TrySolve(ref random, InitialCornerMasks, InitialCells) && (!Connect || Repair(ref random)))
+                if (TrySolve(ref random, initialMasks, InitialCells) && (!Connect || Repair(ref random, initialMasks)))
                 {
                     for (int c = 0; c < cells; c++)
                         result[c] = InitialCells[c] == Occupied ? Occupied : FirstVariant(c);
@@ -90,11 +102,11 @@ namespace LevelGeneration
             return 0;
         }
 
-        // Solves from these corner masks and cells (Free, Occupied or a forced variant)
-        bool TrySolve(ref Random random, NativeArray<byte> cornerMasks, NativeArray<int> startCells)
+        // Solves from these slot masks and cells (Free, Occupied or a forced variant)
+        bool TrySolve(ref Random random, NativeArray<ulong> slotMasks, NativeArray<int> startCells)
         {
             int cells = Width * Height;
-            _cornerMasks.CopyFrom(cornerMasks);
+            _slotMasks.CopyFrom(slotMasks);
             _queue.Clear();
             for (int c = 0; c < cells; c++)
             {
@@ -127,7 +139,7 @@ namespace LevelGeneration
             _queue.Add(cell);
         }
 
-        // Arc consistency between cells and their 4 corners
+        // Arc consistency between cells and their 8 slots
         bool Propagate()
         {
             while (_queue.Length > 0)
@@ -137,17 +149,17 @@ namespace LevelGeneration
                 _queued[cell] = false;
 
                 int x = cell % Width, y = cell / Width;
-                // Keep the variants whose corners all fit their corner's mask
+                // Keep the variants whose connections all fit their slot's mask
                 bool any = false;
                 for (int w = 0; w < _words; w++)
                 {
                     ulong allowed = ~0ul;
-                    for (int k = 0; k < 4; k++)
+                    for (int s = 0; s < SlotsPerCell; s++)
                     {
-                        byte mask = _cornerMasks[CornerIndex(x, y, k)];
+                        ulong mask = _slotMasks[Slot(x, y, s)];
                         ulong fits = 0ul;
-                        for (int t = 0; t < WfcTerrains.Count; t++)
-                            if ((mask & (1 << t)) != 0) fits |= _support[(k * WfcTerrains.Count + t) * _words + w];
+                        for (ulong bits = mask; bits != 0ul; bits &= bits - 1)
+                            fits |= _support[(s * WfcConnections.Max + math.tzcnt(bits)) * _words + w];
                         allowed &= fits;
                     }
                     ulong domain = _domains[cell * _words + w] & allowed;
@@ -156,46 +168,71 @@ namespace LevelGeneration
                 }
                 if (!any) return false;
 
-                // Narrow each corner to the terrains this cell's remaining variants have there
-                for (int k = 0; k < 4; k++)
+                // Narrow each slot to the connections this cell's remaining variants have there
+                for (int s = 0; s < SlotsPerCell; s++)
                 {
-                    int corner = CornerIndex(x, y, k);
-                    byte terrains = 0;
-                    for (int t = 0; t < WfcTerrains.Count; t++)
+                    int slot = Slot(x, y, s);
+                    ulong mask = _slotMasks[slot];
+                    ulong kept = 0ul;
+                    for (ulong bits = mask; bits != 0ul; bits &= bits - 1)
+                    {
+                        int connection = math.tzcnt(bits);
                         for (int w = 0; w < _words; w++)
-                            if ((_domains[cell * _words + w] & _support[(k * WfcTerrains.Count + t) * _words + w]) != 0ul)
+                            if ((_domains[cell * _words + w] & _support[(s * WfcConnections.Max + connection) * _words + w]) != 0ul)
                             {
-                                terrains |= (byte)(1 << t);
+                                kept |= 1ul << connection;
                                 break;
                             }
-                    byte narrowed = (byte)(_cornerMasks[corner] & terrains);
-                    if (narrowed == 0) return false;
-                    if (narrowed == _cornerMasks[corner]) continue;
-                    _cornerMasks[corner] = narrowed;
-                    EnqueueCellsAround(corner);
+                    }
+                    if (kept == 0ul) return false;
+                    if (kept == mask) continue;
+                    _slotMasks[slot] = kept;
+                    EnqueueCellsAround(slot);
                 }
             }
             return true;
         }
 
-        // Corner k of cell (x, y): 0 SW, 1 SE, 2 NE, 3 NW
-        int CornerIndex(int x, int y, int k) => k switch
+        // Slot s of cell (x, y): corners 0 SW, 1 SE, 2 NE, 3 NW; edges 4 S, 5 E, 6 N, 7 W
+        int Slot(int x, int y, int s) => s switch
         {
             0 => x + y * _cornerWidth,
             1 => x + 1 + y * _cornerWidth,
             2 => x + 1 + (y + 1) * _cornerWidth,
-            _ => x + (y + 1) * _cornerWidth,
+            3 => x + (y + 1) * _cornerWidth,
+            4 => _corners + x + y * Width,
+            5 => _corners + _edgesAcross + x + 1 + y * _cornerWidth,
+            6 => _corners + x + (y + 1) * Width,
+            _ => _corners + _edgesAcross + x + y * _cornerWidth,
         };
 
-        void EnqueueCellsAround(int corner)
+        // The cells sharing a slot: up to 4 around a corner, the 2 on either side of an edge
+        void EnqueueCellsAround(int slot)
         {
-            int cx = corner % _cornerWidth, cy = corner / _cornerWidth;
-            for (int dy = -1; dy <= 0; dy++)
-                for (int dx = -1; dx <= 0; dx++)
-                {
-                    int x = cx + dx, y = cy + dy;
-                    if (x >= 0 && y >= 0 && x < Width && y < Height) Enqueue(x + y * Width);
-                }
+            if (slot < _corners)
+            {
+                int cx = slot % _cornerWidth, cy = slot / _cornerWidth;
+                for (int dy = -1; dy <= 0; dy++)
+                    for (int dx = -1; dx <= 0; dx++)
+                        EnqueueCell(cx + dx, cy + dy);
+            }
+            else if (slot < _corners + _edgesAcross)
+            {
+                int edge = slot - _corners, ex = edge % Width, ey = edge / Width;
+                EnqueueCell(ex, ey - 1);
+                EnqueueCell(ex, ey);
+            }
+            else
+            {
+                int edge = slot - _corners - _edgesAcross, ex = edge % _cornerWidth, ey = edge / _cornerWidth;
+                EnqueueCell(ex - 1, ey);
+                EnqueueCell(ex, ey);
+            }
+        }
+
+        void EnqueueCell(int x, int y)
+        {
+            if (x >= 0 && y >= 0 && x < Width && y < Height) Enqueue(x + y * Width);
         }
 
         int Count(int cell)
@@ -250,26 +287,27 @@ namespace LevelGeneration
                 _domains[cell * _words + w] = chosen / 64 == w ? 1ul << (chosen % 64) : 0ul;
         }
 
+        // A solved corner is walkable when its one connection is
+        bool IsWalkable(ulong mask) => mask != 0ul && (mask & ~WalkableCorners) == 0ul;
+
         /// <summary>
         /// Connects every walkable area to the start corner. Walkable corners next to each other (not diagonally) are
-        /// connected; anything not reached from the start is a pocket. Small pockets (no locked corners) become wall,
-        /// the rest get the shortest corridor to the reached area carved through wall or water, never through locked
-        /// corners. Then only the cells touching changed corners are solved again (every other cell keeps its tile) and
-        /// the check repeats. False when a re-solve fails (no tile fits): the caller rerolls.
+        /// connected; anything not reached from the start is a pocket. Small pockets (no locked corners) become not
+        /// walkable, the rest get the shortest corridor to the reached area carved through anything else, never through
+        /// locked corners. Then only the cells touching changed corners are solved again (every other cell keeps its tile)
+        /// and the check repeats. False when a re-solve fails (no tile fits): the caller rerolls.
         /// </summary>
-        bool Repair(ref Random random)
+        bool Repair(ref Random random, NativeArray<ulong> initialMasks)
         {
-            int corners = _cornerMasks.Length;
+            int corners = _corners;
             for (int c = 0; c < corners; c++) Repairs[c] = RepairNone;
             UnconnectedPockets = 0;
             if (StartCorner < 0 || StartCorner >= corners) return true;
 
-            byte walkable = WfcTerrains.Mask(WfcTerrain.Walkable);
-            byte wall = WfcTerrains.Mask(WfcTerrain.NotWalkable);
             var component = new NativeArray<int>(corners, Allocator.Temp);
             var queue = new NativeList<int>(corners, Allocator.Temp);
             var parent = new NativeArray<int>(corners, Allocator.Temp);
-            var masks = new NativeArray<byte>(corners, Allocator.Temp);
+            var masks = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
             var changed = new NativeArray<bool>(corners, Allocator.Temp);
             var cells = new NativeArray<int>(Width * Height, Allocator.Temp);
 
@@ -277,14 +315,14 @@ namespace LevelGeneration
             {
                 // Label walkable areas: 0 is the start's, 1.. are pockets; -1 is not walkable
                 for (int c = 0; c < corners; c++) component[c] = -1;
-                if (_cornerMasks[StartCorner] != walkable) return true;
+                if (!IsWalkable(_slotMasks[StartCorner])) return true;
                 int components = 0;
                 var pocketSize = new NativeList<int>(Allocator.Temp);
                 var pocketLocked = new NativeList<bool>(Allocator.Temp);
                 for (int seed = -1; seed < corners; seed++)
                 {
                     int from = seed < 0 ? StartCorner : seed;
-                    if (component[from] >= 0 || _cornerMasks[from] != walkable) continue;
+                    if (component[from] >= 0 || !IsWalkable(_slotMasks[from])) continue;
                     int label = components++;
                     int size = 0;
                     bool locked = false;
@@ -299,7 +337,7 @@ namespace LevelGeneration
                         for (int n = 0; n < 4; n++)
                         {
                             int next = Neighbor(corner, n);
-                            if (next < 0 || component[next] >= 0 || _cornerMasks[next] != walkable) continue;
+                            if (next < 0 || component[next] >= 0 || !IsWalkable(_slotMasks[next])) continue;
                             component[next] = label;
                             queue.Add(next);
                         }
@@ -309,18 +347,19 @@ namespace LevelGeneration
                 }
                 if (components <= 1) return true;
 
-                // Start from the solved corners and change pockets: fill small ones, carve corridors to the rest
-                for (int c = 0; c < corners; c++) { masks[c] = _cornerMasks[c]; changed[c] = false; }
+                // Start from the solved slots and change pockets: fill small ones, carve corridors to the rest
+                masks.CopyFrom(_slotMasks);
+                for (int c = 0; c < corners; c++) changed[c] = false;
                 int unconnected = 0;
                 bool anyChange = false;
                 for (int pocket = 1; pocket < components; pocket++)
                 {
-                    if (pocketSize[pocket] < FillPocketsSmallerThan && !pocketLocked[pocket])
+                    if (pocketSize[pocket] < FillPocketsSmallerThan && !pocketLocked[pocket] && NotWalkableCorners != 0ul)
                     {
                         for (int c = 0; c < corners; c++)
                         {
                             if (component[c] != pocket || LockedCorners[c] != 0) continue;
-                            masks[c] = wall;
+                            masks[c] = NotWalkableCorners;
                             changed[c] = true;
                             Repairs[c] = RepairFilled;
                             anyChange = true;
@@ -341,7 +380,7 @@ namespace LevelGeneration
                         {
                             int next = Neighbor(corner, n);
                             if (next < 0 || parent[next] != -2) continue;
-                            if (_cornerMasks[next] != walkable && LockedCorners[next] != 0) continue;
+                            if (!IsWalkable(_slotMasks[next]) && LockedCorners[next] != 0) continue;
                             parent[next] = corner;
                             if (component[next] == 0) { reached = next; break; }
                             queue.Add(next);
@@ -350,8 +389,8 @@ namespace LevelGeneration
                     if (reached < 0) { unconnected++; continue; }
                     for (int c = parent[reached]; c >= 0; c = parent[c])
                     {
-                        if (masks[c] == walkable) continue;
-                        masks[c] = walkable;
+                        if (IsWalkable(masks[c])) continue;
+                        masks[c] = WalkableCorners;
                         changed[c] = true;
                         Repairs[c] = RepairCarved;
                         anyChange = true;
@@ -360,6 +399,18 @@ namespace LevelGeneration
                 UnconnectedPockets = unconnected;
                 if (!anyChange) return true;
 
+                // The edges touching a changed corner are free again (within their initial rules)
+                for (int c = 0; c < corners; c++)
+                {
+                    if (!changed[c]) continue;
+                    int cx = c % _cornerWidth, cy = c / _cornerWidth;
+                    if (cx > 0) masks[_corners + cx - 1 + cy * Width] = initialMasks[_corners + cx - 1 + cy * Width];
+                    if (cx < Width) masks[_corners + cx + cy * Width] = initialMasks[_corners + cx + cy * Width];
+                    int below = _corners + _edgesAcross + cx + (cy - 1) * _cornerWidth, above = _corners + _edgesAcross + cx + cy * _cornerWidth;
+                    if (cy > 0) masks[below] = initialMasks[below];
+                    if (cy < Height) masks[above] = initialMasks[above];
+                }
+
                 // Solve only the cells touching a changed corner again; the rest keep their tiles
                 for (int y = 0; y < Height; y++)
                     for (int x = 0; x < Width; x++)
@@ -367,7 +418,7 @@ namespace LevelGeneration
                         int cell = x + y * Width;
                         if (InitialCells[cell] == Occupied) { cells[cell] = Occupied; continue; }
                         bool touched = false;
-                        for (int k = 0; k < 4; k++) touched |= changed[CornerIndex(x, y, k)];
+                        for (int k = 0; k < 4; k++) touched |= changed[Slot(x, y, k)];
                         cells[cell] = touched ? Free : FirstVariant(cell);
                     }
                 if (!TrySolve(ref random, masks, cells)) return false;
@@ -406,9 +457,10 @@ namespace LevelGeneration
     public struct WfcSolveJob : IJob
     {
         public int Width, Height;
-        [ReadOnly] public NativeArray<byte> VariantCorners;
+        [ReadOnly] public NativeArray<byte> VariantSlots;
         [ReadOnly] public NativeArray<float> VariantWeights;
-        [ReadOnly] public NativeArray<byte> InitialCornerMasks;
+        [ReadOnly] public NativeArray<ulong> InitialCornerMasks;
+        [ReadOnly] public NativeArray<ulong> InitialEdgeMasks;
         [ReadOnly] public NativeArray<int> InitialCells;
         public uint Seed;
         public int MaxAttempts;
@@ -417,6 +469,7 @@ namespace LevelGeneration
         public bool Connect;
         public int StartCorner;
         public int FillPocketsSmallerThan;
+        public ulong WalkableCorners, NotWalkableCorners;
         [ReadOnly] public NativeArray<byte> LockedCorners;
 
         /// <summary>Per cell: the chosen variant, or WfcSolver.Occupied. Only valid when Attempts &gt; 0.</summary>
@@ -432,14 +485,29 @@ namespace LevelGeneration
             var solver = new WfcSolver
             {
                 Width = Width, Height = Height,
-                VariantCorners = VariantCorners, VariantWeights = VariantWeights,
-                InitialCornerMasks = InitialCornerMasks, InitialCells = InitialCells,
+                VariantSlots = VariantSlots, VariantWeights = VariantWeights,
+                InitialCornerMasks = InitialCornerMasks, InitialEdgeMasks = InitialEdgeMasks, InitialCells = InitialCells,
                 Seed = Seed, MaxAttempts = MaxAttempts,
                 Connect = Connect, StartCorner = StartCorner, FillPocketsSmallerThan = FillPocketsSmallerThan,
+                WalkableCorners = WalkableCorners, NotWalkableCorners = NotWalkableCorners,
                 LockedCorners = LockedCorners, Repairs = Repairs,
             };
             Attempts.Value = solver.Solve(Result);
             UnconnectedPockets.Value = solver.UnconnectedPockets;
+        }
+
+        public void DisposeArrays()
+        {
+            VariantSlots.Dispose();
+            VariantWeights.Dispose();
+            InitialCornerMasks.Dispose();
+            InitialEdgeMasks.Dispose();
+            InitialCells.Dispose();
+            LockedCorners.Dispose();
+            Result.Dispose();
+            Attempts.Dispose();
+            Repairs.Dispose();
+            UnconnectedPockets.Dispose();
         }
     }
 }

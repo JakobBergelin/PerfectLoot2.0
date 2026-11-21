@@ -119,8 +119,10 @@ namespace LevelGeneration
         [Tooltip("Prefabs painted on cells with the Prefab brush (portals, chests, ...)")]
         public List<PlacedPrefab> Prefabs = new List<PlacedPrefab>();
 
-        // (Width + 1) x (Height + 1) WfcCornerRule values, row by row from the south-west
+        // (Width + 1) x (Height + 1) WfcCornerRule values, row by row from the south-west, and the painted corner
+        // connection of each (its Id + 1; 0 is any connection that fits the rule)
         [SerializeField, HideInInspector] byte[] _cornerRules = Array.Empty<byte>();
+        [SerializeField, HideInInspector] int[] _cornerConnections = Array.Empty<int>();
         [SerializeField, HideInInspector] int _cornerRulesWidth, _cornerRulesHeight;
 
         // Saved layout: per cell Tile * 4 + Rotation, or -1 (nothing) / -2 (covered by a piece)
@@ -159,16 +161,26 @@ namespace LevelGeneration
             return (WfcCornerRule)_cornerRules[x + y * CornerWidth];
         }
 
-        public void SetCornerRule(int x, int y, WfcCornerRule rule)
+        /// <summary>The painted corner connection's Id, or -1 when any connection that fits the rule's terrain will do.</summary>
+        public int GetCornerConnection(int x, int y)
+        {
+            EnsureCornerRules();
+            return _cornerConnections[x + y * CornerWidth] - 1;
+        }
+
+        /// <summary>Paints a corner: a terrain (or Any) and optionally one connection (its Id; -1 for any).</summary>
+        public void SetCornerRule(int x, int y, WfcCornerRule rule, int connection = -1)
         {
             EnsureCornerRules();
             if (x < 0 || y < 0 || x >= CornerWidth || y >= CornerHeight) return;
             _cornerRules[x + y * CornerWidth] = (byte)rule;
+            _cornerConnections[x + y * CornerWidth] = Mathf.Max(-1, connection) + 1;
         }
 
         public void ClearCornerRules()
         {
             _cornerRules = new byte[CornerWidth * CornerHeight];
+            _cornerConnections = new int[CornerWidth * CornerHeight];
             _cornerRulesWidth = CornerWidth;
             _cornerRulesHeight = CornerHeight;
         }
@@ -176,15 +188,24 @@ namespace LevelGeneration
         /// <summary>Keeps the corner rules sized to the grid; resizing keeps rules at the same coordinates.</summary>
         public void EnsureCornerRules()
         {
-            if (_cornerRules != null && _cornerRulesWidth == CornerWidth && _cornerRulesHeight == CornerHeight &&
-                _cornerRules.Length == CornerWidth * CornerHeight) return;
+            int count = CornerWidth * CornerHeight;
+            if (_cornerRules != null && _cornerConnections != null && _cornerRulesWidth == CornerWidth && _cornerRulesHeight == CornerHeight &&
+                _cornerRules.Length == count && _cornerConnections.Length == count) return;
 
-            var resized = new byte[CornerWidth * CornerHeight];
-            if (_cornerRules != null && _cornerRules.Length == _cornerRulesWidth * _cornerRulesHeight)
-                for (int y = 0; y < Mathf.Min(_cornerRulesHeight, CornerHeight); y++)
-                    for (int x = 0; x < Mathf.Min(_cornerRulesWidth, CornerWidth); x++)
-                        resized[x + y * CornerWidth] = _cornerRules[x + y * _cornerRulesWidth];
-            _cornerRules = resized;
+            var rules = new byte[count];
+            var connections = new int[count];
+            int oldCount = _cornerRulesWidth * _cornerRulesHeight;
+            bool oldRules = _cornerRules != null && _cornerRules.Length == oldCount;
+            // Layouts painted before connections existed have no connection rules yet
+            bool oldConnections = _cornerConnections != null && _cornerConnections.Length == oldCount;
+            for (int y = 0; y < Mathf.Min(_cornerRulesHeight, CornerHeight); y++)
+                for (int x = 0; x < Mathf.Min(_cornerRulesWidth, CornerWidth); x++)
+                {
+                    if (oldRules) rules[x + y * CornerWidth] = _cornerRules[x + y * _cornerRulesWidth];
+                    if (oldConnections) connections[x + y * CornerWidth] = _cornerConnections[x + y * _cornerRulesWidth];
+                }
+            _cornerRules = rules;
+            _cornerConnections = connections;
             _cornerRulesWidth = CornerWidth;
             _cornerRulesHeight = CornerHeight;
         }
@@ -346,8 +367,9 @@ namespace LevelGeneration
         }
 
 #if UNITY_EDITOR
-        // The preview (or saved layout) on the bent grid, as one cached mesh per terrain: each quarter of a cell is a
-        // patch in its corner's terrain color (walls raised, water lowered). Rebuilt only when what it shows changes.
+        // The preview (or saved layout) on the bent grid, as one cached mesh per corner connection: each quarter of a cell
+        // is a patch in its corner's connection color (not walkable raised, water lowered). Rebuilt only when what it
+        // shows changes.
         [NonSerialized] Mesh[] _previewMeshes;
         [NonSerialized] int _previewKey;
 
@@ -364,11 +386,11 @@ namespace LevelGeneration
 
             var previousMatrix = Gizmos.matrix;
             Gizmos.matrix = Matrix4x4.TRS(transform.position, Yaw, Vector3.one);
-            for (int t = 0; t < _previewMeshes.Length; t++)
+            for (int c = 0; c < _previewMeshes.Length && c < TileSet.CornerConnections.Count; c++)
             {
-                if (_previewMeshes[t] == null || _previewMeshes[t].vertexCount == 0) continue;
-                Gizmos.color = WfcTerrains.Color((WfcTerrain)t);
-                Gizmos.DrawMesh(_previewMeshes[t]);
+                if (_previewMeshes[c] == null || _previewMeshes[c].vertexCount == 0) continue;
+                Gizmos.color = TileSet.CornerConnections[c]?.Color ?? Color.magenta;
+                Gizmos.DrawMesh(_previewMeshes[c]);
             }
             Gizmos.matrix = previousMatrix;
         }
@@ -391,10 +413,11 @@ namespace LevelGeneration
 
         void BuildPreviewMeshes(int[] cells)
         {
-            var vertices = new List<Vector3>[WfcTerrains.Count];
-            var indices = new List<int>[WfcTerrains.Count];
-            for (int t = 0; t < WfcTerrains.Count; t++) { vertices[t] = new List<Vector3>(); indices[t] = new List<int>(); }
-            var corners = new WfcTerrain[4];
+            int connections = TileSet.CornerConnections.Count;
+            var vertices = new List<Vector3>[connections];
+            var indices = new List<int>[connections];
+            for (int c = 0; c < connections; c++) { vertices[c] = new List<Vector3>(); indices[c] = new List<int>(); }
+            var corners = new int[4];
 
             if (cells != null)
                 for (int y = 0; y < Height; y++)
@@ -414,7 +437,7 @@ namespace LevelGeneration
                 if (placed.Piece < 0 || placed.Piece >= TileSet.Pieces.Count) continue;
                 var piece = TileSet.Pieces[placed.Piece];
                 piece.EnsureCorners();
-                var grid = WfcRotation.RotateGrid(piece.Corners, piece.Size.x, piece.Size.y, placed.Rotation, out int w, out int h);
+                var grid = WfcRotation.RotateGrid(piece.CornerIds, piece.Size.x, piece.Size.y, placed.Rotation, out int w, out int h);
                 for (int py = 0; py < h; py++)
                     for (int px = 0; px < w; px++)
                     {
@@ -426,37 +449,40 @@ namespace LevelGeneration
                     }
             }
 
-            if (_previewMeshes == null) _previewMeshes = new Mesh[WfcTerrains.Count];
-            for (int t = 0; t < WfcTerrains.Count; t++)
+            if (_previewMeshes != null && _previewMeshes.Length != connections) OnDisable();
+            if (_previewMeshes == null) _previewMeshes = new Mesh[connections];
+            for (int c = 0; c < connections; c++)
             {
-                if (_previewMeshes[t] == null)
-                    _previewMeshes[t] = new Mesh { name = "Level preview", hideFlags = HideFlags.HideAndDontSave, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
-                var mesh = _previewMeshes[t];
+                if (_previewMeshes[c] == null)
+                    _previewMeshes[c] = new Mesh { name = "Level preview", hideFlags = HideFlags.HideAndDontSave, indexFormat = UnityEngine.Rendering.IndexFormat.UInt32 };
+                var mesh = _previewMeshes[c];
                 mesh.Clear();
-                mesh.SetVertices(vertices[t]);
-                mesh.SetTriangles(indices[t], 0);
+                mesh.SetVertices(vertices[c]);
+                mesh.SetTriangles(indices[c], 0);
                 mesh.RecalculateNormals();
                 mesh.RecalculateBounds();
             }
         }
 
-        // The cell's 4 quarters (SW, SE, NE, NW) as patches on the bent grid, in this object's space
-        void AddCell(int x, int y, WfcTerrain[] corners, List<Vector3>[] vertices, List<int>[] indices)
+        // The cell's 4 quarters (SW, SE, NE, NW, corner connection Ids) as patches on the bent grid, in this object's space
+        void AddCell(int x, int y, int[] corners, List<Vector3>[] vertices, List<int>[] indices)
         {
             if (x < 0 || y < 0 || x >= Width || y >= Height) return;
             var bent = BentCorners();
             for (int k = 0; k < 4; k++)
             {
                 float x0 = x + (k == 1 || k == 2 ? 0.5f : 0f), y0 = y + (k >= 2 ? 0.5f : 0f);
-                var terrain = corners[k];
+                int connection = TileSet.CornerIndex(corners[k]);
+                if (connection < 0) continue;
+                var terrain = TileSet.CornerConnections[connection].Terrain;
                 var lift = Vector3.up * (terrain == WfcTerrain.NotWalkable ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
-                var list = vertices[(int)terrain];
+                var list = vertices[connection];
                 int start = list.Count;
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0) + lift);
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0 + 0.5f) + lift);
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0 + 0.5f, y0 + 0.5f) + lift);
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0 + 0.5f, y0) + lift);
-                var triangles = indices[(int)terrain];
+                var triangles = indices[connection];
                 triangles.Add(start); triangles.Add(start + 1); triangles.Add(start + 2);
                 triangles.Add(start); triangles.Add(start + 2); triangles.Add(start + 3);
             }

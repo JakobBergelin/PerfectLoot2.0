@@ -8,7 +8,8 @@ using UnityEditor;
 using UnityEngine;
 
 /// <summary>
-/// Level layout Inspector and Scene view tools. Brushes: paint corner rules (Walkable / Wall / Water / Any), force a
+/// Level layout Inspector and Scene view tools. Brushes: paint corner rules (a terrain or Any, optionally one corner
+/// connection), force a
 /// tile on a cell, place a multi-cell piece, the player start, an enemy spawner or a prefab. Generate Preview runs the
 /// same solver as the game and draws the result as gizmo blocks; Save Layout keeps it so the game spawns exactly that
 /// level. Layouts are drawn in the Scene view whether selected or not (gizmos).
@@ -34,6 +35,7 @@ public class LevelLayoutEditor : Editor
     // Static so the brush survives reselecting the layout
     static Brush _brush;
     static WfcCornerRule _rule = WfcCornerRule.NotWalkable;
+    static int _connection = -1;
     static int _tile, _piece, _rotation;
     static GameObject _prefab;
     static bool _forceWalkable = true;
@@ -89,7 +91,9 @@ public class LevelLayoutEditor : Editor
         {
             case Brush.Corners:
                 _rule = (WfcCornerRule)GUILayout.Toolbar((int)_rule, RuleNames);
-                EditorGUILayout.HelpBox("Click or drag to paint corners. Shift+drag fills a rectangle. Right-click sets Any.", MessageType.None);
+                DrawConnectionPicker(layout);
+                EditorGUILayout.HelpBox("Click or drag to paint corners. Shift+drag fills a rectangle. Right-click sets Any. " +
+                                        "A connection limits the corner to that one; Any connection allows every one with the terrain.", MessageType.None);
                 break;
             case Brush.Tile:
                 if (!HasTiles(layout)) break;
@@ -185,6 +189,25 @@ public class LevelLayoutEditor : Editor
                     if (GUILayout.Toggle(prefab == _prefab, prefab.name, EditorStyles.miniButton) && prefab != _prefab)
                         _prefab = prefab;
                 }
+    }
+
+    // The corner connections that fit the brush's terrain, plus "Any connection"
+    static void DrawConnectionPicker(LevelLayoutAuthoring layout)
+    {
+        if (layout.TileSet == null) return;
+        var fitting = layout.TileSet.CornerConnections.Where(c => c != null && WfcTerrains.Allows(_rule, c.Terrain)).ToList();
+        int selected = fitting.FindIndex(c => c.Id == _connection) + 1;
+        var names = new[] { "Any connection" }.Concat(fitting.Select(c => $"{c.Name} ({c.Terrain})")).ToArray();
+        selected = EditorGUILayout.Popup("Connection", selected, names);
+        _connection = selected > 0 ? fitting[selected - 1].Id : -1;
+    }
+
+    // A painted corner's color: its connection's, or its terrain's
+    static Color RuleColor(LevelLayoutAuthoring layout, WfcCornerRule rule, int connection)
+    {
+        var painted = connection >= 0 && layout.TileSet != null ? layout.TileSet.CornerConnection(connection) : null;
+        if (painted != null) return painted.Color;
+        return rule == WfcCornerRule.Any ? Color.white : WfcTerrains.Color((WfcTerrain)((int)rule - 1));
     }
 
     static bool HasTiles(LevelLayoutAuthoring layout)
@@ -308,27 +331,7 @@ public class LevelLayoutEditor : Editor
             return;
         }
 
-        int cells = layout.Width * layout.Height;
-        var job = new WfcSolveJob
-        {
-            Width = layout.Width,
-            Height = layout.Height,
-            VariantCorners = new NativeArray<byte>(compiled.Variants.SelectMany(v => new[] { (byte)v.SouthWest, (byte)v.SouthEast, (byte)v.NorthEast, (byte)v.NorthWest }).ToArray(), Allocator.TempJob),
-            VariantWeights = new NativeArray<float>(compiled.Variants.Select(v => v.Weight).ToArray(), Allocator.TempJob),
-            InitialCornerMasks = new NativeArray<byte>(compiled.CornerMasks, Allocator.TempJob),
-            InitialCells = new NativeArray<int>(compiled.InitialCells, Allocator.TempJob),
-            Seed = layout.Seed,
-            MaxAttempts = layout.MaxAttempts,
-            Result = new NativeArray<int>(cells, Allocator.TempJob),
-            Attempts = new NativeReference<int>(Allocator.TempJob),
-            Connect = layout.ConnectWalkableAreas,
-            StartCorner = compiled.StartCorner,
-            FillPocketsSmallerThan = layout.FillPocketsSmallerThan,
-            LockedCorners = new NativeArray<byte>(compiled.LockedCorners, Allocator.TempJob),
-            Repairs = new NativeArray<byte>(compiled.CornerMasks.Length, Allocator.TempJob),
-            UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
-        };
-
+        var job = compiled.CreateJob(layout.Seed, layout.MaxAttempts, layout.ConnectWalkableAreas, layout.FillPocketsSmallerThan);
         var timer = Stopwatch.StartNew();
         job.Schedule().Complete();
         timer.Stop();
@@ -345,15 +348,7 @@ public class LevelLayoutEditor : Editor
                 else if (repair == WfcSolver.RepairFilled) filled++;
             }
         }
-        job.VariantCorners.Dispose();
-        job.VariantWeights.Dispose();
-        job.InitialCornerMasks.Dispose();
-        job.InitialCells.Dispose();
-        job.Result.Dispose();
-        job.Attempts.Dispose();
-        job.LockedCorners.Dispose();
-        job.Repairs.Dispose();
-        job.UnconnectedPockets.Dispose();
+        job.DisposeArrays();
 
         string connected = !layout.ConnectWalkableAreas ? "" : $" Connected: {carved} corners carved, {filled} filled" +
                            (unconnected > 0 ? $"; {unconnected} pockets couldn't be reached without changing painted or forced corners." : ".");
@@ -375,13 +370,8 @@ public class LevelLayoutEditor : Editor
         var set = layout.Placements;
         if (set == null || set.Rules.Count == 0 || layout.PreviewCells == null || layout.TileSet == null) return "";
 
-        var tileCorners = new byte[layout.TileSet.Tiles.Count * 4];
-        for (int t = 0; t < layout.TileSet.Tiles.Count; t++)
-        {
-            var terrain = layout.TileSet.Tiles[t]?.Corners;
-            for (int k = 0; k < 4; k++) tileCorners[t * 4 + k] = terrain != null ? (byte)terrain[k] : LevelPlacement.Unknown;
-        }
-        var cornerTerrain = LevelPlacement.CornerTerrain(layout.Width, layout.Height, layout.PreviewCells, tileCorners, compiled.CornerMasks);
+        var cornerTerrain = LevelPlacement.CornerTerrain(layout.Width, layout.Height, layout.PreviewCells, layout.TileSet.TileCornerTerrains(),
+                                                         compiled.CornerMasks, compiled.CornerTerrains);
         var occupied = compiled.InitialCells.Select(cell => cell == WfcSolver.Occupied).ToArray();
         var rules = set.Rules.Select(rule => rule == null ? new PlacementRuleData() : new PlacementRuleData
         {
@@ -510,8 +500,9 @@ public class LevelLayoutEditor : Editor
         {
             case Brush.Corners:
                 var rule = _erasing ? WfcCornerRule.Any : _rule;
-                if (layout.GetCornerRule(at.x, at.y) == rule) return;
-                Modify("Paint corner", l => l.SetCornerRule(at.x, at.y, rule));
+                int connection = _erasing ? -1 : _connection;
+                if (layout.GetCornerRule(at.x, at.y) == rule && layout.GetCornerConnection(at.x, at.y) == connection) return;
+                Modify("Paint corner", l => l.SetCornerRule(at.x, at.y, rule, connection));
                 break;
 
             case Brush.Tile:
@@ -580,11 +571,12 @@ public class LevelLayoutEditor : Editor
     void FillCorners(LevelLayoutAuthoring layout, Vector2Int from, Vector2Int to)
     {
         var rule = _erasing ? WfcCornerRule.Any : _rule;
+        int connection = _erasing ? -1 : _connection;
         Modify("Fill corners", l =>
         {
             for (int y = Mathf.Min(from.y, to.y); y <= Mathf.Max(from.y, to.y); y++)
                 for (int x = Mathf.Min(from.x, to.x); x <= Mathf.Max(from.x, to.x); x++)
-                    l.SetCornerRule(x, y, rule);
+                    l.SetCornerRule(x, y, rule, connection);
         });
     }
 
@@ -632,7 +624,8 @@ public class LevelLayoutEditor : Editor
                 for (int x = 0; x <= layout.Width; x++)
                 {
                     var rule = layout.GetCornerRule(x, y);
-                    if (rule == WfcCornerRule.Any)
+                    int connection = layout.GetCornerConnection(x, y);
+                    if (rule == WfcCornerRule.Any && connection < 0)
                     {
                         if (!paintingCorners) continue;
                         Handles.color = new Color(1f, 1f, 1f, 0.35f);
@@ -640,7 +633,7 @@ public class LevelLayoutEditor : Editor
                     }
                     else
                     {
-                        Handles.color = WfcTerrains.Color((WfcTerrain)((int)rule - 1));
+                        Handles.color = RuleColor(layout, rule, connection);
                         Handles.DrawSolidDisc(layout.CornerPosition(x, y) + lift, Vector3.up, size * 0.12f);
                     }
                 }
@@ -773,7 +766,7 @@ public class LevelLayoutEditor : Editor
         switch (_brush)
         {
             case Brush.Corners:
-                var color = _rule == WfcCornerRule.Any ? Color.white : WfcTerrains.Color((WfcTerrain)((int)_rule - 1));
+                var color = RuleColor(layout, _rule, _connection);
                 if (_rectStart != null)
                 {
                     var from = _rectStart.Value;

@@ -228,7 +228,7 @@ public static class BiomeTileSets
         set.Tiles.Add(new WfcTile
         {
             Name = name, Prefab = prefab, Weight = weight, AllowRotations = true,
-            SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
+            SouthWest = (int)corners[0], SouthEast = (int)corners[1], NorthEast = (int)corners[2], NorthWest = (int)corners[3],
         });
     }
 

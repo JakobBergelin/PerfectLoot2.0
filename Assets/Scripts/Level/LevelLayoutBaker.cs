@@ -36,28 +36,26 @@ namespace LevelGeneration
             root.Deformation = authoring.Deformation(authoring.Seed);
 
             int variants = compiled.Variants.Count;
-            var corners = builder.Allocate(ref root.VariantCorners, variants * 4);
-            var weights = builder.Allocate(ref root.VariantWeights, variants);
+            Copy(builder, ref root.VariantSlots, compiled.VariantSlots());
+            Copy(builder, ref root.VariantWeights, compiled.VariantWeights());
             var tiles = builder.Allocate(ref root.VariantTile, variants);
             var rotations = builder.Allocate(ref root.VariantRotation, variants);
             for (int v = 0; v < variants; v++)
             {
-                var variant = compiled.Variants[v];
-                for (int k = 0; k < 4; k++) corners[v * 4 + k] = (byte)variant.Corner(k);
-                weights[v] = variant.Weight;
-                tiles[v] = variant.Tile;
-                rotations[v] = variant.Rotation;
+                tiles[v] = compiled.Variants[v].Tile;
+                rotations[v] = compiled.Variants[v].Rotation;
             }
 
-            var cornerMasks = builder.Allocate(ref root.CornerMasks, compiled.CornerMasks.Length);
-            for (int i = 0; i < compiled.CornerMasks.Length; i++) cornerMasks[i] = compiled.CornerMasks[i];
-            var initialCells = builder.Allocate(ref root.InitialCells, compiled.InitialCells.Length);
-            for (int i = 0; i < compiled.InitialCells.Length; i++) initialCells[i] = compiled.InitialCells[i];
+            Copy(builder, ref root.CornerMasks, compiled.CornerMasks);
+            Copy(builder, ref root.EdgeMasks, compiled.EdgeMasks);
+            Copy(builder, ref root.InitialCells, compiled.InitialCells);
+            Copy(builder, ref root.CornerTerrains, compiled.CornerTerrains);
             root.Connect = authoring.ConnectWalkableAreas;
             root.StartCorner = compiled.StartCorner;
             root.FillPocketsSmallerThan = authoring.FillPocketsSmallerThan;
-            var lockedCorners = builder.Allocate(ref root.LockedCorners, compiled.LockedCorners.Length);
-            for (int i = 0; i < compiled.LockedCorners.Length; i++) lockedCorners[i] = compiled.LockedCorners[i];
+            root.WalkableCorners = compiled.WalkableCorners;
+            root.NotWalkableCorners = compiled.NotWalkableCorners;
+            Copy(builder, ref root.LockedCorners, compiled.LockedCorners);
 
             var pieces = builder.Allocate(ref root.Pieces, compiled.Pieces.Count);
             for (int i = 0; i < compiled.Pieces.Count; i++)
@@ -77,12 +75,7 @@ namespace LevelGeneration
             var savedCells = builder.Allocate(ref root.SavedCells, saved?.Length ?? 0);
             for (int i = 0; i < (saved?.Length ?? 0); i++) savedCells[i] = saved[i];
 
-            var tileCorners = builder.Allocate(ref root.TileCorners, tileSet.Tiles.Count * 4);
-            for (int t = 0; t < tileSet.Tiles.Count; t++)
-            {
-                var terrain = tileSet.Tiles[t]?.Corners;
-                for (int k = 0; k < 4; k++) tileCorners[t * 4 + k] = terrain != null ? (byte)terrain[k] : LevelPlacement.Unknown;
-            }
+            Copy(builder, ref root.TileCorners, tileSet.TileCornerTerrains());
 
             // Placement rules; their prefabs and enemies go in buffers below
             var placementSet = authoring.Placements;
@@ -298,6 +291,12 @@ namespace LevelGeneration
                 else Debug.LogWarning($"Dungeon {dungeon.name} has no Return Portal, so finishing it opens no way back.", dungeon);
             }
             AddComponent(GetEntity(TransformUsageFlags.None), area);
+        }
+
+        static void Copy<T>(BlobBuilder builder, ref BlobArray<T> target, T[] source) where T : unmanaged
+        {
+            var array = builder.Allocate(ref target, source.Length);
+            for (int i = 0; i < source.Length; i++) array[i] = source[i];
         }
 
         LevelGeometryExtractor.Part Extract(GameObject prefab, List<Material> materials, List<string> warnings)

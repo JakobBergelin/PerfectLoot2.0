@@ -139,7 +139,7 @@ public static class CathedralLevelSetup
             {
                 Name = name,
                 Prefab = prefab,
-                SouthWest = c[0], SouthEast = c[1], NorthEast = c[2], NorthWest = c[3],
+                SouthWest = (int)c[0], SouthEast = (int)c[1], NorthEast = (int)c[2], NorthWest = (int)c[3],
                 Weight = weight,
                 AllowRotations = true,
             });

@@ -325,9 +325,10 @@ namespace LevelGeneration
             {
                 Width = blob.Width,
                 Height = blob.Height,
-                VariantCorners = Copy(ref blob.VariantCorners, Allocator.TempJob),
+                VariantSlots = Copy(ref blob.VariantSlots, Allocator.TempJob),
                 VariantWeights = Copy(ref blob.VariantWeights, Allocator.TempJob),
                 InitialCornerMasks = Copy(ref blob.CornerMasks, Allocator.TempJob),
+                InitialEdgeMasks = Copy(ref blob.EdgeMasks, Allocator.TempJob),
                 InitialCells = Copy(ref blob.InitialCells, Allocator.TempJob),
                 Seed = seed,
                 MaxAttempts = layout.MaxAttempts,
@@ -336,6 +337,8 @@ namespace LevelGeneration
                 Connect = blob.Connect,
                 StartCorner = blob.StartCorner,
                 FillPocketsSmallerThan = blob.FillPocketsSmallerThan,
+                WalkableCorners = blob.WalkableCorners,
+                NotWalkableCorners = blob.NotWalkableCorners,
                 LockedCorners = Copy(ref blob.LockedCorners, Allocator.TempJob),
                 Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
                 UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
@@ -366,15 +369,7 @@ namespace LevelGeneration
                                "conflict, or the tile set lacks tiles for some corner combinations (see the tile set's coverage).");
             }
 
-            job.VariantCorners.Dispose();
-            job.VariantWeights.Dispose();
-            job.InitialCornerMasks.Dispose();
-            job.InitialCells.Dispose();
-            job.Result.Dispose();
-            job.LockedCorners.Dispose();
-            job.Repairs.Dispose();
-            job.UnconnectedPockets.Dispose();
-            job.Attempts.Dispose();
+            job.DisposeArrays();
             return attempts > 0;
         }
 
@@ -386,7 +381,8 @@ namespace LevelGeneration
         {
             if (blob.PlacementRules.Length == 0) return (0, 0);
             int cells = blob.Width * blob.Height;
-            var terrain = LevelPlacement.CornerTerrain(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.CornerMasks.ToArray());
+            var terrain = LevelPlacement.CornerTerrain(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(),
+                                                       blob.CornerMasks.ToArray(), blob.CornerTerrains.ToArray());
             var occupied = new NativeArray<bool>(cells, Allocator.TempJob);
             for (int i = 0; i < cells && i < blob.InitialCells.Length; i++) occupied[i] = blob.InitialCells[i] == WfcSolver.Occupied;
             var rules = new NativeArray<PlacementRuleData>(blob.PlacementRules.Length, Allocator.TempJob);

@@ -66,7 +66,7 @@ public static class WfcPlaceholderGenerator
             {
                 Name = name,
                 Prefab = SaveTilePrefab(name, corners, materials),
-                SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
+                SouthWest = (int)corners[0], SouthEast = (int)corners[1], NorthEast = (int)corners[2], NorthWest = (int)corners[3],
                 Weight = TileWeight(corners),
                 AllowRotations = true,
             });

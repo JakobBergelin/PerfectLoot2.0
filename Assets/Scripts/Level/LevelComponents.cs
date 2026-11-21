@@ -31,16 +31,20 @@ namespace LevelGeneration
         public LevelDeformation Deformation;
 
         // Solver input (WfcCompiledLayout)
-        public BlobArray<byte> VariantCorners;
+        public BlobArray<byte> VariantSlots;
         public BlobArray<float> VariantWeights;
         public BlobArray<int> VariantTile;
         public BlobArray<int> VariantRotation;
-        public BlobArray<byte> CornerMasks;
+        public BlobArray<ulong> CornerMasks;
+        public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;
+        /// <summary>The terrain of each corner connection, by index.</summary>
+        public BlobArray<byte> CornerTerrains;
         // Connectivity repair (WfcSolver.Repair)
         public bool Connect;
         public int StartCorner;
         public int FillPocketsSmallerThan;
+        public ulong WalkableCorners, NotWalkableCorners;
         public BlobArray<byte> LockedCorners;
 
         public BlobArray<LevelPiecePlacement> Pieces;

@@ -12,5 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe30406a494f41ab8506bedf6606eacf, type: 3}
   m_Name: TileSet
   m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.WfcTileSet
+  CornerConnections:
+  - Id: 0
+    Name: Floor
+    Color: {r: 0.45, g: 0.75, b: 0.35, a: 1}
+    Terrain: 0
+  - Id: 1
+    Name: Wall
+    Color: {r: 0.42, g: 0.42, b: 0.48, a: 1}
+    Terrain: 1
+  - Id: 2
+    Name: Water
+    Color: {r: 0.2, g: 0.5, b: 0.95, a: 1}
+    Terrain: 2
+  EdgeConnections:
+  - Id: 0
+    Name: Plain
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    Walkable: 1
   Tiles: []
   Pieces: []

@@ -3,8 +3,9 @@ using UnityEngine;
 namespace LevelGeneration
 {
     /// <summary>
-    /// What a tile corner is. Tiles are described by their 4 corner terrains, so two tiles fit side by side when their
-    /// shared corners match. Values are stored in assets: keep them and add new ones at the end.
+    /// How a tile corner plays: where units can walk, where they can't (walls, cliffs, chasms, ...) and water. Which tiles
+    /// fit together is decided by connections (WfcCornerConnection), each of which has one of these. Values are stored in
+    /// assets: keep them and add new ones at the end.
     /// </summary>
     public enum WfcTerrain : byte
     {
@@ -13,7 +14,7 @@ namespace LevelGeneration
         Water = 2,
     }
 
-    /// <summary>A painted corner rule: Any, or a forced terrain (terrain + 1).</summary>
+    /// <summary>A painted corner rule's terrain: Any, or a forced terrain (terrain + 1).</summary>
     public enum WfcCornerRule : byte
     {
         Any = 0,
@@ -26,13 +27,8 @@ namespace LevelGeneration
     {
         public const int Count = 3;
 
-        /// <summary>Bit mask with every terrain allowed.</summary>
-        public const byte AllMask = (1 << Count) - 1;
-
-        public static byte Mask(WfcTerrain terrain) => (byte)(1 << (int)terrain);
-
-        /// <summary>The terrains a corner rule allows, as a bit mask.</summary>
-        public static byte Mask(WfcCornerRule rule) => rule == WfcCornerRule.Any ? AllMask : Mask((WfcTerrain)((int)rule - 1));
+        /// <summary>True when a corner connection with this terrain passes the rule.</summary>
+        public static bool Allows(WfcCornerRule rule, WfcTerrain terrain) => rule == WfcCornerRule.Any || (int)rule - 1 == (int)terrain;
 
         public static WfcCornerRule ToRule(WfcTerrain terrain) => (WfcCornerRule)((int)terrain + 1);
 

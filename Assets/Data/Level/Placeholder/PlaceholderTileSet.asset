@@ -12,6 +12,24 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fe30406a494f41ab8506bedf6606eacf, type: 3}
   m_Name: PlaceholderTileSet
   m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.WfcTileSet
+  CornerConnections:
+  - Id: 0
+    Name: Floor
+    Color: {r: 0.45, g: 0.75, b: 0.35, a: 1}
+    Terrain: 0
+  - Id: 1
+    Name: Wall
+    Color: {r: 0.42, g: 0.42, b: 0.48, a: 1}
+    Terrain: 1
+  - Id: 2
+    Name: Water
+    Color: {r: 0.2, g: 0.5, b: 0.95, a: 1}
+    Terrain: 2
+  EdgeConnections:
+  - Id: 0
+    Name: Plain
+    Color: {r: 1, g: 1, b: 1, a: 1}
+    Walkable: 1
   Tiles:
   - Name: Tile_FFFF
     Prefab: {fileID: 7609165153376275164, guid: cab90da7afad4c7419ff660bbdb2d010, type: 3}
@@ -19,6 +37,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 6
     AllowRotations: 1
   - Name: Tile_WFFF
@@ -27,6 +49,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LFFF
@@ -35,6 +61,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WWFF
@@ -43,6 +73,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LWFF
@@ -51,6 +85,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WLFF
@@ -59,6 +97,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLFF
@@ -67,6 +109,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 0
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WFWF
@@ -75,6 +121,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LFWF
@@ -83,6 +133,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WWWF
@@ -91,6 +145,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LWWF
@@ -99,6 +157,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WLWF
@@ -107,6 +169,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLWF
@@ -115,6 +181,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 1
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LFLF
@@ -123,6 +193,10 @@ MonoBehaviour:
     SouthEast: 0
     NorthEast: 2
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WWLF
@@ -131,6 +205,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 2
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LWLF
@@ -139,6 +217,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 2
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WLLF
@@ -147,6 +229,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 2
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLLF
@@ -155,6 +241,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 2
     NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_WWWW
@@ -163,6 +253,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 1
     NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 3
     AllowRotations: 1
   - Name: Tile_LWWW
@@ -171,6 +265,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 1
     NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLWW
@@ -179,6 +277,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 1
     NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LWLW
@@ -187,6 +289,10 @@ MonoBehaviour:
     SouthEast: 1
     NorthEast: 2
     NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLLW
@@ -195,6 +301,10 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 2
     NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1
     AllowRotations: 1
   - Name: Tile_LLLL
@@ -203,11 +313,16 @@ MonoBehaviour:
     SouthEast: 2
     NorthEast: 2
     NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
     Weight: 1.5
     AllowRotations: 1
   Pieces:
   - Name: Arena 2x2
     Prefab: {fileID: 1381346672059543420, guid: 3bb3ef435e1a52f45a02da60882b53c7, type: 3}
     Size: {x: 2, y: 2}
-    Corners: 000000000000000000y
+    CornerIds: 000000000000000000000000000000000000000000000000000000000000000000000000i
     AllowRotations: 1
+    _terrainCorners: 

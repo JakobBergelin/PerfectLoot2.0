@@ -27,16 +27,18 @@ namespace LevelGeneration
 
         /// <summary>
         /// Every corner's terrain (WfcTerrain, or Unknown) in the finished layout: from each cell's tile (Tile * 4 + Rotation,
-        /// tileCorners holds 4 per tile: SW, SE, NE, NW) and, under pieces, from the single-terrain corner masks.
+        /// tileCorners holds 4 terrains per tile: SW, SE, NE, NW) and, under pieces, from the single-connection corner
+        /// masks (connectionTerrains holds each corner connection's terrain).
         /// </summary>
-        public static byte[] CornerTerrain(int width, int height, int[] packedCells, byte[] tileCorners, byte[] cornerMasks)
+        public static byte[] CornerTerrain(int width, int height, int[] packedCells, byte[] tileCorners, ulong[] cornerMasks, byte[] connectionTerrains)
         {
             int cornerWidth = width + 1;
             var terrain = new byte[cornerWidth * (height + 1)];
             for (int c = 0; c < terrain.Length; c++)
             {
-                byte mask = c < cornerMasks.Length ? cornerMasks[c] : (byte)0;
-                terrain[c] = mask != 0 && (mask & (mask - 1)) == 0 ? (byte)math.tzcnt((int)mask) : Unknown;
+                ulong mask = c < cornerMasks.Length ? cornerMasks[c] : 0ul;
+                int connection = mask != 0ul && (mask & (mask - 1)) == 0ul ? math.tzcnt(mask) : -1;
+                terrain[c] = connection >= 0 && connection < connectionTerrains.Length ? connectionTerrains[connection] : Unknown;
             }
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++)
