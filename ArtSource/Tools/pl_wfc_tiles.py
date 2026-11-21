@@ -11,10 +11,11 @@ Usage inside Blender:
     T.build_all(collection, materials)     # one object per tile + collision objects (children)
     T.export_all(collection, out_dir)      # FBX per tile (+ slots.txt)
 Work is done in Unity coordinates (u = x east, v = z north, h = up) and written as Blender (u, -v, h); with the
-pipeline's FBX settings (axis_forward -Z, axis_up Y) Blender -Y comes out as Unity +Z.
+pipeline's FBX settings (axis_forward -Z, axis_up Y) Blender -Y comes out as Unity +Z. Unity's FBX import also flips X,
+so export_fbx mirrors each model in X on the way out (and back afterwards): Unity then gets (u, h, v) as built.
 """
 import bpy, bmesh, math, os, random
-from mathutils import Vector, noise
+from mathutils import Matrix, Vector, noise
 
 TILE = 5.0
 N = 20                      # grid cells per side (0.25 m)
@@ -355,17 +356,42 @@ def canonical_corners():
     return out
 
 
+MIRROR_X = Matrix.Scale(-1, 4, (1, 0, 0))
+
+
+def mirror_x(root):
+    """Mirrors the meshes of root and its children in X, in root's space, faces flipped so they still face out.
+    Calling it again undoes it."""
+    done = set()
+    for o in [root] + list(root.children_recursive):
+        if o.type != 'MESH' or o.data.name in done: continue
+        done.add(o.data.name)
+        local = root.matrix_world.inverted() @ o.matrix_world
+        o.data.transform(local.inverted() @ MIRROR_X @ local)
+        o.data.flip_normals()
+        o.data.update()
+
+
+def export_fbx(o, path):
+    """o and its children as one FBX with the pipeline's settings. Unity's FBX import flips X, so the meshes are mirrored in
+    X while they're written: in Unity the model comes out as built (a tile's NW corner stays NW)."""
+    bpy.ops.object.select_all(action='DESELECT')
+    for x in [o] + list(o.children_recursive): x.select_set(True)
+    bpy.context.view_layer.objects.active = o
+    mirror_x(o)
+    try:
+        bpy.ops.export_scene.fbx(filepath=path, use_selection=True, apply_scale_options='FBX_SCALE_UNITS',
+                                 axis_forward='-Z', axis_up='Y', apply_unit_scale=True, bake_space_transform=True, use_mesh_modifiers=True,
+                                 mesh_smooth_type='OFF', add_leaf_bones=False, bake_anim=False, object_types={'MESH'})
+    finally:
+        mirror_x(o)
+
+
 def export_tiles(objs, outdir):
     """FBX per tile (with its collision children) + slots.txt."""
     os.makedirs(outdir, exist_ok=True)
     slots = ["# object|material slots in submesh order"]
     for o in objs:
-        bpy.ops.object.select_all(action='DESELECT')
-        o.select_set(True)
-        for c in o.children: c.select_set(True)
-        bpy.context.view_layer.objects.active = o
-        bpy.ops.export_scene.fbx(filepath=os.path.join(outdir, o.name + ".fbx"), use_selection=True, apply_scale_options='FBX_SCALE_UNITS',
-                                 axis_forward='-Z', axis_up='Y', apply_unit_scale=True, bake_space_transform=True, use_mesh_modifiers=True,
-                                 mesh_smooth_type='OFF', add_leaf_bones=False, bake_anim=False, object_types={'MESH'})
+        export_fbx(o, os.path.join(outdir, o.name + ".fbx"))
         slots.append(o.name + "|" + ",".join(m.name for m in o.data.materials))
     open(os.path.join(outdir, "slots.txt"), "w").write("\n".join(slots))

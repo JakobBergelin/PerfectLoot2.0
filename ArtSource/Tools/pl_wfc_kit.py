@@ -525,13 +525,7 @@ def export_kit(objects, outdir, S):
     os.makedirs(outdir, exist_ok=True)
     slots = ["# object|material slots in submesh order"]
     for name, o in sorted(objects.items()):
-        bpy.ops.object.select_all(action='DESELECT')
-        o.select_set(True)
-        for c in o.children: c.select_set(True)
-        bpy.context.view_layer.objects.active = o
-        bpy.ops.export_scene.fbx(filepath=os.path.join(outdir, name + ".fbx"), use_selection=True, apply_scale_options='FBX_SCALE_UNITS',
-                                 axis_forward='-Z', axis_up='Y', apply_unit_scale=True, bake_space_transform=True, use_mesh_modifiers=True,
-                                 mesh_smooth_type='OFF', add_leaf_bones=False, bake_anim=False, object_types={'MESH'})
+        T.export_fbx(o, os.path.join(outdir, name + ".fbx"))     # Mirrored in X on the way out: Unity's import flips it back
         slots.append(name + "|" + ",".join(m.name for m in o.data.materials))
     with open(os.path.join(outdir, "slots.txt"), "w") as f: f.write("\n".join(slots))
 
