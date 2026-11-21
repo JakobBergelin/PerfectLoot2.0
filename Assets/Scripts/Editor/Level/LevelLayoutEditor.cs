@@ -337,6 +337,7 @@ public class LevelLayoutEditor : Editor
         timer.Stop();
 
         int attempts = job.Attempts.Value;
+        int backtracks = job.Backtracks.Value;
         int carved = 0, filled = 0, unconnected = job.UnconnectedPockets.Value;
         if (attempts > 0)
         {
@@ -355,7 +356,8 @@ public class LevelLayoutEditor : Editor
         string warnings = compiled.Warnings.Count > 0 ? "\n" + string.Join("\n", compiled.Warnings) : "";
         string placed = attempts > 0 ? PreviewPlacement(layout, compiled) : "";
         if (attempts > 0)
-            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms.{connected}{placed}{warnings}",
+            SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms" +
+                      $"{(backtracks > 0 ? $" with {backtracks} backtracks" : "")}.{connected}{placed}{warnings}",
                       compiled.Warnings.Count > 0 || unconnected > 0 ? MessageType.Warning : MessageType.Info);
         else
             SetStatus($"No solution after {layout.MaxAttempts} attempts with seed {layout.Seed}. The rules may conflict, or the tile set " +

@@ -342,6 +342,7 @@ namespace LevelGeneration
                 LockedCorners = Copy(ref blob.LockedCorners, Allocator.TempJob),
                 Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
                 UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
+                Backtracks = new NativeReference<int>(Allocator.TempJob),
             };
             job.Schedule().Complete();
 
@@ -361,7 +362,10 @@ namespace LevelGeneration
                 }
                 string connected = !blob.Connect ? "" : $" Connected: {carved} corners carved, {filled} filled" +
                                    (job.UnconnectedPockets.Value > 0 ? $", {job.UnconnectedPockets.Value} pockets left (locked corners in the way)." : ".");
-                Debug.Log($"Level generated with seed {seed}" + (attempts > 1 ? $" (attempt {attempts})." : ".") + connected);
+                // Every machine builds the level from the seed: the same hash on host and clients means the same level
+                uint hash = 2166136261u;
+                for (int i = 0; i < cells; i++) hash = (hash ^ (uint)packed[i]) * 16777619u;
+                Debug.Log($"Level generated with seed {seed}" + (attempts > 1 ? $" (attempt {attempts})" : "") + $" and {job.Backtracks.Value} backtracks, cells hash {hash:X8}." + connected);
             }
             else
             {

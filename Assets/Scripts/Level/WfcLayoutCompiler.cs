@@ -75,6 +75,7 @@ namespace LevelGeneration
             Attempts = new NativeReference<int>(Allocator.TempJob),
             Repairs = new NativeArray<byte>(CornerMasks.Length, Allocator.TempJob),
             UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
+            Backtracks = new NativeReference<int>(Allocator.TempJob),
         };
 
         /// <summary>Solver output (variant indices) to the saved-layout format (Tile * 4 + Rotation, or Occupied).</summary>

@@ -9,10 +9,12 @@ namespace LevelGeneration
     /// Wave function collapse over tiles described by connections. Every cell has 8 slots it shares with its neighbors:
     /// its 4 corners and its 4 edges. Every slot keeps the connections it can still be (a bit mask), every cell the tile
     /// variants it can still become (a bit set). A variant stays possible only while each of its slots can still be its
-    /// connection there, and a slot keeps only connections some remaining variant next to it has. The cell with the fewest
-    /// options is collapsed (weighted random) and that spreads until nothing changes. On a contradiction the whole grid
-    /// restarts with the next seed. Used by the editor preview and at runtime, so the same inputs and seed give the same
-    /// level. Run it through WfcSolveJob (Burst).
+    /// connection there, and a slot keeps only connections some remaining variant next to it has. The cell with the lowest
+    /// weighted entropy (the least uncertain) is collapsed (weighted random) and that spreads until nothing changes.
+    /// Every change is written to an undo log: on a contradiction the last choice is undone and ruled out (backtracking),
+    /// and only after one backtrack per cell does the whole grid restart with the next seed. Used by the editor preview and
+    /// at runtime, so the same inputs and seed give the same level on every machine (WfcSolveJob uses deterministic
+    /// floats). Run it through WfcSolveJob (Burst).
     /// </summary>
     public struct WfcSolver
     {
@@ -48,6 +50,8 @@ namespace LevelGeneration
         public NativeArray<byte> Repairs;
         /// <summary>Output: pockets that couldn't be connected without changing locked corners.</summary>
         public int UnconnectedPockets;
+        /// <summary>Output: choices undone over every attempt. Many means the tile set lacks tiles for combinations that come up.</summary>
+        public int Backtracks;
 
         public const byte RepairNone = 0, RepairCarved = 1, RepairFilled = 2;
         const int MaxRepairRounds = 4;
@@ -58,6 +62,17 @@ namespace LevelGeneration
         NativeArray<ulong> _slotMasks;  // corners, then edges running east-west, then edges running north-south
         NativeList<int> _queue;
         NativeArray<bool> _queued;
+        NativeArray<float> _weightLogWeight;    // Per variant: w ln w, for the entropy
+        NativeArray<float> _entropy;            // Per cell, valid while not dirty
+        NativeArray<int> _options;              // Per cell: variants left, valid while not dirty
+        NativeArray<bool> _dirty;
+
+        // Undo log: every change to a domain word (Index below _domains.Length) or slot mask (Index - _domains.Length)
+        struct Change { public int Index; public ulong Old; }
+        // A collapse: where the undo log was before it, so it can be undone, and what was chosen
+        struct Decision { public int Log, Cell, Variant; }
+        NativeList<Change> _log;
+        NativeList<Decision> _decisions;
 
         /// <summary>
         /// Fills result (per cell: the chosen variant, or Occupied) and returns the attempt that succeeded (1-based), or
@@ -88,6 +103,14 @@ namespace LevelGeneration
             _slotMasks = new NativeArray<ulong>(initialMasks.Length, Allocator.Temp);
             _queue = new NativeList<int>(cells, Allocator.Temp);
             _queued = new NativeArray<bool>(cells, Allocator.Temp);
+            _entropy = new NativeArray<float>(cells, Allocator.Temp);
+            _options = new NativeArray<int>(cells, Allocator.Temp);
+            _dirty = new NativeArray<bool>(cells, Allocator.Temp);
+            _log = new NativeList<Change>(cells * 8, Allocator.Temp);
+            _decisions = new NativeList<Decision>(cells, Allocator.Temp);
+            _weightLogWeight = new NativeArray<float>(_variants, Allocator.Temp);
+            for (int v = 0; v < _variants; v++)
+                _weightLogWeight[v] = VariantWeights[v] > 0f ? VariantWeights[v] * math.log(VariantWeights[v]) : 0f;
 
             for (int attempt = 0; attempt < math.max(1, MaxAttempts); attempt++)
             {
@@ -118,18 +141,68 @@ namespace LevelGeneration
                                              : initial == Occupied ? 0ul : all;
                 }
                 _queued[c] = false;
+                _dirty[c] = true;
                 Enqueue(c);
             }
+            _log.Clear();
+            _decisions.Clear();
             if (!Propagate()) return false;
 
+            int backtracks = 0;
             while (true)
             {
                 int cell = LowestEntropyCell(ref random);
                 if (cell < 0) return true;
-                Collapse(cell, ref random);
+                int chosen = Pick(cell, ref random);
+                _decisions.Add(new Decision { Log = _log.Length, Cell = cell, Variant = chosen });
+                for (int w = 0; w < _words; w++) SetDomain(cell * _words + w, chosen / 64 == w ? 1ul << (chosen % 64) : 0ul);
                 Enqueue(cell);
-                if (!Propagate()) return false;
+
+                // A contradiction: undo the latest choice and rule it out, as far back as it takes
+                while (!Propagate())
+                {
+                    if (_decisions.Length == 0 || ++backtracks > cells) return false;
+                    Backtracks++;
+                    var decision = _decisions[_decisions.Length - 1];
+                    _decisions.RemoveAt(_decisions.Length - 1);
+                    Undo(decision.Log);
+                    int word = decision.Cell * _words + decision.Variant / 64;
+                    SetDomain(word, _domains[word] & ~(1ul << (decision.Variant % 64)));
+                    Enqueue(decision.Cell);
+                }
             }
+        }
+
+        void SetDomain(int word, ulong value)
+        {
+            if (_domains[word] == value) return;
+            _log.Add(new Change { Index = word, Old = _domains[word] });
+            _domains[word] = value;
+            _dirty[word / _words] = true;
+        }
+
+        void SetSlot(int slot, ulong value)
+        {
+            _log.Add(new Change { Index = _domains.Length + slot, Old = _slotMasks[slot] });
+            _slotMasks[slot] = value;
+        }
+
+        // Restores every domain and slot changed since the undo log was this long
+        void Undo(int length)
+        {
+            while (_log.Length > length)
+            {
+                var change = _log[_log.Length - 1];
+                _log.RemoveAt(_log.Length - 1);
+                if (change.Index < _domains.Length)
+                {
+                    _domains[change.Index] = change.Old;
+                    _dirty[change.Index / _words] = true;
+                }
+                else _slotMasks[change.Index - _domains.Length] = change.Old;
+            }
+            for (int i = 0; i < _queue.Length; i++) _queued[_queue[i]] = false;
+            _queue.Clear();
         }
 
         void Enqueue(int cell)
@@ -163,7 +236,7 @@ namespace LevelGeneration
                         allowed &= fits;
                     }
                     ulong domain = _domains[cell * _words + w] & allowed;
-                    _domains[cell * _words + w] = domain;
+                    SetDomain(cell * _words + w, domain);
                     any |= domain != 0ul;
                 }
                 if (!any) return false;
@@ -186,7 +259,7 @@ namespace LevelGeneration
                     }
                     if (kept == 0ul) return false;
                     if (kept == mask) continue;
-                    _slotMasks[slot] = kept;
+                    SetSlot(slot, kept);
                     EnqueueCellsAround(slot);
                 }
             }
@@ -242,7 +315,25 @@ namespace LevelGeneration
             return count;
         }
 
-        // Undecided cell with the fewest options; random tie-break. -1 when every cell is decided.
+        // Shannon entropy of the cell's remaining variants, weighted: ln(W) - Σ(w ln w) / W. Low when one option dominates.
+        void UpdateEntropy(int cell)
+        {
+            float total = 0f, weightLogWeight = 0f;
+            int count = 0;
+            for (int w = 0; w < _words; w++)
+                for (ulong bits = _domains[cell * _words + w]; bits != 0ul; bits &= bits - 1)
+                {
+                    int v = w * 64 + math.tzcnt(bits);
+                    total += VariantWeights[v];
+                    weightLogWeight += _weightLogWeight[v];
+                    count++;
+                }
+            _options[cell] = count;
+            _entropy[cell] = total > 0f ? math.log(total) - weightLogWeight / total : math.log(math.max(1, count));
+            _dirty[cell] = false;
+        }
+
+        // Undecided cell with the lowest entropy; a little noise breaks ties at random. -1 when every cell is decided.
         int LowestEntropyCell(ref Random random)
         {
             int best = -1;
@@ -250,15 +341,16 @@ namespace LevelGeneration
             for (int c = 0; c < Width * Height; c++)
             {
                 if (InitialCells[c] == Occupied) continue;
-                int count = Count(c);
-                if (count <= 1) continue;
-                float score = count + random.NextFloat() * 0.5f;
+                if (_dirty[c]) UpdateEntropy(c);
+                if (_options[c] <= 1) continue;
+                float score = _entropy[c] + random.NextFloat() * 0.001f;
                 if (score < bestScore) { bestScore = score; best = c; }
             }
             return best;
         }
 
-        void Collapse(int cell, ref Random random)
+        // One of the cell's remaining variants, at random by weight
+        int Pick(int cell, ref Random random)
         {
             float total = 0f;
             for (int v = 0; v < _variants; v++)
@@ -282,9 +374,7 @@ namespace LevelGeneration
                 for (int v = 0; v < _variants && chosen < 0; v++)
                     if (Has(cell, v) && index-- == 0) chosen = v;
             }
-
-            for (int w = 0; w < _words; w++)
-                _domains[cell * _words + w] = chosen / 64 == w ? 1ul << (chosen % 64) : 0ul;
+            return chosen;
         }
 
         // A solved corner is walkable when its one connection is
@@ -452,8 +542,11 @@ namespace LevelGeneration
         }
     }
 
-    /// <summary>Runs WfcSolver with Burst. The working arrays live inside the solver, so they never sit on the job.</summary>
-    [BurstCompile]
+    /// <summary>
+    /// Runs WfcSolver with Burst. The working arrays live inside the solver, so they never sit on the job. Deterministic
+    /// floats: every machine in a multiplayer game builds the level from the same seed and must get the same tiles.
+    /// </summary>
+    [BurstCompile(FloatMode = FloatMode.Deterministic)]
     public struct WfcSolveJob : IJob
     {
         public int Width, Height;
@@ -479,6 +572,8 @@ namespace LevelGeneration
         /// <summary>Per corner: what the repair did (WfcSolver.RepairNone / RepairCarved / RepairFilled).</summary>
         public NativeArray<byte> Repairs;
         public NativeReference<int> UnconnectedPockets;
+        /// <summary>Choices undone over every attempt (WfcSolver.Backtracks).</summary>
+        public NativeReference<int> Backtracks;
 
         public void Execute()
         {
@@ -494,6 +589,7 @@ namespace LevelGeneration
             };
             Attempts.Value = solver.Solve(Result);
             UnconnectedPockets.Value = solver.UnconnectedPockets;
+            Backtracks.Value = solver.Backtracks;
         }
 
         public void DisposeArrays()
@@ -508,6 +604,7 @@ namespace LevelGeneration
             Attempts.Dispose();
             Repairs.Dispose();
             UnconnectedPockets.Dispose();
+            Backtracks.Dispose();
         }
     }
 }
