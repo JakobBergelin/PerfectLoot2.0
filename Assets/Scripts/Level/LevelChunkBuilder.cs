@@ -23,13 +23,17 @@ namespace LevelGeneration
         /// <summary>Cells per chunk side: meshes and colliders are merged, and streamed in, per chunk.</summary>
         public const int ChunkSize = 8;
 
-        /// <summary>A tile or piece in the chunk: Center is its footprint's middle in cells, Rotation its 90° steps.</summary>
+        /// <summary>
+        /// A tile or piece in the chunk: Center is its footprint's middle in cells, Rotation its 90° steps, Raise the meters
+        /// it's lifted (its lowest corner's height).
+        /// </summary>
         public struct Instance
         {
             public bool IsPiece;
             public int Part;
             public float2 Center;
             public int Rotation;
+            public float Raise;
         }
 
         public struct Prop
@@ -119,7 +123,7 @@ namespace LevelGeneration
                     chunk.Props.Add(new Prop
                     {
                         Prefab = prop.Prefab,
-                        Position = Bend(corners, width, height, tileSize, turn, instances[i].Center, prop.Position),
+                        Position = Bend(corners, width, height, tileSize, turn, instances[i].Center, instances[i].Raise, prop.Position),
                         Rotation = math.mul(turn, prop.Rotation),
                     });
                 }
@@ -207,12 +211,12 @@ namespace LevelGeneration
             return chunk;
         }
 
-        // A point in the part's own space, turned with the part, placed on the bent grid; its height stays on top
-        static float3 Bend(NativeArray<float3> corners, int width, int height, float tileSize, quaternion turn, float2 center, float3 local)
+        // A point in the part's own space, turned with the part, placed on the bent grid; its height (plus the part's raise) stays on top
+        static float3 Bend(NativeArray<float3> corners, int width, int height, float tileSize, quaternion turn, float2 center, float raise, float3 local)
         {
             var turned = math.mul(turn, local);
             var ground = LevelDeformation.Sample(corners, width, height, center.x + turned.x / tileSize, center.y + turned.z / tileSize);
-            return ground + new float3(0f, turned.y, 0f);
+            return ground + new float3(0f, raise + turned.y, 0f);
         }
 
         /// <summary>
@@ -330,7 +334,7 @@ namespace LevelGeneration
                 for (int v = 0; v < mesh.Vertices.Length; v++)
                 {
                     int target = item.VertexStart + v;
-                    Vertices[target] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, mesh.Vertices[v]);
+                    Vertices[target] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, mesh.Vertices[v]);
                     Normals[target] = math.mul(turn, mesh.Normals[v]);
                     var tangent = mesh.Tangents[v];
                     Tangents[target] = new float4(math.mul(turn, tangent.xyz), tangent.w);
@@ -399,7 +403,7 @@ namespace LevelGeneration
                 var turn = quaternion.RotateY(math.radians(90f * instance.Rotation));
 
                 for (int v = 0; v < collider.Vertices.Length; v++)
-                    Vertices[item.VertexStart + v] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, collider.Vertices[v]);
+                    Vertices[item.VertexStart + v] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, collider.Vertices[v]);
                 int offset = item.VertexStart - item.BatchVertexStart;
                 for (int t = 0; t * 3 + 2 < collider.Indices.Length; t++)
                     Triangles[item.TriangleStart + t] = new int3(offset + collider.Indices[t * 3], offset + collider.Indices[t * 3 + 1], offset + collider.Indices[t * 3 + 2]);

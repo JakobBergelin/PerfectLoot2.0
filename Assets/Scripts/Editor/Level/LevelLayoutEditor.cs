@@ -372,8 +372,8 @@ public class LevelLayoutEditor : Editor
         var set = layout.Placements;
         if (set == null || set.Rules.Count == 0 || layout.PreviewCells == null || layout.TileSet == null) return "";
 
-        var cornerTerrain = LevelPlacement.CornerTerrain(layout.Width, layout.Height, layout.PreviewCells, layout.TileSet.TileCornerTerrains(),
-                                                         compiled.CornerMasks, compiled.CornerTerrains);
+        var surface = LevelSurface.Build(layout.Width, layout.Height, layout.PreviewCells, layout.TileSet.TileCornerIndices(), layout.TileSet.TileEdgeIndices(),
+                                         compiled.CornerMasks, compiled.CornerTerrains, compiled.CornerHeights, compiled.EdgeWalkables);
         var occupied = compiled.InitialCells.Select(cell => cell == WfcSolver.Occupied).ToArray();
         var rules = set.Rules.Select(rule => rule == null ? new PlacementRuleData() : new PlacementRuleData
         {
@@ -388,7 +388,9 @@ public class LevelLayoutEditor : Editor
         {
             Width = layout.Width, Height = layout.Height, TileSize = layout.TileSize, Seed = layout.Seed,
             StartCorner = compiled.StartCorner, Start = new Unity.Mathematics.float2(layout.PlayerStart.x + 0.5f, layout.PlayerStart.y + 0.5f),
-            CornerTerrain = new NativeArray<byte>(cornerTerrain, Allocator.TempJob),
+            CornerTerrain = new NativeArray<byte>(surface.Terrain, Allocator.TempJob),
+            CornerHeight = new NativeArray<float>(surface.Height, Allocator.TempJob),
+            EdgeWalkable = new NativeArray<byte>(surface.EdgeWalkable, Allocator.TempJob),
             OccupiedCells = new NativeArray<bool>(occupied, Allocator.TempJob),
             BentCorners = new NativeArray<Unity.Mathematics.float3>(layout.BentCorners(), Allocator.TempJob),
             Rules = new NativeArray<PlacementRuleData>(rules, Allocator.TempJob),
@@ -398,6 +400,8 @@ public class LevelLayoutEditor : Editor
         job.Schedule().Complete();
         layout.PreviewPlacements = job.Points.AsArray().ToArray();
         job.CornerTerrain.Dispose();
+        job.CornerHeight.Dispose();
+        job.EdgeWalkable.Dispose();
         job.OccupiedCells.Dispose();
         job.BentCorners.Dispose();
         job.Rules.Dispose();

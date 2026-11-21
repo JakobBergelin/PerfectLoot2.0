@@ -22,6 +22,12 @@ namespace LevelGeneration
         public List<WfcTile> Tiles = new List<WfcTile>();
         [Tooltip("Larger pieces (e.g. a 2x2 arena) placed by hand in the level layout")]
         public List<WfcPiece> Pieces = new List<WfcPiece>();
+        [Tooltip("Meters below its lowest corner that every tile model must reach, so lower ground next to it or the drop around " +
+                 "the level never shows a gap. The Inspector lists tiles that don't. 0 turns the check off.")]
+        [Min(0f)] public float FoundationDepth;
+
+        // 1: corner connections have Higher (older assets load it as 0, which would name connection 0)
+        [SerializeField, HideInInspector] int _version;
 
         void OnEnable() => EnsureConnections();
         void OnValidate() => EnsureConnections();
@@ -41,6 +47,11 @@ namespace LevelGeneration
             }
             if (EdgeConnections.Count == 0)
                 EdgeConnections.Add(new WfcEdgeConnection { Id = 0, Name = "Plain", Walkable = true });
+            if (_version < 1)
+            {
+                foreach (var connection in CornerConnections) if (connection != null) connection.Higher = -1;
+                _version = 1;
+            }
 
             // A connection added in the Inspector copies the last one, Id included
             var used = new HashSet<int>();
@@ -92,6 +103,15 @@ namespace LevelGeneration
             return mask;
         }
 
+        /// <summary>Edge connections units can walk across (bits by index).</summary>
+        public ulong WalkableEdges()
+        {
+            ulong mask = 0ul;
+            for (int i = 0; i < EdgeConnections.Count && i < WfcConnections.Max; i++)
+                if (EdgeConnections[i] != null && EdgeConnections[i].Walkable) mask |= WfcConnections.Bit(i);
+            return mask;
+        }
+
         /// <summary>The terrain of each corner connection, by index.</summary>
         public byte[] CornerTerrains()
         {
@@ -100,17 +120,98 @@ namespace LevelGeneration
             return terrains;
         }
 
-        /// <summary>4 terrains per tile (SW, SE, NE, NW), LevelPlacement.Unknown where a tile or connection is missing.</summary>
-        public byte[] TileCornerTerrains()
+        /// <summary>The ground height of each corner connection, by index.</summary>
+        public float[] CornerHeights()
         {
-            var terrains = new byte[Tiles.Count * 4];
+            var heights = new float[CornerConnections.Count];
+            for (int i = 0; i < heights.Length; i++) heights[i] = CornerConnections[i]?.Height ?? 0f;
+            return heights;
+        }
+
+        /// <summary>1 for each edge connection units can walk across, by index.</summary>
+        public byte[] EdgeWalkables()
+        {
+            var walkables = new byte[EdgeConnections.Count];
+            for (int i = 0; i < walkables.Length; i++) walkables[i] = (byte)(EdgeConnections[i] == null || EdgeConnections[i].Walkable ? 1 : 0);
+            return walkables;
+        }
+
+        /// <summary>4 corner connection indices per tile (SW, SE, NE, NW), LevelSurface.Unknown where a tile or connection is missing.</summary>
+        public byte[] TileCornerIndices()
+        {
+            var indices = new byte[Tiles.Count * 4];
             for (int t = 0; t < Tiles.Count; t++)
                 for (int k = 0; k < 4; k++)
                 {
-                    var connection = Tiles[t] != null ? CornerConnection(Tiles[t].Corners[k]) : null;
-                    terrains[t * 4 + k] = connection != null ? (byte)connection.Terrain : LevelPlacement.Unknown;
+                    int index = Tiles[t] != null ? CornerIndex(Tiles[t].Corners[k]) : -1;
+                    indices[t * 4 + k] = index >= 0 && index < LevelSurface.Unknown ? (byte)index : LevelSurface.Unknown;
                 }
-            return terrains;
+            return indices;
+        }
+
+        /// <summary>4 edge connection indices per tile (S, E, N, W), LevelSurface.Unknown where a tile or connection is missing.</summary>
+        public byte[] TileEdgeIndices()
+        {
+            var indices = new byte[Tiles.Count * 4];
+            for (int t = 0; t < Tiles.Count; t++)
+                for (int k = 0; k < 4; k++)
+                {
+                    int index = Tiles[t] != null ? EdgeIndex(Tiles[t].Edges[k]) : -1;
+                    indices[t * 4 + k] = index >= 0 && index < LevelSurface.Unknown ? (byte)index : LevelSurface.Unknown;
+                }
+            return indices;
+        }
+
+        /// <summary>How high a model with these corners is placed: its lowest corner's height (0 when none is known).</summary>
+        public float Raise(IEnumerable<int> cornerIds)
+        {
+            float lowest = float.MaxValue;
+            foreach (int id in cornerIds)
+            {
+                var connection = CornerConnection(id);
+                if (connection != null) lowest = Mathf.Min(lowest, connection.Height);
+            }
+            return lowest == float.MaxValue ? 0f : lowest;
+        }
+
+        public float[] TileRaises()
+        {
+            var raises = new float[Tiles.Count];
+            for (int t = 0; t < raises.Length; t++) raises[t] = Tiles[t] != null ? Raise(Tiles[t].Corners) : 0f;
+            return raises;
+        }
+
+        public float[] PieceRaises()
+        {
+            var raises = new float[Pieces.Count];
+            for (int p = 0; p < raises.Length; p++) raises[p] = Pieces[p] != null ? Raise(Pieces[p].CornerIds) : 0f;
+            return raises;
+        }
+
+        /// <summary>
+        /// A copy of the tile with every corner swapped for its connection's Higher, so the same model fits one step up (it's
+        /// raised by the new lowest corner). Edges stay. Null, with the reason, when a corner's connection has no Higher.
+        /// </summary>
+        public WfcTile CopyOneStepUp(WfcTile tile, out string problem)
+        {
+            problem = null;
+            var corners = tile.Corners;
+            for (int k = 0; k < 4; k++)
+            {
+                var connection = CornerConnection(corners[k]);
+                if (connection == null || CornerConnection(connection.Higher) == null)
+                {
+                    problem = $"{connection?.Name ?? $"Id {corners[k]}"} has no Higher connection.";
+                    return null;
+                }
+                corners[k] = connection.Higher;
+            }
+            return new WfcTile
+            {
+                Name = tile.Name + " High", Prefab = tile.Prefab, Weight = tile.Weight, AllowRotations = tile.AllowRotations,
+                SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
+                South = tile.South, East = tile.East, North = tile.North, West = tile.West,
+            };
         }
 
         /// <summary>

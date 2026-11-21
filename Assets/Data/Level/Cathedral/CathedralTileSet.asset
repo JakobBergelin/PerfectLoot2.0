@@ -17,14 +17,20 @@ MonoBehaviour:
     Name: Floor
     Color: {r: 0.45, g: 0.75, b: 0.35, a: 1}
     Terrain: 0
+    Height: 0
+    Higher: -1
   - Id: 1
     Name: Wall
     Color: {r: 0.42, g: 0.42, b: 0.48, a: 1}
     Terrain: 1
+    Height: 0
+    Higher: -1
   - Id: 2
     Name: Water
     Color: {r: 0.2, g: 0.5, b: 0.95, a: 1}
     Terrain: 2
+    Height: 0
+    Higher: -1
   EdgeConnections:
   - Id: 0
     Name: Plain
@@ -482,3 +488,5 @@ MonoBehaviour:
     CornerIds: 000000000000000000000000000000000000000000000000000000000000000000000000i
     AllowRotations: 1
     _terrainCorners: 
+  FoundationDepth: 0
+  _version: 1

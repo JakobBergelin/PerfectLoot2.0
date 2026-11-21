@@ -14,10 +14,13 @@ namespace LevelGeneration
         public ulong[] CornerMasks;
         /// <summary>Edge connection masks, as WfcSolver.InitialEdgeMasks.</summary>
         public ulong[] EdgeMasks;
-        /// <summary>Corner connections that are Walkable / NotWalkable (bits by index).</summary>
-        public ulong WalkableCorners, NotWalkableCorners;
-        /// <summary>The terrain of each corner connection, by index.</summary>
+        /// <summary>Corner connections that are Walkable / NotWalkable, edge connections units can walk across (bits by index).</summary>
+        public ulong WalkableCorners, NotWalkableCorners, WalkableEdges;
+        /// <summary>The terrain and ground height of each corner connection, by index.</summary>
         public byte[] CornerTerrains = new byte[0];
+        public float[] CornerHeights = new float[0];
+        /// <summary>1 for each edge connection units can walk across, by index.</summary>
+        public byte[] EdgeWalkables = new byte[0];
         /// <summary>Per cell: WfcSolver.Free, WfcSolver.Occupied or a forced variant index.</summary>
         public int[] InitialCells;
         /// <summary>Per corner: 1 when the connectivity repair may not change it (painted, piece, forced tile, start, walkable prefab, border).</summary>
@@ -70,6 +73,7 @@ namespace LevelGeneration
             FillPocketsSmallerThan = fillPocketsSmallerThan,
             WalkableCorners = WalkableCorners,
             NotWalkableCorners = NotWalkableCorners,
+            WalkableEdges = WalkableEdges,
             LockedCorners = new NativeArray<byte>(LockedCorners, Allocator.TempJob),
             Result = new NativeArray<int>(Width * Height, Allocator.TempJob),
             Attempts = new NativeReference<int>(Allocator.TempJob),
@@ -132,7 +136,10 @@ namespace LevelGeneration
             compiled.Variants = tileSet.BuildVariants(compiled.Warnings);
             compiled.WalkableCorners = tileSet.CornerMask(WfcTerrain.Walkable);
             compiled.NotWalkableCorners = tileSet.CornerMask(WfcTerrain.NotWalkable);
+            compiled.WalkableEdges = tileSet.WalkableEdges();
             compiled.CornerTerrains = tileSet.CornerTerrains();
+            compiled.CornerHeights = tileSet.CornerHeights();
+            compiled.EdgeWalkables = tileSet.EdgeWalkables();
             ulong allEdges = tileSet.AllEdges();
             for (int i = 0; i < compiled.EdgeMasks.Length; i++) compiled.EdgeMasks[i] = allEdges;
 

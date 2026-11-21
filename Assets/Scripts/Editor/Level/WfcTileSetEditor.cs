@@ -43,14 +43,84 @@ public class WfcTileSetEditor : Editor
         serializedObject.Update();
         EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(WfcTileSet.CornerConnections)));
         EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(WfcTileSet.EdgeConnections)));
+        EditorGUILayout.PropertyField(serializedObject.FindProperty(nameof(WfcTileSet.FoundationDepth)));
         EditorGUILayout.Space(10);
+        _copyUp = -1;
         DrawTiles(tileSet, serializedObject.FindProperty(nameof(WfcTileSet.Tiles)));
         EditorGUILayout.Space(10);
         DrawPieces(tileSet, serializedObject.FindProperty(nameof(WfcTileSet.Pieces)));
         serializedObject.ApplyModifiedProperties();
+        if (_copyUp >= 0)
+        {
+            CopyUp(tileSet, _copyUp);
+            GUIUtility.ExitGUI();
+        }
 
         EditorGUILayout.Space(10);
         DrawCoverage(tileSet);
+        DrawFoundations(tileSet);
+    }
+
+    int _copyUp;
+
+    // Inserts the tile's copy one step up right after it
+    void CopyUp(WfcTileSet tileSet, int index)
+    {
+        var copy = tileSet.CopyOneStepUp(tileSet.Tiles[index], out string problem);
+        if (copy == null)
+        {
+            EditorUtility.DisplayDialog("Copy one step up", $"Can't copy {tileSet.Tiles[index].Name} one step up: {problem} " +
+                                        "Set Higher on that corner connection to the connection one step up.", "OK");
+            return;
+        }
+        Undo.RecordObject(tileSet, "Copy tile one step up");
+        tileSet.Tiles.Insert(index + 1, copy);
+        EditorUtility.SetDirty(tileSet);
+        serializedObject.Update();
+    }
+
+    // ---------- foundations ----------
+
+    readonly Dictionary<GameObject, float> _lowest = new Dictionary<GameObject, float>();
+    bool _showShallow;
+
+    void OnEnable() => _lowest.Clear();
+
+    // Lowest point of the prefab's meshes, in its own space (where the tile's lowest corner is at 0)
+    float Lowest(GameObject prefab)
+    {
+        if (_lowest.TryGetValue(prefab, out float lowest)) return lowest;
+        lowest = float.MaxValue;
+        var toRoot = prefab.transform.worldToLocalMatrix;
+        foreach (var filter in prefab.GetComponentsInChildren<MeshFilter>(true))
+        {
+            if (filter.sharedMesh == null) continue;
+            var bounds = filter.sharedMesh.bounds;
+            var matrix = toRoot * filter.transform.localToWorldMatrix;
+            for (int i = 0; i < 8; i++)
+            {
+                var corner = bounds.center + Vector3.Scale(bounds.extents, new Vector3(i % 2 == 0 ? -1 : 1, i / 2 % 2 == 0 ? -1 : 1, i / 4 == 0 ? -1 : 1));
+                lowest = Mathf.Min(lowest, matrix.MultiplyPoint3x4(corner).y);
+            }
+        }
+        _lowest[prefab] = lowest;
+        return lowest;
+    }
+
+    void DrawFoundations(WfcTileSet tileSet)
+    {
+        if (tileSet.FoundationDepth <= 0f) return;
+        var shallow = tileSet.Tiles.Where(t => t?.Prefab != null && Lowest(t.Prefab) > -tileSet.FoundationDepth + 0.01f)
+                             .Select(t => $"{t.Name}: {-Lowest(t.Prefab):0.##} m").ToList();
+        if (shallow.Count == 0)
+        {
+            EditorGUILayout.HelpBox($"Every tile model reaches {tileSet.FoundationDepth} m below its lowest corner.", MessageType.Info);
+            return;
+        }
+        EditorGUILayout.HelpBox($"{shallow.Count} tile models don't reach {tileSet.FoundationDepth} m below their lowest corner, so a gap can " +
+                                "show where lower ground or the drop is next to them.", MessageType.Warning);
+        _showShallow = EditorGUILayout.Foldout(_showShallow, "Tiles that don't reach deep enough", true);
+        if (_showShallow) EditorGUILayout.LabelField(string.Join("\n", shallow), EditorStyles.wordWrappedMiniLabel);
     }
 
     void DrawTiles(WfcTileSet tileSet, SerializedProperty tiles)
@@ -91,6 +161,12 @@ public class WfcTileSetEditor : Editor
                         EditorGUIUtility.labelWidth = 70;
                         EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.AllowRotations)), new GUIContent("Rotations"));
                         EditorGUIUtility.labelWidth = 0;
+                        var ids = CornerFields.Select(field => tile.FindPropertyRelative(field).intValue);
+                        EditorGUILayout.LabelField(new GUIContent($"Raise {tileSet.Raise(ids):0.##} m", "The model is placed at its lowest corner's height"),
+                                                   EditorStyles.miniLabel, GUILayout.Width(80));
+                        if (GUILayout.Button(new GUIContent("Copy up", "Adds a copy with every corner one step up (each connection's Higher)"),
+                                             EditorStyles.miniButton, GUILayout.Width(60)))
+                            _copyUp = i;
                     }
                 }
             }

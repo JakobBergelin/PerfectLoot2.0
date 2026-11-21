@@ -21,50 +21,73 @@ namespace LevelGeneration
         public float Yaw;           // Radians
     }
 
-    public static class LevelPlacement
+    /// <summary>
+    /// The finished layout for gameplay: each corner's terrain (WfcTerrain, or Unknown) and ground height, and whether each
+    /// edge can be walked across. Read from each cell's tile (Tile * 4 + Rotation) and, under pieces, from the
+    /// single-connection corner masks. Edges are indexed like the solver's: Width * (Height + 1) running east-west, then
+    /// (Width + 1) * Height running north-south; an edge no tile names (beside a piece) can be walked across.
+    /// </summary>
+    public class LevelSurface
     {
         public const byte Unknown = 255;
 
-        /// <summary>
-        /// Every corner's terrain (WfcTerrain, or Unknown) in the finished layout: from each cell's tile (Tile * 4 + Rotation,
-        /// tileCorners holds 4 terrains per tile: SW, SE, NE, NW) and, under pieces, from the single-connection corner
-        /// masks (connectionTerrains holds each corner connection's terrain).
-        /// </summary>
-        public static byte[] CornerTerrain(int width, int height, int[] packedCells, byte[] tileCorners, ulong[] cornerMasks, byte[] connectionTerrains)
+        public byte[] Terrain;
+        public float[] Height;
+        public byte[] EdgeWalkable;
+
+        /// <param name="tileCorners">4 corner connection indices per tile (SW, SE, NE, NW), Unknown where missing</param>
+        /// <param name="tileEdges">4 edge connection indices per tile (S, E, N, W), Unknown where missing</param>
+        public static LevelSurface Build(int width, int height, int[] packedCells, byte[] tileCorners, byte[] tileEdges, ulong[] cornerMasks,
+                                         byte[] connectionTerrains, float[] connectionHeights, byte[] edgeWalkables)
         {
-            int cornerWidth = width + 1;
-            var terrain = new byte[cornerWidth * (height + 1)];
-            for (int c = 0; c < terrain.Length; c++)
+            int cornerWidth = width + 1, across = width * (height + 1);
+            var corners = new int[cornerWidth * (height + 1)];
+            var edges = new int[across + cornerWidth * height];
+            for (int c = 0; c < corners.Length; c++)
             {
                 ulong mask = c < cornerMasks.Length ? cornerMasks[c] : 0ul;
-                int connection = mask != 0ul && (mask & (mask - 1)) == 0ul ? math.tzcnt(mask) : -1;
-                terrain[c] = connection >= 0 && connection < connectionTerrains.Length ? connectionTerrains[connection] : Unknown;
+                corners[c] = mask != 0ul && (mask & (mask - 1)) == 0ul ? math.tzcnt(mask) : Unknown;
             }
+            for (int e = 0; e < edges.Length; e++) edges[e] = Unknown;
+
             for (int y = 0; y < height; y++)
                 for (int x = 0; x < width; x++)
                 {
                     int packed = packedCells[x + y * width];
                     if (packed < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(packed), rotation = LevelLayoutAuthoring.PackedRotation(packed);
-                    if (tile * 4 + 3 >= tileCorners.Length) continue;
-                    for (int k = 0; k < 4; k++)
-                    {
-                        int cx = x + (k == 1 || k == 2 ? 1 : 0), cy = y + (k >= 2 ? 1 : 0);
-                        // A tile turned r times has at corner k what it has at (k + r) % 4
-                        terrain[cx + cy * cornerWidth] = tileCorners[tile * 4 + (k + rotation) % 4];
-                    }
+                    if (tile * 4 + 3 >= tileCorners.Length || tile * 4 + 3 >= tileEdges.Length) continue;
+                    // A tile turned r times has at corner (or edge) k what it has at (k + r) % 4
+                    corners[x + y * cornerWidth] = tileCorners[tile * 4 + rotation % 4];
+                    corners[x + 1 + y * cornerWidth] = tileCorners[tile * 4 + (1 + rotation) % 4];
+                    corners[x + 1 + (y + 1) * cornerWidth] = tileCorners[tile * 4 + (2 + rotation) % 4];
+                    corners[x + (y + 1) * cornerWidth] = tileCorners[tile * 4 + (3 + rotation) % 4];
+                    edges[x + y * width] = tileEdges[tile * 4 + rotation % 4];
+                    edges[across + x + 1 + y * cornerWidth] = tileEdges[tile * 4 + (1 + rotation) % 4];
+                    edges[x + (y + 1) * width] = tileEdges[tile * 4 + (2 + rotation) % 4];
+                    edges[across + x + y * cornerWidth] = tileEdges[tile * 4 + (3 + rotation) % 4];
                 }
-            return terrain;
+
+            var surface = new LevelSurface { Terrain = new byte[corners.Length], Height = new float[corners.Length], EdgeWalkable = new byte[edges.Length] };
+            for (int c = 0; c < corners.Length; c++)
+            {
+                bool known = corners[c] < connectionTerrains.Length;
+                surface.Terrain[c] = known ? connectionTerrains[corners[c]] : Unknown;
+                surface.Height[c] = known ? connectionHeights[corners[c]] : 0f;
+            }
+            for (int e = 0; e < edges.Length; e++)
+                surface.EdgeWalkable[e] = edges[e] < edgeWalkables.Length ? edgeWalkables[edges[e]] : (byte)1;
+            return surface;
         }
     }
 
     /// <summary>
     /// Fills the level with placements, rule by rule: points spread at least the rule's Spacing apart (Bridson's
     /// Poisson-disk sampling, restarted in every region it hasn't reached) on the floor reachable from the start, kept
-    /// only where no wall or water is within ClearRadius, not on a piece, at least MinDistanceFromStart from the start,
-    /// outside every hand-placed prefab's reserved radius,
-    /// and for spawners on ground no steeper than MaxSlope and Spacing away from every other spawner. Deterministic per
-    /// seed; used by the editor preview and at runtime.
+    /// only in cells whose 4 corners are at one height (not on ramps or cliffs), where nothing unwalkable or water is
+    /// within ClearRadius, not on a piece, at least MinDistanceFromStart from the start, outside every hand-placed
+    /// prefab's reserved radius, and for spawners on ground no steeper than MaxSlope and Spacing away from every other
+    /// spawner. Deterministic per seed; used by the editor preview and at runtime.
     /// </summary>
     [BurstCompile]
     public struct LevelPlacementJob : IJob
@@ -76,7 +99,10 @@ namespace LevelGeneration
         public uint Seed;
         public int StartCorner;
         public float2 Start;    // Player start, in cells
+        // LevelSurface
         [ReadOnly] public NativeArray<byte> CornerTerrain;
+        [ReadOnly] public NativeArray<float> CornerHeight;
+        [ReadOnly] public NativeArray<byte> EdgeWalkable;
         [ReadOnly] public NativeArray<bool> OccupiedCells;
         [ReadOnly] public NativeArray<float3> BentCorners;
         [ReadOnly] public NativeArray<PlacementRuleData> Rules;
@@ -162,6 +188,11 @@ namespace LevelGeneration
         {
             int2 cell = (int2)math.floor(point);
             if (OccupiedCells[cell.x + cell.y * Width]) return false;
+            // Flat cells only: a ramp or cliff has corners at different heights
+            int stride = Width + 1, southWest = cell.x + cell.y * stride;
+            float ground = CornerHeight[southWest];
+            if (CornerHeight[southWest + 1] != ground || CornerHeight[southWest + stride] != ground || CornerHeight[southWest + stride + 1] != ground)
+                return false;
 
             // On reachable floor: the nearest corner's quarter is where the point stands
             int2 nearest = (int2)math.round(point);
@@ -221,7 +252,8 @@ namespace LevelGeneration
             return false;
         }
 
-        // Walkable corners reachable from the start (neighbors, not diagonals); everything walkable when the start isn't
+        // Walkable corners reachable from the start (neighbors across an edge that can be walked across, not diagonals);
+        // everything walkable when the start isn't
         NativeArray<bool> FloodReachable()
         {
             int corners = (Width + 1) * (Height + 1);
@@ -245,7 +277,10 @@ namespace LevelGeneration
                     int nx = x + (n == 0 ? 1 : n == 2 ? -1 : 0), ny = y + (n == 1 ? 1 : n == 3 ? -1 : 0);
                     if (nx < 0 || ny < 0 || nx > Width || ny > Height) continue;
                     int next = nx + ny * cornerWidth;
-                    if (reachable[next] || CornerTerrain[next] != walkable) continue;
+                    // The edge from this corner to the next: east-west edges first, then north-south ones
+                    int edge = n == 0 ? x + y * Width : n == 2 ? x - 1 + y * Width
+                             : Width * (Height + 1) + x + (n == 1 ? y : y - 1) * cornerWidth;
+                    if (reachable[next] || CornerTerrain[next] != walkable || EdgeWalkable[edge] == 0) continue;
                     reachable[next] = true;
                     queue.Add(next);
                 }

@@ -38,21 +38,28 @@ namespace LevelGeneration
         public BlobArray<ulong> CornerMasks;
         public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;
-        /// <summary>The terrain of each corner connection, by index.</summary>
-        public BlobArray<byte> CornerTerrains;
         // Connectivity repair (WfcSolver.Repair)
         public bool Connect;
         public int StartCorner;
         public int FillPocketsSmallerThan;
-        public ulong WalkableCorners, NotWalkableCorners;
+        public ulong WalkableCorners, NotWalkableCorners, WalkableEdges;
         public BlobArray<byte> LockedCorners;
+
+        // The finished level for gameplay (LevelSurface): per corner connection its terrain and height, per edge
+        // connection whether it can be walked across, per tile its 4 corner and 4 edge connection indices
+        public BlobArray<byte> CornerTerrains;
+        public BlobArray<float> CornerHeights;
+        public BlobArray<byte> EdgeWalkables;
+        public BlobArray<byte> TileCorners;
+        public BlobArray<byte> TileEdges;
+        /// <summary>How high each tile and piece model is placed: its lowest corner's height.</summary>
+        public BlobArray<float> TileRaises;
+        public BlobArray<float> PieceRaises;
 
         public BlobArray<LevelPiecePlacement> Pieces;
         /// <summary>Saved layout (Tile * 4 + Rotation per cell), empty when there is none.</summary>
         public BlobArray<int> SavedCells;
 
-        /// <summary>4 terrains per tile (SW, SE, NE, NW), to know every corner's terrain from the placed tiles.</summary>
-        public BlobArray<byte> TileCorners;
         // Procedural placement (LevelPlacementSet)
         public BlobArray<LevelPlacementRuleBlob> PlacementRules;
         public BlobArray<LevelPlacementGroupBlob> PlacementGroups;

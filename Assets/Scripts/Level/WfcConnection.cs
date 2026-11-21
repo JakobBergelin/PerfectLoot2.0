@@ -16,6 +16,11 @@ namespace LevelGeneration
         public Color Color = Color.gray;
         [Tooltip("How the corner plays: walkable, not walkable or water")]
         public WfcTerrain Terrain;
+        [Tooltip("Meters above the grid that the ground is at this corner. A tile's model is raised to its lowest corner's height, " +
+                 "so a ramp or cliff model starts at its low side and a high-ground copy starts at the high ground.")]
+        public float Height;
+        [Tooltip("The same connection one step up (Id, or -1 for none), for the tile set's \"Copy one step up\" button")]
+        public int Higher = -1;
     }
 
     /// <summary>What a tile edge can be. Two tiles fit side by side when their shared edge has the same connection.</summary>

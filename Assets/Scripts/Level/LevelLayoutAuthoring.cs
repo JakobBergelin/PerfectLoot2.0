@@ -475,7 +475,8 @@ namespace LevelGeneration
                 int connection = TileSet.CornerIndex(corners[k]);
                 if (connection < 0) continue;
                 var terrain = TileSet.CornerConnections[connection].Terrain;
-                var lift = Vector3.up * (terrain == WfcTerrain.NotWalkable ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
+                var lift = Vector3.up * (TileSet.CornerConnections[connection].Height +
+                                         (terrain == WfcTerrain.NotWalkable ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f));
                 var list = vertices[connection];
                 int start = list.Count;
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0) + lift);

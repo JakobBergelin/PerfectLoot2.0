@@ -25,7 +25,8 @@ namespace LevelGeneration
         {
             public Entity Layout;
             public int[] Packed;            // Per cell: Tile * 4 + Rotation, or negative for nothing
-            public float3[] Corners;        // Bent grid
+            public float3[] Corners;        // Bent grid (where tile models are bent to)
+            public float3[] Ground;         // The bent grid at each corner's ground height (where things stand)
             public NativeArray<float3> JobCorners;  // The same, for the chunk jobs
             public Material[] Materials;
             public Entity[] PropPrefabs;
@@ -160,6 +161,10 @@ namespace LevelGeneration
                 ChunksPerFrame = math.max(1, layout.ChunksPerFrame),
             };
             packed.Dispose();
+            var surface = LevelSurface.Build(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.TileEdges.ToArray(),
+                                             blob.CornerMasks.ToArray(), blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
+            stream.Ground = new float3[corners.Length];
+            for (int i = 0; i < corners.Length; i++) stream.Ground[i] = corners[i] + new float3(0f, surface.Height[i], 0f);
             stream.Built = new bool[stream.ChunksX * stream.ChunksY];
             stream.PiecesByChunk = new List<int>[stream.Built.Length];
             for (int i = 0; i < blob.Pieces.Length; i++)
@@ -193,15 +198,15 @@ namespace LevelGeneration
             foreach (var entity in spawners)
             {
                 var spawner = EntityManager.GetComponentData<LevelEnemySpawner>(entity);
-                spawner.Position = GridToWorld(ref blob, stream.Corners, spawner.Cell.x + 0.5f, spawner.Cell.y + 0.5f);
+                spawner.Position = GridToWorld(ref blob, stream.Ground, spawner.Cell.x + 0.5f, spawner.Cell.y + 0.5f);
                 EntityManager.SetComponentData(entity, spawner);
             }
 
             // Procedural placement: spawners now, props with their chunks
-            var (placedProps, placedSpawners) = Place(stream, ref blob, seed);
+            var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface);
 
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
-            var playerStart = GridToWorld(ref blob, stream.Corners, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
+            var playerStart = GridToWorld(ref blob, stream.Ground, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
             long chunksStart = timer.ElapsedMilliseconds;
             var first = StartChunks(stream, playerStart, int.MaxValue);
             foreach (var chunk in first) Finish(chunk);
@@ -263,6 +268,7 @@ namespace LevelGeneration
                     instances.Add(new LevelChunkBuilder.Instance
                     {
                         Part = tile, Center = new float2(x + 0.5f, y + 0.5f), Rotation = LevelLayoutAuthoring.PackedRotation(cell),
+                        Raise = tile < blob.TileRaises.Length ? blob.TileRaises[tile] : 0f,
                     });
                 }
 
@@ -274,6 +280,7 @@ namespace LevelGeneration
                     instances.Add(new LevelChunkBuilder.Instance
                     {
                         IsPiece = true, Part = piece.Piece, Center = new float2(piece.Cell) + new float2(piece.Size) * 0.5f, Rotation = piece.Rotation,
+                        Raise = piece.Piece < blob.PieceRaises.Length ? blob.PieceRaises[piece.Piece] : 0f,
                     });
                 }
 
@@ -295,7 +302,7 @@ namespace LevelGeneration
                 {
                     int prefab = blob.PlacementRules[placed.Rule].Prefab;
                     if (prefab < 0 || prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[prefab] == Entity.Null) continue;
-                    Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Corners, placed.Grid.x, placed.Grid.y),
+                    Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Ground, placed.Grid.x, placed.Grid.y),
                           math.mul(blob.Rotation, quaternion.RotateY(placed.Yaw)));
                 }
             // Hand-placed prefabs: at their cell's center, turned with the bent grid there
@@ -306,7 +313,7 @@ namespace LevelGeneration
                     if (placed.Prefab < 0 || placed.Prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[placed.Prefab] == Entity.Null) continue;
                     var turn = math.mul(LevelDeformation.CellTurn(stream.Corners, blob.Width, blob.Height, placed.Cell.x, placed.Cell.y),
                                         quaternion.RotateY(math.radians(90f * placed.Rotation)));
-                    Spawn(stream.PlacementPrefabs[placed.Prefab], GridToWorld(ref blob, stream.Corners, placed.Cell.x + 0.5f, placed.Cell.y + 0.5f),
+                    Spawn(stream.PlacementPrefabs[placed.Prefab], GridToWorld(ref blob, stream.Ground, placed.Cell.x + 0.5f, placed.Cell.y + 0.5f),
                           math.mul(blob.Rotation, turn));
                 }
             foreach (var prop in pending.Builder.Props)
@@ -339,6 +346,7 @@ namespace LevelGeneration
                 FillPocketsSmallerThan = blob.FillPocketsSmallerThan,
                 WalkableCorners = blob.WalkableCorners,
                 NotWalkableCorners = blob.NotWalkableCorners,
+                WalkableEdges = blob.WalkableEdges,
                 LockedCorners = Copy(ref blob.LockedCorners, Allocator.TempJob),
                 Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
                 UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
@@ -381,12 +389,10 @@ namespace LevelGeneration
         /// Runs the placement rules (LevelPlacementJob) on the finished layout: spawners become LevelEnemySpawner entities
         /// with a group picked by weight, props are kept per chunk until it's built. Returns how many of each.
         /// </summary>
-        (int Props, int Spawners) Place(LevelStream stream, ref LevelLayoutBlob blob, uint seed)
+        (int Props, int Spawners) Place(LevelStream stream, ref LevelLayoutBlob blob, uint seed, LevelSurface surface)
         {
             if (blob.PlacementRules.Length == 0) return (0, 0);
             int cells = blob.Width * blob.Height;
-            var terrain = LevelPlacement.CornerTerrain(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(),
-                                                       blob.CornerMasks.ToArray(), blob.CornerTerrains.ToArray());
             var occupied = new NativeArray<bool>(cells, Allocator.TempJob);
             for (int i = 0; i < cells && i < blob.InitialCells.Length; i++) occupied[i] = blob.InitialCells[i] == WfcSolver.Occupied;
             var rules = new NativeArray<PlacementRuleData>(blob.PlacementRules.Length, Allocator.TempJob);
@@ -398,7 +404,9 @@ namespace LevelGeneration
             {
                 Width = blob.Width, Height = blob.Height, TileSize = blob.TileSize, Seed = seed,
                 StartCorner = blob.StartCorner, Start = new float2(blob.PlayerStart) + 0.5f,
-                CornerTerrain = new NativeArray<byte>(terrain, Allocator.TempJob),
+                CornerTerrain = new NativeArray<byte>(surface.Terrain, Allocator.TempJob),
+                CornerHeight = new NativeArray<float>(surface.Height, Allocator.TempJob),
+                EdgeWalkable = new NativeArray<byte>(surface.EdgeWalkable, Allocator.TempJob),
                 OccupiedCells = occupied, BentCorners = stream.JobCorners, Rules = rules, Reserved = reserved,
                 Points = new NativeList<PlacementPoint>(Allocator.TempJob),
             };
@@ -439,7 +447,7 @@ namespace LevelGeneration
                 EntityManager.AddComponentData(spawner, new LevelEnemySpawner
                 {
                     Cell = (int2)math.floor(point.Grid),
-                    Position = GridToWorld(ref blob, stream.Corners, point.Grid.x, point.Grid.y),
+                    Position = GridToWorld(ref blob, stream.Ground, point.Grid.x, point.Grid.y),
                     TriggerRadius = rule.TriggerRadius,
                     SpawnRadius = rule.SpawnRadius,
                 });
@@ -451,6 +459,8 @@ namespace LevelGeneration
 
             enemies.Dispose();
             job.CornerTerrain.Dispose();
+            job.CornerHeight.Dispose();
+            job.EdgeWalkable.Dispose();
             job.OccupiedCells.Dispose();
             job.Rules.Dispose();
             job.Reserved.Dispose();

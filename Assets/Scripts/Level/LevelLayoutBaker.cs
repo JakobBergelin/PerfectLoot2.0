@@ -49,13 +49,21 @@ namespace LevelGeneration
             Copy(builder, ref root.CornerMasks, compiled.CornerMasks);
             Copy(builder, ref root.EdgeMasks, compiled.EdgeMasks);
             Copy(builder, ref root.InitialCells, compiled.InitialCells);
-            Copy(builder, ref root.CornerTerrains, compiled.CornerTerrains);
             root.Connect = authoring.ConnectWalkableAreas;
             root.StartCorner = compiled.StartCorner;
             root.FillPocketsSmallerThan = authoring.FillPocketsSmallerThan;
             root.WalkableCorners = compiled.WalkableCorners;
             root.NotWalkableCorners = compiled.NotWalkableCorners;
+            root.WalkableEdges = compiled.WalkableEdges;
             Copy(builder, ref root.LockedCorners, compiled.LockedCorners);
+
+            Copy(builder, ref root.CornerTerrains, compiled.CornerTerrains);
+            Copy(builder, ref root.CornerHeights, compiled.CornerHeights);
+            Copy(builder, ref root.EdgeWalkables, compiled.EdgeWalkables);
+            Copy(builder, ref root.TileCorners, tileSet.TileCornerIndices());
+            Copy(builder, ref root.TileEdges, tileSet.TileEdgeIndices());
+            Copy(builder, ref root.TileRaises, tileSet.TileRaises());
+            Copy(builder, ref root.PieceRaises, tileSet.PieceRaises());
 
             var pieces = builder.Allocate(ref root.Pieces, compiled.Pieces.Count);
             for (int i = 0; i < compiled.Pieces.Count; i++)
@@ -75,7 +83,6 @@ namespace LevelGeneration
             var savedCells = builder.Allocate(ref root.SavedCells, saved?.Length ?? 0);
             for (int i = 0; i < (saved?.Length ?? 0); i++) savedCells[i] = saved[i];
 
-            Copy(builder, ref root.TileCorners, tileSet.TileCornerTerrains());
 
             // Placement rules; their prefabs and enemies go in buffers below
             var placementSet = authoring.Placements;
