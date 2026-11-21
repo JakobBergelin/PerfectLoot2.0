@@ -82,6 +82,10 @@ MonoBehaviour:
     Name: Cliff
     Color: {r: 0.8, g: 0.35, b: 0.25, a: 1}
     Walkable: 0
+  - Id: 2
+    Name: Slope
+    Color: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+    Walkable: 1
   Tiles:
   - Name: Floor
     Prefab: {fileID: 1898504868844677056, guid: b69f275ea640da54285ad652b60cb99a, type: 3}
@@ -945,10 +949,42 @@ MonoBehaviour:
     East: 1
     North: 0
     West: 1
-    Weight: 25.92
+    Weight: 7.776
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 1
+    Background: 0
+    Looks: []
+  - Name: RampSide
+    Prefab: {fileID: 8234667624171789328, guid: 58c850dca3de11e4d800a4e185b665e0, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 7
+    NorthWest: 7
+    South: 0
+    East: 2
+    North: 0
+    West: 1
+    Weight: 18.144
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: RampMid
+    Prefab: {fileID: 3498594081001852491, guid: 51b09df10810b5a46a9cc3a8f27276a3, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 7
+    NorthWest: 7
+    South: 0
+    East: 2
+    North: 0
+    West: 2
+    Weight: 7.776
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
     Background: 0
     Looks: []
   - Name: BridgeEnd

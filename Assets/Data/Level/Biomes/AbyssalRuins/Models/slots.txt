@@ -49,6 +49,8 @@ K_Liquid|Bank,Liquid
 K_Overgrowth|Joint,Overgrowth,Accent
 K_Path|Joint,Path
 K_Ramp|Joint,Floor,Cliff
+K_RampMid|Joint,Floor
+K_RampSide|Joint,Floor,Cliff
 K_Rock|WallDark,WallTop
 K_Rock_Drop_1|WallDark,WallTop,WallSide,Chasm
 K_Rock_Drop_2|WallDark,WallTop,WallSide,Chasm

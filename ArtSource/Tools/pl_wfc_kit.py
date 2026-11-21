@@ -37,11 +37,17 @@ CONNECTIONS = [
     ("OvergrowthHigh", "overgrowth", HIGH, "Walkable", 9, None),
 ]
 CONN = {c[0]: {"kind": c[1], "height": c[2], "terrain": c[3], "id": c[4], "higher": c[5]} for c in CONNECTIONS}
-# name, Id, units can walk across. A ramp is a Walk Through tile with a straight cliff's edges, so it needs no edges of its own.
-EDGES = [("Plain", 0, True), ("Cliff", 1, False)]
+# name, Id, units can walk across. A narrow ramp is a Walk Through tile with a straight cliff's edges; a wide ramp's open
+# side is a Slope edge, which only another ramp's open side matches.
+EDGES = [("Plain", 0, True), ("Cliff", 1, False), ("Slope", 2, True)]
 EDGE = {e[0]: e[1] for e in EDGES}
 FLOORLIKE = ("floor", "path", "overgrowth")
-RAMP_HALF = 1.4     # Half the width of a ramp cut through a cliff
+RAMP_HALF = 1.4     # Half the width of a narrow ramp cut through a cliff
+# Where each kind of ramp tile's slope runs across the tile (u from, to): a narrow ramp has walls on both sides; a wide
+# ramp is a RampSide with its open (Slope) side against a mirrored RampSide or a RampMid, so neighbouring ramps merge
+OPEN = TILE / 2 + 0.01
+RAMP_SPANS = {"ramp": (-RAMP_HALF, RAMP_HALF), "ramp_side": (-RAMP_HALF, OPEN), "ramp_mid": (-OPEN, OPEN)}
+RAMP_WEIGHT = {"Ramp": 0.15, "RampSide": 0.35, "RampMid": 0.15}   # Factors on a straight cliff's weight
 LIP = 0.35 / (TILE / 2)     # Width of the stone lip along cliff tops and chasm rims (in Field.g units: meters / half a tile)
 # How strongly a connection claims a tile's area against the others (a bridge deck is narrower than half a tile)
 BIAS = {"Bridge": 0.72}
@@ -278,10 +284,13 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
     depth = S["depth"]
     g = {c: (lambda u, v, c=c: F.g(c, u, v)) for c in F.present}
     jitter = T._jitter(seed, S["cliff_jitter"])
-    # A ramp is a strip cut through the middle of a straight cliff, from the low ground (south) up to the high ground
-    ramp = (lambda u, v: (v / TILE + 0.5) * HIGH) if kind == "ramp" else None
-    strip = (lambda u, v: RAMP_HALF - abs(u)) if ramp else None
-    if strip: g = {c: (lambda u, v, c=c: min(F.g(c, u, v), abs(u) - RAMP_HALF)) for c in F.present}
+    # A ramp is a strip cut through a straight cliff, from the low ground (south) up to the high ground, between u = lo and
+    # hi. Its sides have walls (a narrow ramp), or a wide ramp's open side runs on into the next ramp tile.
+    lo, hi = RAMP_SPANS.get(kind, (0.0, 0.0))
+    walls = [u for u in (lo, hi) if abs(u) < TILE / 2]
+    ramp = (lambda u, v: (v / TILE + 0.5) * HIGH) if kind in RAMP_SPANS else None
+    strip = (lambda u, v: min(u - lo, hi - u)) if ramp else None
+    if strip: g = {c: (lambda u, v, c=c: min(F.g(c, u, v), max(lo - u, u - hi))) for c in F.present}
 
     # Surfaces; each returns faces whose outline gets the faces down to its neighbors
     outlines = {}
@@ -327,7 +336,7 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
     for c, faces in outlines.items():
         k = CONN[c]["kind"]
         for a, e in outline_edges(b, faces):
-            if strip and abs(abs((uv_of(a)[0] + uv_of(e)[0]) / 2) - RAMP_HALF) < 0.06: continue   # The ramp's sides are below
+            if strip and any(abs((uv_of(a)[0] + uv_of(e)[0]) / 2 - w) < 0.06 for w in walls): continue   # The ramp's sides are below
             other = across(F, a, e)
             ko = CONN[other]["kind"]
             ta = a.co.z
@@ -352,8 +361,8 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
 
     # The ramp's sides: down from the ramp to the low ground beside it, or from the high ground down to the ramp
     if strip:
-        for side in (-1, 1):
-            u = side * RAMP_HALF
+        for u in walls:
+            side = 1 if u > 0 else -1
             for j in range(N):
                 v0, v1 = T._gp(j), T._gp(j + 1)
                 beside = h[F.winner(u + side * 0.05, (v0 + v1) / 2)]
@@ -470,10 +479,10 @@ def kit_tiles(S):
         for c in corners: w *= WEIGHT[c] * (S["drop_factor"] if c == "Drop" else 1.0) * (S["liquid_factor"] / 0.5 if c == "Liquid" else 1.0)
         return w
 
-    def add(name, corners, model=None, kind=None, factor=1.0, background=False, mirror=False, looks=0, walk_through=False):
+    def add(name, corners, model=None, kind=None, factor=1.0, background=False, mirror=False, looks=0, walk_through=False, edges=None):
         model = model or "K_" + name
         if model not in models: models[model] = dict(corners=corners, kind=kind, looks=looks)
-        tiles.append(dict(name=name, model=model, corners=corners, edges=edge_ids(corners), weight=weight(corners) * factor,
+        tiles.append(dict(name=name, model=model, corners=corners, edges=edges or edge_ids(corners), weight=weight(corners) * factor,
                           background=background, mirror=mirror, walk_through=walk_through,
                           looks=[f"{model}_Look{l}" for l in range(1, looks + 1)]))
 
@@ -492,7 +501,14 @@ def kit_tiles(S):
     # Corner and diagonal cliffs are rarer than straight ones, so cliffs run long instead of zigzagging
     for p, corners in patterns("Floor", "FloorHigh"):
         add(f"Cliff_{p}", corners, factor={"2": 1.0, "D": 0.25}.get(p, 0.5))
-    add("Ramp", ["Floor", "Floor", "FloorHigh", "FloorHigh"], kind="ramp", factor=0.5, walk_through=True)
+    # Narrow ramps, and wide ones (a RampSide on each side, RampMids between): neighbouring ramps mostly merge.
+    # Wide ramps aren't Walk Through: their walkable Slope edges already join low and high ground, and the connectivity
+    # repair, which asks for Walk Through tiles, then only asks for narrow ramps (a wide one needs ramp neighbours,
+    # which a carved corridor can't give it)
+    ramp = ["Floor", "Floor", "FloorHigh", "FloorHigh"]
+    add("Ramp", ramp, kind="ramp", factor=RAMP_WEIGHT["Ramp"], walk_through=True)
+    add("RampSide", ramp, kind="ramp_side", factor=RAMP_WEIGHT["RampSide"], mirror=True, edges=["Plain", "Slope", "Plain", "Cliff"])
+    add("RampMid", ramp, kind="ramp_mid", factor=RAMP_WEIGHT["RampMid"], edges=["Plain", "Slope", "Plain", "Slope"])
     # Where a bridge reaches the ground (its mirror is the other side)
     add("BridgeEnd", ["Floor", "Floor", "Bridge", "Drop"], factor=4.0, mirror=True)
     # Where a cliff between low and high ground runs into a chasm: without these a plateau could only be ringed all by
