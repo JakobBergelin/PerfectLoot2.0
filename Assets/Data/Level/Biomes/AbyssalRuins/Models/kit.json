@@ -1,0 +1,1504 @@
+{
+ "corners": [
+  {
+   "id": 0,
+   "name": "Floor",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": 7
+  },
+  {
+   "id": 1,
+   "name": "Rock",
+   "terrain": "NotWalkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 2,
+   "name": "Liquid",
+   "terrain": "Water",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 3,
+   "name": "Drop",
+   "terrain": "NotWalkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 4,
+   "name": "Path",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": 8
+  },
+  {
+   "id": 5,
+   "name": "Overgrowth",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": 9
+  },
+  {
+   "id": 6,
+   "name": "Bridge",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 7,
+   "name": "FloorHigh",
+   "terrain": "Walkable",
+   "height": 2.5,
+   "higher": -1
+  },
+  {
+   "id": 8,
+   "name": "PathHigh",
+   "terrain": "Walkable",
+   "height": 2.5,
+   "higher": -1
+  },
+  {
+   "id": 9,
+   "name": "OvergrowthHigh",
+   "terrain": "Walkable",
+   "height": 2.5,
+   "higher": -1
+  }
+ ],
+ "edges": [
+  {
+   "id": 0,
+   "name": "Plain",
+   "walkable": true
+  },
+  {
+   "id": 1,
+   "name": "Cliff",
+   "walkable": false
+  }
+ ],
+ "tiles": [
+  {
+   "name": "Floor",
+   "model": "K_Floor",
+   "corners": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 256.0,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": [
+    "K_Floor_Look1",
+    "K_Floor_Look2"
+   ]
+  },
+  {
+   "name": "Path",
+   "model": "K_Path",
+   "corners": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 6.5536,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Overgrowth",
+   "model": "K_Overgrowth",
+   "corners": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 6.5536,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock",
+   "model": "K_Rock",
+   "corners": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop",
+   "model": "K_Drop",
+   "corners": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.0736,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid",
+   "model": "K_Liquid",
+   "corners": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0625,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh",
+   "model": "K_Floor",
+   "corners": [
+    7,
+    7,
+    7,
+    7
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 10.4976,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": [
+    "K_Floor_Look1",
+    "K_Floor_Look2"
+   ]
+  },
+  {
+   "name": "PathHigh",
+   "model": "K_Path",
+   "corners": [
+    8,
+    8,
+    8,
+    8
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "OvergrowthHigh",
+   "model": "K_Overgrowth",
+   "corners": [
+    9,
+    9,
+    9,
+    9
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_1",
+   "model": "K_Floor_Path_1",
+   "corners": [
+    0,
+    0,
+    0,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 102.4,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_2",
+   "model": "K_Floor_Path_2",
+   "corners": [
+    0,
+    0,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 40.96,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_D",
+   "model": "K_Floor_Path_D",
+   "corners": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 20.48,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_3",
+   "model": "K_Floor_Path_3",
+   "corners": [
+    0,
+    4,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 16.384,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_1",
+   "model": "K_Floor_Overgrowth_1",
+   "corners": [
+    0,
+    0,
+    0,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 102.4,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_2",
+   "model": "K_Floor_Overgrowth_2",
+   "corners": [
+    0,
+    0,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 40.96,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_D",
+   "model": "K_Floor_Overgrowth_D",
+   "corners": [
+    0,
+    5,
+    0,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 20.48,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_3",
+   "model": "K_Floor_Overgrowth_3",
+   "corners": [
+    0,
+    5,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 16.384,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_1",
+   "model": "K_Floor_Rock_1",
+   "corners": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 64.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_2",
+   "model": "K_Floor_Rock_2",
+   "corners": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 16.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_D",
+   "model": "K_Floor_Rock_D",
+   "corners": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 8.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_3",
+   "model": "K_Floor_Rock_3",
+   "corners": [
+    0,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 4.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Drop_1",
+   "model": "K_Floor_Drop_1",
+   "corners": [
+    0,
+    0,
+    0,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 76.8,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Drop_2",
+   "model": "K_Floor_Drop_2",
+   "corners": [
+    0,
+    0,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 23.04,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Drop_D",
+   "model": "K_Floor_Drop_D",
+   "corners": [
+    0,
+    3,
+    0,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 11.52,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Drop_3",
+   "model": "K_Floor_Drop_3",
+   "corners": [
+    0,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 6.912,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_1",
+   "model": "K_Floor_Liquid_1",
+   "corners": [
+    0,
+    0,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 32.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_2",
+   "model": "K_Floor_Liquid_2",
+   "corners": [
+    0,
+    0,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 4.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_D",
+   "model": "K_Floor_Liquid_D",
+   "corners": [
+    0,
+    2,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.0,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_3",
+   "model": "K_Floor_Liquid_3",
+   "corners": [
+    0,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.5,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_1",
+   "model": "K_Rock_Drop_1",
+   "corners": [
+    1,
+    1,
+    1,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.2,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_2",
+   "model": "K_Rock_Drop_2",
+   "corners": [
+    1,
+    1,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.44,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_D",
+   "model": "K_Rock_Drop_D",
+   "corners": [
+    1,
+    3,
+    1,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.72,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_3",
+   "model": "K_Rock_Drop_3",
+   "corners": [
+    1,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.728,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop_Bridge_1",
+   "model": "K_Drop_Bridge_1",
+   "corners": [
+    3,
+    3,
+    3,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.432,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop_Bridge_2",
+   "model": "K_Drop_Bridge_2",
+   "corners": [
+    3,
+    3,
+    6,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.09,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop_Bridge_D",
+   "model": "K_Drop_Bridge_D",
+   "corners": [
+    3,
+    6,
+    3,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.045,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop_Bridge_3",
+   "model": "K_Drop_Bridge_3",
+   "corners": [
+    3,
+    6,
+    6,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0187,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_Drop_1",
+   "model": "K_FloorHigh_Drop_1",
+   "corners": [
+    7,
+    7,
+    7,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "weight": 6.9984,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_Drop_2",
+   "model": "K_FloorHigh_Drop_2",
+   "corners": [
+    7,
+    7,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "weight": 4.6656,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_Drop_D",
+   "model": "K_FloorHigh_Drop_D",
+   "corners": [
+    7,
+    3,
+    7,
+    3
+   ],
+   "edges": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "weight": 2.3328,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_Drop_3",
+   "model": "K_FloorHigh_Drop_3",
+   "corners": [
+    7,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    1,
+    0,
+    0,
+    1
+   ],
+   "weight": 3.1104,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_PathHigh_1",
+   "model": "K_Floor_Path_1",
+   "corners": [
+    7,
+    7,
+    7,
+    8
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 5.832,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_PathHigh_2",
+   "model": "K_Floor_Path_2",
+   "corners": [
+    7,
+    7,
+    8,
+    8
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 3.24,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_PathHigh_D",
+   "model": "K_Floor_Path_D",
+   "corners": [
+    7,
+    8,
+    7,
+    8
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.62,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_PathHigh_3",
+   "model": "K_Floor_Path_3",
+   "corners": [
+    7,
+    8,
+    8,
+    8
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.8,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_OvergrowthHigh_1",
+   "model": "K_Floor_Overgrowth_1",
+   "corners": [
+    7,
+    7,
+    7,
+    9
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 5.832,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_OvergrowthHigh_2",
+   "model": "K_Floor_Overgrowth_2",
+   "corners": [
+    7,
+    7,
+    9,
+    9
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 3.24,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_OvergrowthHigh_D",
+   "model": "K_Floor_Overgrowth_D",
+   "corners": [
+    7,
+    9,
+    7,
+    9
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.62,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorHigh_OvergrowthHigh_3",
+   "model": "K_Floor_Overgrowth_3",
+   "corners": [
+    7,
+    9,
+    9,
+    9
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.8,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Cliff_1",
+   "model": "K_Cliff_1",
+   "corners": [
+    0,
+    0,
+    0,
+    7
+   ],
+   "edges": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "weight": 115.2,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Cliff_2",
+   "model": "K_Cliff_2",
+   "corners": [
+    0,
+    0,
+    7,
+    7
+   ],
+   "edges": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "weight": 51.84,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Cliff_D",
+   "model": "K_Cliff_D",
+   "corners": [
+    0,
+    7,
+    0,
+    7
+   ],
+   "edges": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "weight": 25.92,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Cliff_3",
+   "model": "K_Cliff_3",
+   "corners": [
+    0,
+    7,
+    7,
+    7
+   ],
+   "edges": [
+    1,
+    0,
+    0,
+    1
+   ],
+   "weight": 23.328,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Ramp",
+   "model": "K_Ramp",
+   "corners": [
+    0,
+    0,
+    7,
+    7
+   ],
+   "edges": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "weight": 36.288,
+   "background": false,
+   "mirror": false,
+   "walkThrough": true,
+   "looks": []
+  },
+  {
+   "name": "BridgeEnd",
+   "model": "K_BridgeEnd",
+   "corners": [
+    0,
+    0,
+    6,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 19.2,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_AABC",
+   "model": "K_CliffDrop_AABC",
+   "corners": [
+    0,
+    0,
+    7,
+    3
+   ],
+   "edges": [
+    0,
+    1,
+    1,
+    0
+   ],
+   "weight": 10.368,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_ABAC",
+   "model": "K_CliffDrop_ABAC",
+   "corners": [
+    0,
+    7,
+    0,
+    3
+   ],
+   "edges": [
+    1,
+    1,
+    0,
+    0
+   ],
+   "weight": 10.368,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_BBAC",
+   "model": "K_CliffDrop_BBAC",
+   "corners": [
+    7,
+    7,
+    0,
+    3
+   ],
+   "edges": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "weight": 4.6656,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_BABC",
+   "model": "K_CliffDrop_BABC",
+   "corners": [
+    7,
+    0,
+    7,
+    3
+   ],
+   "edges": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "weight": 4.6656,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_CCAB",
+   "model": "K_CliffDrop_CCAB",
+   "corners": [
+    3,
+    3,
+    0,
+    7
+   ],
+   "edges": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "weight": 3.1104,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "CliffDrop_CACB",
+   "model": "K_CliffDrop_CACB",
+   "corners": [
+    3,
+    0,
+    3,
+    7
+   ],
+   "edges": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "weight": 3.1104,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Background",
+   "model": "K_Rock",
+   "corners": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.0,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Drop_Background",
+   "model": "K_DropSpires",
+   "corners": [
+    3,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 6.2208,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": [
+    "K_DropSpires_Look1",
+    "K_DropSpires_Look2"
+   ]
+  },
+  {
+   "name": "Rock_Drop_1_Background",
+   "model": "K_Rock_Drop_1",
+   "corners": [
+    1,
+    1,
+    1,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.2,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_2_Background",
+   "model": "K_Rock_Drop_2",
+   "corners": [
+    1,
+    1,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.44,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_D_Background",
+   "model": "K_Rock_Drop_D",
+   "corners": [
+    1,
+    3,
+    1,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.44,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Drop_3_Background",
+   "model": "K_Rock_Drop_3",
+   "corners": [
+    1,
+    3,
+    3,
+    3
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.728,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  }
+ ]
+}

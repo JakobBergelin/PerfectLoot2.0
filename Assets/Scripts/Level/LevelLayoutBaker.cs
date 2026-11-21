@@ -38,6 +38,7 @@ namespace LevelGeneration
             int variants = compiled.Variants.Count;
             Copy(builder, ref root.VariantSlots, compiled.VariantSlots());
             Copy(builder, ref root.VariantWeights, compiled.VariantWeights());
+            Copy(builder, ref root.VariantWalkThrough, compiled.VariantWalkThrough());
             var tiles = builder.Allocate(ref root.VariantTile, variants);
             var rotations = builder.Allocate(ref root.VariantRotation, variants);
             var mirrors = builder.Allocate(ref root.VariantMirror, variants);
@@ -64,6 +65,7 @@ namespace LevelGeneration
             Copy(builder, ref root.EdgeWalkables, compiled.EdgeWalkables);
             Copy(builder, ref root.TileCorners, tileSet.TileCornerIndices());
             Copy(builder, ref root.TileEdges, tileSet.TileEdgeIndices());
+            Copy(builder, ref root.TileWalkThrough, tileSet.TileWalkThrough());
             Copy(builder, ref root.TileRaises, tileSet.TileRaises());
             Copy(builder, ref root.PieceRaises, tileSet.PieceRaises());
 
@@ -73,6 +75,7 @@ namespace LevelGeneration
             root.Ring.Height = ring?.Height ?? 0;
             Copy(builder, ref root.Ring.VariantSlots, ring?.VariantSlots() ?? new byte[0]);
             Copy(builder, ref root.Ring.VariantWeights, ring?.VariantWeights() ?? new float[0]);
+            Copy(builder, ref root.Ring.VariantWalkThrough, ring?.VariantWalkThrough() ?? new byte[0]);
             Copy(builder, ref root.Ring.VariantTile, ring?.Variants.ConvertAll(v => v.Tile).ToArray() ?? new int[0]);
             Copy(builder, ref root.Ring.VariantRotation, ring?.Variants.ConvertAll(v => v.Rotation).ToArray() ?? new int[0]);
             Copy(builder, ref root.Ring.VariantMirror, ring?.Variants.ConvertAll(v => (byte)(v.Mirror ? 1 : 0)).ToArray() ?? new byte[0]);

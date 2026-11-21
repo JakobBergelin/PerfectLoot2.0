@@ -72,6 +72,13 @@ namespace LevelGeneration
             return slots;
         }
 
+        public byte[] VariantWalkThrough()
+        {
+            var walkThrough = new byte[Variants.Count];
+            for (int v = 0; v < walkThrough.Length; v++) walkThrough[v] = (byte)(Variants[v].WalkThrough ? 1 : 0);
+            return walkThrough;
+        }
+
         public float[] VariantWeights()
         {
             var weights = new float[Variants.Count];
@@ -86,6 +93,7 @@ namespace LevelGeneration
             Height = Height,
             VariantSlots = new NativeArray<byte>(VariantSlots(), Allocator.TempJob),
             VariantWeights = new NativeArray<float>(VariantWeights(), Allocator.TempJob),
+            VariantWalkThrough = new NativeArray<byte>(VariantWalkThrough(), Allocator.TempJob),
             InitialCornerMasks = new NativeArray<ulong>(CornerMasks, Allocator.TempJob),
             InitialEdgeMasks = new NativeArray<ulong>(EdgeMasks, Allocator.TempJob),
             InitialCells = new NativeArray<int>(InitialCells, Allocator.TempJob),
@@ -97,6 +105,7 @@ namespace LevelGeneration
             WalkableCorners = WalkableCorners,
             NotWalkableCorners = NotWalkableCorners,
             WalkableEdges = WalkableEdges,
+            CornerHeights = new NativeArray<float>(CornerHeights, Allocator.TempJob),
             LockedCorners = new NativeArray<byte>(LockedCorners, Allocator.TempJob),
             Result = new NativeArray<int>(Width * Height, Allocator.TempJob),
             Attempts = new NativeReference<int>(Allocator.TempJob),

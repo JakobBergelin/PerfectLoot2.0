@@ -19,8 +19,8 @@ using UnityEngine.SceneManagement;
 public static class BiomeTileSets
 {
     const string Root = "Assets/Data/Level/Biomes";
-    const string ComicEnv = "Assets/ArtStyleTest/Materials/ComicCathedral/CT_Stone.mat";
-    const string ComicFloor = "Assets/ArtStyleTest/Materials/ComicCathedral/Ground_CT_Stone.mat";
+    internal const string ComicEnv = "Assets/ArtStyleTest/Materials/ComicCathedral/CT_Stone.mat";
+    internal const string ComicFloor = "Assets/ArtStyleTest/Materials/ComicCathedral/Ground_CT_Stone.mat";
     const string ComicGlow = "Assets/ArtStyleTest/Materials/ComicCathedral/CT_Flame.mat";
     const string SampleProfile = "Assets/Settings/SampleSceneProfile.asset";
 
@@ -99,11 +99,12 @@ public static class BiomeTileSets
         },
         new Biome
         {
-            Name = "AbyssalRuins", TestScene = "TestReachExit", Ambient = AmbientKind.Motes, Border = WfcCornerRule.Water, LiquidFactor = 1.1f,
+            Name = "AbyssalRuins", TestScene = "TestReachExit", Ambient = AmbientKind.Motes, LiquidFactor = 1.1f,
             Style = new BiomeTileGenerator.Style { WallHeight = 2.4f, WallTopJitter = 0.7f, WallBulge = 0.08f, BoundaryNoise = 0.1f, Chasm = true, ChasmDepth = 12f, Feature = BiomeTileGenerator.FloorFeature.RuneCircle, GlowReach = 0.9f, RimRockChance = 0.2f, CrownRocks = 4 },
             Pattern = FloorPattern.Slabs, Floor = "#403C4A", FloorAlt = "#3C3846", FloorGap = "#262330",
             WallSide = "#565470", WallTop = "#8C88A8", Bank = "#2A2834", Rock = "#5E5A78", Accent = "#3FC4B4", AccentGlow = "#4FD6C8",
             EnvShadow = "#2A4448",
+            Deep = "#0E2A30", Shallow = "#1A4A50", Foam = "#6FD6C8", Ripple = "#2C6A6E",
             ChasmRim = "#2A2834", ChasmFog = "#123E44", ChasmMist = new Color(0.3f, 1.1f, 1.0f),
             Glow = new Color(0.03f, 0.15f, 0.14f),
             Key = "#FFE6CC", KeyIntensity = 1.15f, AmbientSky = "#4A6670", AmbientEquator = "#2A3E44", AmbientGround = "#101418", Fog = "#0E2226", FogDensity = 0.014f,
@@ -129,6 +130,9 @@ public static class BiomeTileSets
 
     public static WfcTileSet Build(Biome biome)
     {
+        // A biome with a Blender kit (ArtSource/Tools/pl_wfc_kit.py) is built from it
+        if (BiomeKitBuilder.HasKit(biome)) return BiomeKitBuilder.Build(biome);
+
         string folder = $"{Root}/{biome.Name}";
         EnsureFolder(folder);
         EnsureFolder(folder + "/Tiles");
@@ -241,7 +245,7 @@ public static class BiomeTileSets
 
     // ---------- materials ----------
 
-    static Dictionary<BiomeTileGenerator.Part, Material> BuildMaterials(Biome b, string folder)
+    internal static Dictionary<BiomeTileGenerator.Part, Material> BuildMaterials(Biome b, string folder)
     {
         string m = folder + "/Materials";
         var floorA = FloorTexture(b, folder, "FloorA", b.Floor, 11);
@@ -302,7 +306,7 @@ public static class BiomeTileSets
         return result;
     }
 
-    static Material Comic(string template, string path, Color color, Color shadow, Texture2D texture = null)
+    internal static Material Comic(string template, string path, Color color, Color shadow, Texture2D texture = null)
     {
         var material = AssetDatabase.LoadAssetAtPath<Material>(path);
         if (material == null)
@@ -493,6 +497,9 @@ public static class BiomeTileSets
             {
                 layout.TileSet = tileSet;
                 layout.Border = b.Border;
+                // Kit tile sets have Background tiles: a ring of scenery around the level
+                layout.BackgroundRing = BiomeKitBuilder.HasKit(b) ? 3 : 0;
+                layout.BackgroundBorder = WfcCornerRule.NotWalkable;
                 EditorUtility.SetDirty(layout);
             }
         EditorSceneManager.MarkSceneDirty(subscene);
@@ -642,9 +649,9 @@ public static class BiomeTileSets
         return hash % 997;
     }
 
-    static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
+    internal static Color Hex(string hex) => ColorUtility.TryParseHtmlString(hex, out var color) ? color : Color.magenta;
 
-    static void EnsureFolder(string path)
+    internal static void EnsureFolder(string path)
     {
         if (AssetDatabase.IsValidFolder(path)) return;
         string parent = Path.GetDirectoryName(path).Replace('\\', '/');

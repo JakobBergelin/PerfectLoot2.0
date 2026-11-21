@@ -176,7 +176,7 @@ namespace LevelGeneration
                 ChunksPerFrame = math.max(1, layout.ChunksPerFrame),
             };
             packed.Dispose();
-            var surface = LevelSurface.Build(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.TileEdges.ToArray(),
+            var surface = LevelSurface.Build(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.TileEdges.ToArray(), blob.TileWalkThrough.ToArray(),
                                              cornerMasks, blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
             stream.Ground = new float3[corners.Length];
             for (int i = 0; i < corners.Length; i++) stream.Ground[i] = corners[i] + new float3(0f, surface.Height[i], 0f);
@@ -404,6 +404,7 @@ namespace LevelGeneration
                 Height = blob.Height,
                 VariantSlots = Copy(ref blob.VariantSlots, Allocator.TempJob),
                 VariantWeights = Copy(ref blob.VariantWeights, Allocator.TempJob),
+                VariantWalkThrough = Copy(ref blob.VariantWalkThrough, Allocator.TempJob),
                 InitialCornerMasks = new NativeArray<ulong>(cornerMasks, Allocator.TempJob),
                 InitialEdgeMasks = Copy(ref blob.EdgeMasks, Allocator.TempJob),
                 InitialCells = new NativeArray<int>(initialCells, Allocator.TempJob),
@@ -417,6 +418,7 @@ namespace LevelGeneration
                 WalkableCorners = blob.WalkableCorners,
                 NotWalkableCorners = blob.NotWalkableCorners,
                 WalkableEdges = blob.WalkableEdges,
+                CornerHeights = Copy(ref blob.CornerHeights, Allocator.TempJob),
                 LockedCorners = new NativeArray<byte>(lockedCorners, Allocator.TempJob),
                 Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
                 UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
@@ -473,12 +475,14 @@ namespace LevelGeneration
                 Height = ring.Height,
                 VariantSlots = Copy(ref ring.VariantSlots, Allocator.TempJob),
                 VariantWeights = Copy(ref ring.VariantWeights, Allocator.TempJob),
+                VariantWalkThrough = Copy(ref ring.VariantWalkThrough, Allocator.TempJob),
                 InitialCornerMasks = new NativeArray<ulong>(cornerMasks, Allocator.TempJob),
                 InitialEdgeMasks = new NativeArray<ulong>(edgeMasks, Allocator.TempJob),
                 InitialCells = Copy(ref ring.InitialCells, Allocator.TempJob),
                 Seed = math.hash(new uint2(seed, 0xB6C0u)),
                 MaxAttempts = layout.MaxAttempts,
                 StartCorner = -1,
+                CornerHeights = Copy(ref blob.CornerHeights, Allocator.TempJob),
                 LockedCorners = new NativeArray<byte>(cornerMasks.Length, Allocator.TempJob),
                 Result = new NativeArray<int>(cells, Allocator.TempJob),
                 Attempts = new NativeReference<int>(Allocator.TempJob),

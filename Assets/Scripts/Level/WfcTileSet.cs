@@ -162,6 +162,14 @@ namespace LevelGeneration
             return indices;
         }
 
+        /// <summary>1 for each Walk Through tile, by index.</summary>
+        public byte[] TileWalkThrough()
+        {
+            var walkThrough = new byte[Tiles.Count];
+            for (int t = 0; t < walkThrough.Length; t++) walkThrough[t] = (byte)(Tiles[t] != null && Tiles[t].WalkThrough ? 1 : 0);
+            return walkThrough;
+        }
+
         /// <summary>How high a model with these corners is placed: its lowest corner's height (0 when none is known).</summary>
         public float Raise(IEnumerable<int> cornerIds)
         {
@@ -209,7 +217,7 @@ namespace LevelGeneration
             return new WfcTile
             {
                 Name = tile.Name + " High", Prefab = tile.Prefab, Weight = tile.Weight, AllowRotations = tile.AllowRotations, Background = tile.Background,
-                AllowMirror = tile.AllowMirror, Looks = new List<GameObject>(tile.Looks ?? new List<GameObject>()),
+                AllowMirror = tile.AllowMirror, WalkThrough = tile.WalkThrough, Looks = new List<GameObject>(tile.Looks ?? new List<GameObject>()),
                 SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
                 South = tile.South, East = tile.East, North = tile.North, West = tile.West,
             };
@@ -267,6 +275,7 @@ namespace LevelGeneration
                             Tile = t,
                             Rotation = r,
                             Mirror = m == 1,
+                            WalkThrough = tile.WalkThrough,
                             Corners = new int4(corners[0], corners[1], corners[2], corners[3]),
                             Edges = new int4(edges[0], edges[1], edges[2], edges[3]),
                         });
@@ -299,6 +308,9 @@ namespace LevelGeneration
         [Tooltip("Also use the tile mirrored (east and west swapped). Leave it off for tiles with one-sided edges, " +
                  "like a ramp's west and east slope edges.")]
         public bool AllowMirror;
+        [Tooltip("Units walk between all its walkable corners through it, even across a cliff edge (a ramp up a cliff). The " +
+                 "connectivity repair asks for one where a corridor has to cross a cliff.")]
+        public bool WalkThrough;
         [Tooltip("Only used in the background ring around the level (scenery, no colliders), never inside it")]
         public bool Background;
         [Tooltip("Other models for the same tile. Each cell picks one (or Prefab) at random, so neighboring cells look different.")]
@@ -355,6 +367,7 @@ namespace LevelGeneration
         public int Tile;
         public int Rotation;
         public bool Mirror;
+        public bool WalkThrough;
         /// <summary>Corner connection indices: SouthWest, SouthEast, NorthEast, NorthWest.</summary>
         public int4 Corners;
         /// <summary>Edge connection indices: South, East, North, West.</summary>

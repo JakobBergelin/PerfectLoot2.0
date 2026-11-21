@@ -162,6 +162,8 @@ public class WfcTileSetEditor : Editor
                         EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.AllowRotations)), new GUIContent("Rotations"));
                         EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.Background)),
                                                       new GUIContent("Background", "Only used in the background ring around the level"));
+                        EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.WalkThrough)),
+                                                      new GUIContent("Walk Through", "Units walk between all its corners through it (a ramp)"));
                         EditorGUIUtility.labelWidth = 0;
                         var ids = CornerFields.Select(field => tile.FindPropertyRelative(field).intValue);
                         EditorGUILayout.LabelField(new GUIContent($"Raise {tileSet.Raise(ids):0.##} m", "The model is placed at its lowest corner's height"),

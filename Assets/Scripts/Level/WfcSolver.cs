@@ -20,6 +20,8 @@ namespace LevelGeneration
     {
         public const int Free = -1;
         public const int Occupied = -2;
+        /// <summary>A start cell that may only become a Walk Through tile (a ramp): the repair asks for one to get past a cliff.</summary>
+        public const int WalkThroughOnly = -3;
         /// <summary>Slots per cell: corners SW, SE, NE, NW, then edges S, E, N, W.</summary>
         public const int SlotsPerCell = 8;
 
@@ -27,6 +29,8 @@ namespace LevelGeneration
         /// <summary>8 connection indices per variant: corners SW, SE, NE, NW, then edges S, E, N, W.</summary>
         public NativeArray<byte> VariantSlots;
         public NativeArray<float> VariantWeights;
+        /// <summary>1 for variants of Walk Through tiles: units walk between all their walkable corners through them (a ramp).</summary>
+        public NativeArray<byte> VariantWalkThrough;
         /// <summary>(Width + 1) * (Height + 1) corner connection masks, row by row from the south-west.</summary>
         public NativeArray<ulong> InitialCornerMasks;
         /// <summary>Edge connection masks: Width * (Height + 1) edges running east-west (row by row), then (Width + 1) * Height running north-south.</summary>
@@ -44,6 +48,8 @@ namespace LevelGeneration
         public ulong WalkableCorners, NotWalkableCorners;
         /// <summary>Edge connections units can walk across (bits by index); a cliff edge isn't one.</summary>
         public ulong WalkableEdges;
+        /// <summary>The ground height of each corner connection (by index): the repair asks for a ramp only between heights.</summary>
+        public NativeArray<float> CornerHeights;
         /// <summary>Per corner: 1 when the repair may never change it (painted rules, pieces, forced tiles, start, border).</summary>
         public NativeArray<byte> LockedCorners;
         /// <summary>Pockets with fewer walkable corners than this (and none locked) are filled with not walkable; larger ones are carved to.</summary>
@@ -56,8 +62,8 @@ namespace LevelGeneration
         public int Backtracks;
 
         public const byte RepairNone = 0, RepairCarved = 1, RepairFilled = 2;
-        const int MaxRepairRounds = 4;
-        const int MaxRepairRing = 2;    // Rings of cells around the changes the repair may solve again when no tile fits
+        const int MaxRepairRounds = 8;
+        const int MaxRepairRing = 4;    // Rings of cells around the changes the repair may solve again when no tile fits
 
         int _variants, _words, _cornerWidth, _corners, _edgesAcross;
         NativeArray<ulong> _support;    // [slot s][connection][word]: variants with that connection in slot s
@@ -76,6 +82,15 @@ namespace LevelGeneration
         struct Decision { public int Log, Cell, Variant; }
         NativeList<Change> _log;
         NativeList<Decision> _decisions;
+
+        // Connectivity repair working data (Repair)
+        NativeArray<int> _component, _parent, _kept;
+        NativeList<int> _pathQueue, _rampA, _rampB, _pocketSize;
+        NativeArray<ulong> _walkThroughDomain;    // [word]: the Walk Through variants
+        NativeList<bool> _pocketLocked;
+        NativeArray<ulong> _masks, _keptSlots;
+        NativeArray<bool> _changed, _corridor;
+        NativeArray<byte> _repairsBefore;
 
         /// <summary>
         /// Fills result (per cell: the chosen variant, or Occupied) and returns the attempt that succeeded (1-based), or
@@ -111,6 +126,9 @@ namespace LevelGeneration
             _dirty = new NativeArray<bool>(cells, Allocator.Temp);
             _log = new NativeList<Change>(cells * 8, Allocator.Temp);
             _decisions = new NativeList<Decision>(cells, Allocator.Temp);
+            _walkThroughDomain = new NativeArray<ulong>(_words, Allocator.Temp);
+            for (int v = 0; v < _variants; v++)
+                if (VariantWalkThrough[v] != 0) _walkThroughDomain[v / 64] |= 1ul << (v % 64);
             _weightLogWeight = new NativeArray<float>(_variants, Allocator.Temp);
             for (int v = 0; v < _variants; v++)
                 _weightLogWeight[v] = VariantWeights[v] > 0f ? VariantWeights[v] * math.log(VariantWeights[v]) : 0f;
@@ -141,7 +159,7 @@ namespace LevelGeneration
                 {
                     ulong all = w < _words - 1 || _variants % 64 == 0 ? ~0ul : (1ul << (_variants % 64)) - 1;
                     _domains[c * _words + w] = initial >= 0 ? (initial / 64 == w ? 1ul << (initial % 64) : 0ul)
-                                             : initial == Occupied ? 0ul : all;
+                                             : initial == Occupied ? 0ul : initial == WalkThroughOnly ? _walkThroughDomain[w] : all;
                 }
                 _queued[c] = false;
                 _dirty[c] = true;
@@ -380,18 +398,23 @@ namespace LevelGeneration
             return chosen;
         }
 
+        // The height of a corner with this one connection
+        float HeightOf(ulong mask) => mask != 0ul && math.tzcnt(mask) < CornerHeights.Length ? CornerHeights[math.tzcnt(mask)] : 0f;
+
         // A solved corner is walkable when its one connection is
         bool IsWalkable(ulong mask) => mask != 0ul && (mask & ~WalkableCorners) == 0ul;
 
         /// <summary>
         /// Connects every walkable area to the start corner. Walkable corners next to each other (not diagonally) are
-        /// connected unless the edge between them can't be walked across (a cliff); anything not reached from the start is
-        /// a pocket. Small pockets (no locked corners) become not walkable, the rest get the shortest corridor to the
-        /// reached area carved through anything else, never through locked corners, and across a cliff only when there's
-        /// no other way: its corners become walkable and its edges crossable (the cliff becomes a ramp). Then only the cells
+        /// connected when the edge between them can be walked across or a Walk Through tile (a ramp) is beside it; anything
+        /// not reached from the start is a pocket. Small pockets (no locked corners) become not walkable, the rest get the
+        /// shortest corridor to the reached area carved through anything else, never through locked corners, and across a
+        /// cliff only when there's no other way: its corners become walkable, and a cell beside each cliff it crosses must
+        /// become a Walk Through tile. Then only the cells
         /// touching changed corners are solved again (every other cell keeps its tile), with up to two rings of cells
-        /// around them when no tile fits, and the check repeats. When even that fails, the level stays as it was and those
-        /// pockets are reported as unconnected. Always true (kept for the caller's reroll check).
+        /// around them when no tile fits, and the check repeats. When all the changes together don't fit, each pocket is
+        /// tried on its own; one that still doesn't fit stays as it was and is reported as unconnected. Always true (kept
+        /// for the caller's reroll check).
         /// </summary>
         bool Repair(ref Random random, NativeArray<ulong> initialMasks)
         {
@@ -400,143 +423,213 @@ namespace LevelGeneration
             UnconnectedPockets = 0;
             if (StartCorner < 0 || StartCorner >= corners) return true;
 
-            var component = new NativeArray<int>(corners, Allocator.Temp);
-            var queue = new NativeList<int>(corners, Allocator.Temp);
-            var parent = new NativeArray<int>(corners, Allocator.Temp);
-            var masks = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
-            var changed = new NativeArray<bool>(corners, Allocator.Temp);
-            var cells = new NativeArray<int>(cellCount, Allocator.Temp);
-            var openEdges = new NativeList<int>(Allocator.Temp);
-            var start = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
-            var near = new NativeArray<bool>(cellCount, Allocator.Temp);
-            var grown = new NativeArray<bool>(cellCount, Allocator.Temp);
-            var kept = new NativeArray<int>(cellCount, Allocator.Temp);
-            var keptSlots = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
-            var repairsBefore = new NativeArray<byte>(corners, Allocator.Temp);
+            _component = new NativeArray<int>(corners, Allocator.Temp);
+            _pathQueue = new NativeList<int>(corners, Allocator.Temp);
+            _parent = new NativeArray<int>(corners, Allocator.Temp);
+            _masks = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
+            _changed = new NativeArray<bool>(corners, Allocator.Temp);
+            _corridor = new NativeArray<bool>(corners, Allocator.Temp);
+            _rampA = new NativeList<int>(Allocator.Temp);
+            _rampB = new NativeList<int>(Allocator.Temp);
+            _kept = new NativeArray<int>(cellCount, Allocator.Temp);
+            _keptSlots = new NativeArray<ulong>(_slotMasks.Length, Allocator.Temp);
+            _repairsBefore = new NativeArray<byte>(corners, Allocator.Temp);
+            _pocketSize = new NativeList<int>(Allocator.Temp);
+            _pocketLocked = new NativeList<bool>(Allocator.Temp);
+            var pockets = new NativeList<int>(Allocator.Temp);
 
             for (int round = 0; round < MaxRepairRounds; round++)
             {
-                // Label walkable areas: 0 is the start's, 1.. are pockets; -1 is not walkable
-                for (int c = 0; c < corners; c++) component[c] = -1;
-                if (!IsWalkable(_slotMasks[StartCorner])) return true;
-                int components = 0;
-                var pocketSize = new NativeList<int>(Allocator.Temp);
-                var pocketLocked = new NativeList<bool>(Allocator.Temp);
-                for (int seed = -1; seed < corners; seed++)
-                {
-                    int from = seed < 0 ? StartCorner : seed;
-                    if (component[from] >= 0 || !IsWalkable(_slotMasks[from])) continue;
-                    int label = components++;
-                    int size = 0;
-                    bool locked = false;
-                    queue.Clear();
-                    queue.Add(from);
-                    component[from] = label;
-                    for (int head = 0; head < queue.Length; head++)
-                    {
-                        int corner = queue[head];
-                        size++;
-                        locked |= LockedCorners[corner] != 0;
-                        for (int n = 0; n < 4; n++)
-                        {
-                            int next = Neighbor(corner, n);
-                            if (next < 0 || component[next] >= 0 || !IsWalkable(_slotMasks[next]) || !CanCross(_slotMasks[EdgeBetween(corner, next)])) continue;
-                            component[next] = label;
-                            queue.Add(next);
-                        }
-                    }
-                    pocketSize.Add(size);
-                    pocketLocked.Add(locked);
-                }
+                int components = LabelWalkableAreas();
                 if (components <= 1) return true;
 
-                // Start from the solved slots and change pockets: fill small ones, carve corridors to the rest
-                masks.CopyFrom(_slotMasks);
-                repairsBefore.CopyFrom(Repairs);
-                for (int c = 0; c < corners; c++) changed[c] = false;
-                openEdges.Clear();
-                int unconnected = 0, changedPockets = 0;
-                for (int pocket = 1; pocket < components; pocket++)
-                {
-                    if (pocketSize[pocket] < FillPocketsSmallerThan && !pocketLocked[pocket] && NotWalkableCorners != 0ul)
+                // Every pocket's change at once, solved in one go: corridors to the larger ones first, then the small ones filled
+                // (but never a corner a corridor runs through)
+                StartChanges();
+                int unconnected = 0;
+                pockets.Clear();
+                for (int fill = 0; fill < 2; fill++)
+                    for (int pocket = 1; pocket < components; pocket++)
                     {
-                        for (int c = 0; c < corners; c++)
-                        {
-                            if (component[c] != pocket || LockedCorners[c] != 0) continue;
-                            masks[c] = NotWalkableCorners;
-                            changed[c] = true;
-                            Repairs[c] = RepairFilled;
-                        }
-                        changedPockets++;
-                        continue;
+                        if (Fills(pocket) != (fill == 1)) continue;
+                        if (ChangePocket(pocket)) pockets.Add(pocket);
+                        else unconnected++;
                     }
+                UnconnectedPockets = unconnected;
+                if (pockets.Length == 0) return true;
+                if (Resolve(ref random, initialMasks)) continue;
 
-                    // The shortest path to the start's area: without crossing a cliff if there is one, else across one
-                    int reached = ShortestPath(pocket, false, component, parent, queue);
-                    if (reached < 0) reached = ShortestPath(pocket, true, component, parent, queue);
-                    if (reached < 0) { unconnected++; continue; }
-                    changedPockets++;
-                    // Walk the path back to the pocket: every corner on it becomes walkable, every edge on it crossable
-                    for (int c = reached; parent[c] >= 0; c = parent[c])
+                // Together they don't fit: one pocket at a time, keeping the ones that do
+                for (int i = 0; i < pockets.Length; i++)
+                {
+                    StartChanges();
+                    ChangePocket(pockets[i]);
+                    if (!Resolve(ref random, initialMasks))
                     {
-                        int from = parent[c], edge = EdgeBetween(c, from);
-                        if (!CanCross(masks[edge]))
-                        {
-                            openEdges.Add(edge);
-                            changed[c] = changed[from] = true;
-                        }
-                        if (IsWalkable(masks[from])) continue;
-                        masks[from] = WalkableCorners;
-                        changed[from] = true;
-                        Repairs[from] = RepairCarved;
+                        // The corridor at the pocket's height instead (its ramp then goes where it meets the start's area)
+                        StartChanges();
+                        ChangePocket(pockets[i], atPocketHeight: true);
+                        if (!Resolve(ref random, initialMasks)) unconnected++;
                     }
                 }
                 UnconnectedPockets = unconnected;
-                if (changedPockets == 0) return true;
+                if (unconnected == components - 1) return true;    // Nothing changed: the next round would do the same
+            }
+            // Out of rounds: whatever is still cut off
+            UnconnectedPockets = math.max(0, LabelWalkableAreas() - 1);
+            return true;
+        }
 
-                // The re-solve starts from the layout's rules with the changed corners on top, and an edge the path crosses
-                // may only become one units can walk across (a ramp instead of a cliff). Kept cells fix their slots again.
-                start.CopyFrom(initialMasks);
-                for (int c = 0; c < corners; c++)
-                    if (changed[c]) start[c] = masks[c];
-                for (int i = 0; i < openEdges.Length; i++)
+        // Labels walkable areas (0 is the start's, 1.. pockets, -1 not walkable) with their sizes and whether they hold a
+        // locked corner; returns how many there are (0 when the start isn't walkable)
+        int LabelWalkableAreas()
+        {
+            for (int c = 0; c < _corners; c++) _component[c] = -1;
+            _pocketSize.Clear();
+            _pocketLocked.Clear();
+            if (!IsWalkable(_slotMasks[StartCorner])) return 0;
+            int components = 0;
+            for (int seed = -1; seed < _corners; seed++)
+            {
+                int from = seed < 0 ? StartCorner : seed;
+                if (_component[from] >= 0 || !IsWalkable(_slotMasks[from])) continue;
+                int label = components++;
+                int size = 0;
+                bool locked = false;
+                _pathQueue.Clear();
+                _pathQueue.Add(from);
+                _component[from] = label;
+                for (int head = 0; head < _pathQueue.Length; head++)
                 {
-                    int edge = openEdges[i];
-                    if ((initialMasks[edge] & WalkableEdges) != 0ul) start[edge] = initialMasks[edge] & WalkableEdges;
+                    int corner = _pathQueue[head];
+                    size++;
+                    locked |= LockedCorners[corner] != 0;
+                    for (int n = 0; n < 4; n++)
+                    {
+                        int next = Neighbor(corner, n);
+                        if (next < 0 || _component[next] >= 0 || !IsWalkable(_slotMasks[next]) || !Passable(corner, next)) continue;
+                        _component[next] = label;
+                        _pathQueue.Add(next);
+                    }
                 }
+                _pocketSize.Add(size);
+                _pocketLocked.Add(locked);
+            }
+            return components;
+        }
 
-                // Solve the cells touching a changed corner again; when no tile fits, also the cells around them (room for,
-                // say, a ramp's other side), a ring at a time. Every other cell keeps its tile.
-                for (int c = 0; c < cellCount; c++) kept[c] = InitialCells[c] == Occupied ? Occupied : FirstVariant(c);
-                keptSlots.CopyFrom(_slotMasks);
+        // Starts a set of changes from the solved slots, remembering the level as it is to go back to
+        void StartChanges()
+        {
+            _masks.CopyFrom(_slotMasks);
+            _keptSlots.CopyFrom(_slotMasks);
+            for (int c = 0; c < Width * Height; c++) _kept[c] = InitialCells[c] == Occupied ? Occupied : FirstVariant(c);
+            _repairsBefore.CopyFrom(Repairs);
+            for (int c = 0; c < _corners; c++) _changed[c] = _corridor[c] = false;
+            _rampA.Clear();
+            _rampB.Clear();
+        }
+
+        // Fills a small pocket with not walkable, or carves the shortest corridor from it to the start's area (without
+        // crossing a cliff if there is a way, else across one), as the ground where it joins the start's area or, when asked,
+        // as the pocket's ground. False when it can't be reached past locked corners.
+        // A pocket small enough (and without locked corners) to be filled rather than connected
+        bool Fills(int pocket) => _pocketSize[pocket] < FillPocketsSmallerThan && !_pocketLocked[pocket] && NotWalkableCorners != 0ul;
+
+        bool ChangePocket(int pocket, bool atPocketHeight = false)
+        {
+            if (Fills(pocket))
+            {
+                for (int c = 0; c < _corners; c++)
+                {
+                    if (_component[c] != pocket || LockedCorners[c] != 0 || _corridor[c]) continue;
+                    _masks[c] = NotWalkableCorners;
+                    _changed[c] = true;
+                    Repairs[c] = RepairFilled;
+                }
+                return true;
+            }
+
+            int reached = ShortestPath(pocket, false, _component, _parent, _pathQueue);
+            if (reached < 0) reached = ShortestPath(pocket, true, _component, _parent, _pathQueue);
+            if (reached < 0) return false;
+            // The corridor is one connection (so one height): the ground at one of its ends
+            int end = reached;
+            while (atPocketHeight && _parent[end] >= 0) end = _parent[end];
+            ulong corridor = _slotMasks[end] & WalkableCorners;
+            // Walk the path back to the pocket: every corner on it becomes walkable (and stays so: no fill takes it)
+            for (int c = reached; _parent[c] >= 0; c = _parent[c])
+            {
+                int from = _parent[c];
+                _corridor[c] = _corridor[from] = true;
+                if (IsWalkable(_masks[from])) continue;
+                _masks[from] = corridor;
+                _changed[from] = true;
+                Repairs[from] = RepairCarved;
+            }
+            // Where a step goes between heights (across a cliff), one of the cells beside it must become a Walk Through
+            // tile (a ramp)
+            for (int c = reached; _parent[c] >= 0; c = _parent[c])
+            {
+                int from = _parent[c];
+                if (HeightOf(_masks[c]) == HeightOf(_masks[from]) || Passable(c, from)) continue;
+                CellsBeside(c, from, out int a, out int b);
+                if (!Rampable(a)) a = b;
+                if (!Rampable(b)) b = a;
+                if (a >= 0)
+                {
+                    _rampA.Add(a);
+                    _rampB.Add(b);
+                }
+                _changed[c] = _changed[from] = true;
+            }
+            return true;
+        }
+
+        // Solves the changed part again: the cells touching a changed corner, then up to MaxRepairRing rings of cells around
+        // them when no tile fits; every other cell keeps its tile. The start is the layout's rules with the changed corners
+        // on top; a cell the corridor needs a ramp in may only become a Walk Through tile (first the cells on one side of
+        // the cliffs it crosses, then the other). When nothing fits, the level goes back to how it was (and the changes'
+        // repair marks with it); false then.
+        bool Resolve(ref Random random, NativeArray<ulong> initialMasks)
+        {
+            var start = new NativeArray<ulong>(initialMasks.Length, Allocator.Temp);
+            start.CopyFrom(initialMasks);
+            for (int c = 0; c < _corners; c++)
+                if (_changed[c]) start[c] = _masks[c];
+
+            int cellCount = Width * Height;
+            var near = new NativeArray<bool>(cellCount, Allocator.Temp);
+            var grown = new NativeArray<bool>(cellCount, Allocator.Temp);
+            var cells = new NativeArray<int>(cellCount, Allocator.Temp);
+            for (int side = 0; side < (_rampA.Length > 0 ? 2 : 1); side++)
+            {
+                var ramps = side == 0 ? _rampA : _rampB;
                 for (int y = 0; y < Height; y++)
                     for (int x = 0; x < Width; x++)
                     {
                         bool touched = false;
-                        for (int k = 0; k < 4; k++) touched |= changed[Slot(x, y, k)];
+                        for (int k = 0; k < 4; k++) touched |= _changed[Slot(x, y, k)];
                         near[x + y * Width] = touched;
                     }
-                bool solved = false;
-                for (int ring = 0; ring <= MaxRepairRing && !solved; ring++)
+                for (int i = 0; i < ramps.Length; i++) near[ramps[i]] = true;
+                for (int ring = 0; ring <= MaxRepairRing; ring++)
                 {
                     if (ring > 0) Grow(near, grown);
                     for (int c = 0; c < cellCount; c++)
-                        cells[c] = kept[c] == Occupied || InitialCells[c] >= 0 ? kept[c] : near[c] ? Free : kept[c];
-                    solved = TrySolve(ref random, start, cells);
-                }
-                if (!solved)
-                {
-                    // No tile fits even with room around: keep the level as it was, and those pockets stay unreachable
-                    _slotMasks.CopyFrom(keptSlots);
-                    for (int c = 0; c < cellCount; c++)
-                        for (int w = 0; w < _words; w++)
-                            _domains[c * _words + w] = kept[c] >= 0 && kept[c] / 64 == w ? 1ul << (kept[c] % 64) : 0ul;
-                    Repairs.CopyFrom(repairsBefore);
-                    UnconnectedPockets = unconnected + changedPockets;
-                    return true;
+                        cells[c] = _kept[c] == Occupied || InitialCells[c] >= 0 ? _kept[c] : near[c] ? Free : _kept[c];
+                    for (int i = 0; i < ramps.Length; i++) cells[ramps[i]] = WalkThroughOnly;
+                    if (TrySolve(ref random, start, cells)) return true;
                 }
             }
-            return true;
+
+            // No tile fits even with room around: back to the level as it was
+            _slotMasks.CopyFrom(_keptSlots);
+            for (int c = 0; c < cellCount; c++)
+                for (int w = 0; w < _words; w++)
+                    _domains[c * _words + w] = _kept[c] >= 0 && _kept[c] / 64 == w ? 1ul << (_kept[c] % 64) : 0ul;
+            Repairs.CopyFrom(_repairsBefore);
+            return false;
         }
 
         // Every cell next to a marked one (not diagonally) gets marked too
@@ -568,7 +661,7 @@ namespace LevelGeneration
                     int next = Neighbor(corner, n);
                     if (next < 0 || parent[next] != -2) continue;
                     if (!IsWalkable(_slotMasks[next]) && LockedCorners[next] != 0) continue;
-                    if (!crossCliffs && !CanCross(_slotMasks[EdgeBetween(corner, next)])) continue;
+                    if (!crossCliffs && !Passable(corner, next)) continue;
                     parent[next] = corner;
                     if (component[next] == 0) return next;
                     queue.Add(next);
@@ -586,6 +679,34 @@ namespace LevelGeneration
 
         // An edge units can walk across (a solved edge has one connection; one inside a piece is still open and counts)
         bool CanCross(ulong mask) => (mask & WalkableEdges) != 0ul;
+
+        // Units can walk from corner a to its neighbor b: along a walkable edge, or through a Walk Through tile beside it
+        bool Passable(int a, int b)
+        {
+            if (CanCross(_slotMasks[EdgeBetween(a, b)])) return true;
+            CellsBeside(a, b, out int left, out int right);
+            return WalkThrough(left) || WalkThrough(right);
+        }
+
+        // The cells on either side of the edge between neighboring corners a and b (-1 off the grid)
+        void CellsBeside(int a, int b, out int first, out int second)
+        {
+            int low = math.min(a, b), x = low % _cornerWidth, y = low / _cornerWidth;
+            bool alongX = math.abs(a - b) == 1;
+            int fx = alongX ? x : x - 1, fy = alongX ? y - 1 : y;
+            first = fx >= 0 && fy >= 0 && fx < Width && fy < Height ? fx + fy * Width : -1;
+            second = x < Width && y < Height ? x + y * Width : -1;
+        }
+
+        bool WalkThrough(int cell)
+        {
+            if (cell < 0 || InitialCells[cell] == Occupied) return false;
+            int variant = FirstVariant(cell);
+            return variant >= 0 && VariantWalkThrough[variant] != 0;
+        }
+
+        // A cell the repair may turn into a ramp: on the grid, not under a piece or a forced tile
+        bool Rampable(int cell) => cell >= 0 && InitialCells[cell] == Free;
 
         // Corner next to corner in direction n (0 east, 1 north, 2 west, 3 south), or -1 off the grid
         int Neighbor(int corner, int n)
@@ -623,6 +744,7 @@ namespace LevelGeneration
         public int Width, Height;
         [ReadOnly] public NativeArray<byte> VariantSlots;
         [ReadOnly] public NativeArray<float> VariantWeights;
+        [ReadOnly] public NativeArray<byte> VariantWalkThrough;
         [ReadOnly] public NativeArray<ulong> InitialCornerMasks;
         [ReadOnly] public NativeArray<ulong> InitialEdgeMasks;
         [ReadOnly] public NativeArray<int> InitialCells;
@@ -634,6 +756,7 @@ namespace LevelGeneration
         public int StartCorner;
         public int FillPocketsSmallerThan;
         public ulong WalkableCorners, NotWalkableCorners, WalkableEdges;
+        [ReadOnly] public NativeArray<float> CornerHeights;
         [ReadOnly] public NativeArray<byte> LockedCorners;
 
         /// <summary>Per cell: the chosen variant, or WfcSolver.Occupied. Only valid when Attempts &gt; 0.</summary>
@@ -651,11 +774,11 @@ namespace LevelGeneration
             var solver = new WfcSolver
             {
                 Width = Width, Height = Height,
-                VariantSlots = VariantSlots, VariantWeights = VariantWeights,
+                VariantSlots = VariantSlots, VariantWeights = VariantWeights, VariantWalkThrough = VariantWalkThrough,
                 InitialCornerMasks = InitialCornerMasks, InitialEdgeMasks = InitialEdgeMasks, InitialCells = InitialCells,
                 Seed = Seed, MaxAttempts = MaxAttempts,
                 Connect = Connect, StartCorner = StartCorner, FillPocketsSmallerThan = FillPocketsSmallerThan,
-                WalkableCorners = WalkableCorners, NotWalkableCorners = NotWalkableCorners, WalkableEdges = WalkableEdges,
+                WalkableCorners = WalkableCorners, NotWalkableCorners = NotWalkableCorners, WalkableEdges = WalkableEdges, CornerHeights = CornerHeights,
                 LockedCorners = LockedCorners, Repairs = Repairs,
             };
             Attempts.Value = solver.Solve(Result);
@@ -667,10 +790,12 @@ namespace LevelGeneration
         {
             VariantSlots.Dispose();
             VariantWeights.Dispose();
+            VariantWalkThrough.Dispose();
             InitialCornerMasks.Dispose();
             InitialEdgeMasks.Dispose();
             InitialCells.Dispose();
             LockedCorners.Dispose();
+            CornerHeights.Dispose();
             Result.Dispose();
             Attempts.Dispose();
             Repairs.Dispose();

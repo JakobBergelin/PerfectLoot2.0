@@ -36,6 +36,7 @@ namespace LevelGeneration
         public BlobArray<int> VariantTile;
         public BlobArray<int> VariantRotation;
         public BlobArray<byte> VariantMirror;
+        public BlobArray<byte> VariantWalkThrough;
         public BlobArray<ulong> CornerMasks;
         public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;
@@ -53,6 +54,7 @@ namespace LevelGeneration
         public BlobArray<byte> EdgeWalkables;
         public BlobArray<byte> TileCorners;
         public BlobArray<byte> TileEdges;
+        public BlobArray<byte> TileWalkThrough;
         /// <summary>How high each tile and piece model is placed: its lowest corner's height.</summary>
         public BlobArray<float> TileRaises;
         public BlobArray<float> PieceRaises;
@@ -101,6 +103,7 @@ namespace LevelGeneration
         public BlobArray<int> VariantTile;
         public BlobArray<int> VariantRotation;
         public BlobArray<byte> VariantMirror;
+        public BlobArray<byte> VariantWalkThrough;
         public BlobArray<ulong> CornerMasks;
         public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;

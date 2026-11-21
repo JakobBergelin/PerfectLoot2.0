@@ -80,7 +80,8 @@ namespace LevelGeneration
 
         /// <param name="tileCorners">4 corner connection indices per tile (SW, SE, NE, NW), Unknown where missing</param>
         /// <param name="tileEdges">4 edge connection indices per tile (S, E, N, W), Unknown where missing</param>
-        public static LevelSurface Build(int width, int height, int[] packedCells, byte[] tileCorners, byte[] tileEdges, ulong[] cornerMasks,
+        /// <param name="tileWalkThrough">1 per Walk Through tile: its 4 edges count as walkable (units walk through it, a ramp)</param>
+        public static LevelSurface Build(int width, int height, int[] packedCells, byte[] tileCorners, byte[] tileEdges, byte[] tileWalkThrough, ulong[] cornerMasks,
                                          byte[] connectionTerrains, float[] connectionHeights, byte[] edgeWalkables)
         {
             int cornerWidth = width + 1, across = width * (height + 1);
@@ -127,6 +128,16 @@ namespace LevelGeneration
             }
             for (int e = 0; e < edges.Length; e++)
                 surface.EdgeWalkable[e] = edges[e] < edgeWalkables.Length ? edgeWalkables[edges[e]] : (byte)1;
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    int packed = packedCells[x + y * width];
+                    if (packed < 0) continue;
+                    int tile = LevelLayoutAuthoring.PackedTile(packed);
+                    if (tile >= tileWalkThrough.Length || tileWalkThrough[tile] == 0) continue;
+                    surface.EdgeWalkable[x + y * width] = surface.EdgeWalkable[x + (y + 1) * width] = 1;
+                    surface.EdgeWalkable[across + x + y * cornerWidth] = surface.EdgeWalkable[across + x + 1 + y * cornerWidth] = 1;
+                }
             return surface;
         }
     }
