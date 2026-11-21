@@ -115,10 +115,10 @@ public struct EnemyAlerts : IComponentData
 }
 
 /// <summary>
-/// Sets each enemy's EnemyTarget to the nearest target it senses, counting Threat. Physics enemies (EnemyDetection): see it within their
+/// Sets each enemy's EnemyTarget to the nearest target it senses, counting Threat. Solid enemies (EnemyDetection): see it within their
 /// sight radius (shrinking toward ProximityRadius for a target behind them) with line of sight on the FlowField, or notice
 /// it within ProximityRadius through walls; finding one themselves alerts enemies within AlertRadius (next frame). Swarms
-/// (SwarmDetection): a target within Radius, keeping it unless one with more Threat comes that close. Both react to alerts and drop a dead or gone target; Physics enemies also
+/// (SwarmDetection): a target within Radius, keeping it unless one with more Threat comes that close. Both react to alerts and drop a dead or gone target; Solid enemies also
 /// forget it after ForgetTime without sensing it. Being hit is EnemyHitDetectionSystem, near misses EnemyNearMissSystem.
 /// </summary>
 [UpdateInGroup(typeof(MovementSystemGroup))]

@@ -41,7 +41,7 @@ public static class EnemyEntitySetup
         // Without AI (training dummies) it just stands there
         if (definition.HasAI)
         {
-            bool ranged = definition.BodyType == BodyType.Physics && definition.DesiredDistance > 0f;
+            bool ranged = definition.BodyType == BodyType.Solid && definition.DesiredDistance > 0f;
             AddOrSet(entityManager, entity, new NpcBehavior
             {
                 TurnSpeed = definition.TurnSpeed,

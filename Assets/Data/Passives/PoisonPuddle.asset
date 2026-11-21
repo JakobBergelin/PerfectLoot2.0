@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 87502426fe358e74db677de7bc9885c4, type: 3}
+  m_Name: PoisonPuddle
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.DeathPuddlePassive
+  Name: Poison Puddle
+  Icon: {fileID: 0}
+  Description: Leaves a poison puddle where it dies, for 3 seconds.
+  PlayerSelectable: 0
+  DamageType: 3
+  DamagePerSecond: 1
+  Radius: 2.5
+  Lifetime: 3

@@ -107,6 +107,9 @@ public enum PassiveType
     MomentumOfMind,
     RaiseDead,
     FrostAura,
+    Split,
+    Hopping,
+    DeathPuddle,
 }
 
 /// <summary>

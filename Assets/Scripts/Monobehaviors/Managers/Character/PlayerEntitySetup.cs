@@ -14,7 +14,7 @@ public static class PlayerEntitySetup
         AddOrSet(entityManager, entity, new PlayerIndex { Value = playerIndex });
         AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = playerIndex });
         // In the spatial grid, so enemies keep a little distance (capsule radius 0.5)
-        AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Physics });
+        AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Solid });
         // Its active buffs and debuffs, for the HUD (EffectDisplaySystem)
         AddBuffer<EffectDisplay>(entityManager, entity);
         AddBuffer<HoveredEffect>(entityManager, entity);
@@ -44,7 +44,7 @@ public static class PlayerEntitySetup
         AddOrSet(entityManager, entity, new Player());
         AddOrSet(entityManager, entity, new TestPlayer());
         AddOrSet(entityManager, entity, new EnemyTargetable { FieldSlot = fieldSlot });
-        AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Physics });
+        AddOrSet(entityManager, entity, new Steering { Radius = 0.8f, BodyType = BodyType.Solid });
         AddCombatComponents(entityManager, entity, baseStats);
     }
 }

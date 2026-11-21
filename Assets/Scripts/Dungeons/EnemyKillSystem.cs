@@ -23,12 +23,13 @@ partial struct EnemyKillSystem : ISystem
         var killed = new NativeList<Entity>(Allocator.Temp);
         var kills = SystemAPI.GetSingletonBuffer<DungeonKill>();
         var bosses = SystemAPI.GetComponentLookup<DungeonBoss>(true);
+        var noLoot = SystemAPI.GetComponentLookup<NoKillLoot>(true);
         foreach (var (health, transform, entity) in SystemAPI.Query<RefRO<Health>, RefRO<LocalToWorld>>()
                      .WithAll<Enemy>().WithNone<KillCounted>().WithEntityAccess())
         {
             if (health.ValueRO.CurrentValue > 0f) continue;
             killed.Add(entity);
-            kills.Add(new DungeonKill { Position = transform.ValueRO.Position, Boss = bosses.HasComponent(entity) });
+            kills.Add(new DungeonKill { Position = transform.ValueRO.Position, Boss = bosses.HasComponent(entity), NoLoot = noLoot.HasComponent(entity) });
         }
         if (!killed.IsEmpty) state.EntityManager.AddComponent<KillCounted>(killed.AsArray());
     }

@@ -37,6 +37,8 @@ public partial struct EnemySelfDestructSystem : ISystem
             bool isCompanion = SystemAPI.HasComponent<Companion>(entity);
             var source = isCompanion ? SystemAPI.GetComponent<Companion>(entity).Owner : entity;
             var s = selfDestruct.ValueRO;
+            health.ValueRW.CurrentValue = 0f;
+            if (s.Damage <= 0f) continue;   // Only a death (e.g. the Puffshroom, whose Death Puddle does the hurting)
 
             var blast = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(blast, new LocalTransform { Position = transform.ValueRO.Position, Rotation = quaternion.identity, Scale = 1f });
@@ -45,8 +47,6 @@ public partial struct EnemySelfDestructSystem : ISystem
             commandBuffer.AddComponent(blast, new AttackTarget { TargetType = isCompanion ? TargetType.Enemy : TargetType.Player });
             if (isCompanion) commandBuffer.AddComponent(blast, new InitializeFromSource());
             commandBuffer.AddComponent(blast, new DestroyWithChildren());   // A single-frame hit
-
-            health.ValueRW.CurrentValue = 0f;
         }
     }
 }

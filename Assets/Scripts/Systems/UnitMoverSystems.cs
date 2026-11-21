@@ -155,7 +155,7 @@ public partial struct UnitMoverSystem : ISystem
             uint blockLayers = UnitMovement.WorldLayers |
                                (phased ? 0u
                                 : isPlayer ? (uint)CollisionLayerHelper.Enemy
-                                : steering.BodyType == BodyType.Physics && !PlayerPhased ? (uint)CollisionLayerHelper.Player : 0u);
+                                : steering.BodyType == BodyType.Solid && !PlayerPhased ? (uint)CollisionLayerHelper.Player : 0u);
             uint floorLayers = UnitMovement.GroundLayer |
                                (WaterWalkers.HasComponent(entity) && WaterWalkers.IsComponentEnabled(entity) ? (uint)CollisionLayerHelper.Water : 0u);
 

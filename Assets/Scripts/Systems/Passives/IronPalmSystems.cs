@@ -21,7 +21,6 @@ public partial struct IronPalmSystem : ISystem
 
     Random _random;
 
-    [BurstCompile]
     public void OnCreate(ref SystemState state)
     {
         _random = Random.CreateFromIndex((uint)System.Environment.TickCount);

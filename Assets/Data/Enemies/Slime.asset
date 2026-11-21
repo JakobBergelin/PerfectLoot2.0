@@ -1,0 +1,134 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: be91b521b825c8b2afba6fb6d8827fc6, type: 3}
+  m_Name: Slime
+  m_EditorClassIdentifier: Assembly-CSharp::Enemies.EnemyDefinition
+  Name: Slime
+  Prefab: {fileID: 7900000000000000001, guid: 75a35a42b4783514da87ad5d558534ec, type: 3}
+  OverrideColor: 0
+  Tint: {r: 0.9, g: 0.88, b: 0.78, a: 1}
+  BodyType: 0
+  Scale: 1
+  Mass: 1
+  CameraFocus: 0
+  Stats:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 1
+    Damage: 0
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
+    Health: 4
+    HealthRegeneration: 0
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceOnHit: 0
+    ResourceOnCrit: 0
+    LifeOnHit: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 0
+    ArmorPierce: 0
+    MovementSpeed: 2.5
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    PickupRange: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0
+    CriticalChance: 0
+    CriticalDamage: 1
+    BlockChance: 0
+    DodgeChance: 0
+    ProjectileDamageReduction: 0
+    MeleeDamageReduction: 0
+    AgilityForStrength: 0
+  Experience: 6
+  HasAI: 1
+  DetectionRadius: 15
+  ProximityRadius: 4
+  AlertRadius: 10
+  NearMissMargin: 2
+  ForgetTime: 5
+  AttackRadius: 1.5
+  TurnSpeed: 2
+  TurnAcceleration: 1
+  DesiredDistance: 0
+  DistanceTolerance: 1.5
+  Skills:
+  - {fileID: 11400000, guid: d828b0822490ec644ab88c4c0ebd8098, type: 2}
+  Passives:
+  - {fileID: 11400000, guid: 05b8670def4e83346bc5932e9644a88e, type: 2}
+  - {fileID: 11400000, guid: 016758b30ef5f484dac67bdfa09f8eb4, type: 2}
+  MeleeDamage: 0.5
+  SecondsBetweenAttacks: 1
+  AttackTurnSpeed: 360
+  AttackFacingAngle: 60
+  StatsPerDifficulty:
+    Strength: 0
+    Agility: 0
+    Intelligence: 0
+    WeaponDamage: 0
+    WeaponDamageRange: 0
+    WeaponReach: 0
+    WeaponCooldown: 0
+    AttackSpeed: 0.03
+    Damage: 0.1
+    ElementalDamage: 0
+    FireDamage: 0
+    ColdDamage: 0
+    LightningDamage: 0
+    PoisonDamage: 0
+    Health: 1
+    HealthRegeneration: 0
+    Resource: 0
+    ResourceRegeneration: 0
+    ResourceCostReduction: 0
+    ResourceOnHit: 0
+    ResourceOnCrit: 0
+    LifeOnHit: 0
+    Pierce: 0
+    Bounces: 0
+    ProjectileSpeed: 0
+    Armor: 1
+    ArmorPierce: 0
+    MovementSpeed: 0
+    AreaOfEffect: 0
+    CooldownReduction: 0
+    BuffDuration: 0
+    PickupRange: 0
+    ColdResistance: 0
+    FireResistance: 0
+    PoisonResistance: 0
+    LightningResistance: 0
+    AllResistance: 0.02
+    CriticalChance: 0
+    CriticalDamage: 0
+    BlockChance: 0
+    DodgeChance: 0
+    ProjectileDamageReduction: 0
+    MeleeDamageReduction: 0
+    AgilityForStrength: 0
+  Unlocks: []

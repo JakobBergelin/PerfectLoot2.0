@@ -8,7 +8,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 /// <summary>
-/// Hazards (see Hazard): every TickInterval, each enemy standing in at least one hazard takes one normal main hit per
+/// Hazards (see Hazard): every TickInterval, each enemy (or, for HitsPlayers, each player and companion) standing in at least one hazard takes one normal main hit per
 /// source and damage type, of DamagePerSecond x TickInterval; it can crit and applies the type's status effect.
 /// Overlapping hazards of the same source and type count once (the strongest). Counts hazards down and removes them.
 /// </summary>
@@ -56,7 +56,7 @@ public partial struct HazardSystem : ISystem
         var filter = new CollisionFilter
         {
             BelongsTo = ~0u,
-            CollidesWith = (uint)CollisionLayerHelper.AnyEnemy,
+            CollidesWith = (uint)CollisionLayerHelper.Unit,
             GroupIndex = 0,
         };
 
@@ -69,7 +69,8 @@ public partial struct HazardSystem : ISystem
             foreach (var overlap in overlaps)
             {
                 var target = overlap.Entity;
-                if (!SystemAPI.HasComponent<Enemy>(target) || !SystemAPI.HasComponent<Health>(target) || !SystemAPI.HasBuffer<DamageInstance>(target)) continue;
+                bool wanted = hazard.ValueRO.HitsPlayers ? SystemAPI.HasComponent<EnemyTargetable>(target) : SystemAPI.HasComponent<Enemy>(target);
+                if (!wanted || !SystemAPI.HasComponent<Health>(target) || !SystemAPI.HasBuffer<DamageInstance>(target)) continue;
 
                 var key = new HitKey { Target = target, Source = source.ValueRO.Entity, Type = hazard.ValueRO.Type };
                 if (hits.TryGetValue(key, out var existing) && existing.DamagePerSecond >= hazard.ValueRO.DamagePerSecond) continue;

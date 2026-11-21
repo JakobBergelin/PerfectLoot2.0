@@ -285,7 +285,7 @@ public class DungeonManager : MonoBehaviour
         using var spawnerEntities = spawners.ToEntityArray(Allocator.Temp);
         foreach (var spawner in spawnerEntities)
             foreach (var entry in entityManager.GetBuffer<LevelEnemySpawnerEntry>(spawner, isReadOnly: true))
-                _totalEnemies += math.max(0, _dungeon.EnemyCount(entry.Count, _difficulty));
+                _totalEnemies += math.max(0, _dungeon.EnemyCount(entry.Count, _difficulty)) * Passives.SplitPassive.KillsPer(entry.Definition.Value, _difficulty);  // Splits count too
         RecordStarted(_dungeon, _difficulty);
 
         _run = entityManager.CreateEntity(typeof(DungeonRun));
@@ -333,7 +333,7 @@ public class DungeonManager : MonoBehaviour
         {
             if (kill.Boss) _bossKilled = true;
             else _kills++;
-            DropLoot(entityManager, NetLootTable.Kill, kill.Position);
+            if (!kill.NoLoot) DropLoot(entityManager, NetLootTable.Kill, kill.Position);
         }
     }
 

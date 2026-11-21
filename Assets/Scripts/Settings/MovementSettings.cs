@@ -37,7 +37,7 @@ public struct MovementConfig : IComponentData
     [Header("Enemy crowds")]
     [Tooltip("Enemies try to keep (radius + other radius) * this apart")]
     public float SeparationSpacing;
-    [Tooltip("Speed (units per second) at which Physics-body enemies push away from overlapping neighbours")]
+    [Tooltip("Speed (units per second) at which Solid-body enemies push away from overlapping neighbours")]
     public float PhysicsSeparationStrength;
     [Tooltip("Same for Swarm-body enemies; higher, since nothing else keeps them apart")]
     public float SwarmSeparationStrength;

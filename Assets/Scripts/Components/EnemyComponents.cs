@@ -46,7 +46,7 @@ public struct HuntsPlayer : IComponentData
 }
 
 /// <summary>
-/// How a Physics enemy finds the player: seen within SightRadius (shrinking toward ProximityRadius for a player behind it,
+/// How a Solid enemy finds the player: seen within SightRadius (shrinking toward ProximityRadius for a player behind it,
 /// line of sight on the FlowField), or within ProximityRadius through walls; hit by the player; or alerted (a player attack
 /// missing it by NearMissMargin, another enemy that found the player within that one's AlertRadius). Forgets the player
 /// after ForgetTime without sensing it.
@@ -70,7 +70,7 @@ public struct SwarmDetection : IComponentData
     public float NearMissMargin;
 }
 
-/// <summary>Swarm enemies' fixed melee attack (Physics enemies have skills instead, EnemySkillSlot).</summary>
+/// <summary>Swarm enemies' fixed melee attack (Solid enemies have skills instead, EnemySkillSlot).</summary>
 public struct EnemyMeleeAttack : IComponentData
 {
     public float Damage;
@@ -81,12 +81,12 @@ public struct EnemyMeleeAttack : IComponentData
 }
 
 /// <summary>
-/// How an enemy's body interacts. Physics: collides with other units and the player (body-blocks, pushes).
+/// How an enemy's body interacts. Solid: collides with other units and the player (body-blocks, pushes).
 /// Swarm: only collides with the world (ground, walls, props); separation steering keeps them apart. Much cheaper.
 /// </summary>
 public enum BodyType
 {
-    Physics,
+    Solid,
     Swarm,
 }
 

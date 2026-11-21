@@ -29,6 +29,7 @@ public struct DungeonKill : IBufferElementData
 {
     public float3 Position;
     public bool Boss;
+    public bool NoLoot;     // Came out of a Split (NoKillLoot): counts, but rolls no kill loot
 }
 
 /// <summary>An enemy whose death is already in the DungeonKill buffer (dying enemies can stay at 0 health for a while).</summary>

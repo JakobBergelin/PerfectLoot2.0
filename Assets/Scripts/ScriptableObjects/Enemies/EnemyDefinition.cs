@@ -20,9 +20,9 @@ namespace Enemies
         public Color Tint = Color.white;
 
         [Header("Body")]
-        [Tooltip("Physics: collides with other units and the player (body-blocks). Swarm: only collides with the world, " +
+        [Tooltip("Solid: collides with other units and the player (body-blocks). Swarm: only collides with the world, " +
                  "much cheaper for big numbers. Must match the prefab's layer (Enemy or EnemySwarm).")]
-        public BodyType BodyType = BodyType.Physics;
+        public BodyType BodyType = BodyType.Solid;
         [Tooltip("Uniform size; the collider and health bar scale with it")]
         public float Scale = 1f;
         [Tooltip("Heavier units push lighter ones aside")]
@@ -52,13 +52,13 @@ namespace Enemies
         [Tooltip("Distance at which it sees the player, with line of sight; shrinks toward Proximity Radius for a player " +
                  "behind it. Swarm: notices the player within this distance, no line of sight.")]
         public float DetectionRadius = 15f;
-        [Tooltip("Physics only: notices the player this close even through walls")]
+        [Tooltip("Solid only: notices the player this close even through walls")]
         public float ProximityRadius = 4f;
-        [Tooltip("Physics only: when it finds the player itself, enemies within this many meters join in")]
+        [Tooltip("Solid only: when it finds the player itself, enemies within this many meters join in")]
         public float AlertRadius = 10f;
         [Tooltip("A player attack missing it by up to this many meters (beyond the attack's radius) makes it notice the player")]
         public float NearMissMargin = 2f;
-        [Tooltip("Physics only: gives up after this many seconds without seeing, being hit by or being alerted to the player")]
+        [Tooltip("Solid only: gives up after this many seconds without seeing, being hit by or being alerted to the player")]
         public float ForgetTime = 5f;
         [Tooltip("Distance from the target at which it stops walking. Swarm: also where it attacks, with a hit of half this radius.")]
         public float AttackRadius = 3f;
@@ -69,14 +69,14 @@ namespace Enemies
 
         [Header("Ranged")]
         [Tooltip("Distance it tries to keep from its target: it backs away from a closer one, and walks closer to a farther one or " +
-                 "one it can't see. 0: not ranged, it walks up to Attack Radius. Physics only.")]
+                 "one it can't see. 0: not ranged, it walks up to Attack Radius. Solid only.")]
         public float DesiredDistance;
         [Tooltip("How many meters off Desired Distance it may be before it moves")]
         public float DistanceTolerance = 1.5f;
 
         [Header("Skills")]
         [Tooltip("In priority order: it uses the first one that's ready, so big skills go first and basic attacks last. Empty: it " +
-                 "never attacks. One skill of each kind per enemy. Physics only: Swarm enemies use the melee attack below.")]
+                 "never attacks. One skill of each kind per enemy. Solid only: Swarm enemies use the melee attack below.")]
         public List<EnemySkill> Skills = new List<EnemySkill>();
 
         [Header("Passives")]
@@ -161,7 +161,7 @@ namespace Enemies
             string expectedLayer = BodyType == BodyType.Swarm ? "EnemySwarm" : "Enemy";
             if (LayerMask.LayerToName(Prefab.layer) != expectedLayer)
                 Debug.LogWarning($"{name}: BodyType {BodyType} needs a prefab on the {expectedLayer} layer, but {Prefab.name} is on " +
-                                 $"'{LayerMask.LayerToName(Prefab.layer)}'. Use EnemySwarmVisuals for Swarm, EnemyVisuals for Physics.", this);
+                                 $"'{LayerMask.LayerToName(Prefab.layer)}'. Use EnemySwarmVisuals for Swarm, EnemyVisuals for Solid.", this);
         }
 #endif
     }

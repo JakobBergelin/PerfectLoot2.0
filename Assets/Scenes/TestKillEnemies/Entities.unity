@@ -177,6 +177,10 @@ MonoBehaviour:
     TriggerRadius: 35
     SpawnRadius: 4
     Group:
+    - Definition: {fileID: 11400000, guid: c56bd56d12c9fb446bb5c9e9bdd6d56a, type: 2}
+      Count: 3
+    - Definition: {fileID: 11400000, guid: d8086e29ec07766429cfaa5f1679127c, type: 2}
+      Count: 2
     - Definition: {fileID: 11400000, guid: e1266fb2409be8c2ea4c7044d143c156, type: 2}
       Count: 4
     - Definition: {fileID: 11400000, guid: a6c39c9a365941d797c513d41e5040ad, type: 2}
@@ -185,6 +189,10 @@ MonoBehaviour:
     TriggerRadius: 35
     SpawnRadius: 4
     Group:
+    - Definition: {fileID: 11400000, guid: c56bd56d12c9fb446bb5c9e9bdd6d56a, type: 2}
+      Count: 3
+    - Definition: {fileID: 11400000, guid: d8086e29ec07766429cfaa5f1679127c, type: 2}
+      Count: 2
     - Definition: {fileID: 11400000, guid: 53e46699ce5772a858e12955aec09bcb, type: 2}
       Count: 2
     - Definition: {fileID: 11400000, guid: 74587591ab379f912dbeac133b4527dd, type: 2}

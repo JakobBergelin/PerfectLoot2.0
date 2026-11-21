@@ -333,7 +333,7 @@ public static class CathedralLevelSetup
             }
             definition.Prefab = visuals[visual];
             definition.OverrideColor = false;
-            definition.BodyType = BodyType.Physics;
+            definition.BodyType = BodyType.Solid;
             EditorUtility.SetDirty(definition);
             list.Add(definition);
             return definition;
