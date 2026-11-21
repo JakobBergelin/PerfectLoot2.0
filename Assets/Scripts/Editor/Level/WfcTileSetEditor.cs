@@ -170,6 +170,16 @@ public class WfcTileSetEditor : Editor
                                              EditorStyles.miniButton, GUILayout.Width(60)))
                             _copyUp = i;
                     }
+                    using (new EditorGUILayout.HorizontalScope())
+                    {
+                        EditorGUIUtility.labelWidth = 50;
+                        EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.AllowMirror)),
+                                                      new GUIContent("Mirror", "Also use the tile mirrored (east and west swapped). Off for tiles with one-sided edges."),
+                                                      GUILayout.Width(70));
+                        EditorGUIUtility.labelWidth = 0;
+                        EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.Looks)),
+                                                      new GUIContent("Looks", "Other models for the same tile; neighboring cells pick different ones"), true);
+                    }
                 }
             }
         }

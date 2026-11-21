@@ -40,10 +40,12 @@ namespace LevelGeneration
             Copy(builder, ref root.VariantWeights, compiled.VariantWeights());
             var tiles = builder.Allocate(ref root.VariantTile, variants);
             var rotations = builder.Allocate(ref root.VariantRotation, variants);
+            var mirrors = builder.Allocate(ref root.VariantMirror, variants);
             for (int v = 0; v < variants; v++)
             {
                 tiles[v] = compiled.Variants[v].Tile;
                 rotations[v] = compiled.Variants[v].Rotation;
+                mirrors[v] = (byte)(compiled.Variants[v].Mirror ? 1 : 0);
             }
 
             Copy(builder, ref root.CornerMasks, compiled.CornerMasks);
@@ -73,9 +75,30 @@ namespace LevelGeneration
             Copy(builder, ref root.Ring.VariantWeights, ring?.VariantWeights() ?? new float[0]);
             Copy(builder, ref root.Ring.VariantTile, ring?.Variants.ConvertAll(v => v.Tile).ToArray() ?? new int[0]);
             Copy(builder, ref root.Ring.VariantRotation, ring?.Variants.ConvertAll(v => v.Rotation).ToArray() ?? new int[0]);
+            Copy(builder, ref root.Ring.VariantMirror, ring?.Variants.ConvertAll(v => (byte)(v.Mirror ? 1 : 0)).ToArray() ?? new byte[0]);
             Copy(builder, ref root.Ring.CornerMasks, ring?.CornerMasks ?? new ulong[0]);
             Copy(builder, ref root.Ring.EdgeMasks, ring?.EdgeMasks ?? new ulong[0]);
             Copy(builder, ref root.Ring.InitialCells, ring?.InitialCells ?? new int[0]);
+
+            var landmarks = builder.Allocate(ref root.Landmarks, compiled.Landmarks.Count);
+            for (int i = 0; i < compiled.Landmarks.Count; i++)
+            {
+                var pool = compiled.Landmarks[i];
+                landmarks[i].MinCount = pool.MinCount;
+                landmarks[i].MaxCount = pool.MaxCount;
+                landmarks[i].Spacing = pool.Spacing;
+                var options = builder.Allocate(ref landmarks[i].Options, pool.Options.Count);
+                for (int o = 0; o < pool.Options.Count; o++)
+                {
+                    var option = pool.Options[o];
+                    options[o].Piece = option.Piece;
+                    options[o].Rotation = option.Rotation;
+                    options[o].Width = option.Width;
+                    options[o].Height = option.Height;
+                    Copy(builder, ref options[o].Corners, System.Array.ConvertAll(option.Corners, c => (byte)c));
+                }
+            }
+            Copy(builder, ref root.KeepClear, compiled.KeepClear.ConvertAll(c => new int2(c.x, c.y)).ToArray());
 
             var pieces = builder.Allocate(ref root.Pieces, compiled.Pieces.Count);
             for (int i = 0; i < compiled.Pieces.Count; i++)
@@ -112,18 +135,14 @@ namespace LevelGeneration
                 var rule = rules[r];
                 if (rule == null) { ruleBlobs[r] = new LevelPlacementRuleBlob { Prefab = -1 }; continue; }
                 int prefab = -1;
-                if (rule.Kind == PlacementKind.Prop && rule.Prefab != null)
+                if ((rule.Kind == PlacementKind.Prop || rule.Kind == PlacementKind.EdgeProp) && rule.Prefab != null)
                 {
                     prefab = placementPrefabs.IndexOf(rule.Prefab);
                     if (prefab < 0) { prefab = placementPrefabs.Count; placementPrefabs.Add(rule.Prefab); }
                 }
                 ruleBlobs[r] = new LevelPlacementRuleBlob
                 {
-                    Data = new PlacementRuleData
-                    {
-                        Kind = rule.Kind, Spacing = rule.Spacing, ClearRadius = rule.ClearRadius,
-                        MinDistanceFromStart = rule.MinDistanceFromStart, MaxSlope = rule.MaxSlope,
-                    },
+                    Data = rule.ToData(tileSet),
                     Prefab = prefab,
                     TriggerRadius = rule.TriggerRadius,
                     SpawnRadius = rule.SpawnRadius,
@@ -169,7 +188,13 @@ namespace LevelGeneration
             var propPrefabs = new List<GameObject>();
             var geometryWarnings = new List<string>();
             var tileParts = new List<LevelGeometryExtractor.Part>();
-            foreach (var tile in tileSet.Tiles) tileParts.Add(Extract(tile?.Prefab, materials, geometryWarnings));
+            var lookStarts = new List<int>();
+            foreach (var tile in tileSet.Tiles)
+            {
+                lookStarts.Add(tileParts.Count);
+                for (int look = 0; look < (tile?.LookCount ?? 1); look++) tileParts.Add(Extract(tile?.Look(look), materials, geometryWarnings));
+            }
+            lookStarts.Add(tileParts.Count);
             var pieceParts = new List<LevelGeometryExtractor.Part>();
             foreach (var piece in tileSet.Pieces) pieceParts.Add(Extract(piece?.Prefab, materials, geometryWarnings));
             foreach (var warning in geometryWarnings) Debug.LogWarning($"Level layout: {warning}", authoring);
@@ -185,6 +210,7 @@ namespace LevelGeneration
             ref var geometryRoot = ref geometryBuilder.ConstructRoot<LevelGeometryBlob>();
             var tileGeometry = geometryBuilder.Allocate(ref geometryRoot.Tiles, tileParts.Count);
             for (int i = 0; i < tileParts.Count; i++) LevelGeometryExtractor.Write(geometryBuilder, ref tileGeometry[i], tileParts[i], PropIndex);
+            Copy(geometryBuilder, ref geometryRoot.TileLookStart, lookStarts.ToArray());
             var pieceGeometry = geometryBuilder.Allocate(ref geometryRoot.Pieces, pieceParts.Count);
             for (int i = 0; i < pieceParts.Count; i++) LevelGeometryExtractor.Write(geometryBuilder, ref pieceGeometry[i], pieceParts[i], PropIndex);
             var geometry = geometryBuilder.CreateBlobAssetReference<LevelGeometryBlob>(Allocator.Persistent);

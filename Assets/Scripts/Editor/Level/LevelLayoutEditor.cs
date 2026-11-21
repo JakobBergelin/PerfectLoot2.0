@@ -37,6 +37,7 @@ public class LevelLayoutEditor : Editor
     static WfcCornerRule _rule = WfcCornerRule.NotWalkable;
     static int _connection = -1;
     static int _tile, _piece, _rotation;
+    static bool _mirror;
     static GameObject _prefab;
     static bool _forceWalkable = true;
     static float _reservedRadius = 5f;
@@ -100,6 +101,7 @@ public class LevelLayoutEditor : Editor
                 _tile = EditorGUILayout.Popup("Tile", Mathf.Clamp(_tile, 0, layout.TileSet.Tiles.Count - 1),
                                               layout.TileSet.Tiles.Select((t, i) => $"{i}: {t.Name}").ToArray());
                 _rotation = GUILayout.Toolbar(_rotation, RotationNames);
+                _mirror = EditorGUILayout.Toggle(new GUIContent("Mirrored", "East and west swapped before turning (the tile must allow mirroring)"), _mirror);
                 EditorGUILayout.HelpBox("Click a cell to force this tile there, right-click to remove. R rotates.", MessageType.None);
                 break;
             case Brush.Piece:
@@ -278,6 +280,7 @@ public class LevelLayoutEditor : Editor
                 {
                     layout.PreviewCells = null;
                     layout.PreviewRing = null;
+                    layout.PreviewLandmarks = null;
                     layout.PreviewRepairs = null;
                     layout.PreviewPlacements = null;
                     _status = null;
@@ -332,6 +335,7 @@ public class LevelLayoutEditor : Editor
             return;
         }
 
+        layout.PreviewLandmarks = compiled.PlaceLandmarks(layout.Seed);
         var job = compiled.CreateJob(layout.Seed, layout.MaxAttempts, layout.ConnectWalkableAreas, layout.FillPocketsSmallerThan);
         var timer = Stopwatch.StartNew();
         job.Schedule().Complete();
@@ -355,7 +359,8 @@ public class LevelLayoutEditor : Editor
         string connected = !layout.ConnectWalkableAreas ? "" : $" Connected: {carved} corners carved, {filled} filled" +
                            (unconnected > 0 ? $"; {unconnected} pockets couldn't be reached without changing painted or forced corners." : ".");
         string warnings = compiled.Warnings.Count > 0 ? "\n" + string.Join("\n", compiled.Warnings) : "";
-        string placed = attempts > 0 ? PreviewPlacement(layout, compiled) + PreviewRing(layout, compiled) : "";
+        string landmarks = compiled.Landmarks.Count > 0 ? $"\nLandmarks placed: {layout.PreviewLandmarks.Count}." : "";
+        string placed = attempts > 0 ? landmarks + PreviewPlacement(layout, compiled) + PreviewRing(layout, compiled) : "";
         if (attempts > 0)
             SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms" +
                       $"{(backtracks > 0 ? $" with {backtracks} backtracks" : "")}.{connected}{placed}{warnings}",
@@ -393,11 +398,7 @@ public class LevelLayoutEditor : Editor
         var surface = LevelSurface.Build(layout.Width, layout.Height, layout.PreviewCells, layout.TileSet.TileCornerIndices(), layout.TileSet.TileEdgeIndices(),
                                          compiled.CornerMasks, compiled.CornerTerrains, compiled.CornerHeights, compiled.EdgeWalkables);
         var occupied = compiled.InitialCells.Select(cell => cell == WfcSolver.Occupied).ToArray();
-        var rules = set.Rules.Select(rule => rule == null ? new PlacementRuleData() : new PlacementRuleData
-        {
-            Kind = rule.Kind, Spacing = rule.Spacing, ClearRadius = rule.ClearRadius,
-            MinDistanceFromStart = rule.MinDistanceFromStart, MaxSlope = rule.MaxSlope,
-        }).ToArray();
+        var rules = set.Rules.Select(rule => rule == null ? new PlacementRuleData() : rule.ToData(layout.TileSet)).ToArray();
         // Matches the baker: prefabs with a prefab, inside the grid
         var reserved = layout.Prefabs.Where(p => p != null && p.Prefab != null && layout.InGrid(p.Cell))
                              .Select(p => new Unity.Mathematics.float3(p.Cell.x + 0.5f, p.Cell.y + 0.5f, Mathf.Max(0f, p.ReservedRadius))).ToArray();
@@ -407,6 +408,7 @@ public class LevelLayoutEditor : Editor
             Width = layout.Width, Height = layout.Height, TileSize = layout.TileSize, Seed = layout.Seed,
             StartCorner = compiled.StartCorner, Start = new Unity.Mathematics.float2(layout.PlayerStart.x + 0.5f, layout.PlayerStart.y + 0.5f),
             CornerTerrain = new NativeArray<byte>(surface.Terrain, Allocator.TempJob),
+            EdgeConnection = new NativeArray<int>(surface.EdgeConnection, Allocator.TempJob),
             CornerHeight = new NativeArray<float>(surface.Height, Allocator.TempJob),
             EdgeWalkable = new NativeArray<byte>(surface.EdgeWalkable, Allocator.TempJob),
             OccupiedCells = new NativeArray<bool>(occupied, Allocator.TempJob),
@@ -418,6 +420,7 @@ public class LevelLayoutEditor : Editor
         job.Schedule().Complete();
         layout.PreviewPlacements = job.Points.AsArray().ToArray();
         job.CornerTerrain.Dispose();
+        job.EdgeConnection.Dispose();
         job.CornerHeight.Dispose();
         job.EdgeWalkable.Dispose();
         job.OccupiedCells.Dispose();
@@ -534,7 +537,7 @@ public class LevelLayoutEditor : Editor
                 Modify(_erasing ? "Remove forced tile" : "Force tile", l =>
                 {
                     l.ForcedTiles.RemoveAll(f => f.Cell == at);
-                    if (!_erasing) l.ForcedTiles.Add(new LevelLayoutAuthoring.ForcedTile { Cell = at, Tile = _tile, Rotation = _rotation });
+                    if (!_erasing) l.ForcedTiles.Add(new LevelLayoutAuthoring.ForcedTile { Cell = at, Tile = _tile, Rotation = _rotation, Mirror = _mirror });
                 });
                 break;
 

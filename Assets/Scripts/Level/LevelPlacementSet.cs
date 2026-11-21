@@ -8,6 +8,7 @@ namespace LevelGeneration
     {
         Prop,           // An ECS prefab, spawned when its chunk is built
         EnemySpawner,   // A spawner (like the hand-placed ones) with one of the rule's groups
+        EdgeProp,       // A prop along edges: chosen edge connections, or where walkable ground ends (torches, railings, clutter)
     }
 
     /// <summary>
@@ -34,8 +35,30 @@ namespace LevelGeneration
         [Min(0f)] public float MinDistanceFromStart;
 
         [Header("Prop")]
-        [Tooltip("Spawned (as an entity) with a random yaw on the floor")]
+        [Tooltip("Spawned (as an entity) with a random yaw on the floor; edge props face the walkable (or lower) side of their edge")]
         public GameObject Prefab;
+
+        [Header("Edge Prop")]
+        [Tooltip("Edge connection Ids (from the level's tile set) to place along, e.g. a Cliff edge. Empty: along every edge " +
+                 "where walkable ground meets anything else.")]
+        public List<int> EdgeIds = new List<int>();
+
+        /// <summary>The rule as the placement job sees it, with its edge Ids turned into the tile set's edge bits.</summary>
+        public PlacementRuleData ToData(WfcTileSet tileSet)
+        {
+            ulong edges = 0ul;
+            if (tileSet != null)
+                foreach (int id in EdgeIds)
+                {
+                    int index = tileSet.EdgeIndex(id);
+                    if (index >= 0 && index < WfcConnections.Max) edges |= WfcConnections.Bit(index);
+                }
+            return new PlacementRuleData
+            {
+                Kind = Kind, Spacing = Spacing, ClearRadius = ClearRadius, MinDistanceFromStart = MinDistanceFromStart,
+                MaxSlope = MaxSlope, EdgeMask = edges, AlongWalkableBorder = EdgeIds.Count == 0,
+            };
+        }
 
         [Header("Enemy Spawner")]
         [Tooltip("Steepest ground (degrees) a spawner may stand on")]

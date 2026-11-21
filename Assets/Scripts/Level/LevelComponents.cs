@@ -35,6 +35,7 @@ namespace LevelGeneration
         public BlobArray<float> VariantWeights;
         public BlobArray<int> VariantTile;
         public BlobArray<int> VariantRotation;
+        public BlobArray<byte> VariantMirror;
         public BlobArray<ulong> CornerMasks;
         public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;
@@ -61,8 +62,12 @@ namespace LevelGeneration
         /// <summary>The background ring's solver input (WfcCompiledLayout.Ring), on a grid RingMargin bigger on every side.</summary>
         public WfcSolveInput Ring;
 
+        /// <summary>Landmarks placed by seed before solving (WfcLayoutCompiler.PlaceLandmarks), and the cells they stay off.</summary>
+        public BlobArray<LevelLandmarkBlob> Landmarks;
+        public BlobArray<int2> KeepClear;
+
         public BlobArray<LevelPiecePlacement> Pieces;
-        /// <summary>Saved layout (Tile * 4 + Rotation per cell), empty when there is none.</summary>
+        /// <summary>Saved layout (LevelLayoutAuthoring.Pack per cell), empty when there is none.</summary>
         public BlobArray<int> SavedCells;
 
         // Procedural placement (LevelPlacementSet)
@@ -70,6 +75,21 @@ namespace LevelGeneration
         public BlobArray<LevelPlacementGroupBlob> PlacementGroups;
         // Hand-placed prefabs (LevelLayoutAuthoring.Prefabs)
         public BlobArray<LevelPrefabPlacement> Prefabs;
+    }
+
+    /// <summary>A landmark (LandmarkPool) kept in a blob.</summary>
+    public struct LevelLandmarkBlob
+    {
+        public int MinCount, MaxCount;
+        public float Spacing;
+        public BlobArray<LevelLandmarkOptionBlob> Options;
+    }
+
+    /// <summary>A landmark's piece in one rotation (LandmarkOption): footprint and corner connection indices.</summary>
+    public struct LevelLandmarkOptionBlob
+    {
+        public int Piece, Rotation, Width, Height;
+        public BlobArray<byte> Corners;
     }
 
     /// <summary>A solver input kept in a blob: what a WfcCompiledLayout holds for WfcSolveJob.</summary>
@@ -80,6 +100,7 @@ namespace LevelGeneration
         public BlobArray<float> VariantWeights;
         public BlobArray<int> VariantTile;
         public BlobArray<int> VariantRotation;
+        public BlobArray<byte> VariantMirror;
         public BlobArray<ulong> CornerMasks;
         public BlobArray<ulong> EdgeMasks;
         public BlobArray<int> InitialCells;

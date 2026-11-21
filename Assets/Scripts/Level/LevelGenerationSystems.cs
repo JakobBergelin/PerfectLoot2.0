@@ -31,11 +31,13 @@ namespace LevelGeneration
             // bigger grid, or is null. Chunks and JobCorners (the bent grid for the chunk jobs) cover the bigger grid.
             public int Margin;
             public int[] Ring;
+            public int[] Looks, RingLooks;   // Per cell (of Packed, of Ring): which look of its tile it shows (LevelLooks)
             public NativeArray<float3> JobCorners;
             public Material[] Materials;
             public Entity[] PropPrefabs;
             public int ChunksX, ChunksY;
             public bool[] Built;
+            public List<LevelPiecePlacement> Pieces; // Hand-placed pieces, then this seed's landmarks
             public List<int>[] PiecesByChunk; // Piece placements, by the chunk of their south-west cell
             public List<PlacementPoint>[] PlacedPropsByChunk;   // Procedural props, spawned with their chunk
             public List<int>[] PrefabsByChunk;  // Hand-placed prefabs (LevelLayoutBlob.Prefabs), spawned with their chunk
@@ -138,12 +140,19 @@ namespace LevelGeneration
             // A saved layout keeps the editor's seed, so its bend matches the preview too
             uint seed = useSaved || !layout.RandomSeed ? layout.Seed : LevelSeed.Take();
 
+            // The solver input with this seed's landmarks in it (a saved layout was solved with the same ones)
+            var cornerMasks = blob.CornerMasks.ToArray();
+            var lockedCorners = blob.LockedCorners.ToArray();
+            var initialCells = blob.InitialCells.ToArray();
+            var landmarks = WfcLayoutCompiler.PlaceLandmarks(seed, blob.Width, blob.Height, cornerMasks, lockedCorners, initialCells,
+                                                             LandmarkPools(ref blob), KeepClear(ref blob), new Vector2Int(blob.PlayerStart.x, blob.PlayerStart.y));
+
             var packed = new NativeArray<int>(cells, Allocator.Temp);
             if (useSaved)
             {
                 for (int i = 0; i < cells; i++) packed[i] = blob.SavedCells[i];
             }
-            else if (!Solve(ref blob, layout, seed, packed))
+            else if (!Solve(ref blob, layout, seed, packed, cornerMasks, lockedCorners, initialCells))
             {
                 for (int i = 0; i < cells; i++) packed[i] = WfcSolver.Free;
             }
@@ -168,14 +177,26 @@ namespace LevelGeneration
             };
             packed.Dispose();
             var surface = LevelSurface.Build(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.TileEdges.ToArray(),
-                                             blob.CornerMasks.ToArray(), blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
+                                             cornerMasks, blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
             stream.Ground = new float3[corners.Length];
             for (int i = 0; i < corners.Length; i++) stream.Ground[i] = corners[i] + new float3(0f, surface.Height[i], 0f);
             if (margin > 0) stream.Ring = SolveRing(ref blob, layout, seed, surface);
+            var lookCounts = LookCounts(ref layout.Geometry.Value);
+            stream.Looks = LevelLooks.Pick(blob.Width, blob.Height, stream.Packed, lookCounts, seed);
+            if (stream.Ring != null)
+                stream.RingLooks = LevelLooks.Pick(blob.Width + 2 * margin, blob.Height + 2 * margin, stream.Ring, lookCounts, math.hash(new uint2(seed, 0xB6C0u)));
+            stream.Pieces = new List<LevelPiecePlacement>();
+            for (int i = 0; i < blob.Pieces.Length; i++) stream.Pieces.Add(blob.Pieces[i]);
+            foreach (var landmark in landmarks)
+                stream.Pieces.Add(new LevelPiecePlacement
+                {
+                    Piece = landmark.Piece, Rotation = landmark.Rotation,
+                    Cell = new int2(landmark.Cell.x, landmark.Cell.y), Size = new int2(landmark.Size.x, landmark.Size.y),
+                });
             stream.Built = new bool[stream.ChunksX * stream.ChunksY];
             stream.PiecesByChunk = new List<int>[stream.Built.Length];
-            for (int i = 0; i < blob.Pieces.Length; i++)
-                (stream.PiecesByChunk[ChunkOf(stream, ref blob, blob.Pieces[i].Cell)] ??= new List<int>()).Add(i);
+            for (int i = 0; i < stream.Pieces.Count; i++)
+                (stream.PiecesByChunk[ChunkOf(stream, ref blob, stream.Pieces[i].Cell)] ??= new List<int>()).Add(i);
             stream.PrefabsByChunk = new List<int>[stream.Built.Length];
             for (int i = 0; i < blob.Prefabs.Length; i++)
                 (stream.PrefabsByChunk[ChunkOf(stream, ref blob, blob.Prefabs[i].Cell)] ??= new List<int>()).Add(i);
@@ -202,7 +223,7 @@ namespace LevelGeneration
             }
 
             // Procedural placement: spawners now, props with their chunks
-            var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface);
+            var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface, initialCells);
 
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Ground, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
@@ -215,6 +236,41 @@ namespace LevelGeneration
                       $"first {first.Count} of {stream.Built.Length} chunks {timer.ElapsedMilliseconds - chunksStart} ms; " +
                       $"the rest stream in within {stream.LoadDistance} m of the player.");
             return playerStart;
+        }
+
+        // The blob's landmarks as WfcLayoutCompiler.PlaceLandmarks takes them
+        static List<LandmarkPool> LandmarkPools(ref LevelLayoutBlob blob)
+        {
+            var pools = new List<LandmarkPool>();
+            for (int i = 0; i < blob.Landmarks.Length; i++)
+            {
+                ref var landmark = ref blob.Landmarks[i];
+                var pool = new LandmarkPool { MinCount = landmark.MinCount, MaxCount = landmark.MaxCount, Spacing = landmark.Spacing };
+                for (int o = 0; o < landmark.Options.Length; o++)
+                {
+                    ref var option = ref landmark.Options[o];
+                    var corners = new int[option.Corners.Length];
+                    for (int c = 0; c < corners.Length; c++) corners[c] = option.Corners[c];
+                    pool.Options.Add(new LandmarkOption { Piece = option.Piece, Rotation = option.Rotation, Width = option.Width, Height = option.Height, Corners = corners });
+                }
+                pools.Add(pool);
+            }
+            return pools;
+        }
+
+        static List<Vector2Int> KeepClear(ref LevelLayoutBlob blob)
+        {
+            var cells = new List<Vector2Int>();
+            for (int i = 0; i < blob.KeepClear.Length; i++) cells.Add(new Vector2Int(blob.KeepClear[i].x, blob.KeepClear[i].y));
+            return cells;
+        }
+
+        // How many looks each tile has (LevelGeometryBlob.TileLookStart)
+        static int[] LookCounts(ref LevelGeometryBlob geometry)
+        {
+            var counts = new int[math.max(0, geometry.TileLookStart.Length - 1)];
+            for (int t = 0; t < counts.Length; t++) counts[t] = geometry.TileLookStart[t + 1] - geometry.TileLookStart[t];
+            return counts;
         }
 
         // The chunk a level cell is built in (chunks cover the level and its background ring)
@@ -274,10 +330,12 @@ namespace LevelGeneration
                     int cell = inLevel ? stream.Packed[lx + ly * blob.Width] : stream.Ring != null ? stream.Ring[x + y * width] : -1;
                     if (cell < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(cell);
-                    if (tile >= geometry.Tiles.Length) continue;
+                    if (tile + 1 >= geometry.TileLookStart.Length) continue;
+                    int look = inLevel ? stream.Looks[lx + ly * blob.Width] : stream.RingLooks?[x + y * width] ?? 0;
                     instances.Add(new LevelChunkBuilder.Instance
                     {
-                        Part = tile, Center = new float2(x + 0.5f, y + 0.5f), Rotation = LevelLayoutAuthoring.PackedRotation(cell),
+                        Part = geometry.TileLookStart[tile] + look, Center = new float2(x + 0.5f, y + 0.5f),
+                        Rotation = LevelLayoutAuthoring.PackedRotation(cell), Mirror = LevelLayoutAuthoring.PackedMirror(cell),
                         Raise = tile < blob.TileRaises.Length ? blob.TileRaises[tile] : 0f,
                         NoColliders = !inLevel,
                     });
@@ -286,7 +344,7 @@ namespace LevelGeneration
             if (stream.PiecesByChunk[chunk] != null)
                 foreach (int i in stream.PiecesByChunk[chunk])
                 {
-                    var piece = blob.Pieces[i];
+                    var piece = stream.Pieces[i];
                     if (piece.Piece >= geometry.Pieces.Length) continue;
                     instances.Add(new LevelChunkBuilder.Instance
                     {
@@ -314,7 +372,7 @@ namespace LevelGeneration
                 {
                     int prefab = blob.PlacementRules[placed.Rule].Prefab;
                     if (prefab < 0 || prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[prefab] == Entity.Null) continue;
-                    Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Ground, placed.Grid.x, placed.Grid.y),
+                    Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Corners, placed.Grid.x, placed.Grid.y) + new float3(0f, placed.Height, 0f),
                           math.mul(blob.Rotation, quaternion.RotateY(placed.Yaw)));
                 }
             // Hand-placed prefabs: at their cell's center, turned with the bent grid there
@@ -335,7 +393,7 @@ namespace LevelGeneration
             }
         }
 
-        bool Solve(ref LevelLayoutBlob blob, LevelLayout layout, uint seed, NativeArray<int> packed)
+        bool Solve(ref LevelLayoutBlob blob, LevelLayout layout, uint seed, NativeArray<int> packed, ulong[] cornerMasks, byte[] lockedCorners, int[] initialCells)
         {
             int cells = blob.Width * blob.Height;
             int variants = blob.VariantWeights.Length;
@@ -346,9 +404,9 @@ namespace LevelGeneration
                 Height = blob.Height,
                 VariantSlots = Copy(ref blob.VariantSlots, Allocator.TempJob),
                 VariantWeights = Copy(ref blob.VariantWeights, Allocator.TempJob),
-                InitialCornerMasks = Copy(ref blob.CornerMasks, Allocator.TempJob),
+                InitialCornerMasks = new NativeArray<ulong>(cornerMasks, Allocator.TempJob),
                 InitialEdgeMasks = Copy(ref blob.EdgeMasks, Allocator.TempJob),
-                InitialCells = Copy(ref blob.InitialCells, Allocator.TempJob),
+                InitialCells = new NativeArray<int>(initialCells, Allocator.TempJob),
                 Seed = seed,
                 MaxAttempts = layout.MaxAttempts,
                 Result = new NativeArray<int>(cells, Allocator.TempJob),
@@ -359,7 +417,7 @@ namespace LevelGeneration
                 WalkableCorners = blob.WalkableCorners,
                 NotWalkableCorners = blob.NotWalkableCorners,
                 WalkableEdges = blob.WalkableEdges,
-                LockedCorners = Copy(ref blob.LockedCorners, Allocator.TempJob),
+                LockedCorners = new NativeArray<byte>(lockedCorners, Allocator.TempJob),
                 Repairs = new NativeArray<byte>(blob.CornerMasks.Length, Allocator.TempJob),
                 UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
                 Backtracks = new NativeReference<int>(Allocator.TempJob),
@@ -372,7 +430,7 @@ namespace LevelGeneration
                 for (int i = 0; i < cells; i++)
                 {
                     int v = job.Result[i];
-                    packed[i] = v >= 0 && v < variants ? LevelLayoutAuthoring.Pack(blob.VariantTile[v], blob.VariantRotation[v]) : v;
+                    packed[i] = v >= 0 && v < variants ? LevelLayoutAuthoring.Pack(blob.VariantTile[v], blob.VariantRotation[v], blob.VariantMirror[v] != 0) : v;
                 }
                 int carved = 0, filled = 0;
                 foreach (var repair in job.Repairs)
@@ -437,7 +495,7 @@ namespace LevelGeneration
                 for (int i = 0; i < cells; i++)
                 {
                     int v = job.Result[i];
-                    packed[i] = v >= 0 ? LevelLayoutAuthoring.Pack(ring.VariantTile[v], ring.VariantRotation[v]) : v;
+                    packed[i] = v >= 0 ? LevelLayoutAuthoring.Pack(ring.VariantTile[v], ring.VariantRotation[v], ring.VariantMirror[v] != 0) : v;
                 }
             }
             else Debug.LogWarning($"No background ring fits around the level with seed {seed}: the Background tiles lack combinations its edge needs.");
@@ -449,12 +507,12 @@ namespace LevelGeneration
         /// Runs the placement rules (LevelPlacementJob) on the finished layout: spawners become LevelEnemySpawner entities
         /// with a group picked by weight, props are kept per chunk until it's built. Returns how many of each.
         /// </summary>
-        (int Props, int Spawners) Place(LevelStream stream, ref LevelLayoutBlob blob, uint seed, LevelSurface surface)
+        (int Props, int Spawners) Place(LevelStream stream, ref LevelLayoutBlob blob, uint seed, LevelSurface surface, int[] initialCells)
         {
             if (blob.PlacementRules.Length == 0) return (0, 0);
             int cells = blob.Width * blob.Height;
             var occupied = new NativeArray<bool>(cells, Allocator.TempJob);
-            for (int i = 0; i < cells && i < blob.InitialCells.Length; i++) occupied[i] = blob.InitialCells[i] == WfcSolver.Occupied;
+            for (int i = 0; i < cells; i++) occupied[i] = initialCells[i] == WfcSolver.Occupied;
             var rules = new NativeArray<PlacementRuleData>(blob.PlacementRules.Length, Allocator.TempJob);
             for (int r = 0; r < rules.Length; r++) rules[r] = blob.PlacementRules[r].Data;
             var reserved = new NativeArray<float3>(blob.Prefabs.Length, Allocator.TempJob);
@@ -465,6 +523,7 @@ namespace LevelGeneration
                 Width = blob.Width, Height = blob.Height, TileSize = blob.TileSize, Seed = seed,
                 StartCorner = blob.StartCorner, Start = new float2(blob.PlayerStart) + 0.5f,
                 CornerTerrain = new NativeArray<byte>(surface.Terrain, Allocator.TempJob),
+                EdgeConnection = new NativeArray<int>(surface.EdgeConnection, Allocator.TempJob),
                 CornerHeight = new NativeArray<float>(surface.Height, Allocator.TempJob),
                 EdgeWalkable = new NativeArray<byte>(surface.EdgeWalkable, Allocator.TempJob),
                 OccupiedCells = occupied, BentCorners = stream.JobCorners, Rules = rules, Reserved = reserved,
@@ -506,7 +565,7 @@ namespace LevelGeneration
                 EntityManager.AddComponentData(spawner, new LevelEnemySpawner
                 {
                     Cell = (int2)math.floor(point.Grid),
-                    Position = GridToWorld(ref blob, stream.Ground, point.Grid.x, point.Grid.y),
+                    Position = GridToWorld(ref blob, stream.Corners, point.Grid.x, point.Grid.y) + new float3(0f, point.Height, 0f),
                     TriggerRadius = rule.TriggerRadius,
                     SpawnRadius = rule.SpawnRadius,
                 });
@@ -518,6 +577,7 @@ namespace LevelGeneration
 
             enemies.Dispose();
             job.CornerTerrain.Dispose();
+            job.EdgeConnection.Dispose();
             job.CornerHeight.Dispose();
             job.EdgeWalkable.Dispose();
             job.OccupiedCells.Dispose();

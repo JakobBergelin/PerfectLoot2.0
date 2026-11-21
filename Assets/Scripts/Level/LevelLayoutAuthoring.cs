@@ -25,6 +25,20 @@ namespace LevelGeneration
             public Vector2Int Cell;
             public int Tile;
             public int Rotation;
+            [Tooltip("Mirrored before it's turned (the tile must allow mirroring)")]
+            public bool Mirror;
+        }
+
+        [Serializable]
+        public class Landmark
+        {
+            [Tooltip("Index of the piece in the tile set's Pieces")]
+            public int Piece;
+            [Tooltip("At least this many are placed (when they fit), at most Max Count; a random number in between")]
+            [Min(0)] public int MinCount = 1;
+            [Min(0)] public int MaxCount = 1;
+            [Tooltip("Cells between this landmark's middle and any other landmark's or the player start")]
+            [Min(0f)] public float Spacing = 8f;
         }
 
         [Serializable]
@@ -125,6 +139,9 @@ namespace LevelGeneration
         public List<SpawnerMarker> EnemySpawners = new List<SpawnerMarker>();
         [Tooltip("Prefabs painted on cells with the Prefab brush (portals, chests, ...)")]
         public List<PlacedPrefab> Prefabs = new List<PlacedPrefab>();
+        [Tooltip("Pieces placed at random (by seed) before the level is solved, where they fit the corner rules: arenas, " +
+                 "shrines and other set pieces. Like hand-placed pieces, their cells are taken and their corners fixed.")]
+        public List<Landmark> Landmarks = new List<Landmark>();
 
         // (Width + 1) x (Height + 1) WfcCornerRule values, row by row from the south-west, and the painted corner
         // connection of each (its Id + 1; 0 is any connection that fits the rule)
@@ -132,14 +149,18 @@ namespace LevelGeneration
         [SerializeField, HideInInspector] int[] _cornerConnections = Array.Empty<int>();
         [SerializeField, HideInInspector] int _cornerRulesWidth, _cornerRulesHeight;
 
-        // Saved layout: per cell Tile * 4 + Rotation, or -1 (nothing) / -2 (covered by a piece)
+        // Saved layout: per cell Pack(tile, rotation, mirror), or -1 (nothing) / -2 (covered by a piece). Format 1 has
+        // the mirror bit; layouts saved before it (Tile * 4 + Rotation) aren't used.
         [SerializeField, HideInInspector] int[] _savedCells = Array.Empty<int>();
-        [SerializeField, HideInInspector] int _savedWidth, _savedHeight;
+        [SerializeField, HideInInspector] int _savedWidth, _savedHeight, _savedFormat;
+        const int SavedFormat = 1;
 
         /// <summary>Editor preview, same format as the saved layout. Not saved with the scene.</summary>
         [NonSerialized] public int[] PreviewCells;
         /// <summary>The background ring around the preview, on the grid BackgroundRing cells bigger on every side. Not saved.</summary>
         [NonSerialized] public int[] PreviewRing;
+        /// <summary>Landmarks the preview placed (WfcCompiledLayout.Pieces from Landmarks). Not saved.</summary>
+        [NonSerialized] public List<WfcCompiledLayout.Placement> PreviewLandmarks;
         /// <summary>What the connectivity repair changed in the preview, per corner (WfcSolver.Repair*). Not saved.</summary>
         [NonSerialized] public byte[] PreviewRepairs;
         /// <summary>Procedural placements in the preview (LevelPlacementJob). Not saved.</summary>
@@ -149,7 +170,7 @@ namespace LevelGeneration
         public int CornerHeight => Height + 1;
 
         public bool HasSavedLayout => _savedCells != null && _savedCells.Length == Width * Height &&
-                                      _savedWidth == Width && _savedHeight == Height;
+                                      _savedWidth == Width && _savedHeight == Height && _savedFormat == SavedFormat;
 
         public int[] SavedCells => HasSavedLayout ? _savedCells : null;
 
@@ -158,11 +179,14 @@ namespace LevelGeneration
             _savedCells = cells ?? Array.Empty<int>();
             _savedWidth = cells != null ? Width : 0;
             _savedHeight = cells != null ? Height : 0;
+            _savedFormat = SavedFormat;
         }
 
-        public static int Pack(int tile, int rotation) => tile * 4 + rotation;
-        public static int PackedTile(int packed) => packed >> 2;
+        /// <summary>A placed tile as one number: Tile * 8, plus 4 when mirrored, plus quarter turns.</summary>
+        public static int Pack(int tile, int rotation, bool mirror) => tile * 8 + (mirror ? 4 : 0) + rotation;
+        public static int PackedTile(int packed) => packed >> 3;
         public static int PackedRotation(int packed) => packed & 3;
+        public static bool PackedMirror(int packed) => (packed & 4) != 0;
 
         public WfcCornerRule GetCornerRule(int x, int y)
         {
@@ -437,7 +461,7 @@ namespace LevelGeneration
                         if (packed < 0) continue;
                         int tile = PackedTile(packed);
                         if (tile >= TileSet.Tiles.Count || TileSet.Tiles[tile] == null) continue;
-                        WfcRotation.RotateCorners(TileSet.Tiles[tile].Corners, PackedRotation(packed), corners);
+                        WfcRotation.Turn(TileSet.Tiles[tile].Corners, PackedRotation(packed), PackedMirror(packed), false, corners);
                         AddCell(x, y, corners, vertices, indices);
                     }
 
@@ -448,12 +472,16 @@ namespace LevelGeneration
                 {
                     int packed = PreviewRing[i];
                     if (packed < 0 || PackedTile(packed) >= TileSet.Tiles.Count || TileSet.Tiles[PackedTile(packed)] == null) continue;
-                    WfcRotation.RotateCorners(TileSet.Tiles[PackedTile(packed)].Corners, PackedRotation(packed), corners);
+                    WfcRotation.Turn(TileSet.Tiles[PackedTile(packed)].Corners, PackedRotation(packed), PackedMirror(packed), false, corners);
                     AddCell(i % ringWidth - margin, i / ringWidth - margin, corners, vertices, indices);
                 }
 
-            // Pieces are rules, so they show with or without a preview
-            foreach (var placed in Pieces)
+            // Pieces are rules, so they show with or without a preview; landmarks only with the preview that placed them
+            var shown = new List<PlacedPiece>(Pieces);
+            if (PreviewLandmarks != null && cells == PreviewCells)
+                foreach (var landmark in PreviewLandmarks)
+                    shown.Add(new PlacedPiece { Piece = landmark.Piece, Rotation = landmark.Rotation, Cell = landmark.Cell });
+            foreach (var placed in shown)
             {
                 if (placed.Piece < 0 || placed.Piece >= TileSet.Pieces.Count) continue;
                 var piece = TileSet.Pieces[placed.Piece];

@@ -209,6 +209,7 @@ namespace LevelGeneration
             return new WfcTile
             {
                 Name = tile.Name + " High", Prefab = tile.Prefab, Weight = tile.Weight, AllowRotations = tile.AllowRotations, Background = tile.Background,
+                AllowMirror = tile.AllowMirror, Looks = new List<GameObject>(tile.Looks ?? new List<GameObject>()),
                 SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
                 South = tile.South, East = tile.East, North = tile.North, West = tile.West,
             };
@@ -246,23 +247,36 @@ namespace LevelGeneration
                     continue;
                 }
 
-                var seen = new HashSet<long>();
-                int rotations = tile.AllowRotations ? 4 : 1;
-                for (int r = 0; r < rotations; r++)
+                // Rotations that give the same connections are left out. A mirrored copy that fits like an unmirrored one
+                // stays (it looks different), and the two share the tile's weight.
+                int first = variants.Count;
+                var keys = new List<long>();
+                for (int m = 0; m < (tile.AllowMirror ? 2 : 1); m++)
                 {
-                    WfcRotation.RotateCorners(cornerIndices, r, corners);
-                    WfcRotation.RotateCorners(edgeIndices, r, edges);
-                    long key = 0;
-                    for (int k = 0; k < 4; k++) key = (key << 12) | (long)(corners[k] << 6 | edges[k]);
-                    if (!seen.Add(key)) continue;
-                    variants.Add(new WfcVariant
+                    var seen = new HashSet<long>();
+                    for (int r = 0; r < (tile.AllowRotations ? 4 : 1); r++)
                     {
-                        Tile = t,
-                        Rotation = r,
-                        Corners = new int4(corners[0], corners[1], corners[2], corners[3]),
-                        Edges = new int4(edges[0], edges[1], edges[2], edges[3]),
-                        Weight = Mathf.Max(0f, tile.Weight),
-                    });
+                        WfcRotation.Turn(cornerIndices, r, m == 1, false, corners);
+                        WfcRotation.Turn(edgeIndices, r, m == 1, true, edges);
+                        long key = 0;
+                        for (int k = 0; k < 4; k++) key = (key << 12) | (long)(corners[k] << 6 | edges[k]);
+                        if (!seen.Add(key)) continue;
+                        keys.Add(key);
+                        variants.Add(new WfcVariant
+                        {
+                            Tile = t,
+                            Rotation = r,
+                            Mirror = m == 1,
+                            Corners = new int4(corners[0], corners[1], corners[2], corners[3]),
+                            Edges = new int4(edges[0], edges[1], edges[2], edges[3]),
+                        });
+                    }
+                }
+                for (int i = first; i < variants.Count; i++)
+                {
+                    var variant = variants[i];
+                    variant.Weight = Mathf.Max(0f, tile.Weight) / keys.FindAll(k => k == keys[i - first]).Count;
+                    variants[i] = variant;
                 }
             }
             return variants;
@@ -282,8 +296,18 @@ namespace LevelGeneration
         [Min(0f)] public float Weight = 1f;
         [Tooltip("Also use the tile turned 90°, 180° and 270°")]
         public bool AllowRotations = true;
+        [Tooltip("Also use the tile mirrored (east and west swapped). Leave it off for tiles with one-sided edges, " +
+                 "like a ramp's west and east slope edges.")]
+        public bool AllowMirror;
         [Tooltip("Only used in the background ring around the level (scenery, no colliders), never inside it")]
         public bool Background;
+        [Tooltip("Other models for the same tile. Each cell picks one (or Prefab) at random, so neighboring cells look different.")]
+        public List<GameObject> Looks = new List<GameObject>();
+
+        /// <summary>Prefab, then Looks: look 0 is Prefab.</summary>
+        public int LookCount => 1 + (Looks?.Count ?? 0);
+
+        public GameObject Look(int look) => look <= 0 || Looks == null || look > Looks.Count ? Prefab : Looks[look - 1];
 
         /// <summary>Corner connection Ids: SouthWest, SouthEast, NorthEast, NorthWest.</summary>
         public int[] Corners => new[] { SouthWest, SouthEast, NorthEast, NorthWest };
@@ -325,11 +349,12 @@ namespace LevelGeneration
         }
     }
 
-    /// <summary>A tile in one rotation, as the solver sees it: connection indices (bits), not Ids.</summary>
+    /// <summary>A tile in one rotation (maybe mirrored first), as the solver sees it: connection indices (bits), not Ids.</summary>
     public struct WfcVariant
     {
         public int Tile;
         public int Rotation;
+        public bool Mirror;
         /// <summary>Corner connection indices: SouthWest, SouthEast, NorthEast, NorthWest.</summary>
         public int4 Corners;
         /// <summary>Edge connection indices: South, East, North, West.</summary>
@@ -346,6 +371,23 @@ namespace LevelGeneration
         public static void RotateCorners<T>(IReadOnlyList<T> corners, int rotation, T[] result)
         {
             for (int j = 0; j < 4; j++) result[j] = corners[(j + rotation) % 4];
+        }
+
+        /// <summary>
+        /// Where corner (or edge) j of a tile mirrored (east and west swapped, x → -x) and then turned r times comes from in
+        /// the tile: mirroring swaps SW with SE and NE with NW, or the east edge with the west one.
+        /// </summary>
+        public static int Source(int j, int rotation, bool mirror, bool edges)
+        {
+            int turned = (j + rotation) % 4;
+            if (!mirror) return turned;
+            return edges ? (4 - turned) % 4 : turned ^ 1;
+        }
+
+        /// <summary>Corners (edges: true for S, E, N, W) of a tile mirrored (when asked) and turned r times.</summary>
+        public static void Turn<T>(IReadOnlyList<T> values, int rotation, bool mirror, bool edges, T[] result)
+        {
+            for (int j = 0; j < 4; j++) result[j] = values[Source(j, rotation, mirror, edges)];
         }
 
         /// <summary>Unique number for 4 corner terrains (SW + 3 SE + 9 NE + 27 NW). Used by the tile generators.</summary>

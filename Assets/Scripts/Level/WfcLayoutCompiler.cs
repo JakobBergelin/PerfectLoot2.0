@@ -36,6 +36,22 @@ namespace LevelGeneration
         /// </summary>
         public WfcCompiledLayout Ring;
         public int Margin;
+        /// <summary>The layout's landmarks, each with its piece in every allowed rotation. Placed by seed with PlaceLandmarks.</summary>
+        public List<LandmarkPool> Landmarks = new List<LandmarkPool>();
+        /// <summary>Cells landmarks stay off: the player start and hand-placed prefabs.</summary>
+        public List<Vector2Int> KeepClear = new List<Vector2Int>();
+
+        /// <summary>
+        /// Places the landmarks for this seed into the solver input (cells taken, corners fixed and locked) and adds them to
+        /// Pieces. Returns the ones placed.
+        /// </summary>
+        public List<Placement> PlaceLandmarks(uint seed)
+        {
+            var start = StartCorner >= 0 ? new Vector2Int(StartCorner % (Width + 1), StartCorner / (Width + 1)) : new Vector2Int(-1000, -1000);
+            var placed = WfcLayoutCompiler.PlaceLandmarks(seed, Width, Height, CornerMasks, LockedCorners, InitialCells, Landmarks, KeepClear, start);
+            Pieces.AddRange(placed);
+            return placed;
+        }
 
         public struct Placement
         {
@@ -89,21 +105,104 @@ namespace LevelGeneration
             Backtracks = new NativeReference<int>(Allocator.TempJob),
         };
 
-        /// <summary>Solver output (variant indices) to the saved-layout format (Tile * 4 + Rotation, or Occupied).</summary>
+        /// <summary>Solver output (variant indices) to the saved-layout format (LevelLayoutAuthoring.Pack, or Occupied).</summary>
         public int[] ToPackedCells(int[] variantCells)
         {
             var packed = new int[variantCells.Length];
             for (int i = 0; i < packed.Length; i++)
             {
                 int v = variantCells[i];
-                packed[i] = v >= 0 && v < Variants.Count ? LevelLayoutAuthoring.Pack(Variants[v].Tile, Variants[v].Rotation) : v;
+                packed[i] = v >= 0 && v < Variants.Count ? LevelLayoutAuthoring.Pack(Variants[v].Tile, Variants[v].Rotation, Variants[v].Mirror) : v;
             }
             return packed;
         }
     }
 
+    /// <summary>A landmark (LevelLayoutAuthoring.Landmark): how many and how far apart, and its piece in each rotation.</summary>
+    public class LandmarkPool
+    {
+        public int MinCount, MaxCount;
+        public float Spacing;
+        public List<LandmarkOption> Options = new List<LandmarkOption>();
+    }
+
+    /// <summary>A landmark's piece in one rotation: its footprint and (Width + 1) * (Height + 1) corner connection indices.</summary>
+    public struct LandmarkOption
+    {
+        public int Piece, Rotation, Width, Height;
+        public int[] Corners;
+    }
+
     public static class WfcLayoutCompiler
     {
+        const int LandmarkTries = 200;
+
+        /// <summary>
+        /// Places landmarks at random (by seed) where they fit: every cell free, every corner allowed by the corner masks, off
+        /// the cells to keep clear, and at least the landmark's Spacing (in cells, middle to middle) from the player start
+        /// and every other landmark. Their cells become Occupied and their corners fixed and locked, like hand-placed pieces.
+        /// Changes the arrays; returns what was placed. Shared by the editor preview and the game.
+        /// </summary>
+        public static List<WfcCompiledLayout.Placement> PlaceLandmarks(uint seed, int width, int height, ulong[] cornerMasks, byte[] lockedCorners,
+                                                                       int[] cells, List<LandmarkPool> pools, List<Vector2Int> keepClear, Vector2Int start)
+        {
+            var placed = new List<WfcCompiledLayout.Placement>();
+            var middles = new List<Vector2>();
+            var startMiddle = start + Vector2.one * 0.5f;
+            var random = new Unity.Mathematics.Random(math.max(1u, math.hash(new uint2(seed, 0x1A4Du))));
+            int cornerWidth = width + 1;
+            foreach (var pool in pools)
+            {
+                if (pool.Options.Count == 0) continue;
+                int count = pool.MinCount + random.NextInt(math.max(0, pool.MaxCount - pool.MinCount) + 1);
+                for (int n = 0; n < count; n++)
+                    for (int attempt = 0; attempt < LandmarkTries; attempt++)
+                    {
+                        var option = pool.Options[random.NextInt(pool.Options.Count)];
+                        if (option.Width > width || option.Height > height) break;
+                        var cell = new Vector2Int(random.NextInt(width - option.Width + 1), random.NextInt(height - option.Height + 1));
+                        var middle = cell + new Vector2(option.Width, option.Height) * 0.5f;
+                        if (Vector2.Distance(middle, startMiddle) < pool.Spacing || middles.Exists(m => Vector2.Distance(m, middle) < pool.Spacing)) continue;
+                        if (!LandmarkFits(option, cell, width, cornerMasks, cells, keepClear)) continue;
+
+                        for (int y = 0; y < option.Height; y++)
+                            for (int x = 0; x < option.Width; x++)
+                                cells[cell.x + x + (cell.y + y) * width] = WfcSolver.Occupied;
+                        for (int y = 0; y <= option.Height; y++)
+                            for (int x = 0; x <= option.Width; x++)
+                            {
+                                int corner = cell.x + x + (cell.y + y) * cornerWidth;
+                                cornerMasks[corner] = WfcConnections.Bit(option.Corners[x + y * (option.Width + 1)]);
+                                lockedCorners[corner] = 1;
+                            }
+                        middles.Add(middle);
+                        placed.Add(new WfcCompiledLayout.Placement
+                        {
+                            Piece = option.Piece, Rotation = option.Rotation, Cell = cell, Size = new Vector2Int(option.Width, option.Height),
+                        });
+                        break;
+                    }
+            }
+            return placed;
+        }
+
+        static bool LandmarkFits(LandmarkOption option, Vector2Int cell, int width, ulong[] cornerMasks, int[] cells, List<Vector2Int> keepClear)
+        {
+            for (int y = 0; y < option.Height; y++)
+                for (int x = 0; x < option.Width; x++)
+                {
+                    var at = new Vector2Int(cell.x + x, cell.y + y);
+                    if (cells[at.x + at.y * width] != WfcSolver.Free || keepClear.Contains(at)) return false;
+                }
+            for (int y = 0; y <= option.Height; y++)
+                for (int x = 0; x <= option.Width; x++)
+                {
+                    ulong mask = cornerMasks[cell.x + x + (cell.y + y) * (width + 1)];
+                    if ((mask & WfcConnections.Bit(option.Corners[x + y * (option.Width + 1)])) == 0ul) return false;
+                }
+            return true;
+        }
+
         // Keeps only the walkable connections on a cell's 4 corners and locks them, unless a piece covers the cell (then the piece decides)
         static void ForceWalkable(WfcCompiledLayout compiled, Vector2Int cell, int cornerWidth, string what)
         {
@@ -252,14 +351,14 @@ namespace LevelGeneration
                     tileEdges[k] = tileSet.EdgeIndex(tile.Edges[k]);
                 }
                 int rotation = ((forced.Rotation % 4) + 4) % 4;
-                WfcRotation.RotateCorners(tileCorners, rotation, corners);
-                WfcRotation.RotateCorners(tileEdges, rotation, edges);
+                WfcRotation.Turn(tileCorners, rotation, forced.Mirror, false, corners);
+                WfcRotation.Turn(tileEdges, rotation, forced.Mirror, true, edges);
                 var wanted = new int4(corners[0], corners[1], corners[2], corners[3]);
                 var wantedEdges = new int4(edges[0], edges[1], edges[2], edges[3]);
-                int variant = compiled.Variants.FindIndex(v => v.Tile == forced.Tile && math.all(v.Corners == wanted) && math.all(v.Edges == wantedEdges));
+                int variant = compiled.Variants.FindIndex(v => v.Tile == forced.Tile && v.Mirror == forced.Mirror && math.all(v.Corners == wanted) && math.all(v.Edges == wantedEdges));
                 if (variant < 0)
                 {
-                    compiled.Warnings.Add($"Forced tile {tile.Name} at {forced.Cell} uses a rotation the tile doesn't allow (or a missing connection).");
+                    compiled.Warnings.Add($"Forced tile {tile.Name} at {forced.Cell} uses a rotation or mirroring the tile doesn't allow (or a missing connection).");
                     continue;
                 }
                 compiled.InitialCells[cell] = variant;
@@ -272,6 +371,36 @@ namespace LevelGeneration
                         compiled.Warnings.Add($"Forced tile at {forced.Cell} doesn't match the corner rule at ({cx}, {cy}); the level can't be solved.");
                 }
             }
+
+            // Landmarks: their pieces in every allowed rotation, placed per seed (PlaceLandmarks) clear of the start and prefabs
+            foreach (var landmark in layout.Landmarks)
+            {
+                if (landmark == null) continue;
+                if (landmark.Piece < 0 || landmark.Piece >= tileSet.Pieces.Count || tileSet.Pieces[landmark.Piece] == null)
+                {
+                    compiled.Warnings.Add($"A landmark names piece {landmark.Piece}, which the tile set doesn't have; skipped.");
+                    continue;
+                }
+                var piece = tileSet.Pieces[landmark.Piece];
+                piece.EnsureCorners();
+                var pool = new LandmarkPool { MinCount = landmark.MinCount, MaxCount = Mathf.Max(landmark.MinCount, landmark.MaxCount), Spacing = landmark.Spacing };
+                for (int r = 0; r < (piece.AllowRotations ? 4 : 1); r++)
+                {
+                    var grid = WfcRotation.RotateGrid(piece.CornerIds, piece.Size.x, piece.Size.y, r, out int w, out int h);
+                    var indices = System.Array.ConvertAll(grid, tileSet.CornerIndex);
+                    if (System.Array.Exists(indices, i => i < 0 || i >= WfcConnections.Max))
+                    {
+                        compiled.Warnings.Add($"Landmark {piece.Name} uses a corner connection the tile set doesn't have; skipped.");
+                        pool.Options.Clear();
+                        break;
+                    }
+                    pool.Options.Add(new LandmarkOption { Piece = landmark.Piece, Rotation = r, Width = w, Height = h, Corners = indices });
+                }
+                if (pool.Options.Count > 0) compiled.Landmarks.Add(pool);
+            }
+            if (layout.InGrid(start)) compiled.KeepClear.Add(start);
+            foreach (var placed in layout.Prefabs)
+                if (placed != null && placed.Prefab != null && layout.InGrid(placed.Cell)) compiled.KeepClear.Add(placed.Cell);
 
             if (layout.BackgroundRing > 0) compiled.Ring = CompileRing(layout, tileSet, compiled);
             return compiled;

@@ -11,14 +11,55 @@ namespace LevelGeneration
         public PlacementKind Kind;
         public float Spacing, ClearRadius, MinDistanceFromStart;
         public float MaxSlope;      // Degrees (spawners)
+        public ulong EdgeMask;      // Edge props: the edge connections (bits by index) to place along
+        public bool AlongWalkableBorder;    // Edge props without edge connections: where walkable ground meets anything else
     }
 
-    /// <summary>A placed thing: Grid is in cells (x across, y forward) on the unbent grid.</summary>
+    /// <summary>A placed thing: Grid is in cells (x across, y forward) on the unbent grid, Height the ground's height there.</summary>
     public struct PlacementPoint
     {
         public int Rule;
         public float2 Grid;
         public float Yaw;           // Radians
+        public float Height;        // Meters above the bent grid
+    }
+
+    public static class LevelLooks
+    {
+        /// <summary>
+        /// Which look (0 is the tile's Prefab, then its Looks) each cell shows: random by seed, but never the one of the cell
+        /// west or south of it when that cell has the same tile (the cells east and north avoid this one in turn), as long as
+        /// the tile has looks enough. lookCounts holds each tile's number of looks.
+        /// </summary>
+        public static int[] Pick(int width, int height, int[] packed, int[] lookCounts, uint seed)
+        {
+            var looks = new int[packed.Length];
+            for (int y = 0; y < height; y++)
+                for (int x = 0; x < width; x++)
+                {
+                    int cell = x + y * width;
+                    if (packed[cell] < 0) continue;
+                    int tile = LevelLayoutAuthoring.PackedTile(packed[cell]);
+                    int count = tile < lookCounts.Length ? lookCounts[tile] : 1;
+                    if (count <= 1) continue;
+                    int west = x > 0 && packed[cell - 1] >= 0 && LevelLayoutAuthoring.PackedTile(packed[cell - 1]) == tile ? looks[cell - 1] : -1;
+                    int south = y > 0 && packed[cell - width] >= 0 && LevelLayoutAuthoring.PackedTile(packed[cell - width]) == tile ? looks[cell - width] : -1;
+                    var random = new Random(math.max(1u, math.hash(new uint3(seed, (uint)cell, 0x100Cu))));
+                    int options = count - (west >= 0 ? 1 : 0) - (south >= 0 && south != west ? 1 : 0);
+                    if (options <= 0)
+                    {
+                        looks[cell] = random.NextInt(count);
+                        continue;
+                    }
+                    int pick = random.NextInt(options);
+                    for (int look = 0; look < count; look++)
+                    {
+                        if (look == west || look == south) continue;
+                        if (pick-- == 0) { looks[cell] = look; break; }
+                    }
+                }
+            return looks;
+        }
     }
 
     /// <summary>
@@ -58,16 +99,19 @@ namespace LevelGeneration
                     int packed = packedCells[x + y * width];
                     if (packed < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(packed), rotation = LevelLayoutAuthoring.PackedRotation(packed);
+                    bool mirror = LevelLayoutAuthoring.PackedMirror(packed);
                     if (tile * 4 + 3 >= tileCorners.Length || tile * 4 + 3 >= tileEdges.Length) continue;
-                    // A tile turned r times has at corner (or edge) k what it has at (k + r) % 4
-                    corners[x + y * cornerWidth] = tileCorners[tile * 4 + rotation % 4];
-                    corners[x + 1 + y * cornerWidth] = tileCorners[tile * 4 + (1 + rotation) % 4];
-                    corners[x + 1 + (y + 1) * cornerWidth] = tileCorners[tile * 4 + (2 + rotation) % 4];
-                    corners[x + (y + 1) * cornerWidth] = tileCorners[tile * 4 + (3 + rotation) % 4];
-                    edges[x + y * width] = tileEdges[tile * 4 + rotation % 4];
-                    edges[across + x + 1 + y * cornerWidth] = tileEdges[tile * 4 + (1 + rotation) % 4];
-                    edges[x + (y + 1) * width] = tileEdges[tile * 4 + (2 + rotation) % 4];
-                    edges[across + x + y * cornerWidth] = tileEdges[tile * 4 + (3 + rotation) % 4];
+                    // What the placed (mirrored, turned) tile has at each corner and edge (WfcRotation.Source)
+                    int Corner(int k) => tileCorners[tile * 4 + WfcRotation.Source(k, rotation, mirror, false)];
+                    int Edge(int k) => tileEdges[tile * 4 + WfcRotation.Source(k, rotation, mirror, true)];
+                    corners[x + y * cornerWidth] = Corner(0);
+                    corners[x + 1 + y * cornerWidth] = Corner(1);
+                    corners[x + 1 + (y + 1) * cornerWidth] = Corner(2);
+                    corners[x + (y + 1) * cornerWidth] = Corner(3);
+                    edges[x + y * width] = Edge(0);
+                    edges[across + x + 1 + y * cornerWidth] = Edge(1);
+                    edges[x + (y + 1) * width] = Edge(2);
+                    edges[across + x + y * cornerWidth] = Edge(3);
                 }
 
             var surface = new LevelSurface
@@ -109,6 +153,7 @@ namespace LevelGeneration
         [ReadOnly] public NativeArray<byte> CornerTerrain;
         [ReadOnly] public NativeArray<float> CornerHeight;
         [ReadOnly] public NativeArray<byte> EdgeWalkable;
+        [ReadOnly] public NativeArray<int> EdgeConnection;  // Edge connection index per edge (LevelSurface), for edge props
         [ReadOnly] public NativeArray<bool> OccupiedCells;
         [ReadOnly] public NativeArray<float3> BentCorners;
         [ReadOnly] public NativeArray<PlacementRuleData> Rules;
@@ -133,6 +178,11 @@ namespace LevelGeneration
                 var rule = Rules[r];
                 float spacing = rule.Spacing / TileSize;
                 if (spacing <= 0f) continue;
+                if (rule.Kind == PlacementKind.EdgeProp)
+                {
+                    PlaceAlongEdges(r, rule, spacing, reachable);
+                    continue;
+                }
                 bool isSpawner = rule.Kind == PlacementKind.EnemySpawner;
                 var own = new NativeParallelMultiHashMap<int2, float2>(64, Allocator.Temp);
                 float ownBucket = spacing;
@@ -186,7 +236,8 @@ namespace LevelGeneration
 
             if (isSpawner) spawners.Add(Bucket(point, spawnerBucket), point);
             else own.Add(Bucket(point, ownBucket), point);
-            Points.Add(new PlacementPoint { Rule = ruleIndex, Grid = point, Yaw = random.NextFloat(2f * math.PI) });
+            int2 cell = (int2)math.floor(point);
+            Points.Add(new PlacementPoint { Rule = ruleIndex, Grid = point, Yaw = random.NextFloat(2f * math.PI), Height = CornerHeight[cell.x + cell.y * (Width + 1)] });
             return true;
         }
 
@@ -239,6 +290,57 @@ namespace LevelGeneration
             var normal = math.normalizesafe(math.cross(alongY, alongX), new float3(0f, 1f, 0f));
             return math.degrees(math.acos(math.clamp(math.abs(normal.y), 0f, 1f)));
         }
+
+        // Edge props: in the middle of grid edges (between two corners), along the rule's edge connections or, without any,
+        // where walkable ground meets anything else. Each faces its walkable (else its lower) side and stands at that side's
+        // height; the walkable side must be reachable from the start. Spacing apart, in random order.
+        void PlaceAlongEdges(int ruleIndex, PlacementRuleData rule, float spacing, NativeArray<bool> reachable)
+        {
+            var random = new Random(math.max(1u, math.hash(new uint2(Seed, (uint)ruleIndex + 1u))));
+            int cornerWidth = Width + 1, across = Width * (Height + 1), edges = across + cornerWidth * Height;
+            var order = new NativeArray<int>(edges, Allocator.Temp);
+            for (int e = 0; e < edges; e++) order[e] = e;
+            for (int i = edges - 1; i > 0; i--)
+            {
+                int j = random.NextInt(i + 1);
+                (order[i], order[j]) = (order[j], order[i]);
+            }
+            var own = new NativeParallelMultiHashMap<int2, float2>(64, Allocator.Temp);
+            byte walkable = (byte)WfcTerrain.Walkable;
+
+            for (int o = 0; o < edges; o++)
+            {
+                int e = order[o];
+                // The edge's corners a and b, and the cells on either side of it
+                bool alongX = e < across;
+                int ex = alongX ? e % Width : (e - across) % cornerWidth, ey = alongX ? e / Width : (e - across) / cornerWidth;
+                int a = ex + ey * cornerWidth, b = alongX ? a + 1 : a + cornerWidth;
+                int2 sideA = alongX ? new int2(ex, ey - 1) : new int2(ex - 1, ey), sideB = new int2(ex, ey);
+
+                bool walkA = CornerTerrain[a] == walkable, walkB = CornerTerrain[b] == walkable;
+                bool along = !rule.AlongWalkableBorder ? EdgeConnection[e] < WfcConnections.Max && ((rule.EdgeMask >> EdgeConnection[e]) & 1ul) != 0ul
+                                                  : walkA != walkB;
+                if (!along || !(walkA && reachable[a] || walkB && reachable[b])) continue;
+                if (Occupied(sideA) || Occupied(sideB)) continue;
+
+                int toward = walkA != walkB ? (walkA ? a : b) : CornerHeight[a] < CornerHeight[b] ? a : b;
+                int from = toward == a ? b : a;
+                var towardPoint = new float2(toward % cornerWidth, toward / cornerWidth);
+                var fromPoint = new float2(from % cornerWidth, from / cornerWidth);
+                var middle = (towardPoint + fromPoint) * 0.5f;
+                if (math.distance(middle, Start) * TileSize < rule.MinDistanceFromStart) continue;
+                bool reservedNear = false;
+                for (int i = 0; i < Reserved.Length; i++)
+                    reservedNear |= math.distance(middle, Reserved[i].xy) * TileSize < Reserved[i].z;
+                if (reservedNear || TooClose(own, spacing, middle, spacing)) continue;
+
+                own.Add(Bucket(middle, spacing), middle);
+                var facing = towardPoint - fromPoint;
+                Points.Add(new PlacementPoint { Rule = ruleIndex, Grid = middle, Yaw = math.atan2(facing.x, facing.y), Height = CornerHeight[toward] });
+            }
+        }
+
+        bool Occupied(int2 cell) => cell.x >= 0 && cell.y >= 0 && cell.x < Width && cell.y < Height && OccupiedCells[cell.x + cell.y * Width];
 
         static int2 Bucket(float2 point, float size) => (int2)math.floor(point / size);
 

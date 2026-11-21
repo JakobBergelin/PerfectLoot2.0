@@ -35,6 +35,7 @@ namespace LevelGeneration
             public int Rotation;
             public float Raise;
             public bool NoColliders;    // Background ring tiles: scenery only
+            public bool Mirror;         // East and west swapped (x → -x) before the turn
         }
 
         public struct Prop
@@ -124,8 +125,8 @@ namespace LevelGeneration
                     chunk.Props.Add(new Prop
                     {
                         Prefab = prop.Prefab,
-                        Position = Bend(corners, width, height, tileSize, turn, instances[i].Center, instances[i].Raise, prop.Position),
-                        Rotation = math.mul(turn, prop.Rotation),
+                        Position = Bend(corners, width, height, tileSize, turn, instances[i].Center, instances[i].Raise, Mirrored(instances[i].Mirror, prop.Position)),
+                        Rotation = math.mul(turn, instances[i].Mirror ? Reflected(prop.Rotation) : prop.Rotation),
                     });
                 }
             }
@@ -211,6 +212,12 @@ namespace LevelGeneration
             chunk.Handle = JobHandle.CombineDependencies(outlines, colliders);
             return chunk;
         }
+
+        // A point or direction in the part's own space, mirrored (x → -x) when the part is
+        static float3 Mirrored(bool mirror, float3 value) => mirror ? new float3(-value.x, value.y, value.z) : value;
+
+        // A prop's turn as seen in the mirror (x → -x): the turn the other way around the mirrored axis
+        static quaternion Reflected(quaternion rotation) => new quaternion(rotation.value.x, -rotation.value.y, -rotation.value.z, rotation.value.w);
 
         // A point in the part's own space, turned with the part, placed on the bent grid; its height (plus the part's raise) stays on top
         static float3 Bend(NativeArray<float3> corners, int width, int height, float tileSize, quaternion turn, float2 center, float raise, float3 local)
@@ -335,14 +342,16 @@ namespace LevelGeneration
                 for (int v = 0; v < mesh.Vertices.Length; v++)
                 {
                     int target = item.VertexStart + v;
-                    Vertices[target] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, mesh.Vertices[v]);
-                    Normals[target] = math.mul(turn, mesh.Normals[v]);
+                    Vertices[target] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, Mirrored(instance.Mirror, mesh.Vertices[v]));
+                    Normals[target] = math.mul(turn, Mirrored(instance.Mirror, mesh.Normals[v]));
                     var tangent = mesh.Tangents[v];
-                    Tangents[target] = new float4(math.mul(turn, tangent.xyz), tangent.w);
+                    Tangents[target] = new float4(math.mul(turn, Mirrored(instance.Mirror, tangent.xyz)), instance.Mirror ? -tangent.w : tangent.w);
                     Uvs[target] = mesh.Uvs[v];
                 }
                 int offset = item.VertexStart - item.BatchVertexStart;
-                for (int i = 0; i < mesh.Indices.Length; i++) Indices[item.IndexStart + i] = offset + mesh.Indices[i];
+                // A mirrored triangle turns inside out: swap two of its corners
+                for (int i = 0; i < mesh.Indices.Length; i++)
+                    Indices[item.IndexStart + i] = offset + mesh.Indices[instance.Mirror && i % 3 != 0 ? i + (i % 3 == 1 ? 1 : -1) : i];
             }
         }
 
@@ -404,10 +413,12 @@ namespace LevelGeneration
                 var turn = quaternion.RotateY(math.radians(90f * instance.Rotation));
 
                 for (int v = 0; v < collider.Vertices.Length; v++)
-                    Vertices[item.VertexStart + v] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, collider.Vertices[v]);
+                    Vertices[item.VertexStart + v] = Bend(Corners, Width, Height, TileSize, turn, instance.Center, instance.Raise, Mirrored(instance.Mirror, collider.Vertices[v]));
                 int offset = item.VertexStart - item.BatchVertexStart;
                 for (int t = 0; t * 3 + 2 < collider.Indices.Length; t++)
-                    Triangles[item.TriangleStart + t] = new int3(offset + collider.Indices[t * 3], offset + collider.Indices[t * 3 + 1], offset + collider.Indices[t * 3 + 2]);
+                    Triangles[item.TriangleStart + t] = instance.Mirror
+                        ? new int3(offset + collider.Indices[t * 3], offset + collider.Indices[t * 3 + 2], offset + collider.Indices[t * 3 + 1])
+                        : new int3(offset + collider.Indices[t * 3], offset + collider.Indices[t * 3 + 1], offset + collider.Indices[t * 3 + 2]);
             }
         }
 

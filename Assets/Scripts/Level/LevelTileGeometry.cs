@@ -8,7 +8,10 @@ namespace LevelGeneration
     /// <summary>The meshes, colliders and props of every tile and piece, in their own space (pivot at the footprint's middle).</summary>
     public struct LevelGeometryBlob
     {
-        public BlobArray<LevelPartGeometry> Tiles;      // Indexed like WfcTileSet.Tiles
+        /// <summary>Every tile's looks (Prefab, then Looks), one after another: tile t's look l is Tiles[TileLookStart[t] + l].</summary>
+        public BlobArray<LevelPartGeometry> Tiles;
+        /// <summary>Per tile (WfcTileSet.Tiles) where its looks start in Tiles, plus the end: tile t has TileLookStart[t + 1] - TileLookStart[t] looks.</summary>
+        public BlobArray<int> TileLookStart;
         public BlobArray<LevelPartGeometry> Pieces;     // Indexed like WfcTileSet.Pieces
     }
 
