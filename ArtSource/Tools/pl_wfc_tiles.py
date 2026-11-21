@@ -148,7 +148,9 @@ class Builder:
         return vert
 
     def face(self, vs, m):
-        if len(set(vs)) < 3: return None
+        # An outline through a grid point gives that point twice: bmesh refuses such a face, which left holes at seams
+        vs = [v for i, v in enumerate(vs) if v is not vs[i - 1]]
+        if len(set(vs)) < 3 or len(set(vs)) != len(vs): return None
         try:
             f = self.bm.faces.new(vs)
         except ValueError:
@@ -172,7 +174,7 @@ class Builder:
         return faces
 
     def skirt(self, faces, bottom, m, jitter=None, contour_only=False):
-        """Vertical sides to height bottom from the outline of faces, facing away from them (into the region when the
+        """Vertical sides to height bottom (a number or a function of (u, v)) from the outline of faces, facing away from them (into the region when the
         faces face down). jitter(u, v) -> (du, dv) moves the bottom ring (rock walls). contour_only leaves out the
         tile border (use unmerged regions, or T-junction seams get sides too)."""
         fs = set(faces)
@@ -191,7 +193,7 @@ class Builder:
                 if v not in ring:
                     u, vv = v.co.x, -v.co.y
                     du, dv = jitter(u, vv) if jitter else (0.0, 0.0)
-                    ring[v] = self.vert(u + du, vv + dv, bottom)
+                    ring[v] = self.vert(u + du, vv + dv, bottom(u, vv) if callable(bottom) else bottom)
                 return ring[v]
             # Up-facing faces loop CCW seen from above, so (b, a, low a, low b) faces outward
             f = self.face([b, a, low(a), low(b)], m)

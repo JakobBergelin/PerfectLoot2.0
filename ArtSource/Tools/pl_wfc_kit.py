@@ -42,6 +42,7 @@ EDGES = [("Plain", 0, True), ("Cliff", 1, False)]
 EDGE = {e[0]: e[1] for e in EDGES}
 FLOORLIKE = ("floor", "path", "overgrowth")
 RAMP_HALF = 1.4     # Half the width of a ramp cut through a cliff
+LIP = 0.35 / (TILE / 2)     # Width of the stone lip along cliff tops and chasm rims (in Field.g units: meters / half a tile)
 # How strongly a connection claims a tile's area against the others (a bridge deck is narrower than half a tile)
 BIAS = {"Bridge": 0.72}
 
@@ -212,7 +213,7 @@ def floor_surface(b, kind, fn, h, S, M, R, slope=None, look=0):
             height = lambda u, v, cu=cu, cv=cv, top=top, tilt=tilt: hf(u, v) + top + (u - cu) * tilt[0] + (v - cv) * tilt[1]
             gap = 0.07 if kind == "floor" else 0.09
             faces = b.surface(polys, height, mat, scale_about=(cu, cv), k=(slab * STEP - gap) / (slab * STEP))
-            b.skirt(faces, hf(cu, cv) - 0.03, M["Joint"])
+            b.skirt(faces, lambda u, v: hf(u, v) - 0.03, M["Joint"])     # Follows a ramp's slope
     if kind == "floor" and look == 2:
         accent_feature(b, fn, h, S, M, R)
     return bed
@@ -274,7 +275,6 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
     b = T.Builder()
     base = min(CONN[c]["height"] for c in corners)
     h = {c: CONN[c]["height"] - base for c in F.present}
-    rim = max([h[c] for c in F.present if CONN[c]["kind"] != "drop"] or [0.0])
     depth = S["depth"]
     g = {c: (lambda u, v, c=c: F.g(c, u, v)) for c in F.present}
     jitter = T._jitter(seed, S["cliff_jitter"])
@@ -294,6 +294,17 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
             helpers += outlines[c]
         elif k == "bridge": outlines[c] = bridge_surface(b, g[c], h[c], M, R)
     if strip: floor_surface(b, "floor", strip, 0.0, S, M, R, slope=ramp)
+
+    # A lip of edge stones along the top of each cliff and chasm rim, so high ground reads as a plateau
+    if len(F.present) > 1:
+        for c in F.present:
+            if CONN[c]["kind"] not in FLOORLIKE: continue
+            def above(u, v, c=c):
+                o = max((o for o in F.present if o != c), key=lambda o: F.score(o, u, v))
+                return CONN[o]["kind"] == "drop" or (CONN[o]["kind"] in FLOORLIKE and h[o] < h[c] - 0.01)
+            lip = lambda u, v, c=c: min(g[c](u, v), LIP - g[c](u, v)) if above(u, v) else -1.0
+            faces = b.surface(T.region(lip, merge=False), h[c] + 0.16, M["Cliff"])
+            b.skirt(faces, h[c] - 0.03, M["Cliff"], contour_only=True)
 
     # Drop: the bottom of the chasm under the drop and any bridge; spires standing in it for the background
     if "Drop" in F.present:
@@ -321,7 +332,7 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
             ko = CONN[other]["kind"]
             ta = a.co.z
             if k in FLOORLIKE and ko in FLOORLIKE and h[c] > h[other] + 0.01:
-                wall(b, a, e, ta, h[other] - 0.03, M["Cliff"], jitter)
+                wall(b, a, e, ta, h[other] - 0.03, M["Cliff"])     # Straight down: meets the lower floor on the outline
             elif k in FLOORLIKE + ("rock",) and ko == "drop":
                 wall(b, a, e, ta, -depth, M["Chasm"], jitter)
             elif k in FLOORLIKE and ko == "liquid":
@@ -355,12 +366,12 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
                 faces_out = low_side == (side > 0)
                 b.face(vs if faces_out else vs[::-1], M["Cliff"])
 
-    vis = to_object(b, name, coll, F, rim, depth)
+    vis = to_object(b, name, coll, F)
     colliders(name, F, g, h, vis, coll, S, strip, ramp)
     return vis
 
 
-def to_object(b, name, coll, F, rim, depth):
+def to_object(b, name, coll, F):
     """The mesh with faces sorted by material, flat shaded, with UVs the biome shaders read."""
     b.bm.verts.index_update()
     verts = [v.co.copy() for v in b.bm.verts]
@@ -382,7 +393,8 @@ def to_object(b, name, coll, F, rim, depth):
             if slot in ("Floor", "FloorAlt", "Path", "Overgrowth", "Bridge"):
                 uv.data[li].uv = (u / TILE + 0.5, v / TILE + 0.5)
             elif slot == "Chasm":
-                uv.data[li].uv = ((u + v) * 0.3, max(0.0, rim - hh))       # Depth below the rim: fades into fog
+                # Depth below the ground (0: a drop is always a tile's lowest corner), the same in every tile: fades into fog
+                uv.data[li].uv = ((u + v) * 0.3, max(0.0, -hh))
             elif slot == "Liquid":
                 g = F.g("Liquid", u, v) if "Liquid" in F.present else 0.0
                 uv.data[li].uv = (max(0.0, g) * TILE / 2, 0.0)              # Meters from the shore
@@ -477,9 +489,10 @@ def kit_tiles(S):
         for p, corners in patterns(a, b):
             add(f"{a}_{b}_{p}", corners, model=f"K_{la}_{lb}_{p}", factor=0.5 if p == "D" else 1.0)
     # Between heights: cliffs, and a ramp cut through a straight cliff (units walk through it from low to high)
+    # Corner and diagonal cliffs are rarer than straight ones, so cliffs run long instead of zigzagging
     for p, corners in patterns("Floor", "FloorHigh"):
-        add(f"Cliff_{p}", corners, factor=0.5 if p == "D" else 1.0)
-    add("Ramp", ["Floor", "Floor", "FloorHigh", "FloorHigh"], kind="ramp", factor=0.7, walk_through=True)
+        add(f"Cliff_{p}", corners, factor={"2": 1.0, "D": 0.25}.get(p, 0.5))
+    add("Ramp", ["Floor", "Floor", "FloorHigh", "FloorHigh"], kind="ramp", factor=0.5, walk_through=True)
     # Where a bridge reaches the ground (its mirror is the other side)
     add("BridgeEnd", ["Floor", "Floor", "Bridge", "Drop"], factor=4.0, mirror=True)
     # Where a cliff between low and high ground runs into a chasm: without these a plateau could only be ringed all by

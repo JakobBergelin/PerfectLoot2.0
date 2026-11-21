@@ -881,7 +881,7 @@ MonoBehaviour:
     East: 0
     North: 1
     West: 1
-    Weight: 115.2
+    Weight: 57.6
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -913,7 +913,7 @@ MonoBehaviour:
     East: 1
     North: 1
     West: 1
-    Weight: 25.92
+    Weight: 12.96
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -929,7 +929,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 1
-    Weight: 23.328
+    Weight: 11.664
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -945,7 +945,7 @@ MonoBehaviour:
     East: 1
     North: 0
     West: 1
-    Weight: 36.288
+    Weight: 25.92
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 1

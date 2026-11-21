@@ -147,7 +147,8 @@ public static class BiomeKitBuilder
                                                  Color.Lerp(floor, BiomeTileSets.Hex(b.Accent), 0.22f) * 1.1f, shadow),
             ["Accent"] = parts[BiomeTileGenerator.Part.Accent],
             ["Cliff"] = parts[BiomeTileGenerator.Part.Rock],
-            ["WallSide"] = parts[BiomeTileGenerator.Part.WallSide],
+            // Rock walls share the cliffs' color: a near-black side made the background rock look like floating plates
+            ["WallSide"] = parts[BiomeTileGenerator.Part.Rock],
             ["WallTop"] = parts[BiomeTileGenerator.Part.WallTop],
             ["WallDark"] = parts[BiomeTileGenerator.Part.Bank],
             ["Bank"] = parts[BiomeTileGenerator.Part.Bank],
