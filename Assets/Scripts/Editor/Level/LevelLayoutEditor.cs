@@ -277,6 +277,7 @@ public class LevelLayoutEditor : Editor
                 if (GUILayout.Button("Clear Preview"))
                 {
                     layout.PreviewCells = null;
+                    layout.PreviewRing = null;
                     layout.PreviewRepairs = null;
                     layout.PreviewPlacements = null;
                     _status = null;
@@ -354,7 +355,7 @@ public class LevelLayoutEditor : Editor
         string connected = !layout.ConnectWalkableAreas ? "" : $" Connected: {carved} corners carved, {filled} filled" +
                            (unconnected > 0 ? $"; {unconnected} pockets couldn't be reached without changing painted or forced corners." : ".");
         string warnings = compiled.Warnings.Count > 0 ? "\n" + string.Join("\n", compiled.Warnings) : "";
-        string placed = attempts > 0 ? PreviewPlacement(layout, compiled) : "";
+        string placed = attempts > 0 ? PreviewPlacement(layout, compiled) + PreviewRing(layout, compiled) : "";
         if (attempts > 0)
             SetStatus($"Generated with seed {layout.Seed}{(attempts > 1 ? $" (attempt {attempts})" : "")} in {timer.ElapsedMilliseconds} ms" +
                       $"{(backtracks > 0 ? $" with {backtracks} backtracks" : "")}.{connected}{placed}{warnings}",
@@ -363,6 +364,23 @@ public class LevelLayoutEditor : Editor
             SetStatus($"No solution after {layout.MaxAttempts} attempts with seed {layout.Seed}. The rules may conflict, or the tile set " +
                       $"lacks tiles for some corner combinations (see its coverage).{warnings}", MessageType.Error);
         SceneView.RepaintAll();
+    }
+
+    // Solves the background ring around the preview, like the game does; returns a status line
+    static string PreviewRing(LevelLayoutAuthoring layout, WfcCompiledLayout compiled)
+    {
+        layout.PreviewRing = null;
+        var ring = compiled.Ring;
+        if (ring == null || layout.PreviewCells == null) return "";
+        var surface = LevelSurface.Build(layout.Width, layout.Height, layout.PreviewCells, layout.TileSet.TileCornerIndices(), layout.TileSet.TileEdgeIndices(),
+                                         compiled.CornerMasks, compiled.CornerTerrains, compiled.CornerHeights, compiled.EdgeWalkables);
+        WfcLayoutCompiler.FixRingBorder(layout.Width, layout.Height, ring.Margin, ring.CornerMasks, ring.EdgeMasks, surface);
+        var job = ring.CreateJob(Unity.Mathematics.math.hash(new Unity.Mathematics.uint2(layout.Seed, 0xB6C0u)), layout.MaxAttempts, false, 0);
+        job.Schedule().Complete();
+        bool solved = job.Attempts.Value > 0;
+        if (solved) layout.PreviewRing = ring.ToPackedCells(job.Result.ToArray());
+        job.DisposeArrays();
+        return solved ? $"\nBackground ring of {ring.Margin} cells solved." : "\nNo background ring fits: the Background tiles lack combinations the level's edge needs.";
     }
 
     // Runs the placement rules on the preview, like the game does; returns a status line with counts per rule

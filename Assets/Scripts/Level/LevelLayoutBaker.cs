@@ -65,6 +65,18 @@ namespace LevelGeneration
             Copy(builder, ref root.TileRaises, tileSet.TileRaises());
             Copy(builder, ref root.PieceRaises, tileSet.PieceRaises());
 
+            var ring = compiled.Ring;
+            root.RingMargin = ring?.Margin ?? 0;
+            root.Ring.Width = ring?.Width ?? 0;
+            root.Ring.Height = ring?.Height ?? 0;
+            Copy(builder, ref root.Ring.VariantSlots, ring?.VariantSlots() ?? new byte[0]);
+            Copy(builder, ref root.Ring.VariantWeights, ring?.VariantWeights() ?? new float[0]);
+            Copy(builder, ref root.Ring.VariantTile, ring?.Variants.ConvertAll(v => v.Tile).ToArray() ?? new int[0]);
+            Copy(builder, ref root.Ring.VariantRotation, ring?.Variants.ConvertAll(v => v.Rotation).ToArray() ?? new int[0]);
+            Copy(builder, ref root.Ring.CornerMasks, ring?.CornerMasks ?? new ulong[0]);
+            Copy(builder, ref root.Ring.EdgeMasks, ring?.EdgeMasks ?? new ulong[0]);
+            Copy(builder, ref root.Ring.InitialCells, ring?.InitialCells ?? new int[0]);
+
             var pieces = builder.Allocate(ref root.Pieces, compiled.Pieces.Count);
             for (int i = 0; i < compiled.Pieces.Count; i++)
             {

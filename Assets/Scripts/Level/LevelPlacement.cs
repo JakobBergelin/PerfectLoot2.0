@@ -34,6 +34,8 @@ namespace LevelGeneration
         public byte[] Terrain;
         public float[] Height;
         public byte[] EdgeWalkable;
+        /// <summary>Each corner's and edge's connection index, or Unknown.</summary>
+        public int[] CornerConnection, EdgeConnection;
 
         /// <param name="tileCorners">4 corner connection indices per tile (SW, SE, NE, NW), Unknown where missing</param>
         /// <param name="tileEdges">4 edge connection indices per tile (S, E, N, W), Unknown where missing</param>
@@ -68,7 +70,11 @@ namespace LevelGeneration
                     edges[across + x + y * cornerWidth] = tileEdges[tile * 4 + (3 + rotation) % 4];
                 }
 
-            var surface = new LevelSurface { Terrain = new byte[corners.Length], Height = new float[corners.Length], EdgeWalkable = new byte[edges.Length] };
+            var surface = new LevelSurface
+            {
+                Terrain = new byte[corners.Length], Height = new float[corners.Length], EdgeWalkable = new byte[edges.Length],
+                CornerConnection = corners, EdgeConnection = edges,
+            };
             for (int c = 0; c < corners.Length; c++)
             {
                 bool known = corners[c] < connectionTerrains.Length;

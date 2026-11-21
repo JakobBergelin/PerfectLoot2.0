@@ -27,7 +27,11 @@ namespace LevelGeneration
             public int[] Packed;            // Per cell: Tile * 4 + Rotation, or negative for nothing
             public float3[] Corners;        // Bent grid (where tile models are bent to)
             public float3[] Ground;         // The bent grid at each corner's ground height (where things stand)
-            public NativeArray<float3> JobCorners;  // The same, for the chunk jobs
+            // The background ring: Margin cells more on every side; Ring holds its cells (Tile * 4 + Rotation) on that
+            // bigger grid, or is null. Chunks and JobCorners (the bent grid for the chunk jobs) cover the bigger grid.
+            public int Margin;
+            public int[] Ring;
+            public NativeArray<float3> JobCorners;
             public Material[] Materials;
             public Entity[] PropPrefabs;
             public int ChunksX, ChunksY;
@@ -148,15 +152,17 @@ namespace LevelGeneration
             var deformation = blob.Deformation;
             deformation.Seed = seed;
             int chunkSize = LevelChunkBuilder.ChunkSize;
+            int margin = blob.RingMargin;
             var corners = deformation.BuildCorners();
             var stream = new LevelStream
             {
                 Layout = layoutEntity,
                 Packed = packed.ToArray(),
                 Corners = corners,
-                JobCorners = new NativeArray<float3>(corners, Allocator.Persistent),
-                ChunksX = (blob.Width + chunkSize - 1) / chunkSize,
-                ChunksY = (blob.Height + chunkSize - 1) / chunkSize,
+                Margin = margin,
+                JobCorners = new NativeArray<float3>(margin > 0 ? deformation.BuildCorners(margin) : corners, Allocator.Persistent),
+                ChunksX = (blob.Width + 2 * margin + chunkSize - 1) / chunkSize,
+                ChunksY = (blob.Height + 2 * margin + chunkSize - 1) / chunkSize,
                 LoadDistance = layout.LoadDistance,
                 ChunksPerFrame = math.max(1, layout.ChunksPerFrame),
             };
@@ -165,21 +171,14 @@ namespace LevelGeneration
                                              blob.CornerMasks.ToArray(), blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
             stream.Ground = new float3[corners.Length];
             for (int i = 0; i < corners.Length; i++) stream.Ground[i] = corners[i] + new float3(0f, surface.Height[i], 0f);
+            if (margin > 0) stream.Ring = SolveRing(ref blob, layout, seed, surface);
             stream.Built = new bool[stream.ChunksX * stream.ChunksY];
             stream.PiecesByChunk = new List<int>[stream.Built.Length];
             for (int i = 0; i < blob.Pieces.Length; i++)
-            {
-                var cell = math.clamp(blob.Pieces[i].Cell, 0, new int2(blob.Width - 1, blob.Height - 1)) / chunkSize;
-                int chunk = cell.x + cell.y * stream.ChunksX;
-                (stream.PiecesByChunk[chunk] ??= new List<int>()).Add(i);
-            }
+                (stream.PiecesByChunk[ChunkOf(stream, ref blob, blob.Pieces[i].Cell)] ??= new List<int>()).Add(i);
             stream.PrefabsByChunk = new List<int>[stream.Built.Length];
             for (int i = 0; i < blob.Prefabs.Length; i++)
-            {
-                var cell = math.clamp(blob.Prefabs[i].Cell, 0, new int2(blob.Width - 1, blob.Height - 1)) / chunkSize;
-                int chunk = cell.x + cell.y * stream.ChunksX;
-                (stream.PrefabsByChunk[chunk] ??= new List<int>()).Add(i);
-            }
+                (stream.PrefabsByChunk[ChunkOf(stream, ref blob, blob.Prefabs[i].Cell)] ??= new List<int>()).Add(i);
 
             var materialBuffer = EntityManager.GetBuffer<LevelMaterial>(layoutEntity);
             stream.Materials = new Material[materialBuffer.Length];
@@ -218,6 +217,13 @@ namespace LevelGeneration
             return playerStart;
         }
 
+        // The chunk a level cell is built in (chunks cover the level and its background ring)
+        static int ChunkOf(LevelStream stream, ref LevelLayoutBlob blob, int2 cell)
+        {
+            var chunk = (math.clamp(cell, 0, new int2(blob.Width - 1, blob.Height - 1)) + stream.Margin) / LevelChunkBuilder.ChunkSize;
+            return chunk.x + chunk.y * stream.ChunksX;
+        }
+
         /// <summary>Starts up to budget unbuilt chunks within LoadDistance of focus, nearest first.</summary>
         List<PendingChunk> StartChunks(LevelStream stream, float3 focus, int budget)
         {
@@ -234,9 +240,9 @@ namespace LevelGeneration
                 {
                     int chunk = cx + cy * stream.ChunksX;
                     if (stream.Built[chunk]) continue;
-                    // Middle of the chunk (edge chunks can be cut short by the grid)
-                    float midX = (cx * chunkSize + math.min((cx + 1) * chunkSize, blob.Width)) * 0.5f;
-                    float midY = (cy * chunkSize + math.min((cy + 1) * chunkSize, blob.Height)) * 0.5f;
+                    // Middle of the chunk (edge chunks can be cut short by the grid), in level cells
+                    float midX = (cx * chunkSize + math.min((cx + 1) * chunkSize, blob.Width + 2 * stream.Margin)) * 0.5f - stream.Margin;
+                    float midY = (cy * chunkSize + math.min((cy + 1) * chunkSize, blob.Height + 2 * stream.Margin)) * 0.5f - stream.Margin;
                     var center = GridToWorld(ref blob, stream.Corners, midX, midY);
                     float distance = math.distance(center.xz, focus.xz) - halfDiagonal;
                     if (distance <= stream.LoadDistance) candidates.Add((distance, chunk));
@@ -257,11 +263,15 @@ namespace LevelGeneration
             int chunkSize = LevelChunkBuilder.ChunkSize;
             int cx = chunk % stream.ChunksX, cy = chunk / stream.ChunksX;
             var instances = new List<LevelChunkBuilder.Instance>();
+            // Chunk cells are on the grid with the background ring: the level's cells start at (Margin, Margin)
+            int margin = stream.Margin, width = blob.Width + 2 * margin, height = blob.Height + 2 * margin;
 
-            for (int y = cy * chunkSize; y < math.min(blob.Height, (cy + 1) * chunkSize); y++)
-                for (int x = cx * chunkSize; x < math.min(blob.Width, (cx + 1) * chunkSize); x++)
+            for (int y = cy * chunkSize; y < math.min(height, (cy + 1) * chunkSize); y++)
+                for (int x = cx * chunkSize; x < math.min(width, (cx + 1) * chunkSize); x++)
                 {
-                    int cell = stream.Packed[x + y * blob.Width];
+                    int lx = x - margin, ly = y - margin;
+                    bool inLevel = lx >= 0 && ly >= 0 && lx < blob.Width && ly < blob.Height;
+                    int cell = inLevel ? stream.Packed[lx + ly * blob.Width] : stream.Ring != null ? stream.Ring[x + y * width] : -1;
                     if (cell < 0) continue;
                     int tile = LevelLayoutAuthoring.PackedTile(cell);
                     if (tile >= geometry.Tiles.Length) continue;
@@ -269,6 +279,7 @@ namespace LevelGeneration
                     {
                         Part = tile, Center = new float2(x + 0.5f, y + 0.5f), Rotation = LevelLayoutAuthoring.PackedRotation(cell),
                         Raise = tile < blob.TileRaises.Length ? blob.TileRaises[tile] : 0f,
+                        NoColliders = !inLevel,
                     });
                 }
 
@@ -279,12 +290,13 @@ namespace LevelGeneration
                     if (piece.Piece >= geometry.Pieces.Length) continue;
                     instances.Add(new LevelChunkBuilder.Instance
                     {
-                        IsPiece = true, Part = piece.Piece, Center = new float2(piece.Cell) + new float2(piece.Size) * 0.5f, Rotation = piece.Rotation,
+                        IsPiece = true, Part = piece.Piece, Rotation = piece.Rotation,
+                        Center = new float2(piece.Cell + margin) + new float2(piece.Size) * 0.5f,
                         Raise = piece.Piece < blob.PieceRaises.Length ? blob.PieceRaises[piece.Piece] : 0f,
                     });
                 }
 
-            var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, blob.Width, blob.Height, blob.TileSize, instances);
+            var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, width, height, blob.TileSize, instances);
             return new PendingChunk { Stream = stream, Builder = builder, Chunk = chunk };
         }
 
@@ -386,6 +398,54 @@ namespace LevelGeneration
         }
 
         /// <summary>
+        /// Solves the background ring around the solved level (its border fixed to the level's, so they meet exactly) and
+        /// returns its cells on the grid with the ring (Tile * 4 + Rotation; the level's cells are Occupied), or null when
+        /// no ring fits.
+        /// </summary>
+        int[] SolveRing(ref LevelLayoutBlob blob, LevelLayout layout, uint seed, LevelSurface surface)
+        {
+            ref var ring = ref blob.Ring;
+            var cornerMasks = ring.CornerMasks.ToArray();
+            var edgeMasks = ring.EdgeMasks.ToArray();
+            WfcLayoutCompiler.FixRingBorder(blob.Width, blob.Height, blob.RingMargin, cornerMasks, edgeMasks, surface);
+            int cells = ring.Width * ring.Height;
+            var job = new WfcSolveJob
+            {
+                Width = ring.Width,
+                Height = ring.Height,
+                VariantSlots = Copy(ref ring.VariantSlots, Allocator.TempJob),
+                VariantWeights = Copy(ref ring.VariantWeights, Allocator.TempJob),
+                InitialCornerMasks = new NativeArray<ulong>(cornerMasks, Allocator.TempJob),
+                InitialEdgeMasks = new NativeArray<ulong>(edgeMasks, Allocator.TempJob),
+                InitialCells = Copy(ref ring.InitialCells, Allocator.TempJob),
+                Seed = math.hash(new uint2(seed, 0xB6C0u)),
+                MaxAttempts = layout.MaxAttempts,
+                StartCorner = -1,
+                LockedCorners = new NativeArray<byte>(cornerMasks.Length, Allocator.TempJob),
+                Result = new NativeArray<int>(cells, Allocator.TempJob),
+                Attempts = new NativeReference<int>(Allocator.TempJob),
+                Repairs = new NativeArray<byte>(cornerMasks.Length, Allocator.TempJob),
+                UnconnectedPockets = new NativeReference<int>(Allocator.TempJob),
+                Backtracks = new NativeReference<int>(Allocator.TempJob),
+            };
+            job.Schedule().Complete();
+
+            int[] packed = null;
+            if (job.Attempts.Value > 0)
+            {
+                packed = new int[cells];
+                for (int i = 0; i < cells; i++)
+                {
+                    int v = job.Result[i];
+                    packed[i] = v >= 0 ? LevelLayoutAuthoring.Pack(ring.VariantTile[v], ring.VariantRotation[v]) : v;
+                }
+            }
+            else Debug.LogWarning($"No background ring fits around the level with seed {seed}: the Background tiles lack combinations its edge needs.");
+            job.DisposeArrays();
+            return packed;
+        }
+
+        /// <summary>
         /// Runs the placement rules (LevelPlacementJob) on the finished layout: spawners become LevelEnemySpawner entities
         /// with a group picked by weight, props are kept per chunk until it's built. Returns how many of each.
         /// </summary>
@@ -421,8 +481,7 @@ namespace LevelGeneration
                 ref var rule = ref blob.PlacementRules[point.Rule];
                 if (rule.Data.Kind == PlacementKind.Prop)
                 {
-                    var chunkCell = math.clamp((int2)math.floor(point.Grid), 0, new int2(blob.Width - 1, blob.Height - 1)) / LevelChunkBuilder.ChunkSize;
-                    int chunk = chunkCell.x + chunkCell.y * stream.ChunksX;
+                    int chunk = ChunkOf(stream, ref blob, (int2)math.floor(point.Grid));
                     (stream.PlacedPropsByChunk[chunk] ??= new List<PlacementPoint>()).Add(point);
                     props++;
                     continue;

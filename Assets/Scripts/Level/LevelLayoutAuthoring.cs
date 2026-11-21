@@ -53,6 +53,13 @@ namespace LevelGeneration
         [Tooltip("Terrain of every corner on the edge of the grid (unless painted otherwise). Not walkable closes the level.")]
         public WfcCornerRule Border = WfcCornerRule.NotWalkable;
 
+        [Header("Background")]
+        [Tooltip("Cells of scenery around the level, solved from the tile set's Background tiles so they meet its edge " +
+                 "seamlessly. No colliders; nothing is placed there. 0 turns it off.")]
+        [Min(0)] public int BackgroundRing;
+        [Tooltip("Terrain of every corner on the outside of the background ring (like Border, for the ring)")]
+        public WfcCornerRule BackgroundBorder = WfcCornerRule.NotWalkable;
+
         [Header("Generation")]
         public LevelGenerationMode Mode = LevelGenerationMode.GenerateAtRuntime;
         [Tooltip("Generate at runtime: pick a new seed every play (it's logged, so a level can be reproduced)")]
@@ -131,6 +138,8 @@ namespace LevelGeneration
 
         /// <summary>Editor preview, same format as the saved layout. Not saved with the scene.</summary>
         [NonSerialized] public int[] PreviewCells;
+        /// <summary>The background ring around the preview, on the grid BackgroundRing cells bigger on every side. Not saved.</summary>
+        [NonSerialized] public int[] PreviewRing;
         /// <summary>What the connectivity repair changed in the preview, per corner (WfcSolver.Repair*). Not saved.</summary>
         [NonSerialized] public byte[] PreviewRepairs;
         /// <summary>Procedural placements in the preview (LevelPlacementJob). Not saved.</summary>
@@ -405,7 +414,8 @@ namespace LevelGeneration
         // Changes when the shown cells, pieces, tile set or bend change (the mesh is in this object's space)
         int PreviewKey(int[] cells)
         {
-            int key = HashCode.Combine(cells != null ? cells.GetHashCode() : 0, TileSet.GetHashCode(), _bentCornersKey, Pieces.Count);
+            int key = HashCode.Combine(cells != null ? cells.GetHashCode() : 0, PreviewRing != null ? PreviewRing.GetHashCode() : 0,
+                                       TileSet.GetHashCode(), _bentCornersKey, Pieces.Count);
             foreach (var placed in Pieces) key = HashCode.Combine(key, placed.Cell, placed.Piece, placed.Rotation);
             BentCorners();
             return HashCode.Combine(key, _bentCornersKey);
@@ -430,6 +440,17 @@ namespace LevelGeneration
                         WfcRotation.RotateCorners(TileSet.Tiles[tile].Corners, PackedRotation(packed), corners);
                         AddCell(x, y, corners, vertices, indices);
                     }
+
+            // The background ring around the preview (its own grid starts BackgroundRing cells further out)
+            int margin = BackgroundRing, ringWidth = Width + 2 * margin;
+            if (PreviewRing != null && PreviewRing.Length == ringWidth * (Height + 2 * margin))
+                for (int i = 0; i < PreviewRing.Length; i++)
+                {
+                    int packed = PreviewRing[i];
+                    if (packed < 0 || PackedTile(packed) >= TileSet.Tiles.Count || TileSet.Tiles[PackedTile(packed)] == null) continue;
+                    WfcRotation.RotateCorners(TileSet.Tiles[PackedTile(packed)].Corners, PackedRotation(packed), corners);
+                    AddCell(i % ringWidth - margin, i / ringWidth - margin, corners, vertices, indices);
+                }
 
             // Pieces are rules, so they show with or without a preview
             foreach (var placed in Pieces)
@@ -464,10 +485,12 @@ namespace LevelGeneration
             }
         }
 
-        // The cell's 4 quarters (SW, SE, NE, NW, corner connection Ids) as patches on the bent grid, in this object's space
+        // The cell's 4 quarters (SW, SE, NE, NW, corner connection Ids) as patches on the bent grid, in this object's space.
+        // Background ring cells are outside the grid: the bend carries on past the edge there.
         void AddCell(int x, int y, int[] corners, List<Vector3>[] vertices, List<int>[] indices)
         {
-            if (x < 0 || y < 0 || x >= Width || y >= Height) return;
+            int margin = BackgroundRing;
+            if (x < -margin || y < -margin || x >= Width + margin || y >= Height + margin) return;
             var bent = BentCorners();
             for (int k = 0; k < 4; k++)
             {

@@ -56,6 +56,11 @@ namespace LevelGeneration
         public BlobArray<float> TileRaises;
         public BlobArray<float> PieceRaises;
 
+        /// <summary>Cells the background ring reaches past the level on each side; 0 when there is none.</summary>
+        public int RingMargin;
+        /// <summary>The background ring's solver input (WfcCompiledLayout.Ring), on a grid RingMargin bigger on every side.</summary>
+        public WfcSolveInput Ring;
+
         public BlobArray<LevelPiecePlacement> Pieces;
         /// <summary>Saved layout (Tile * 4 + Rotation per cell), empty when there is none.</summary>
         public BlobArray<int> SavedCells;
@@ -65,6 +70,19 @@ namespace LevelGeneration
         public BlobArray<LevelPlacementGroupBlob> PlacementGroups;
         // Hand-placed prefabs (LevelLayoutAuthoring.Prefabs)
         public BlobArray<LevelPrefabPlacement> Prefabs;
+    }
+
+    /// <summary>A solver input kept in a blob: what a WfcCompiledLayout holds for WfcSolveJob.</summary>
+    public struct WfcSolveInput
+    {
+        public int Width, Height;
+        public BlobArray<byte> VariantSlots;
+        public BlobArray<float> VariantWeights;
+        public BlobArray<int> VariantTile;
+        public BlobArray<int> VariantRotation;
+        public BlobArray<ulong> CornerMasks;
+        public BlobArray<ulong> EdgeMasks;
+        public BlobArray<int> InitialCells;
     }
 
     /// <summary>A prefab painted on a cell, spawned at the cell's center when its chunk is built.</summary>

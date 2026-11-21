@@ -208,7 +208,7 @@ namespace LevelGeneration
             }
             return new WfcTile
             {
-                Name = tile.Name + " High", Prefab = tile.Prefab, Weight = tile.Weight, AllowRotations = tile.AllowRotations,
+                Name = tile.Name + " High", Prefab = tile.Prefab, Weight = tile.Weight, AllowRotations = tile.AllowRotations, Background = tile.Background,
                 SouthWest = corners[0], SouthEast = corners[1], NorthEast = corners[2], NorthWest = corners[3],
                 South = tile.South, East = tile.East, North = tile.North, West = tile.West,
             };
@@ -216,9 +216,10 @@ namespace LevelGeneration
 
         /// <summary>
         /// Every tile in every allowed rotation, without rotations that look the same to the solver (symmetric tiles).
-        /// These are what the solver chooses between. Tiles naming a connection the set doesn't have are left out.
+        /// These are what the solver chooses between. Tiles naming a connection the set doesn't have are left out, and so are
+        /// background tiles for the level (background: false) or the others for the background ring (background: true).
         /// </summary>
-        public List<WfcVariant> BuildVariants(List<string> warnings = null)
+        public List<WfcVariant> BuildVariants(List<string> warnings = null, bool background = false)
         {
             if (CornerConnections.Count > WfcConnections.Max || EdgeConnections.Count > WfcConnections.Max)
                 warnings?.Add($"A tile set can have at most {WfcConnections.Max} corner and {WfcConnections.Max} edge connections; tiles using the rest are left out.");
@@ -231,7 +232,7 @@ namespace LevelGeneration
             for (int t = 0; t < Tiles.Count; t++)
             {
                 var tile = Tiles[t];
-                if (tile == null) continue;
+                if (tile == null || tile.Background != background) continue;
                 bool known = true;
                 for (int k = 0; k < 4; k++)
                 {
@@ -281,6 +282,8 @@ namespace LevelGeneration
         [Min(0f)] public float Weight = 1f;
         [Tooltip("Also use the tile turned 90°, 180° and 270°")]
         public bool AllowRotations = true;
+        [Tooltip("Only used in the background ring around the level (scenery, no colliders), never inside it")]
+        public bool Background;
 
         /// <summary>Corner connection Ids: SouthWest, SouthEast, NorthEast, NorthWest.</summary>
         public int[] Corners => new[] { SouthWest, SouthEast, NorthEast, NorthWest };

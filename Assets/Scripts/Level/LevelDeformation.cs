@@ -27,13 +27,17 @@ namespace LevelGeneration
 
         public bool IsFlat => WobbleStrength <= 0f && HillHeight == 0f && BendAngle == 0f;
 
-        /// <summary>Every corner's moved position, (Width + 1) * (Height + 1), row by row from the south-west.</summary>
-        public float3[] BuildCorners()
+        /// <summary>
+        /// Every corner's moved position, (Width + 1) * (Height + 1), row by row from the south-west. With a margin, the
+        /// grid reaches that many cells further on every side (corner (-margin, -margin) first), for the background ring.
+        /// </summary>
+        public float3[] BuildCorners(int margin = 0)
         {
-            var corners = new float3[(Width + 1) * (Height + 1)];
-            for (int y = 0; y <= Height; y++)
-                for (int x = 0; x <= Width; x++)
-                    corners[x + y * (Width + 1)] = Corner(x, y);
+            int width = Width + 2 * margin, height = Height + 2 * margin;
+            var corners = new float3[(width + 1) * (height + 1)];
+            for (int y = 0; y <= height; y++)
+                for (int x = 0; x <= width; x++)
+                    corners[x + y * (width + 1)] = Corner(x - margin, y - margin);
             return corners;
         }
 

@@ -29,6 +29,13 @@ namespace LevelGeneration
         public int StartCorner = -1;
         public List<Placement> Pieces = new List<Placement>();
         public List<string> Warnings = new List<string>();
+        /// <summary>
+        /// The background ring (LevelLayoutAuthoring.BackgroundRing), or null: a grid Margin cells bigger on every side,
+        /// solved after the level from the Background tiles. The level's cells are taken; WfcLayoutCompiler.FixRingBorder sets
+        /// its border from the solved level before the ring is solved.
+        /// </summary>
+        public WfcCompiledLayout Ring;
+        public int Margin;
 
         public struct Placement
         {
@@ -265,7 +272,71 @@ namespace LevelGeneration
                         compiled.Warnings.Add($"Forced tile at {forced.Cell} doesn't match the corner rule at ({cx}, {cy}); the level can't be solved.");
                 }
             }
+
+            if (layout.BackgroundRing > 0) compiled.Ring = CompileRing(layout, tileSet, compiled);
             return compiled;
+        }
+
+        static WfcCompiledLayout CompileRing(LevelLayoutAuthoring layout, WfcTileSet tileSet, WfcCompiledLayout level)
+        {
+            int margin = layout.BackgroundRing, w = layout.Width + 2 * margin, h = layout.Height + 2 * margin;
+            var ring = new WfcCompiledLayout { Width = w, Height = h, Margin = margin, Variants = tileSet.BuildVariants(level.Warnings, background: true) };
+            if (ring.Variants.Count == 0)
+            {
+                level.Warnings.Add("Background Ring is on, but the tile set has no Background tiles, so there's no ring.");
+                return null;
+            }
+            ring.WalkableCorners = level.WalkableCorners;
+            ring.NotWalkableCorners = level.NotWalkableCorners;
+            ring.WalkableEdges = level.WalkableEdges;
+
+            ulong any = tileSet.CornerMask(WfcCornerRule.Any), outside = tileSet.CornerMask(layout.BackgroundBorder);
+            ring.CornerMasks = new ulong[(w + 1) * (h + 1)];
+            for (int y = 0; y <= h; y++)
+                for (int x = 0; x <= w; x++)
+                    ring.CornerMasks[x + y * (w + 1)] = x == 0 || y == 0 || x == w || y == h ? outside : any;
+            ring.EdgeMasks = new ulong[w * (h + 1) + (w + 1) * h];
+            ulong allEdges = tileSet.AllEdges();
+            for (int i = 0; i < ring.EdgeMasks.Length; i++) ring.EdgeMasks[i] = allEdges;
+            ring.InitialCells = new int[w * h];
+            for (int y = 0; y < h; y++)
+                for (int x = 0; x < w; x++)
+                {
+                    bool inLevel = x >= margin && y >= margin && x < margin + layout.Width && y < margin + layout.Height;
+                    ring.InitialCells[x + y * w] = inLevel ? WfcSolver.Occupied : WfcSolver.Free;
+                }
+            ring.LockedCorners = new byte[ring.CornerMasks.Length];
+            return ring;
+        }
+
+        /// <summary>
+        /// Sets the ring's corners and edges along the level's border to what the solved level has there, so the ring meets
+        /// it exactly. Masks are the ring's (its CornerMasks and EdgeMasks, copied); level is the solved level's surface.
+        /// </summary>
+        public static void FixRingBorder(int width, int height, int margin, ulong[] ringCorners, ulong[] ringEdges, LevelSurface level)
+        {
+            int ringWidth = width + 2 * margin, ringHeight = height + 2 * margin;
+            int cornerWidth = width + 1, across = width * (height + 1), ringAcross = ringWidth * (ringHeight + 1);
+            for (int y = 0; y <= height; y++)
+                for (int x = 0; x <= width; x++)
+                {
+                    if (x > 0 && x < width && y > 0 && y < height) continue;
+                    int connection = level.CornerConnection[x + y * cornerWidth];
+                    if (connection < WfcConnections.Max) ringCorners[x + margin + (y + margin) * (ringWidth + 1)] = WfcConnections.Bit(connection);
+                }
+            // East-west edges along the south and north sides, north-south ones along the west and east sides
+            for (int x = 0; x < width; x++)
+                for (int side = 0; side < 2; side++)
+                {
+                    int y = side * height, connection = level.EdgeConnection[x + y * width];
+                    if (connection < WfcConnections.Max) ringEdges[x + margin + (y + margin) * ringWidth] = WfcConnections.Bit(connection);
+                }
+            for (int y = 0; y < height; y++)
+                for (int side = 0; side < 2; side++)
+                {
+                    int x = side * width, connection = level.EdgeConnection[across + x + y * cornerWidth];
+                    if (connection < WfcConnections.Max) ringEdges[ringAcross + x + margin + (y + margin) * (ringWidth + 1)] = WfcConnections.Bit(connection);
+                }
         }
 
         static bool FitsAndFree(WfcCompiledLayout compiled, Vector2Int cell, int w, int h)

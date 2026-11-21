@@ -34,6 +34,7 @@ namespace LevelGeneration
             public float2 Center;
             public int Rotation;
             public float Raise;
+            public bool NoColliders;    // Background ring tiles: scenery only
         }
 
         public struct Prop
@@ -101,7 +102,7 @@ namespace LevelGeneration
                     batch.IndexCount += mesh.Indices.Length;
                     meshBatches[b] = batch;
                 }
-                for (int c = 0; c < part.Colliders.Length; c++)
+                for (int c = 0; c < (instances[i].NoColliders ? 0 : part.Colliders.Length); c++)
                 {
                     ref var collider = ref part.Colliders[c];
                     var key = (collider.Layer, collider.CollidesWith, collider.Ground);

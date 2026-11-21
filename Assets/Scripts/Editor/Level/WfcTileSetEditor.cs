@@ -160,6 +160,8 @@ public class WfcTileSetEditor : Editor
                         EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.Weight)));
                         EditorGUIUtility.labelWidth = 70;
                         EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.AllowRotations)), new GUIContent("Rotations"));
+                        EditorGUILayout.PropertyField(tile.FindPropertyRelative(nameof(WfcTile.Background)),
+                                                      new GUIContent("Background", "Only used in the background ring around the level"));
                         EditorGUIUtility.labelWidth = 0;
                         var ids = CornerFields.Select(field => tile.FindPropertyRelative(field).intValue);
                         EditorGUILayout.LabelField(new GUIContent($"Raise {tileSet.Raise(ids):0.##} m", "The model is placed at its lowest corner's height"),
