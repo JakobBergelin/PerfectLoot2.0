@@ -35,7 +35,7 @@ public static class BiomeTileSets
     {
         public string Name;
         public string TestScene;
-        public WfcCornerRule Border = WfcCornerRule.Wall;
+        public WfcCornerRule Border = WfcCornerRule.NotWalkable;
         public BiomeTileGenerator.Style Style;
         public float LiquidFactor = 0.5f;
 
@@ -194,7 +194,7 @@ public static class BiomeTileSets
     static float Weight(WfcTerrain[] corners, float liquidFactor)
     {
         float weight = 1f;
-        foreach (var c in corners) weight *= c == WfcTerrain.Walkable ? 4f : c == WfcTerrain.Wall ? 1f : liquidFactor;
+        foreach (var c in corners) weight *= c == WfcTerrain.Walkable ? 4f : c == WfcTerrain.NotWalkable ? 1f : liquidFactor;
         return weight;
     }
 

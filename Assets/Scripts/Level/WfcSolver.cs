@@ -265,7 +265,7 @@ namespace LevelGeneration
             if (StartCorner < 0 || StartCorner >= corners) return true;
 
             byte walkable = WfcTerrains.Mask(WfcTerrain.Walkable);
-            byte wall = WfcTerrains.Mask(WfcTerrain.Wall);
+            byte wall = WfcTerrains.Mask(WfcTerrain.NotWalkable);
             var component = new NativeArray<int>(corners, Allocator.Temp);
             var queue = new NativeList<int>(corners, Allocator.Temp);
             var parent = new NativeArray<int>(corners, Allocator.Temp);

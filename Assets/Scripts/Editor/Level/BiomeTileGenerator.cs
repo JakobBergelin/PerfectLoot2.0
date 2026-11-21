@@ -111,7 +111,7 @@ public class BiomeTileGenerator
                 float x = -Half + i * Step, z = -Half + j * Step;
                 float fade = Mathf.Clamp01(4f * u * (1f - u) * 1.5f) * Mathf.Clamp01(4f * v * (1f - v) * 1.5f);
                 float sF = Score(WfcTerrain.Walkable, u, v) + Noise(x, z, 1) * fade * _style.BoundaryNoise;
-                float sW = Score(WfcTerrain.Wall, u, v) + Noise(x, z, 2) * fade * _style.BoundaryNoise;
+                float sW = Score(WfcTerrain.NotWalkable, u, v) + Noise(x, z, 2) * fade * _style.BoundaryNoise;
                 float sL = Score(WfcTerrain.Water, u, v) + Noise(x, z, 3) * fade * _style.BoundaryNoise;
                 int k = i + j * (N + 1);
                 _dF[k] = sF - Mathf.Max(sW, sL);

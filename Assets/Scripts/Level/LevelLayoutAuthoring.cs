@@ -50,8 +50,8 @@ namespace LevelGeneration
         public WfcTileSet TileSet;
         [Tooltip("What to place procedurally (props, enemy spawners) and where")]
         public LevelPlacementSet Placements;
-        [Tooltip("Terrain of every corner on the edge of the grid (unless painted otherwise). Wall closes the level.")]
-        public WfcCornerRule Border = WfcCornerRule.Wall;
+        [Tooltip("Terrain of every corner on the edge of the grid (unless painted otherwise). Not walkable closes the level.")]
+        public WfcCornerRule Border = WfcCornerRule.NotWalkable;
 
         [Header("Generation")]
         public LevelGenerationMode Mode = LevelGenerationMode.GenerateAtRuntime;
@@ -449,7 +449,7 @@ namespace LevelGeneration
             {
                 float x0 = x + (k == 1 || k == 2 ? 0.5f : 0f), y0 = y + (k >= 2 ? 0.5f : 0f);
                 var terrain = corners[k];
-                var lift = Vector3.up * (terrain == WfcTerrain.Wall ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
+                var lift = Vector3.up * (terrain == WfcTerrain.NotWalkable ? 3f : terrain == WfcTerrain.Water ? -0.3f : 0f);
                 var list = vertices[(int)terrain];
                 int start = list.Count;
                 list.Add((Vector3)LevelDeformation.Sample(bent, Width, Height, x0, y0) + lift);

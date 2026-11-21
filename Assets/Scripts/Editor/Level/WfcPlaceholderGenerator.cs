@@ -33,7 +33,7 @@ public static class WfcPlaceholderGenerator
         var materials = new Dictionary<WfcTerrain, Material>
         {
             [WfcTerrain.Walkable] = LoadOrCreateMaterial("PlaceholderFloor", new Color(0.55f, 0.6f, 0.5f)),
-            [WfcTerrain.Wall] = LoadOrCreateMaterial("PlaceholderWall", new Color(0.35f, 0.35f, 0.42f)),
+            [WfcTerrain.NotWalkable] = LoadOrCreateMaterial("PlaceholderWall", new Color(0.35f, 0.35f, 0.42f)),
             [WfcTerrain.Water] = LoadOrCreateMaterial("PlaceholderWater", new Color(0.2f, 0.45f, 0.9f)),
         };
 
@@ -91,7 +91,7 @@ public static class WfcPlaceholderGenerator
         return corners[0] switch
         {
             WfcTerrain.Walkable => 6f,
-            WfcTerrain.Wall => 3f,
+            WfcTerrain.NotWalkable => 3f,
             _ => 1.5f,
         };
     }
@@ -116,7 +116,7 @@ public static class WfcPlaceholderGenerator
                 var floor = AddBlock(parent, "Floor", offset + new Vector3(0f, -0.1f, 0f), new Vector3(size, 0.2f, size), GroundLayer, materials[terrain]);
                 floor.AddComponent<GroundAuthoring>();
                 break;
-            case WfcTerrain.Wall:
+            case WfcTerrain.NotWalkable:
                 AddBlock(parent, "Wall", offset + new Vector3(0f, WallHeight * 0.5f, 0f), new Vector3(size, WallHeight, size), WallLayer, materials[terrain]);
                 break;
             case WfcTerrain.Water:
@@ -151,7 +151,7 @@ public static class WfcPlaceholderGenerator
         foreach (var x in new[] { -1, 1 })
             foreach (var z in new[] { -1, 1 })
                 AddBlock(root.transform, "Pillar", new Vector3(x * TileSize * 0.5f, WallHeight * 0.5f, z * TileSize * 0.5f),
-                         new Vector3(1f, WallHeight, 1f), WallLayer, materials[WfcTerrain.Wall]);
+                         new Vector3(1f, WallHeight, 1f), WallLayer, materials[WfcTerrain.NotWalkable]);
         return SavePrefab(root, $"{Folder}/Arena_2x2.prefab");
     }
 

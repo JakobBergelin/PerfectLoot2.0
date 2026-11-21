@@ -19,7 +19,7 @@ public class LevelLayoutEditor : Editor
     enum Brush { Off, Corners, Tile, Piece, Start, Spawner, Prefab }
 
     static readonly string[] BrushNames = { "Off", "Corners", "Tile", "Piece", "Start", "Spawner", "Prefab" };
-    static readonly string[] RuleNames = { "Any", "Walkable", "Wall", "Water" };
+    static readonly string[] RuleNames = { "Any", "Walkable", "Not walkable", "Water" };
     static readonly string[] RotationNames = { "0°", "90°", "180°", "270°" };
     static readonly Color GridColor = new Color(1f, 1f, 1f, 0.2f);
     static readonly Color ForcedColor = new Color(1f, 0.85f, 0.2f);
@@ -33,7 +33,7 @@ public class LevelLayoutEditor : Editor
 
     // Static so the brush survives reselecting the layout
     static Brush _brush;
-    static WfcCornerRule _rule = WfcCornerRule.Wall;
+    static WfcCornerRule _rule = WfcCornerRule.NotWalkable;
     static int _tile, _piece, _rotation;
     static GameObject _prefab;
     static bool _forceWalkable = true;

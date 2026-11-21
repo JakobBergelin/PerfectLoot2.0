@@ -154,7 +154,7 @@ public static class HubLevelsCreator
         layout.Height = height;
         layout.TileSet = AssetDatabase.LoadAssetAtPath<WfcTileSet>(TileSetPath);
         layout.Placements = null;
-        layout.Border = WfcCornerRule.Wall;
+        layout.Border = WfcCornerRule.NotWalkable;
         layout.Mode = LevelGenerationMode.GenerateAtRuntime;
         layout.RandomSeedEachPlay = false;
         layout.Seed = seed;

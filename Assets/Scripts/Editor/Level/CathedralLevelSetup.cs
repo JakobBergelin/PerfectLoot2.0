@@ -181,7 +181,7 @@ public static class CathedralLevelSetup
     static WfcTerrain Terrain(char letter) => letter switch
     {
         'F' => WfcTerrain.Walkable,
-        'W' => WfcTerrain.Wall,
+        'W' => WfcTerrain.NotWalkable,
         _ => WfcTerrain.Water,
     };
 
@@ -452,7 +452,7 @@ public static class CathedralLevelSetup
 
         layout.Width = 24;
         layout.Height = 24;
-        layout.Border = WfcCornerRule.Wall;
+        layout.Border = WfcCornerRule.NotWalkable;
         layout.Mode = LevelGenerationMode.GenerateAtRuntime;
         layout.RandomSeedEachPlay = true;
         // A flat-floored nave: only a little wobble and no big bend or hills

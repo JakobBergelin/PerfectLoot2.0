@@ -9,7 +9,7 @@ namespace LevelGeneration
     public enum WfcTerrain : byte
     {
         Walkable = 0,
-        Wall = 1,
+        NotWalkable = 1,
         Water = 2,
     }
 
@@ -18,7 +18,7 @@ namespace LevelGeneration
     {
         Any = 0,
         Walkable = 1,
-        Wall = 2,
+        NotWalkable = 2,
         Water = 3,
     }
 
@@ -39,7 +39,7 @@ namespace LevelGeneration
         public static Color Color(WfcTerrain terrain) => terrain switch
         {
             WfcTerrain.Walkable => new Color(0.45f, 0.75f, 0.35f),
-            WfcTerrain.Wall => new Color(0.42f, 0.42f, 0.48f),
+            WfcTerrain.NotWalkable => new Color(0.42f, 0.42f, 0.48f),
             WfcTerrain.Water => new Color(0.2f, 0.5f, 0.95f),
             _ => UnityEngine.Color.magenta,
         };
@@ -48,7 +48,7 @@ namespace LevelGeneration
         public static char Letter(WfcTerrain terrain) => terrain switch
         {
             WfcTerrain.Walkable => 'F',
-            WfcTerrain.Wall => 'W',
+            WfcTerrain.NotWalkable => 'W',
             WfcTerrain.Water => 'L',
             _ => '?',
         };
