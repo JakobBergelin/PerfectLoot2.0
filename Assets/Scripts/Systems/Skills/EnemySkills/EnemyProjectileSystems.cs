@@ -3,7 +3,7 @@ using Unity.Entities;
 using Unity.Mathematics;
 using Unity.Transforms;
 
-/// <summary>Enemy projectile skill: one projectile toward where the target was. An enemy's hits only players; a companion's is its owner's and hits only enemies.</summary>
+/// <summary>Enemy projectile skill: one projectile toward where the target was, or a burst of Count, ShotInterval apart, sweeping from SweepAngle left of it to SweepAngle right. An enemy's hits only players; a companion's is its owner's and hits only enemies.</summary>
 [UpdateInGroup(typeof(SkillSystemGroup))]
 [UpdateAfter(typeof(EnemySkillCastSystem))]
 [BurstCompile]
@@ -23,17 +23,38 @@ public partial struct EnemyProjectileSystem : ISystem
         var buffs = SystemAPI.GetComponentLookup<PackInstinctBuff>(true);
         state.CompleteDependency();  // The lookup is used here on the main thread
 
-        foreach (var (projectile, fires, transform, entity) in SystemAPI.Query<RefRO<EnemyProjectile>, DynamicBuffer<EnemySkillFire>, RefRO<LocalTransform>>().WithEntityAccess())
+        float deltaTime = SystemAPI.Time.DeltaTime;
+        foreach (var (projectile, fires, transform, entity) in SystemAPI.Query<RefRW<EnemyProjectile>, DynamicBuffer<EnemySkillFire>, RefRO<LocalTransform>>().WithEntityAccess())
         {
             bool isCompanion = SystemAPI.HasComponent<Companion>(entity);
             var source = isCompanion ? SystemAPI.GetComponent<Companion>(entity).Owner : entity;
             var targetType = isCompanion ? TargetType.Enemy : TargetType.Player;
             float critBonus = isCompanion ? CompanionUtil.CriticalChanceBonus(buffs, entity, source) : 0f;
 
+            ref var p = ref projectile.ValueRW;
             foreach (var fire in fires)
             {
-                if (fire.Type == EnemySkillType.Projectile)
-                    Spawn(commandBuffer, entity, source, targetType, projectile.ValueRO, transform.ValueRO.Position + fire.Direction, fire.Direction, critBonus);
+                if (fire.Type != EnemySkillType.Projectile) continue;
+                if (p.Count <= 1) Spawn(commandBuffer, entity, source, targetType, p, transform.ValueRO.Position + fire.Direction, fire.Direction, critBonus);
+                else
+                {
+                    // A burst starts: its shots follow ShotInterval apart, sweeping across where the target was now
+                    p.ShotsFired = 0;
+                    p.ShotTimer = 0f;
+                    p.AimDirection = fire.Direction;
+                }
+            }
+
+            if (p.Count <= 1 || p.ShotsFired >= p.Count) continue;
+            p.ShotTimer -= deltaTime;
+            while (p.ShotTimer <= 0f && p.ShotsFired < p.Count)
+            {
+                // Negative turns left: the first shot left of the aim, the last right of it
+                float angle = -p.SweepAngle + 2f * p.SweepAngle * p.ShotsFired / (p.Count - 1);
+                var direction = math.rotate(quaternion.RotateY(angle), p.AimDirection);
+                Spawn(commandBuffer, entity, source, targetType, p, transform.ValueRO.Position + direction, direction, critBonus);
+                p.ShotsFired++;
+                p.ShotTimer += p.ShotInterval;
             }
         }
     }

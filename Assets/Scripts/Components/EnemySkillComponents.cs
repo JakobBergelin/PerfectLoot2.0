@@ -119,6 +119,15 @@ public struct EnemyProjectile : IComponentData
     public float Radius;
     public float HitForce;
     public float MaxDistance;
+
+    // A burst: Count shots, ShotInterval apart, turning from SweepAngle left of the aim to SweepAngle right (1: one shot)
+    public int Count;
+    public float ShotInterval;
+    public float SweepAngle;        // Radians
+
+    public int ShotsFired;          // In the current burst; Count: no burst going
+    public float ShotTimer;
+    public float3 AimDirection;     // Where the target was when the burst started
 }
 
 /// <summary>Self Destruct: when it goes off, Damage to everything on the other side within Radius of the unit, then the unit dies.</summary>
