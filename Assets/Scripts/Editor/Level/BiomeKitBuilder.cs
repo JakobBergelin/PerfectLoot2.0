@@ -243,6 +243,30 @@ public static class BiomeKitBuilder
             ["Bridge"] = BiomeTileSets.Comic(BiomeTileSets.ComicEnv, $"{m}/{b.Name}_Bridge.mat", BiomeTileSets.Hex("#5E4636"), shadow),
             ["Spire"] = BiomeTileSets.Comic(BiomeTileSets.ComicEnv, $"{m}/{b.Name}_Spire.mat", BiomeTileSets.Hex(b.Rock) * 0.7f, shadow),
         };
+
+        // A forest kit's own slots (only for biomes that set their colors). Ground-like ones use the floor template;
+        // canopies and bushes sway in the wind (PL_Comic's _SwayAmount, meters).
+        void Slot(string slot, string hex, bool ground = false, float sway = 0f)
+        {
+            if (hex == null) return;
+            var material = BiomeTileSets.Comic(ground ? BiomeTileSets.ComicFloor : BiomeTileSets.ComicEnv, $"{m}/{b.Name}_{slot}.mat",
+                                               BiomeTileSets.Hex(hex), shadow);
+            material.SetFloat("_SwayAmount", sway);
+            material.SetFloat("_SwaySpeed", sway > 0f ? 1.1f : 1f);
+            result[slot] = material;
+        }
+        Slot("Path", b.Path, ground: true);
+        Slot("Overgrowth", b.Meadow, ground: true);
+        Slot("Bridge", b.Bridge);
+        Slot("Flower", b.Flower);
+        Slot("Trunk", b.Trunk);
+        Slot("Birch", b.Birch);
+        Slot("Canopy", b.Canopy, sway: 0.12f);
+        Slot("CanopyLight", b.CanopyLight, sway: 0.14f);
+        Slot("CanopyWarm", b.CanopyWarm, sway: 0.12f);
+        Slot("Bush", b.Bush, sway: 0.05f);
+        Slot("Undergrowth", b.Undergrowth, ground: true);
+        Slot("Rope", b.Rope);
         foreach (var material in result.Values) EditorUtility.SetDirty(material);
         return result;
     }

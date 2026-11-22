@@ -29,7 +29,7 @@ public static class BiomeTileSets
     const int WallLayer = 7;
 
     public enum FloorPattern { Slabs, Plates, Mud }
-    public enum AmbientKind { None, Embers, Snow, Spores, Motes }
+    public enum AmbientKind { None, Embers, Snow, Spores, Motes, Pollen }
 
     public class Biome
     {
@@ -58,6 +58,10 @@ public static class BiomeTileSets
         public float Bloom = 0.35f, Saturation = 5f, Contrast = 8f, Vignette = 0.28f;
         public string ShadowTint, HighlightTint;
         public AmbientKind Ambient;
+
+        // A forest kit (pl_wfc_kit's grass, trees and rope styles): colors for its own slots; null for biomes without them.
+        // Path, Meadow and Bridge replace the colors the kit otherwise derives from the floor.
+        public string Path, Meadow, Bridge, Flower, Trunk, Birch, Canopy, CanopyLight, CanopyWarm, Bush, Undergrowth, Rope;
     }
 
     public static readonly Biome[] All =
@@ -109,6 +113,23 @@ public static class BiomeTileSets
             Glow = new Color(0.03f, 0.15f, 0.14f),
             Key = "#FFE6CC", KeyIntensity = 1.15f, AmbientSky = "#4A6670", AmbientEquator = "#2A3E44", AmbientGround = "#101418", Fog = "#0E2226", FogDensity = 0.014f,
             Bloom = 0.4f, ShadowTint = "#2A4448", HighlightTint = "#FFD8B0",
+        },
+        // The first dungeon: a bright, cozy forest. Jade greens (never the poison trait's acid green), warm sun, cool teal
+        // shadows, rose and white flowers, bright teal water, and a light green-teal mist the world fades into.
+        new Biome
+        {
+            Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
+            Style = new BiomeTileGenerator.Style(),
+            Pattern = FloorPattern.Mud, Floor = "#4E8A58", FloorAlt = "#3F7449", FloorGap = "#2E5A3C",
+            WallSide = "#7E7A70", WallTop = "#9A968C", Bank = "#5E4634", Rock = "#8E8A80", Accent = "#E0709E", AccentGlow = "#FF8AB8", AccentGlowStrength = 0.25f,
+            EnvShadow = "#3A5E6A",
+            Deep = "#1E6A86", Shallow = "#3FA6BC", Foam = "#D2F0EE", Ripple = "#7CCAD6",
+            ChasmFog = "#86B4A8",
+            Key = "#FFE8C4", KeyIntensity = 1.35f, KeyAngles = new Vector3(48f, 320f, 0f),
+            AmbientSky = "#8FB8C8", AmbientEquator = "#5E8A84", AmbientGround = "#2A3A30", Fog = "#9CC4B8", FogDensity = 0.009f,
+            Bloom = 0.3f, Saturation = 4f, Contrast = 6f, Vignette = 0.18f, ShadowTint = "#3A5E6A", HighlightTint = "#FFE8C4",
+            Path = "#8E7656", Meadow = "#5E9A62", Bridge = "#9A6A42", Flower = "#F4EEDC", Trunk = "#6A4A36", Birch = "#E8E2D2",
+            Canopy = "#3E8A66", CanopyLight = "#6AB27A", CanopyWarm = "#95AE5C", Bush = "#3A7A56", Undergrowth = "#2C5642", Rope = "#D6BE88",
         },
     };
 
@@ -578,6 +599,12 @@ public static class BiomeTileSets
                 tint = new Color(1.3f, 0.45f, 0.75f); rate = 45f; size = 0.08f; life = 8f;
                 shape.position = new Vector3(0f, 1.2f, 0f); shape.scale = new Vector3(44f, 2.4f, 44f);
                 velocity.y = new ParticleSystem.MinMaxCurve(0.05f, 0.25f); noise.strength = 0.5f;
+                break;
+            case AmbientKind.Pollen:
+                // Soft warm specks drifting in the sunlight, about head high
+                tint = new Color(1.25f, 1.15f, 0.85f); rate = 40f; size = 0.07f; life = 10f;
+                shape.position = new Vector3(0f, 1.8f, 0f); shape.scale = new Vector3(44f, 3f, 44f);
+                velocity.y = new ParticleSystem.MinMaxCurve(-0.05f, 0.12f); noise.strength = 0.35f;
                 break;
             default:
                 tint = new Color(0.35f, 1.3f, 1.2f); rate = 55f; size = 0.08f; life = 8f;

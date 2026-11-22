@@ -100,7 +100,7 @@
     0,
     0
    ],
-   "weight": 0.4096,
+   "weight": 0.0005,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -146,7 +146,10 @@
    "background": false,
    "mirror": false,
    "walkThrough": false,
-   "looks": []
+   "looks": [
+    "BH_Rock_Look1",
+    "BH_Rock_Look2"
+   ]
   },
   {
    "name": "Liquid",
@@ -184,7 +187,7 @@
     0,
     0
    ],
-   "weight": 51.2,
+   "weight": 9.6,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -205,7 +208,7 @@
     0,
     0
    ],
-   "weight": 10.24,
+   "weight": 0.36,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -226,7 +229,7 @@
     0,
     0
    ],
-   "weight": 5.12,
+   "weight": 0.18,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -247,7 +250,7 @@
     0,
     0
    ],
-   "weight": 2.048,
+   "weight": 0.0135,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -520,7 +523,7 @@
     0,
     0
    ],
-   "weight": 0.3072,
+   "weight": 0.002,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -541,7 +544,7 @@
     0,
     0
    ],
-   "weight": 0.2304,
+   "weight": 0.0081,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -562,7 +565,7 @@
     0,
     0
    ],
-   "weight": 0.1152,
+   "weight": 0.004,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -583,7 +586,7 @@
     0,
     0
    ],
-   "weight": 0.1728,
+   "weight": 0.0324,
    "background": false,
    "mirror": false,
    "walkThrough": false,
@@ -772,7 +775,7 @@
     0,
     0
    ],
-   "weight": 2.304,
+   "weight": 0.432,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -793,7 +796,7 @@
     0,
     0
    ],
-   "weight": 2.304,
+   "weight": 0.432,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -814,7 +817,7 @@
     0,
     0
    ],
-   "weight": 0.4608,
+   "weight": 0.0162,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -835,7 +838,7 @@
     0,
     0
    ],
-   "weight": 0.4608,
+   "weight": 0.0162,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -856,7 +859,7 @@
     0,
     0
    ],
-   "weight": 0.3456,
+   "weight": 0.0648,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -877,7 +880,7 @@
     0,
     0
    ],
-   "weight": 0.3456,
+   "weight": 0.0648,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -1045,7 +1048,7 @@
     0,
     0
    ],
-   "weight": 0.0768,
+   "weight": 0.0027,
    "background": false,
    "mirror": true,
    "walkThrough": false,
@@ -1070,7 +1073,10 @@
    "background": true,
    "mirror": false,
    "walkThrough": false,
-   "looks": []
+   "looks": [
+    "BH_Rock_Look1",
+    "BH_Rock_Look2"
+   ]
   }
  ]
 }

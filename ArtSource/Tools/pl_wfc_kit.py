@@ -70,7 +70,7 @@ STYLES = {
                               cliff_jitter=0.0, accent="flowers", glow=0.0, spires=False, liquid_factor=0.6, drop_factor=0.0,
                               connections=["Floor", "Path", "Overgrowth", "Rock", "Liquid", "Bridge"],
                               prefix="BH_", ground="grass", wall="trees", bridge="rope", water=(-0.45, -1.0),
-                              weights={"Path": 0.8, "Overgrowth": 1.2, "Rock": 1.4, "Bridge": 0.05}),
+                              weights={"Path": 0.15, "Overgrowth": 1.2, "Rock": 1.4, "Bridge": 0.05}),
 }
 
 # Material slot names: Unity puts the biome's material on each (BiomeKitBuilder)
@@ -276,7 +276,7 @@ def tree(b, u, v, h, scale, M, R):
     a tall narrow one (lumps stacked up) or a birch (a pale trunk under a lighter crown)."""
     roll = R.random()
     kind = "birch" if roll < 0.2 else ("tall" if roll < 0.3 else "broad")
-    green = lambda: M[R.choice(["Canopy"] * 5 + ["CanopyLight"] * 3 + ["CanopyWarm"] * 2)]
+    green = lambda: M[R.choice(["Canopy"] * 5 + ["CanopyLight"] * 4 + ["CanopyWarm"])]
     birch = kind == "birch"
     height = scale * (R.uniform(2.2, 3.2) if kind != "broad" else R.uniform(1.4, 2.6))
     prism(b, u, v, h, scale ** 0.5 * (R.uniform(0.15, 0.2) if birch else R.uniform(0.22, 0.36)), height + 0.6 * scale,
@@ -311,8 +311,8 @@ def trees_surface(b, fn, h, S, M, R, seed):
     n = 3
     for j in range(n):
         for i in range(n):
-            u = -TILE / 2 + (i + 0.5) * TILE / n + R.uniform(-0.6, 0.6)
-            v = -TILE / 2 + (j + 0.5) * TILE / n + R.uniform(-0.6, 0.6)
+            u = -TILE / 2 + (i + 0.5) * TILE / n + R.uniform(-0.8, 0.8)
+            v = -TILE / 2 + (j + 0.5) * TILE / n + R.uniform(-0.8, 0.8)
             depth = fn(u, v)
             if depth < 0.1 or R.random() < 0.2: continue
             tree(b, u, v, h, min(1.3, 0.55 + depth * 1.5) * R.uniform(0.85, 1.15), M, R)
@@ -662,6 +662,7 @@ def kit_tiles(S):
     tiles = []
     models = {}
     used = set(S.get("connections", CONN))      # A tile is only in the kit when all its corners are
+    forest = S.get("wall") == "trees"           # A tree wall repeats a lot: it gets extra looks
     weights = dict(WEIGHT, **S.get("weights", {}))
 
     def weight(corners):
@@ -679,7 +680,7 @@ def kit_tiles(S):
                           looks=[f"{model}_Look{l}" for l in range(1, looks + 1)]))
 
     for c in ("Floor", "Path", "Overgrowth", "Rock", "Drop", "Liquid"):
-        add(c, [c] * 4, looks=2 if c == "Floor" else 0, mirror=c == "Floor")
+        add(c, [c] * 4, looks=2 if c == "Floor" or (c == "Rock" and forest) else 0, mirror=c == "Floor")
     for c, low in (("FloorHigh", "Floor"), ("PathHigh", "Path"), ("OvergrowthHigh", "Overgrowth")):
         add(c, [c] * 4, model="K_" + low, looks=2 if c == "FloorHigh" else 0, mirror=c == "FloorHigh")
     for a, b in (("Floor", "Path"), ("Floor", "Overgrowth"), ("Floor", "Rock"), ("Floor", "Drop"), ("Floor", "Liquid"),
@@ -719,7 +720,7 @@ def kit_tiles(S):
         for ground in ("Floor", "Path"):
             add(f"BridgeEnd{'' if ground == 'Floor' else ground}", [ground, ground, "Bridge", "Liquid"], factor=4.0, mirror=True)
     # Background ring: rock and drop (with spires standing in the fog)
-    add("Rock_Background", ["Rock"] * 4, model="K_Rock", background=True)
+    add("Rock_Background", ["Rock"] * 4, model="K_Rock", background=True, looks=2 if forest else 0)
     add("Drop_Background", ["Drop"] * 4, model="K_DropSpires", kind="spires", background=True, looks=2, factor=3.0)
     for p, corners in patterns("Rock", "Drop"):
         add(f"Rock_Drop_{p}_Background", corners, model=f"K_Rock_Drop_{p}", background=True)

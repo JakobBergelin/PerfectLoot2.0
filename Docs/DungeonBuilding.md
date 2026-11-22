@@ -98,6 +98,9 @@ the level's shape is sent over the network. The runtime log prints a hash of the
 ### Biome palette (`BiomeTileSets.Biome`)
 - Floor, wall, rock, accent and liquid colors; chasm rim, fog and mist; key light, ambient trilight, fog color and
   density; bloom, saturation, contrast, vignette, shadow and highlight tints; ambient particle kind.
+- A forest kit's own slots (Path, Meadow, Bridge, Flower, Trunk, Birch, Canopy, CanopyLight, CanopyWarm, Bush,
+  Undergrowth, Rope): set their colors and `BiomeKitBuilder` makes their materials. Canopies and bushes get wind
+  (`_SwayAmount`, meters of sway, on the Comic material; 0 keeps a material still).
 - `Tools/Level/Biomes/Build All Biome Tile Sets` rebuilds every tile set (from the Blender kit when a biome has one).
   `Tools/Level/Biomes/Apply Biomes To Test Levels` puts each biome on its test level: light, fog, sky, volume,
   particles, tile set, ring and backdrop.

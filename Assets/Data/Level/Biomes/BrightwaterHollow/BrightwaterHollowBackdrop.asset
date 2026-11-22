@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5e709ab3427a2b489fb353e7eaa8bfb, type: 3}
+  m_Name: BrightwaterHollowBackdrop
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.LevelBackdrop
+  RingSink: 8
+  AbyssColor: {r: 0.5254902, g: 0.7058824, b: 0.65882355, a: 1}
+  FadeStart: 2
+  FadeDepth: 40
+  FadeBands: 5
+  Mist: {fileID: 5705985519887665171, guid: 2bf80a2ea5a81c04bb0eb155260bf244, type: 3}
+  Pieces:
+  - {fileID: 8283395497052249593, guid: e3494bab6cd17b14ab3deb4d048d90a4, type: 3}
+  - {fileID: 6744035555302189269, guid: 051c2840ebccdd74f923185f38b86eae, type: 3}
+  - {fileID: 3391546448963580266, guid: 8f85723e013726341b70d528f38b60fb, type: 3}
+  - {fileID: 3900461401624883146, guid: 84bd916191dddce4da2654fee59e0b36, type: 3}
+  - {fileID: 3441863463796737573, guid: 87e4485c7b49d544b9b16cd7f4f46d03, type: 3}
+  PieceCount: 40
+  PieceDistance: {x: 5, y: 70}
+  PieceDepth: {x: 3, y: 22}
+  PieceScale: {x: 0.9, y: 1.5}
+  PieceSpacing: 16

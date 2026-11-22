@@ -6,10 +6,13 @@ fragment and floating islands. Every piece has its pivot at its top center (Unit
 below the ground, so none ever rises over the level). Material slots are the kit's (pl_wfc_kit.SLOTS), so Unity gives
 them the biome's materials.
 
+Forest pieces (kind="forest", Brightwater Hollow) are wooded hills, a ridge, a grove of big old trees and a mossy crag,
+built from the kit's trees.
+
 Usage inside Blender:
     import sys; sys.path.append(r"<repo>/ArtSource/Tools")
     import importlib, pl_backdrop as BD; importlib.reload(BD)
-    objects = BD.build_backdrop(collection, seed=41)
+    objects = BD.build_backdrop(collection, seed=41)       # or kind="forest", S=K.STYLES["BrightwaterHollow"]
     BD.export_backdrop(objects, out_dir)    # FBX per piece and slots.txt for BiomeKitBuilder
 """
 import math, os, random
@@ -89,15 +92,65 @@ PIECES = [("SpireA", spire_a), ("SpireB", spire_b), ("Pillar", pillar), ("Tower"
           ("IslandA", island_a), ("IslandB", island_b)]
 
 
-def build_backdrop(coll, seed=41):
-    """Every backdrop piece in coll, side by side along X. Returns {name: object}."""
-    M = K.materials()
+# ---------- forest (Brightwater Hollow): wooded hills and groves seen down in the mist ----------
+
+def mound(b, rx, ry, h, M, seed, m="Undergrowth"):
+    """A low faceted hill: the top of an ellipsoid (rx, ry across, h high), dented by noise. Returns its height at (u, v)."""
+    center = K.Vector((0.0, 0.0, 0.0))
+    verts = K.bmesh.ops.create_icosphere(b.bm, subdivisions=2, radius=1.0,
+                                         matrix=K.Matrix.Diagonal((rx, ry, h)).to_4x4())["verts"]
+    off = K.Vector((seed * 0.7, seed * 1.3, 2.0))
+    for vt in verts:
+        d = vt.co - center
+        vt.co = center + d * (1.0 + 0.12 * K.noise.noise(K.Vector((d.x / rx, d.y / ry, d.z / h)) * 2.0 + off))
+    idx = b.mat_index(M[m])
+    for f in {f for vt in verts for f in vt.link_faces}: f.material_index = idx
+    return lambda u, v: h * math.sqrt(max(0.0, 1.0 - (u / rx) ** 2 - (v / ry) ** 2))
+
+
+def wooded(b, rx, ry, h, count, scale, M, seed):
+    """A hill covered in trees, bigger toward its middle."""
+    R = random.Random(seed)
+    top = mound(b, rx, ry, h, M, seed)
+    for _ in range(count):
+        a, d = R.uniform(0, 2 * math.pi), math.sqrt(R.random()) * 0.85
+        u, v = math.cos(a) * rx * d, math.sin(a) * ry * d
+        K.tree(b, u, v, top(u, v) - 0.3, R.uniform(*scale) * (1.15 - 0.35 * d), M, R)
+
+
+def hill_a(b, M, seed): wooded(b, 14, 10, 6, 55, (2.0, 2.8), M, seed)
+def hill_b(b, M, seed): wooded(b, 10, 8, 5, 32, (1.9, 2.6), M, seed)
+def ridge(b, M, seed): wooded(b, 22, 7, 7, 70, (2.0, 2.7), M, seed)
+def grove(b, M, seed): wooded(b, 6, 6, 3, 12, (2.4, 3.0), M, seed)
+
+
+def crag(b, M, seed):
+    """A tall mossy crag standing out of the mist, a few trees on its top."""
+    R = random.Random(seed)
+    column(b, [(-16, 4.2), (-8, 4.6), (-8, 4.0), (-2, 3.6), (0, 3.2)], M, seed, sides=7, side="Cliff", top="Undergrowth")
+    for _ in range(5):
+        a, d = R.uniform(0, 2 * math.pi), R.uniform(0.0, 1.8)
+        K.tree(b, math.cos(a) * d, math.sin(a) * d, 0.0, R.uniform(1.6, 2.2), M, R)
+
+
+FOREST_PIECES = [("HillA", hill_a), ("HillB", hill_b), ("Ridge", ridge), ("Grove", grove), ("Crag", crag)]
+SETS = {"ruins": (PIECES, "Backdrop_"), "forest": (FOREST_PIECES, "BHBackdrop_")}
+
+
+def build_backdrop(coll, seed=41, kind="ruins", S=None):
+    """Every backdrop piece of a kind ("ruins" or "forest") in coll, side by side along X, each with its top at its pivot.
+    S: the biome's kit style (its preview colors). Returns {name: object}."""
+    pieces, prefix = SETS[kind]
+    M = K.materials(S)
     objects = {}
-    for i, (name, fn) in enumerate(PIECES):
+    for i, (name, fn) in enumerate(pieces):
         b = T.Builder()
         fn(b, M, seed * 31 + i * 7)
-        o = b.to_object("Backdrop_" + name, coll)
-        o.location.x = i * 16.0
+        if kind == "forest":    # Trees grow up from the hill, so the pivot moves to the treetops afterwards
+            top = max(v.co.z for v in b.bm.verts)
+            for v in b.bm.verts: v.co.z -= top
+        o = K.to_object(b, prefix + name, coll, None) if kind == "forest" else b.to_object(prefix + name, coll)
+        o.location.x = i * 50.0 if kind == "forest" else i * 16.0
         objects[o.name] = o
     return objects
 

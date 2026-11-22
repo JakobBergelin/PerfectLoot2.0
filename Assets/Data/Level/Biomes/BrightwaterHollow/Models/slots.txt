@@ -9,11 +9,11 @@ BH_FloorPathLiquid_BBAC|FloorAlt,Floor,Path,Cliff,Bank,Liquid
 BH_FloorPathLiquid_CACB|FloorAlt,Floor,Path,Bank,Liquid,Cliff
 BH_FloorPathLiquid_CCAB|FloorAlt,Floor,Path,Cliff,Bank,Liquid
 BH_FloorRockLiquid_AABC|FloorAlt,Floor,Undergrowth,Cliff,Bush,Bank,Liquid
-BH_FloorRockLiquid_ABAC|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,Canopy,CanopyLight,Bank,Liquid
+BH_FloorRockLiquid_ABAC|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyLight,Birch,Bank,Liquid
 BH_FloorRockLiquid_BABC|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,Canopy,CanopyLight,CanopyWarm,Birch,Bank,Liquid
-BH_FloorRockLiquid_BBAC|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyWarm,CanopyLight,Canopy,Birch,Bank,Liquid
-BH_FloorRockLiquid_CACB|FloorAlt,Floor,Undergrowth,Bush,Cliff,Birch,CanopyLight,Trunk,CanopyWarm,Bank,Liquid
-BH_FloorRockLiquid_CCAB|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyLight,Bank,Liquid
+BH_FloorRockLiquid_BBAC|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyLight,Canopy,Birch,Bank,Liquid
+BH_FloorRockLiquid_CACB|FloorAlt,Floor,Undergrowth,Bush,Cliff,Birch,CanopyLight,Trunk,Bank,Liquid
+BH_FloorRockLiquid_CCAB|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyLight,Canopy,Bank,Liquid
 BH_Floor_Liquid_1|FloorAlt,Floor,Bank,Liquid,Cliff
 BH_Floor_Liquid_2|FloorAlt,Floor,Bank,Liquid,Cliff
 BH_Floor_Liquid_3|FloorAlt,Floor,Bank,Liquid,Cliff
@@ -48,3 +48,5 @@ BH_Rock_Liquid_1|Undergrowth,Bush,Cliff,Trunk,CanopyLight,CanopyWarm,Birch,Bank,
 BH_Rock_Liquid_2|Undergrowth,Bush,Trunk,CanopyLight,Canopy,Bank,Liquid
 BH_Rock_Liquid_3|Undergrowth,Bush,Trunk,Canopy,CanopyLight,Bank,Liquid
 BH_Rock_Liquid_D|Undergrowth,Bush,Cliff,Trunk,Canopy,CanopyLight,Birch,Bank,Liquid
+BH_Rock_Look1|Undergrowth,Trunk,Canopy,CanopyLight,Birch,CanopyWarm
+BH_Rock_Look2|Undergrowth,Birch,CanopyLight,Trunk,Canopy

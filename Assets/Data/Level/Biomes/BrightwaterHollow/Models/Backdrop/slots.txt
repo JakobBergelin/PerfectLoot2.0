@@ -1,0 +1,6 @@
+# object|material slots in submesh order
+BHBackdrop_Crag|Cliff,Undergrowth,Trunk,CanopyWarm,CanopyLight,Canopy
+BHBackdrop_Grove|Undergrowth,Trunk,Canopy,CanopyLight,Birch,CanopyWarm
+BHBackdrop_HillA|Undergrowth,Trunk,CanopyLight,Canopy,CanopyWarm,Birch
+BHBackdrop_HillB|Undergrowth,Trunk,Canopy,CanopyLight,CanopyWarm,Birch
+BHBackdrop_Ridge|Undergrowth,Trunk,CanopyWarm,CanopyLight,Birch,Canopy

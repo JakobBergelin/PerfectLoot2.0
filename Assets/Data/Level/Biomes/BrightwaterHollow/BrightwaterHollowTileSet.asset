@@ -1,0 +1,842 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fe30406a494f41ab8506bedf6606eacf, type: 3}
+  m_Name: BrightwaterHollowTileSet
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.WfcTileSet
+  CornerConnections:
+  - Id: 0
+    Name: Floor
+    Color: {r: 0.45, g: 0.75, b: 0.35, a: 1}
+    Terrain: 0
+    Height: 0
+    Higher: -1
+  - Id: 1
+    Name: Rock
+    Color: {r: 0.42, g: 0.42, b: 0.48, a: 1}
+    Terrain: 1
+    Height: 0
+    Higher: -1
+  - Id: 2
+    Name: Liquid
+    Color: {r: 0.2, g: 0.5, b: 0.95, a: 1}
+    Terrain: 2
+    Height: 0
+    Higher: -1
+  - Id: 4
+    Name: Path
+    Color: {r: 0.8, g: 0.75, b: 0.5, a: 1}
+    Terrain: 0
+    Height: 0
+    Higher: -1
+  - Id: 5
+    Name: Overgrowth
+    Color: {r: 0.3, g: 0.6, b: 0.5, a: 1}
+    Terrain: 0
+    Height: 0
+    Higher: -1
+  - Id: 6
+    Name: Bridge
+    Color: {r: 0.6, g: 0.4, b: 0.25, a: 1}
+    Terrain: 0
+    Height: 0
+    Higher: -1
+  EdgeConnections:
+  - Id: 0
+    Name: Plain
+    Color: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+    Walkable: 1
+  - Id: 1
+    Name: Cliff
+    Color: {r: 0.8, g: 0.35, b: 0.25, a: 1}
+    Walkable: 0
+  - Id: 2
+    Name: Slope
+    Color: {r: 0.85, g: 0.85, b: 0.85, a: 1}
+    Walkable: 1
+  Tiles:
+  - Name: Floor
+    Prefab: {fileID: 6559286389884661904, guid: df50a0253502a9f4d933f8af1f4dfada, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 0
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 256
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks:
+    - {fileID: 7701997480705471166, guid: f99dbd5f239eb4a4b8225dd0a62ce79b, type: 3}
+    - {fileID: 7165295127672347747, guid: 0d677b6fffb174245b8fd33cb0bc1448, type: 3}
+  - Name: Path
+    Prefab: {fileID: 8174549922730023272, guid: 7c4fcd28bbf33fa45bf19ec62d8ed4be, type: 3}
+    SouthWest: 4
+    SouthEast: 4
+    NorthEast: 4
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0005
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Overgrowth
+    Prefab: {fileID: 6663069043468509113, guid: 5084c9d1d96fdd24d8b341ed39b21b3e, type: 3}
+    SouthWest: 5
+    SouthEast: 5
+    NorthEast: 5
+    NorthWest: 5
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 2.0736
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock
+    Prefab: {fileID: 5586244552086749231, guid: 9b24af277d8f72f45a91302466c2cf2c, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 3.8416
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks:
+    - {fileID: 5094151947525114464, guid: 5b7d6aea71a199c4d8ad2000413221d6, type: 3}
+    - {fileID: 3815115107044549844, guid: 9099e99372c407f45b231966ee55e0e5, type: 3}
+  - Name: Liquid
+    Prefab: {fileID: 8493840674009826449, guid: b152f30b11b60ac418d0996a9d5cf3a2, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.1296
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Path_1
+    Prefab: {fileID: 5166831425355175627, guid: 7f2db050e348b9043b23e5fb3c47d123, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 9.6
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Path_2
+    Prefab: {fileID: 1998405091297184460, guid: 5eedaeedc24c53e47b53b5daacd60ae8, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 4
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.36
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Path_D
+    Prefab: {fileID: 5275777444560591151, guid: c233451c56ca41b4abb1cb5839aab21f, type: 3}
+    SouthWest: 0
+    SouthEast: 4
+    NorthEast: 0
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.18
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Path_3
+    Prefab: {fileID: 2174065695005585199, guid: 7b4791263dacc864395c7cd0659cb2f6, type: 3}
+    SouthWest: 0
+    SouthEast: 4
+    NorthEast: 4
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0135
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Overgrowth_1
+    Prefab: {fileID: 6857814018743347882, guid: fe83fa192ac75ed43a19737967f8fee7, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 5
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 76.8
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Overgrowth_2
+    Prefab: {fileID: 4461882872705209320, guid: edaedbeb3badcd24594eb5d876ff4180, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 5
+    NorthWest: 5
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 23.04
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Overgrowth_D
+    Prefab: {fileID: 1333330426548873716, guid: c2102cd4b55b2e44a8b40491248efc00, type: 3}
+    SouthWest: 0
+    SouthEast: 5
+    NorthEast: 0
+    NorthWest: 5
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 11.52
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Overgrowth_3
+    Prefab: {fileID: 129446697186792111, guid: 225c2dac9c97dbc4da574860fd137c50, type: 3}
+    SouthWest: 0
+    SouthEast: 5
+    NorthEast: 5
+    NorthWest: 5
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 6.912
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Rock_1
+    Prefab: {fileID: 6888972508627143668, guid: f75ec4cfa6198b04ba5f8cbc369400ee, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 89.6
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Rock_2
+    Prefab: {fileID: 25423978874440540, guid: d324f55cdd69b20419f08f9120dd4b3a, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 1
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 31.36
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Rock_D
+    Prefab: {fileID: 2861169338176493867, guid: 3ba2c5be872bcc64ba6deadcb2fa2763, type: 3}
+    SouthWest: 0
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 15.68
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Rock_3
+    Prefab: {fileID: 4628269488558337010, guid: 47561cb360152fe4c9cf1e7e1c8db16e, type: 3}
+    SouthWest: 0
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 10.976
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Liquid_1
+    Prefab: {fileID: 5395435992311791540, guid: 49e532723756c274f8f735c5cc9e9917, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 38.4
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Liquid_2
+    Prefab: {fileID: 3737457529215444311, guid: dc151e08e2884a04799a37da588a3b0a, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 5.76
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Liquid_D
+    Prefab: {fileID: 5693132710339325736, guid: e92774e7bc5a17543a931eedba677a7b, type: 3}
+    SouthWest: 0
+    SouthEast: 2
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 2.88
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Floor_Liquid_3
+    Prefab: {fileID: 4311612232906220007, guid: d977666a5a7e0d843912ffe4328f19d4, type: 3}
+    SouthWest: 0
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.864
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Path_Liquid_1
+    Prefab: {fileID: 132320739284310442, guid: 66647ce36f53afb469d544e5a8750352, type: 3}
+    SouthWest: 4
+    SouthEast: 4
+    NorthEast: 4
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.002
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Path_Liquid_2
+    Prefab: {fileID: 6134282049414206368, guid: 0ed65cc4687da7a41bc1b7847b7aab7c, type: 3}
+    SouthWest: 4
+    SouthEast: 4
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0081
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Path_Liquid_D
+    Prefab: {fileID: 8961771443665566201, guid: b726e11002ebc2e4a8702120f0ef79cb, type: 3}
+    SouthWest: 4
+    SouthEast: 2
+    NorthEast: 4
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.004
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Path_Liquid_3
+    Prefab: {fileID: 2608873458908805842, guid: 905df0f95144c1f41ad91e7eef8fd5d0, type: 3}
+    SouthWest: 4
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0324
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock_Liquid_1
+    Prefab: {fileID: 475732679809679612, guid: 9dbc0b5be835e644f8697c7b0d61f5c5, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 1.6464
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock_Liquid_2
+    Prefab: {fileID: 6852446221232577766, guid: 2826a806f3490c74d857b7a6a5a76462, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.7056
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock_Liquid_D
+    Prefab: {fileID: 4005176413788528979, guid: 9da15195dcc1365469e39b2be70f98ab, type: 3}
+    SouthWest: 1
+    SouthEast: 2
+    NorthEast: 1
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.3528
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock_Liquid_3
+    Prefab: {fileID: 1691193900816096028, guid: fde593c0164685141b25582c304c6e12, type: 3}
+    SouthWest: 1
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.3024
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Liquid_Bridge_1
+    Prefab: {fileID: 8620467770290272548, guid: 3d56a0a9c63f5f749b3d9a162a72f8d7, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 2
+    NorthWest: 6
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0108
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Liquid_Bridge_2
+    Prefab: {fileID: 5155529403759937245, guid: 621c13eab2db46a4092365a27ace6109, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 6
+    NorthWest: 6
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0009
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Liquid_Bridge_D
+    Prefab: {fileID: 2892207217532983183, guid: f8ab9095a82c3ce4faa3cfc5db75d6fb, type: 3}
+    SouthWest: 2
+    SouthEast: 6
+    NorthEast: 2
+    NorthWest: 6
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0004
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Liquid_Bridge_3
+    Prefab: {fileID: 5787310855871108939, guid: 2396b596d2033bb479158203b769eff5, type: 3}
+    SouthWest: 2
+    SouthEast: 6
+    NorthEast: 6
+    NorthWest: 6
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0001
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_AABC
+    Prefab: {fileID: 8209698826255598295, guid: ddd54409e27c8744ca8b44fcfc4c4e6e, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 4
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.432
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_ABAC
+    Prefab: {fileID: 8142055271948605174, guid: 739e4ca89700b8d469832dda512c6ce9, type: 3}
+    SouthWest: 0
+    SouthEast: 4
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.432
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_BBAC
+    Prefab: {fileID: 3992133954044411501, guid: 08156db6cf4e15347bc65f33ed592404, type: 3}
+    SouthWest: 4
+    SouthEast: 4
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0162
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_BABC
+    Prefab: {fileID: 2691237337545534955, guid: 0f2923e73b5b742419b3a27960a94db5, type: 3}
+    SouthWest: 4
+    SouthEast: 0
+    NorthEast: 4
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0162
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_CCAB
+    Prefab: {fileID: 5222811130227252462, guid: d812902899e8d514599abf4acd232160, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 0
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0648
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorPathLiquid_CACB
+    Prefab: {fileID: 87179033033403121, guid: a9716c38bfdcd5645a7a21dd2165443e, type: 3}
+    SouthWest: 2
+    SouthEast: 0
+    NorthEast: 2
+    NorthWest: 4
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0648
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_AABC
+    Prefab: {fileID: 17641990326732208, guid: 659c160c32b3db94a849860589de62ab, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 1
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 4.032
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_ABAC
+    Prefab: {fileID: 1749196330460891763, guid: e6cba9605948dca4bade6d97a774635f, type: 3}
+    SouthWest: 0
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 4.032
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_BBAC
+    Prefab: {fileID: 3348224279101452367, guid: 2880cc900afd77f46b4dff2aa1d29b18, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 0
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 1.4112
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_BABC
+    Prefab: {fileID: 5423834287584090145, guid: 1842d77df759a824bb5850acb3cd2e68, type: 3}
+    SouthWest: 1
+    SouthEast: 0
+    NorthEast: 1
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 1.4112
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_CCAB
+    Prefab: {fileID: 6417489202261941807, guid: ced9d903a3e09094498662a2ddc3cad0, type: 3}
+    SouthWest: 2
+    SouthEast: 2
+    NorthEast: 0
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.6048
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: FloorRockLiquid_CACB
+    Prefab: {fileID: 8378338612239513001, guid: 051f7aed3c7ad26419ebac0931427b49, type: 3}
+    SouthWest: 2
+    SouthEast: 0
+    NorthEast: 2
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.6048
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: BridgeEnd
+    Prefab: {fileID: 264452947126019943, guid: 586b0a2d5cd9ccf4fbe190eb770d8f65, type: 3}
+    SouthWest: 0
+    SouthEast: 0
+    NorthEast: 6
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 1.92
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: BridgeEndPath
+    Prefab: {fileID: 4441037714082785883, guid: 539a2ee1d75da4845a0ab9cd2cd793d9, type: 3}
+    SouthWest: 4
+    SouthEast: 4
+    NorthEast: 6
+    NorthWest: 2
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 0.0027
+    AllowRotations: 1
+    AllowMirror: 1
+    WalkThrough: 0
+    Background: 0
+    Looks: []
+  - Name: Rock_Background
+    Prefab: {fileID: 5586244552086749231, guid: 9b24af277d8f72f45a91302466c2cf2c, type: 3}
+    SouthWest: 1
+    SouthEast: 1
+    NorthEast: 1
+    NorthWest: 1
+    South: 0
+    East: 0
+    North: 0
+    West: 0
+    Weight: 3.8416
+    AllowRotations: 1
+    AllowMirror: 0
+    WalkThrough: 0
+    Background: 1
+    Looks:
+    - {fileID: 5094151947525114464, guid: 5b7d6aea71a199c4d8ad2000413221d6, type: 3}
+    - {fileID: 3815115107044549844, guid: 9099e99372c407f45b231966ee55e0e5, type: 3}
+  Pieces: []
+  FoundationDepth: 0
+  _version: 1
