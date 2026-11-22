@@ -157,6 +157,7 @@ public class AccountManager : MonoBehaviour
             Class = classType,
             Resource = resource,
             Level = 1,
+            NewToTown = true,
         };
         GiveStartingItems(character, startingItems);
         _characters.Add(character);
@@ -191,6 +192,18 @@ public class AccountManager : MonoBehaviour
         if (character == null || !_characters.Contains(character)) return;
         SaveCharacters();
     }
+
+    /// <summary>The character is in a town for the first time: from now on the game starts it there. Saves.</summary>
+    public void MarkVisitedTown(AccountCharacter character)
+    {
+        if (character == null || !character.NewToTown || !_characters.Contains(character)) return;
+        character.NewToTown = false;
+        SaveCharacters();
+    }
+
+    /// <summary>True when any of the account's characters has finished this dungeon.</summary>
+    public bool AnyCharacterFinished(string dungeonId) =>
+        Characters != null && Characters.Any(c => c.CompletedDungeons.Any(d => d.DungeonId == dungeonId && d.Count > 0));
 
     /// <summary>A dungeon run started at this difficulty: the character remembers it for next time, and saves (DungeonManager).</summary>
     public void RecordDungeonStarted(AccountCharacter character, string dungeonId, int difficulty)

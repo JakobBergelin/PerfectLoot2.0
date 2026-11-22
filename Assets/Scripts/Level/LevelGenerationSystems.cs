@@ -41,7 +41,6 @@ namespace LevelGeneration
             public List<LevelPiecePlacement> Pieces; // Hand-placed pieces, then this seed's landmarks
             public List<int>[] PiecesByChunk; // Piece placements, by the chunk of their south-west cell
             public List<PlacementPoint>[] PlacedPropsByChunk;   // Procedural props, spawned with their chunk
-            public List<int>[] PrefabsByChunk;  // Hand-placed prefabs (LevelLayoutBlob.Prefabs), spawned with their chunk
             public Entity[] PlacementPrefabs;
             public float LoadDistance;
             public int ChunksPerFrame;
@@ -209,9 +208,6 @@ namespace LevelGeneration
             stream.PiecesByChunk = new List<int>[stream.Built.Length];
             for (int i = 0; i < stream.Pieces.Count; i++)
                 (stream.PiecesByChunk[ChunkOf(stream, ref blob, stream.Pieces[i].Cell)] ??= new List<int>()).Add(i);
-            stream.PrefabsByChunk = new List<int>[stream.Built.Length];
-            for (int i = 0; i < blob.Prefabs.Length; i++)
-                (stream.PrefabsByChunk[ChunkOf(stream, ref blob, blob.Prefabs[i].Cell)] ??= new List<int>()).Add(i);
 
             var materialBuffer = EntityManager.GetBuffer<LevelMaterial>(layoutEntity);
             stream.Materials = new Material[materialBuffer.Length];
@@ -241,6 +237,18 @@ namespace LevelGeneration
             // Animals are only for the eyes: worlds that render get them (a dedicated server doesn't)
             if (EntityManager.HasBuffer<LevelAmbientCreature>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
                 BuildAmbientLife(layoutEntity, ref blob, stream, seed, surface);
+
+            // Hand-placed prefabs (portals, exits, chests, boss spawn points; few), all at once so they exist before their
+            // chunks stream in: at their cell's center, turned with the bent grid there
+            for (int i = 0; i < blob.Prefabs.Length; i++)
+            {
+                var placed = blob.Prefabs[i];
+                if (placed.Prefab < 0 || placed.Prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[placed.Prefab] == Entity.Null) continue;
+                var turn = math.mul(LevelDeformation.CellTurn(stream.Corners, blob.Width, blob.Height, placed.Cell.x, placed.Cell.y),
+                                    quaternion.RotateY(math.radians(90f * placed.Rotation)));
+                Spawn(stream.PlacementPrefabs[placed.Prefab], GridToWorld(ref blob, stream.Ground, placed.Cell.x + 0.5f, placed.Cell.y + 0.5f),
+                      math.mul(blob.Rotation, turn));
+            }
 
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Ground, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
@@ -500,17 +508,6 @@ namespace LevelGeneration
                     if (prefab < 0 || prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[prefab] == Entity.Null) continue;
                     Spawn(stream.PlacementPrefabs[prefab], GridToWorld(ref blob, stream.Corners, placed.Grid.x, placed.Grid.y) + new float3(0f, placed.Height, 0f),
                           math.mul(blob.Rotation, quaternion.RotateY(placed.Yaw)));
-                }
-            // Hand-placed prefabs: at their cell's center, turned with the bent grid there
-            if (stream.PrefabsByChunk[chunkIndex] != null)
-                foreach (int i in stream.PrefabsByChunk[chunkIndex])
-                {
-                    var placed = blob.Prefabs[i];
-                    if (placed.Prefab < 0 || placed.Prefab >= stream.PlacementPrefabs.Length || stream.PlacementPrefabs[placed.Prefab] == Entity.Null) continue;
-                    var turn = math.mul(LevelDeformation.CellTurn(stream.Corners, blob.Width, blob.Height, placed.Cell.x, placed.Cell.y),
-                                        quaternion.RotateY(math.radians(90f * placed.Rotation)));
-                    Spawn(stream.PlacementPrefabs[placed.Prefab], GridToWorld(ref blob, stream.Ground, placed.Cell.x + 0.5f, placed.Cell.y + 0.5f),
-                          math.mul(blob.Rotation, turn));
                 }
             foreach (var prop in pending.Builder.Props)
             {

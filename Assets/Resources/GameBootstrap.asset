@@ -17,4 +17,5 @@ MonoBehaviour:
   MenuScenes:
   - MainMenu
   Town: Hub
+  FirstDungeon: BrightwaterHollow
   SelectDevCharacter: 1

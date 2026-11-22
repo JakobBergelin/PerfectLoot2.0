@@ -791,6 +791,10 @@ MonoBehaviour:
   TileSet: {fileID: 11400000, guid: 5750e8abe0b3b6a4f8593b7642081ae9, type: 2}
   Placements: {fileID: 0}
   Border: 2
+  BackgroundRing: 0
+  BackgroundBorder: 2
+  Backdrop: {fileID: 0}
+  AmbientLife: {fileID: 0}
   Mode: 0
   RandomSeedEachPlay: 0
   Seed: 11
@@ -809,12 +813,15 @@ MonoBehaviour:
   Pieces: []
   EnemySpawners: []
   Prefabs: []
+  Landmarks: []
   _cornerRules: 00000000000000000000000101010101010101000001010101010101010000010101010101010100000101010101010101000001010101010101010000010101010101010100000101010101010101000001010101010101010000000000000000000000y
+  _cornerConnections: 00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000i
   _cornerRulesWidth: 10
   _cornerRulesHeight: 10
   _savedCells: 
   _savedWidth: 0
   _savedHeight: 0
+  _savedFormat: 0
 --- !u!4 &1000380502
 Transform:
   m_ObjectHideFlags: 0
@@ -1355,6 +1362,71 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ef13ae5949c6b6d499c9abf6f8dc08a6, type: 3}
+--- !u!1001 &1638371173
+PrefabInstance:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Modification:
+    serializedVersion: 3
+    m_TransformParent: {fileID: 0}
+    m_Modifications:
+    - target: {fileID: 1783092610233641766, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_Name
+      value: Portal to BrightwaterHollow
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 34
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 14
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.w
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalRotation.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6755082777653546738, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: Scene
+      value: 
+      objectReference: {fileID: 102900000, guid: f2d03e8597636544d9d19f4529e3bf89, type: 3}
+    - target: {fileID: 6934605437758340445, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
+      propertyPath: DisplayName
+      value: Brightwater Hollow
+      objectReference: {fileID: 0}
+    m_RemovedComponents: []
+    m_RemovedGameObjects: []
+    m_AddedGameObjects: []
+    m_AddedComponents: []
+  m_SourcePrefab: {fileID: 100100000, guid: 47ff0e15b55fc53409b1c37ba6c9e344, type: 3}
 --- !u!1001 &1727460255
 PrefabInstance:
   m_ObjectHideFlags: 0
@@ -1900,3 +1972,4 @@ SceneRoots:
   - {fileID: 1727460255}
   - {fileID: 1961506512}
   - {fileID: 1431118511}
+  - {fileID: 1638371173}

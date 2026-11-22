@@ -118,8 +118,8 @@ public class DungeonHUD : MonoBehaviour
         _card.EnableInClassList(FailedClass, failed);
         _name.text = manager.Dungeon.DisplayName;
         _difficulty.text = $"Difficulty {manager.Difficulty}";
-        // Leaving someone else's game is in the game menu
-        _leaveRow.style.display = NetSession.IsHost ? DisplayStyle.Flex : DisplayStyle.None;
+        // Leaving someone else's game is in the game menu; the first dungeon can't be left before the account has finished it
+        _leaveRow.style.display = NetSession.IsHost && manager.CanLeave ? DisplayStyle.Flex : DisplayStyle.None;
         UpdateTimer(manager);
 
         var step = manager.CurrentStep;

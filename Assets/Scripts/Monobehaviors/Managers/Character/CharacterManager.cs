@@ -399,6 +399,8 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
 
         PushCharacter();
 
+        // In a town for the first time: the game starts this character there from now on
+        if (GameArea.IsTown) AccountManager.Instance?.MarkVisitedTown(_character);
         PlayerSpawned?.Invoke(_player);
     }
 
@@ -411,6 +413,7 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         _player = ghost;
         _hasSpawned = true;
         NetPlayerSetup.AddLocalPlayerComponents(entityManager, ghost, PlayerIndex);
+        if (GameArea.IsTown) AccountManager.Instance?.MarkVisitedTown(_character);
         PlayerSpawned?.Invoke(_player);
     }
 

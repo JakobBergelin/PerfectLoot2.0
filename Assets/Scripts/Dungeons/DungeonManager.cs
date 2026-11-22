@@ -220,10 +220,17 @@ public class DungeonManager : MonoBehaviour
         _survived = status.Survived;
     }
 
+    /// <summary>
+    /// Whether this run may be left before it's finished: always, unless the dungeon is one to finish first
+    /// (LeaveOnlyOnceFinished) and nobody on the account has finished it yet.
+    /// </summary>
+    public bool CanLeave => _dungeon == null || !_dungeon.LeaveOnlyOnceFinished ||
+                            (AccountManager.Instance != null && AccountManager.Instance.AnyCharacterFinished(_dungeon.Id));
+
     /// <summary>Back to ReturnScene; an unfinished run is lost.</summary>
     public void Leave()
     {
-        if (_state == RunState.None) return;
+        if (_state == RunState.None || !CanLeave) return;
         GameSceneLoader.Load(ReturnScene);
     }
 
@@ -428,8 +435,11 @@ public class DungeonManager : MonoBehaviour
         var enemyManager = EnemyManager.Instance;
         if (enemyManager == null || !enemyManager.IsReady || !TryGetPlayer(entityManager, out var player)) return;
 
+        var position = BossPosition(entityManager, player, out bool atSpawnPoint);
+        // A boss with a trigger radius waits at its spawn point until a player comes close
+        if (atSpawnPoint && step.BossTriggerRadius > 0f && math.distance(((float3)position).xz, player.xz) > step.BossTriggerRadius) return;
         _bossSpawned = true;
-        _boss = enemyManager.Spawn(step.Boss, BossPosition(entityManager, player), riseIn: true);
+        _boss = enemyManager.Spawn(step.Boss, position, riseIn: true);
         if (_boss == Entity.Null)
         {
             Debug.LogWarning($"DungeonManager: couldn't spawn the boss {step.Boss.name}, so its step is skipped.", this);
@@ -440,8 +450,8 @@ public class DungeonManager : MonoBehaviour
         entityManager.AddComponentData(_boss, new CameraFocus { Radius = step.Boss.BodyRadius });
     }
 
-    // The nearest built Boss Spawn Point, else BossDistance from the player
-    Vector3 BossPosition(EntityManager entityManager, float3 player)
+    // The nearest Boss Spawn Point, else BossDistance from the player
+    Vector3 BossPosition(EntityManager entityManager, float3 player, out bool atSpawnPoint)
     {
         using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<DungeonBossSpawnPoint>(), ComponentType.ReadOnly<LocalToWorld>());
         using var points = query.ToComponentDataArray<LocalToWorld>(Allocator.Temp);
@@ -454,7 +464,8 @@ public class DungeonManager : MonoBehaviour
             nearest = distance;
             position = point.Position;
         }
-        return nearest < float.MaxValue ? position : AroundPlayer(entityManager, player, BossDistance);
+        atSpawnPoint = nearest < float.MaxValue;
+        return atSpawnPoint ? position : AroundPlayer(entityManager, player, BossDistance);
     }
 
     // ---------- Survive ----------

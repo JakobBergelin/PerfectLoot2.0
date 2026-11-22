@@ -21,6 +21,8 @@ public class GameBootstrap : ScriptableObject
     public List<string> MenuScenes = new List<string> { "MainMenu" };
     [Tooltip("Where the main menu starts the game, and where a dungeon's return portal leads when the dungeon wasn't entered from another scene")]
     public string Town = "SampleScene";
+    [Tooltip("Where a new character starts, until it has been in a town (AccountCharacter.NewToTown); empty: the town")]
+    public string FirstDungeon = "BrightwaterHollow";
     [Tooltip("Editor: pressing Play in a game scene plays the Dev account's last played character (else its first), as if " +
              "picked in Character Select. Off: the rig's own Class, Resource and slots, not saved")]
     public bool SelectDevCharacter = true;
@@ -31,6 +33,17 @@ public class GameBootstrap : ScriptableObject
 
     /// <summary>The town scene (Town in Resources/GameBootstrap).</summary>
     public static string TownScene => _settings != null && !string.IsNullOrEmpty(_settings.Town) ? _settings.Town : "SampleScene";
+
+    /// <summary>
+    /// Where the main menu starts the game with this character (player 1's in co-op): the first dungeon while it has
+    /// never been in a town, else the town.
+    /// </summary>
+    public static string StartScene(AccountCharacter character)
+    {
+        string first = _settings != null ? _settings.FirstDungeon : null;
+        bool newToTown = character != null && character.NewToTown;
+        return newToTown && !string.IsNullOrEmpty(first) && Application.CanStreamedLevelBeLoaded(first) ? first : TownScene;
+    }
 
     /// <summary>The main menu: the first of MenuScenes.</summary>
     public static string MainMenuScene => _settings != null && _settings.MenuScenes.Count > 0 ? _settings.MenuScenes[0] : "MainMenu";

@@ -21,6 +21,9 @@ public class DungeonStep
     [Range(1f, 100f)] public float KillPercent = 90f;
     [Tooltip("Kill Boss: spawned at a painted Boss Spawn Point, or near the player when the level has none")]
     public EnemyDefinition Boss;
+    [Tooltip("Kill Boss: meters a player must come within the Boss Spawn Point before the boss appears there (0: at once). " +
+             "On a long level the boss waits in its arena instead of on ground that hasn't streamed in yet")]
+    [Min(0f)] public float BossTriggerRadius;
 
     [Header("Survive")]
     [Tooltip("Seconds to stay alive. Dying before then fails the dungeon: its enemies disappear and only the return portal is left.")]
@@ -60,6 +63,9 @@ public class DungeonDefinition : ScriptableObject
     public List<DungeonStep> Steps = new List<DungeonStep>();
     [Tooltip("Spawned next to the player when the dungeon is finished (the Portal prefab). Leads back where the player came from.")]
     public GameObject ReturnPortal;
+    [Tooltip("Leave Dungeon only shows once a character on the account has finished this dungeon: the first dungeon, " +
+             "which a new character can't skip")]
+    public bool LeaveOnlyOnceFinished;
 
     [Header("Difficulty")]
     [Tooltip("More enemies for each difficulty above 1, as a share of the level's spawner groups, the Survive waves and their " +

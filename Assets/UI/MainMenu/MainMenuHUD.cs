@@ -281,13 +281,14 @@ public class MainMenuHUD : MonoBehaviour
     void StartAdventure()
     {
         if (_starting) return;
-        string town = GameBootstrap.TownScene;
-        if (!Application.CanStreamedLevelBeLoaded(town))
+        // A new character starts in the first dungeon, everyone else in town
+        string scene = GameBootstrap.StartScene(AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(0) : null);
+        if (!Application.CanStreamedLevelBeLoaded(scene))
         {
-            Debug.LogError($"MainMenuHUD: scene '{town}' isn't in Build Settings.", this);
+            Debug.LogError($"MainMenuHUD: scene '{scene}' isn't in Build Settings.", this);
             return;
         }
-        _starting = GameSceneLoader.Load(town);
+        _starting = GameSceneLoader.Load(scene);
     }
 
     static void Exit()

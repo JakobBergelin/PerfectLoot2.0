@@ -40,4 +40,7 @@ public class AccountCharacter
     public bool GotSecondSkill;
     public List<string> SeenSkills = new List<string>();
     public List<CompletedDungeon> CompletedDungeons = new List<CompletedDungeon>();
+    // Made but never in a town yet: the game starts it in the first dungeon (GameBootstrap.StartScene) until it gets there.
+    // False for characters saved before this existed, so they keep starting in town
+    public bool NewToTown;
 }
