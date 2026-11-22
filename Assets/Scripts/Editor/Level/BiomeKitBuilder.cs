@@ -41,8 +41,7 @@ public static class BiomeKitBuilder
 
         var kit = JsonUtility.FromJson<Kit>(File.ReadAllText($"{models}/kit.json"));
         var materials = SlotMaterials(biome, folder);
-        var slots = File.ReadAllLines($"{models}/slots.txt").Where(l => !l.StartsWith("#") && l.Contains("|"))
-                        .ToDictionary(l => l.Split('|')[0], l => l.Split('|')[1].Split(','));
+        var slots = ReadSlots(models);
 
         // A prefab per model (looks included)
         var prefabs = new Dictionary<string, GameObject>();
@@ -75,10 +74,96 @@ public static class BiomeKitBuilder
         tileSet.Pieces.Clear();
         tileSet.EnsureConnections();
         EditorUtility.SetDirty(tileSet);
+        var backdrop = BuildBackdrop(biome, folder, materials);
         AssetDatabase.SaveAssets();
         Debug.Log($"Biome {biome.Name}: {tileSet.Tiles.Count} kit tiles ({prefabs.Count} models), {tileSet.CornerConnections.Count} corner and " +
-                  $"{tileSet.EdgeConnections.Count} edge connections, written to {setPath}.", tileSet);
+                  $"{tileSet.EdgeConnections.Count} edge connections, written to {setPath}" +
+                  (backdrop != null ? $"; backdrop with {backdrop.Pieces.Length} pieces." : "."), tileSet);
         return tileSet;
+    }
+
+    // object|slot,slot,... per line (pl_wfc_kit / pl_backdrop exports)
+    static Dictionary<string, string[]> ReadSlots(string models) =>
+        File.ReadAllLines($"{models}/slots.txt").Where(l => !l.StartsWith("#") && l.Contains("|"))
+            .ToDictionary(l => l.Split('|')[0], l => l.Split('|')[1].Split(','));
+
+    /// <summary>The biome's backdrop (LevelBackdrop), or null when it has none.</summary>
+    public static LevelBackdrop Backdrop(BiomeTileSets.Biome biome) => AssetDatabase.LoadAssetAtPath<LevelBackdrop>($"{Root}/{biome.Name}/{biome.Name}Backdrop.asset");
+
+    /// <summary>
+    /// The biome's backdrop from its Blender pieces (Models/Backdrop, ArtSource/Tools/pl_backdrop.py): a prefab per piece,
+    /// the mist prefab, and the LevelBackdrop asset (same asset on rebuilds, so tuned values stay; its colors and prefabs
+    /// are refreshed). Null when the biome has no pieces.
+    /// </summary>
+    static LevelBackdrop BuildBackdrop(BiomeTileSets.Biome biome, string folder, Dictionary<string, Material> materials)
+    {
+        string models = ModelsFolder(biome) + "/Backdrop";
+        if (!File.Exists($"{models}/slots.txt")) return null;
+        BiomeTileSets.EnsureFolder(folder + "/Backdrop");
+        var slots = ReadSlots(models);
+        var pieces = slots.Keys.OrderBy(n => n).Select(n => SavePrefab(n, models, folder + "/Backdrop", slots, materials)).ToArray();
+
+        string path = $"{folder}/{biome.Name}Backdrop.asset";
+        var backdrop = AssetDatabase.LoadAssetAtPath<LevelBackdrop>(path);
+        if (backdrop == null)
+        {
+            backdrop = ScriptableObject.CreateInstance<LevelBackdrop>();
+            AssetDatabase.CreateAsset(backdrop, path);
+        }
+        // The chasm's fog: the drop, the sunk ring and the sky below the horizon all become this one color
+        backdrop.AbyssColor = BiomeTileSets.Hex(biome.ChasmFog ?? biome.Fog);
+        backdrop.Mist = SaveMist(biome, folder);
+        backdrop.Pieces = pieces;
+        EditorUtility.SetDirty(backdrop);
+        return backdrop;
+    }
+
+    // Sheets of mist (PerfectLoot/Mist) at different depths, each drifting its own way: parallax below the level
+    static readonly (float Depth, float Opacity, float Scale, Vector2 Drift, float Lift)[] MistLayers =
+    {
+        (6f, 0.4f, 0.06f, new Vector2(0.7f, 0.3f), 1.9f),
+        (18f, 0.5f, 0.035f, new Vector2(-0.4f, 0.5f), 1.6f),
+        (40f, 0.65f, 0.02f, new Vector2(0.25f, -0.2f), 1.35f),
+    };
+    const float MistSize = 500f;   // Meters per sheet: well past the farthest silhouettes
+
+    static GameObject SaveMist(BiomeTileSets.Biome biome, string folder)
+    {
+        var shader = Shader.Find("PerfectLoot/Mist");
+        var quad = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
+        var root = new GameObject($"{biome.Name}_Mist");
+        for (int i = 0; i < MistLayers.Length; i++)
+        {
+            var layer = MistLayers[i];
+            string path = $"{folder}/Materials/{biome.Name}_Mist{i + 1}.mat";
+            var material = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (material == null)
+            {
+                material = new Material(shader);
+                AssetDatabase.CreateAsset(material, path);
+            }
+            material.shader = shader;
+            material.SetFloat("_Opacity", layer.Opacity);
+            material.SetFloat("_Scale", layer.Scale);
+            material.SetFloat("_Lift", layer.Lift);
+            material.SetVector("_Drift", new Vector4(layer.Drift.x, layer.Drift.y, 0f, 0f));
+            material.renderQueue = 2900 + MistLayers.Length - i;   // Deepest first
+            EditorUtility.SetDirty(material);
+
+            var sheet = new GameObject($"Mist{i + 1}");
+            sheet.transform.SetParent(root.transform, false);
+            sheet.transform.localPosition = new Vector3(0f, -layer.Depth, 0f);
+            sheet.transform.localRotation = Quaternion.Euler(90f, 0f, 0f);   // The quad faces up
+            sheet.transform.localScale = Vector3.one * MistSize;
+            sheet.AddComponent<MeshFilter>().sharedMesh = quad;
+            var renderer = sheet.AddComponent<MeshRenderer>();
+            renderer.sharedMaterial = material;
+            renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            renderer.receiveShadows = false;
+        }
+        var prefab = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/Backdrop/{biome.Name}_Mist.prefab");
+        Object.DestroyImmediate(root);
+        return prefab;
     }
 
     // Level geometry reads the meshes at bake time, so they stay readable; materials come from the slots

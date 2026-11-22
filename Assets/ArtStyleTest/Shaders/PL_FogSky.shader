@@ -1,6 +1,7 @@
 // PerfectLoot fog sky (URP 17 / Unity 6): a skybox that is the scene's fog color (RenderSettings.fogColor), a little
 // darker straight down and lighter toward the horizon. With it, whatever lies beyond the level (a chasm, the edge of
-// the map) fades into the same fog as distant geometry, so the top-down camera never shows a gray void.
+// the map) fades into the same fog as distant geometry, so the top-down camera never shows a gray void. Below the
+// horizon it turns to the abyss color while a level has a backdrop (PL_Abyss.hlsl).
 Shader "PerfectLoot/FogSky"
 {
     Properties
@@ -21,6 +22,7 @@ Shader "PerfectLoot/FogSky"
             #pragma vertex vert
             #pragma fragment frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "PL_Abyss.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half _HorizonLift;
@@ -44,6 +46,8 @@ Shader "PerfectLoot/FogSky"
                 half3 fog = unity_FogColor.rgb;
                 half3 color = fog * lerp(1.0h + _HorizonLift, 1.0h - _DepthDarken, saturate(-y * 1.5));
                 color = lerp(color, fog * (1.0h + _HorizonLift * 0.5h), saturate(y * 2.0));
+                // Below a level with a backdrop: the abyss color, the same as everything deep down (PL_Abyss.hlsl)
+                if (_PL_AbyssDepth > 0.0) color = lerp(color, _PL_AbyssColor.rgb, saturate(-y * 4.0));
                 return half4(color, 1.0h);
             }
             ENDHLSL

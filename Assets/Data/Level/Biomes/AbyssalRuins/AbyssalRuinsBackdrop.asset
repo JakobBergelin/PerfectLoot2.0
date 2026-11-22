@@ -1,0 +1,33 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e5e709ab3427a2b489fb353e7eaa8bfb, type: 3}
+  m_Name: AbyssalRuinsBackdrop
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.LevelBackdrop
+  RingSink: 3
+  AbyssColor: {r: 0.07058824, g: 0.24313726, b: 0.26666668, a: 1}
+  FadeStart: 1
+  FadeDepth: 30
+  FadeBands: 5
+  Mist: {fileID: 143185261892039736, guid: e58be10856185044fa9c25309710d54a, type: 3}
+  Pieces:
+  - {fileID: 1311311044329795851, guid: b6e6e9c4ef7facf43b773d8622a58617, type: 3}
+  - {fileID: 7239641147556402235, guid: 86858b82b89f77847ad8786df7adf83a, type: 3}
+  - {fileID: 816983812974121871, guid: 28acb3fa3f74ff0409954f6edc738a4d, type: 3}
+  - {fileID: 4292324125187131295, guid: 73346bf7c5055e14591fd27567da88e6, type: 3}
+  - {fileID: 6402903947443718987, guid: e8ea504e7e1fccc4fa763cc40574f1d1, type: 3}
+  - {fileID: 7522100233204710703, guid: 0ed8fc66e942a5f4788f32aa0f7a4a53, type: 3}
+  - {fileID: 6376316590288371570, guid: 04e8f4898523d94468b042ac1e314d89, type: 3}
+  PieceCount: 30
+  PieceDistance: {x: 10, y: 80}
+  PieceDepth: {x: 5, y: 40}
+  PieceScale: {x: 0.8, y: 1.6}
+  PieceSpacing: 14

@@ -138,6 +138,23 @@ namespace LevelGeneration
         public Entity Value;
     }
 
+    /// <summary>The layout's backdrop (LevelBackdrop), when it has one; its silhouettes are LevelBackdropPiece.</summary>
+    public struct LevelBackdropData : IComponentData
+    {
+        public float4 AbyssColor;
+        public float FadeStart, FadeDepth;
+        public int FadeBands;
+        public Entity Mist;
+        public int PieceCount;
+        public float2 PieceDistance, PieceDepth, PieceScale;
+        public float PieceSpacing;
+    }
+
+    public struct LevelBackdropPiece : IBufferElementData
+    {
+        public Entity Value;
+    }
+
     /// <summary>The enemies of placement rules' groups (LevelPlacementGroupBlob.EnemyStart).</summary>
     public struct LevelPlacementEnemy : IBufferElementData
     {

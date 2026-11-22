@@ -35,6 +35,7 @@ Shader "PerfectLoot/Glow"
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "PL_Abyss.hlsl"
 
             CBUFFER_START(UnityPerMaterial)
                 half4 _Color;
@@ -87,6 +88,7 @@ Shader "PerfectLoot/Glow"
                 half3 color = _Color.rgb * falloff * flicker;
                 // Fog fades the glow away rather than tinting it
                 color *= ComputeFogIntensity(input.fogFactor);
+                color *= 1.0h - PL_AbyssFade(input.positionWS.y);
                 return half4(color, 0.0h);
             }
             ENDHLSL

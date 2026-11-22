@@ -156,8 +156,9 @@ MonoBehaviour:
   TileSet: {fileID: 11400000, guid: 5efb2fcd02f9ebd4da8185f7d276c97f, type: 2}
   Placements: {fileID: 0}
   Border: 2
-  BackgroundRing: 3
+  BackgroundRing: 5
   BackgroundBorder: 2
+  Backdrop: {fileID: 11400000, guid: cd4d04b46831a45488ba730a687860be, type: 2}
   Mode: 0
   RandomSeedEachPlay: 1
   Seed: 3

@@ -497,8 +497,9 @@ public static class BiomeTileSets
             {
                 layout.TileSet = tileSet;
                 layout.Border = b.Border;
-                // Kit tile sets have Background tiles: a ring of scenery around the level
-                layout.BackgroundRing = BiomeKitBuilder.HasKit(b) ? 3 : 0;
+                // Kit tile sets have Background tiles: a ring of scenery around the level, wider when a backdrop sinks it away
+                layout.Backdrop = BiomeKitBuilder.Backdrop(b);
+                layout.BackgroundRing = !BiomeKitBuilder.HasKit(b) ? 0 : layout.Backdrop != null ? 5 : 3;
                 layout.BackgroundBorder = WfcCornerRule.NotWalkable;
                 EditorUtility.SetDirty(layout);
             }

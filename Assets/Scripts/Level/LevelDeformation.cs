@@ -22,6 +22,8 @@ namespace LevelGeneration
         /// <summary>Meters corners rise or sink at most.</summary>
         public float HillHeight;
         public float HillScale;
+        /// <summary>Meters the background ring sinks at its outer edge, curving down from the level's edge (LevelBackdrop).</summary>
+        public float RingSink;
 
         public const float MaxWobble = 0.2f;
 
@@ -30,6 +32,7 @@ namespace LevelGeneration
         /// <summary>
         /// Every corner's moved position, (Width + 1) * (Height + 1), row by row from the south-west. With a margin, the
         /// grid reaches that many cells further on every side (corner (-margin, -margin) first), for the background ring.
+        /// Ring corners sink by RingSink times the square of how far out they are (0 at the level's edge, 1 at the ring's).
         /// </summary>
         public float3[] BuildCorners(int margin = 0)
         {
@@ -37,7 +40,17 @@ namespace LevelGeneration
             var corners = new float3[(width + 1) * (height + 1)];
             for (int y = 0; y <= height; y++)
                 for (int x = 0; x <= width; x++)
-                    corners[x + y * (width + 1)] = Corner(x - margin, y - margin);
+                {
+                    var p = Corner(x - margin, y - margin);
+                    if (margin > 0 && RingSink != 0f)
+                    {
+                        // Distance outside the level's rectangle, in cells (round at its corners)
+                        var outside = math.max(int2.zero, math.max(new int2(margin - x, margin - y), new int2(x - margin - Width, y - margin - Height)));
+                        float t = math.saturate(math.length((float2)outside) / margin);
+                        p.y -= RingSink * t * t;
+                    }
+                    corners[x + y * (width + 1)] = p;
+                }
             return corners;
         }
 

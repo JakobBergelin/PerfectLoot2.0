@@ -163,6 +163,7 @@ References: `Docs/inspiration/Tileset/`. Take the principles from those pictures
 
 - **Platforms over a drop.** Build walkable ground as platforms, ledges and bridges above a drop (chasm, lava pit, bog, void) wherever the biome allows, instead of one big flat floor. The drop frames the walkable area and gives depth at gameplay zoom.
 - **Depth fog.** The drop fades into one fog color per biome, so walkable edges read as dark silhouettes against it. The fog color comes from the biome palette and is never a trait hue at high saturation.
+- **The world falls away, it never stops.** Past the level's edge the background ring curves down into the drop, everything below the level fades into the biome's abyss color, mist sheets drift at a few depths, and large silhouettes (spires, ruin towers, floating islands) stand far out in the fog. No piece of the backdrop ever rises above the level.
 - **Calm floors.** Floors are mid-dark, low contrast, with only a subtle tile pattern. Detail goes on walls, rails and edges. An actor's base color is always brighter than the floor under it.
 - **Clear edges.** Every walkable edge has a rim: railing, low wall, cliff lip or spikes, in the biome's shape language.
 - **Props stay off walkable tiles.** Props go on edges, corners, walls and background pieces. Only rarely put a prop on a walkable tile, and only when it is meant to be an obstacle or a landmark. Keep combat space clear.
@@ -213,7 +214,10 @@ Shaders made for surfaces the comic shader can't animate (the only exceptions to
 - `PerfectLoot/Liquid`: water and lava. UV0.x is the distance to the shore, so foam and the shallow band survive the level's mesh merging.
 - `PerfectLoot/Glow`: additive light pools on the floor around lava and chasms, in stepped bands, instead of point lights (the comic shader's point light reach is short).
 - `PerfectLoot/Chasm`: the walls and bottom of a drop fading into fog by depth (UV0.y).
-- `PerfectLoot/FogSky`: a sky in the scene's fog color, so nothing beyond the level shows a gray void. Also used in the Hub and cathedral scenes.
+- `PerfectLoot/FogSky`: a sky in the scene's fog color, so nothing beyond the level shows a gray void. Also used in the Hub and cathedral scenes. Below the horizon it takes the abyss color while a level has a backdrop.
+- `PerfectLoot/Mist`: transparent sheets of drifting, hard-banded mist in the abyss color (the backdrop's mist layers).
+
+**Backdrop** (`LevelBackdrop` asset per biome, set on a level's Backdrop field): the background ring sinks away from the level's edge (Ring Sink, meters at its outer edge), everything below the level fades in hard steps to the abyss color (`PL_Abyss.hlsl`, used by the Comic, Chasm, Liquid and Glow shaders; global values set while the level exists), the mist prefab spawns at the level's center, and the silhouette pieces are scattered around the ring from the level's seed, each with its top below the ground. Pieces are modelled in Blender with `ArtSource/Tools/pl_backdrop.py` (pivot at the top, the kit's material slots) and exported to `Models/Backdrop/`; `BiomeKitBuilder` turns them into prefabs and fills the asset. Abyssal Ruins uses the chasm's teal `#123E44` as its abyss color.
 
 To add a biome: add an entry to `BiomeTileSets.All` (palette from section 11's table style, a `Style` for the geometry), rebuild, then apply or set a level's Tile Set by hand.
 

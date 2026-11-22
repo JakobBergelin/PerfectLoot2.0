@@ -1,0 +1,8 @@
+# object|material slots in submesh order
+Backdrop_Arch|Spire,WallTop
+Backdrop_IslandA|Cliff,Floor,Spire,WallTop
+Backdrop_IslandB|Cliff,Floor
+Backdrop_Pillar|Cliff,WallTop
+Backdrop_SpireA|Cliff,WallTop
+Backdrop_SpireB|Cliff,WallTop
+Backdrop_Tower|Spire,WallTop

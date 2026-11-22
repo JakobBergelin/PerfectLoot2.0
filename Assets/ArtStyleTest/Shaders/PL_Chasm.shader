@@ -20,6 +20,7 @@ Shader "PerfectLoot/Chasm"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "PL_Abyss.hlsl"
         CBUFFER_START(UnityPerMaterial)
             half4 _RimColor;
             half4 _FogColor;
@@ -93,6 +94,7 @@ Shader "PerfectLoot/Chasm"
                 float glow = step(1.0 - _MistAmount, mist) * smoothstep(0.55, 1.0, depth);
                 color = lerp(color, _MistColor.rgb, glow * 0.6);
                 color = MixFog(color, input.fogFactor);
+                color = PL_ApplyAbyss(color, input.positionWS.y);
                 return half4(color, 1.0h);
             }
             ENDHLSL

@@ -73,6 +73,8 @@ namespace LevelGeneration
         [Min(0)] public int BackgroundRing;
         [Tooltip("Terrain of every corner on the outside of the background ring (like Border, for the ring)")]
         public WfcCornerRule BackgroundBorder = WfcCornerRule.NotWalkable;
+        [Tooltip("What lies beyond the level (the biome's): the ring sinks away, the depths fade to the abyss color, mist and silhouettes below")]
+        public LevelBackdrop Backdrop;
 
         [Header("Generation")]
         public LevelGenerationMode Mode = LevelGenerationMode.GenerateAtRuntime;
@@ -252,6 +254,7 @@ namespace LevelGeneration
             Width = Width, Height = Height, TileSize = TileSize, Seed = seed,
             WobbleStrength = WobbleStrength, WobbleScale = WobbleScale, BendAngle = BendAngle,
             HillHeight = HillHeight, HillScale = HillScale,
+            RingSink = Backdrop != null ? Backdrop.RingSink : 0f,
         };
 
         // Bent corners for Seed (grid space), rebuilt when a setting changes

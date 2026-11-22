@@ -30,6 +30,7 @@ Shader "PerfectLoot/Liquid"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "PL_Abyss.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
             half4 _DeepColor;
@@ -172,6 +173,7 @@ Shader "PerfectLoot/Liquid"
 
                 color *= _Brightness;
                 color = MixFog(color, input.fogFactor);
+                color = PL_ApplyAbyss(color, input.positionWS.y);
                 return half4(color, 1.0h);
             }
             ENDHLSL

@@ -49,6 +49,7 @@ Shader "PerfectLoot/Comic"
 
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "PL_Abyss.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -246,6 +247,7 @@ Shader "PerfectLoot/Comic"
                 color += emission * pulse;
 
                 color = MixFog(color, input.fogFactor);
+                color = PL_ApplyAbyss(color, input.positionWS.y);
                 return half4(color, 1.0h);
             }
             ENDHLSL
@@ -279,6 +281,7 @@ Shader "PerfectLoot/Comic"
             {
                 float4 positionCS : SV_POSITION;
                 float  fogFactor  : TEXCOORD0;
+                float  worldY     : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -307,13 +310,14 @@ Shader "PerfectLoot/Comic"
                     posCS.xy += (nCS / len) / _ScreenParams.xy * _OutlineWidth * weight * 2.0 * posCS.w;
                 o.positionCS = posCS;
                 o.fogFactor = ComputeFogFactor(posCS.z);
+                o.worldY = positionWS.y;
                 return o;
             }
 
             half4 frag (Varyings input) : SV_Target
             {
                 clip(_OutlineWidth - 0.001);
-                return half4(MixFog(_OutlineColor.rgb, input.fogFactor), 1.0h);
+                return half4(PL_ApplyAbyss(MixFog(_OutlineColor.rgb, input.fogFactor), input.worldY), 1.0h);
             }
             ENDHLSL
         }

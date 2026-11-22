@@ -243,6 +243,23 @@ namespace LevelGeneration
                 DependsOn(prefab);
                 placementPrefabBuffer.Add(new LevelPlacementPrefab { Value = GetEntity(prefab, TransformUsageFlags.Dynamic) });
             }
+            var backdrop = authoring.Backdrop;
+            if (backdrop != null)
+            {
+                DependsOn(backdrop);
+                var color = backdrop.AbyssColor.linear;
+                AddComponent(entity, new LevelBackdropData
+                {
+                    AbyssColor = new float4(color.r, color.g, color.b, 1f),
+                    FadeStart = backdrop.FadeStart, FadeDepth = backdrop.FadeDepth, FadeBands = backdrop.FadeBands,
+                    Mist = backdrop.Mist != null ? GetEntity(backdrop.Mist, TransformUsageFlags.Dynamic) : Entity.Null,
+                    PieceCount = backdrop.PieceCount, PieceDistance = backdrop.PieceDistance, PieceDepth = backdrop.PieceDepth,
+                    PieceScale = backdrop.PieceScale, PieceSpacing = backdrop.PieceSpacing,
+                });
+                var pieceBuffer = AddBuffer<LevelBackdropPiece>(entity);
+                foreach (var piece in backdrop.Pieces)
+                    if (piece != null) pieceBuffer.Add(new LevelBackdropPiece { Value = GetEntity(piece, TransformUsageFlags.Dynamic) });
+            }
             var placementEnemyBuffer = AddBuffer<LevelPlacementEnemy>(entity);
             foreach (var entry in placementEnemies)
             {

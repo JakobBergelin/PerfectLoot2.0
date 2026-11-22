@@ -64,12 +64,16 @@ namespace LevelGeneration
             RequireForUpdate<LevelLayout>();
         }
 
+        // The level is gone (no LevelLayout left): so is its abyss fade
+        protected override void OnStopRunning() => ClearBackdrop();
+
         protected override void OnDestroy()
         {
             foreach (var pending in _pending) pending.Builder.Dispose();
             foreach (var stream in _streams) if (stream.JobCorners.IsCreated) stream.JobCorners.Dispose();
             foreach (var collider in _colliders) if (collider.IsCreated) collider.Dispose();
             foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
+            ClearBackdrop();
             _pending.Clear();
             _streams.Clear();
             _colliders.Clear();
@@ -224,6 +228,8 @@ namespace LevelGeneration
 
             // Procedural placement: spawners now, props with their chunks
             var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface, initialCells);
+            if (EntityManager.HasComponent<LevelBackdropData>(layoutEntity)) BuildBackdrop(layoutEntity, ref blob, stream, seed);
+            else ClearBackdrop();
 
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Ground, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
@@ -237,6 +243,56 @@ namespace LevelGeneration
                       $"the rest stream in within {stream.LoadDistance} m of the player.");
             return playerStart;
         }
+
+        static readonly int AbyssColorId = Shader.PropertyToID("_PL_AbyssColor"), AbyssTopId = Shader.PropertyToID("_PL_AbyssTop"),
+                            AbyssDepthId = Shader.PropertyToID("_PL_AbyssDepth"), AbyssBandsId = Shader.PropertyToID("_PL_AbyssBands");
+
+        /// <summary>
+        /// The level's backdrop (LevelBackdrop): turns on the abyss fade below the level (global shader values, the same
+        /// for every camera), spawns the mist at the level's center and scatters the silhouettes around the background
+        /// ring from the seed (so every machine places the same ones).
+        /// </summary>
+        void BuildBackdrop(Entity layoutEntity, ref LevelLayoutBlob blob, LevelStream stream, uint seed)
+        {
+            var backdrop = EntityManager.GetComponentData<LevelBackdropData>(layoutEntity);
+            Shader.SetGlobalColor(AbyssColorId, new Color(backdrop.AbyssColor.x, backdrop.AbyssColor.y, backdrop.AbyssColor.z, 1f));
+            Shader.SetGlobalFloat(AbyssTopId, blob.Origin.y - backdrop.FadeStart);
+            Shader.SetGlobalFloat(AbyssDepthId, backdrop.FadeDepth);
+            Shader.SetGlobalFloat(AbyssBandsId, backdrop.FadeBands);
+
+            // The level's size in grid space (meters), and the ring's reach past it
+            var size = new float2(blob.Width, blob.Height) * blob.TileSize;
+            float ring = stream.Margin * blob.TileSize;
+            if (backdrop.Mist != Entity.Null)
+                Spawn(backdrop.Mist, blob.Origin + math.mul(blob.Rotation, new float3(size.x * 0.5f, 0f, size.y * 0.5f)), blob.Rotation);
+
+            var pieces = EntityManager.GetBuffer<LevelBackdropPiece>(layoutEntity).ToNativeArray(Allocator.Temp);
+            if (pieces.Length == 0) return;
+            var random = new Unity.Mathematics.Random(math.max(1u, math.hash(new uint2(seed, 0xBAC4u))));
+            var placed = new List<float2>();
+            float reach = ring + backdrop.PieceDistance.y;
+            for (int attempt = 0; attempt < backdrop.PieceCount * 30 && placed.Count < backdrop.PieceCount; attempt++)
+            {
+                // A point in the band PieceDistance outside the ring, away from the others
+                var point = random.NextFloat2(-reach, size + reach);
+                float outside = math.length(math.max(float2.zero, math.max(-point, point - size))) - ring;
+                if (outside < backdrop.PieceDistance.x || outside > backdrop.PieceDistance.y) continue;
+                bool crowded = false;
+                foreach (var other in placed) crowded |= math.distance(other, point) < backdrop.PieceSpacing;
+                if (crowded) continue;
+                placed.Add(point);
+
+                var prefab = pieces[random.NextInt(pieces.Length)].Value;
+                float depth = random.NextFloat(backdrop.PieceDepth.x, backdrop.PieceDepth.y);
+                Spawn(prefab, blob.Origin + math.mul(blob.Rotation, new float3(point.x, -depth, point.y)),
+                      math.mul(blob.Rotation, quaternion.RotateY(random.NextFloat(2f * math.PI))),
+                      random.NextFloat(backdrop.PieceScale.x, backdrop.PieceScale.y));
+            }
+            pieces.Dispose();
+        }
+
+        // No level, no abyss fade
+        static void ClearBackdrop() => Shader.SetGlobalFloat(AbyssDepthId, 0f);
 
         // The blob's landmarks as WfcLayoutCompiler.PlaceLandmarks takes them
         static List<LandmarkPool> LandmarkPools(ref LevelLayoutBlob blob)
@@ -604,7 +660,7 @@ namespace LevelGeneration
 
         // Props are prefabs: placed whole. Unity Physics bakes static colliders unparented, in the prefab's space, so
         // those are moved the same way; parented parts follow the root.
-        void Spawn(Entity prefab, float3 position, quaternion turn)
+        void Spawn(Entity prefab, float3 position, quaternion turn, float scale = 0f)
         {
             var root = EntityManager.Instantiate(prefab);
             if (EntityManager.HasComponent<LocalTransform>(root))
@@ -612,6 +668,7 @@ namespace LevelGeneration
                 var transform = EntityManager.GetComponentData<LocalTransform>(root);
                 transform.Position = position;
                 transform.Rotation = turn;
+                if (scale > 0f) transform.Scale = scale;   // 0 keeps the prefab's
                 EntityManager.SetComponentData(root, transform);
             }
 
