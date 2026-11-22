@@ -1,0 +1,5 @@
+# object|material slots in submesh order
+Critter_Bird|CritterFeather,CritterFeatherLight,CritterEye,CritterBeak
+Critter_Fish|CritterFish
+Critter_Rabbit|CritterFurGrey,CritterEye,CritterFurLight
+Critter_Squirrel|CritterFur,CritterFurLight,CritterEye

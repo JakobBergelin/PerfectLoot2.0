@@ -260,6 +260,18 @@ namespace LevelGeneration
                 foreach (var piece in backdrop.Pieces)
                     if (piece != null) pieceBuffer.Add(new LevelBackdropPiece { Value = GetEntity(piece, TransformUsageFlags.Dynamic) });
             }
+            if (authoring.AmbientLife != null)
+            {
+                DependsOn(authoring.AmbientLife);
+                var creatures = AddBuffer<LevelAmbientCreature>(entity);
+                foreach (var creature in authoring.AmbientLife.Creatures)
+                    if (creature?.Prefab != null && creature.Count > 0)
+                        creatures.Add(new LevelAmbientCreature
+                        {
+                            Prefab = GetEntity(creature.Prefab, TransformUsageFlags.Dynamic), Kind = creature.Kind, Count = creature.Count,
+                            FleeRadius = creature.FleeRadius, Speed = creature.Speed, Height = creature.Height, Scale = creature.Scale,
+                        });
+            }
             var placementEnemyBuffer = AddBuffer<LevelPlacementEnemy>(entity);
             foreach (var entry in placementEnemies)
             {

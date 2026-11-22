@@ -1,0 +1,43 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 83f275ab80595444fb4215af2d6870f5, type: 3}
+  m_Name: BrightwaterHollowAmbientLife
+  m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.AmbientLifeSet
+  Creatures:
+  - Prefab: {fileID: 6083454318240492231, guid: e46297f10b140f143ac5c8a162ad5d00, type: 3}
+    Kind: 0
+    Count: 10
+    FleeRadius: 4
+    Speed: 1.6
+    Height: 0
+    Scale: {x: 1.3, y: 1.7}
+  - Prefab: {fileID: 7363107833246067049, guid: b24c30bc08c584143ad6e20158d92008, type: 3}
+    Kind: 0
+    Count: 8
+    FleeRadius: 5
+    Speed: 1.8
+    Height: 0
+    Scale: {x: 1.2, y: 1.5}
+  - Prefab: {fileID: 1644238940652217440, guid: 7fab8dc05a513ac4e83baf7e8c486a26, type: 3}
+    Kind: 1
+    Count: 12
+    FleeRadius: 5
+    Speed: 1
+    Height: 0
+    Scale: {x: 1.4, y: 1.8}
+  - Prefab: {fileID: 7791431452446538008, guid: c59d08442cc6886419e4e841b9f52bcc, type: 3}
+    Kind: 2
+    Count: 14
+    FleeRadius: 3
+    Speed: 0.5
+    Height: -0.43
+    Scale: {x: 1.5, y: 2.2}

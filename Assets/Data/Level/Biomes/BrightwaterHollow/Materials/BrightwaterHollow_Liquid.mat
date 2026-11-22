@@ -28,6 +28,7 @@ Material:
     m_Floats:
     - _Brightness: 1
     - _CrustAmount: 0.45
+    - _Current: 0.9
     - _FlowSpeed: 0.2
     - _FoamWidth: 0.18
     - _Mode: 0

@@ -155,6 +155,39 @@ namespace LevelGeneration
         public Entity Value;
     }
 
+    /// <summary>A kind of small animal the level is home to (AmbientLifeSet), on the layout entity.</summary>
+    public struct LevelAmbientCreature : IBufferElementData
+    {
+        public Entity Prefab;
+        public AmbientLifeSet.Kind Kind;
+        public int Count;
+        public float FleeRadius, Speed, Height;
+        public float2 Scale;
+    }
+
+    /// <summary>
+    /// One small animal, moved by AmbientCreatureSystem: it rests, wanders near Home and flees from players, going From
+    /// To over Duration seconds (Elapsed so far).
+    /// </summary>
+    public struct AmbientCreature : IComponentData
+    {
+        public enum State : byte { Resting, Moving, Fleeing }
+
+        public AmbientLifeSet.Kind Kind;
+        public State Now;
+        public float3 Home, From, To;
+        public float Elapsed, Duration, Rest;
+        public float Yaw;           // Radians, the way it faces
+        public float FleeRadius, Speed;
+        public Unity.Mathematics.Random Random;
+    }
+
+    /// <summary>Open ground where birds land (the level's corners with walkable ground all around), on the layout entity.</summary>
+    public struct AmbientPerch : IBufferElementData
+    {
+        public float3 Position;
+    }
+
     /// <summary>The enemies of placement rules' groups (LevelPlacementGroupBlob.EnemyStart).</summary>
     public struct LevelPlacementEnemy : IBufferElementData
     {

@@ -159,6 +159,7 @@ MonoBehaviour:
   BackgroundRing: 5
   BackgroundBorder: 2
   Backdrop: {fileID: 11400000, guid: a2d262f8cc08c5544a03eb696b33e62c, type: 2}
+  AmbientLife: {fileID: 11400000, guid: d63988b4ebc4657449c11aec67dd4b95, type: 2}
   Mode: 0
   RandomSeedEachPlay: 0
   Seed: 7

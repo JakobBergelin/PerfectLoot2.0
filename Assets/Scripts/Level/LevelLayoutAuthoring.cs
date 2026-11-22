@@ -75,6 +75,8 @@ namespace LevelGeneration
         public WfcCornerRule BackgroundBorder = WfcCornerRule.NotWalkable;
         [Tooltip("What lies beyond the level (the biome's): the ring sinks away, the depths fade to the abyss color, mist and silhouettes below")]
         public LevelBackdrop Backdrop;
+        [Tooltip("Small animals living in the level (the biome's): decoration only, placed from the seed")]
+        public AmbientLifeSet AmbientLife;
 
         [Header("Generation")]
         public LevelGenerationMode Mode = LevelGenerationMode.GenerateAtRuntime;

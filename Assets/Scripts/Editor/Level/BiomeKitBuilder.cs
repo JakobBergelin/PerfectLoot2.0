@@ -75,6 +75,7 @@ public static class BiomeKitBuilder
         tileSet.EnsureConnections();
         EditorUtility.SetDirty(tileSet);
         var backdrop = BuildBackdrop(biome, folder, materials);
+        BuildAmbientLife(biome, folder);
         AssetDatabase.SaveAssets();
         Debug.Log($"Biome {biome.Name}: {tileSet.Tiles.Count} kit tiles ({prefabs.Count} models), {tileSet.CornerConnections.Count} corner and " +
                   $"{tileSet.EdgeConnections.Count} edge connections, written to {setPath}" +
@@ -116,6 +117,75 @@ public static class BiomeKitBuilder
         backdrop.Pieces = pieces;
         EditorUtility.SetDirty(backdrop);
         return backdrop;
+    }
+
+    /// <summary>The biome's small animals (AmbientLifeSet), or null when it has none.</summary>
+    public static AmbientLifeSet AmbientLife(BiomeTileSets.Biome biome) => AssetDatabase.LoadAssetAtPath<AmbientLifeSet>($"{Root}/{biome.Name}/{biome.Name}AmbientLife.asset");
+
+    // Colors of the creatures' parts (pl_critters.py slots), and how each kind lives when the asset is first made
+    static readonly Dictionary<string, string> CritterColors = new Dictionary<string, string>
+    {
+        ["CritterFur"] = "#A8683E", ["CritterFurLight"] = "#E8D2B0", ["CritterFurGrey"] = "#8C7A68", ["CritterFeather"] = "#5A6EA8",
+        ["CritterFeatherLight"] = "#E8C8A0", ["CritterBeak"] = "#D8A040", ["CritterEye"] = "#151018", ["CritterFish"] = "#1E4E62",
+    };
+    static readonly (string Name, AmbientLifeSet.Kind Kind, int Count, float Flee, float Speed, float Height, Vector2 Scale)[] CritterDefaults =
+    {
+        ("Critter_Squirrel", AmbientLifeSet.Kind.Darter, 10, 4f, 1.6f, 0f, new Vector2(1.3f, 1.7f)),
+        ("Critter_Rabbit", AmbientLifeSet.Kind.Darter, 8, 5f, 1.8f, 0f, new Vector2(1.2f, 1.5f)),
+        ("Critter_Bird", AmbientLifeSet.Kind.Flyer, 12, 5f, 1f, 0f, new Vector2(1.4f, 1.8f)),
+        ("Critter_Fish", AmbientLifeSet.Kind.Swimmer, 14, 3f, 0.5f, -0.43f, new Vector2(1.5f, 2.2f)),
+    };
+
+    /// <summary>
+    /// The biome's small animals from its Blender creatures (Models/Critters, ArtSource/Tools/pl_critters.py): a prefab
+    /// each (no colliders) with Comic materials, and the AmbientLifeSet asset (same asset on rebuilds, so tuned counts and
+    /// speeds stay; prefabs are refreshed). Null when the biome has none.
+    /// </summary>
+    static AmbientLifeSet BuildAmbientLife(BiomeTileSets.Biome biome, string folder)
+    {
+        string models = ModelsFolder(biome) + "/Critters";
+        if (!File.Exists($"{models}/slots.txt")) return null;
+        ConfigureImports(models);
+        BiomeTileSets.EnsureFolder(folder + "/Critters");
+        var shadow = BiomeTileSets.Hex(biome.EnvShadow);
+        var slots = ReadSlots(models);
+        var prefabs = new Dictionary<string, GameObject>();
+        foreach (var (name, slotNames) in slots)
+        {
+            var mesh = AssetDatabase.LoadAllAssetsAtPath($"{models}/{name}.fbx").OfType<Mesh>().First(m => m.name == name);
+            var materials = slotNames.Select(slot =>
+            {
+                var material = BiomeTileSets.Comic(BiomeTileSets.ComicEnv, $"{folder}/Materials/{biome.Name}_{slot.Trim()}.mat",
+                                                   BiomeTileSets.Hex(CritterColors.TryGetValue(slot.Trim(), out var hex) ? hex : "#808080"), shadow);
+                material.SetFloat("_RimStrength", 0.6f);
+                if (slot.Trim() == "CritterFish") { material.SetFloat("_OutlineWidth", 0f); material.SetFloat("_PatternStrength", 0f); }
+                EditorUtility.SetDirty(material);
+                return material;
+            }).ToArray();
+            var root = new GameObject(name);
+            root.AddComponent<MeshFilter>().sharedMesh = mesh;
+            var renderer = root.AddComponent<MeshRenderer>();
+            renderer.sharedMaterials = materials;
+            if (name.EndsWith("Fish")) renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+            prefabs[name] = PrefabUtility.SaveAsPrefabAsset(root, $"{folder}/Critters/{name}.prefab");
+            Object.DestroyImmediate(root);
+        }
+
+        string path = $"{folder}/{biome.Name}AmbientLife.asset";
+        var set = AssetDatabase.LoadAssetAtPath<AmbientLifeSet>(path);
+        if (set == null)
+        {
+            set = ScriptableObject.CreateInstance<AmbientLifeSet>();
+            set.Creatures = CritterDefaults.Where(d => prefabs.ContainsKey(d.Name)).Select(d => new AmbientLifeSet.Creature
+            {
+                Prefab = prefabs[d.Name], Kind = d.Kind, Count = d.Count, FleeRadius = d.Flee, Speed = d.Speed, Height = d.Height, Scale = d.Scale,
+            }).ToArray();
+            AssetDatabase.CreateAsset(set, path);
+        }
+        foreach (var creature in set.Creatures)
+            if (creature.Prefab != null && prefabs.TryGetValue(creature.Prefab.name, out var prefab)) creature.Prefab = prefab;
+        EditorUtility.SetDirty(set);
+        return set;
     }
 
     // Sheets of mist (PerfectLoot/Mist) at different depths, each drifting its own way: parallax below the level

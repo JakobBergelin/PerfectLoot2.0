@@ -238,6 +238,9 @@ namespace LevelGeneration
             var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface, initialCells);
             if (EntityManager.HasComponent<LevelBackdropData>(layoutEntity)) BuildBackdrop(layoutEntity, ref blob, stream, seed);
             else ClearBackdrop();
+            // Animals are only for the eyes: worlds that render get them (a dedicated server doesn't)
+            if (EntityManager.HasBuffer<LevelAmbientCreature>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
+                BuildAmbientLife(layoutEntity, ref blob, stream, seed, surface);
 
             // The start's surroundings, all at once (their jobs run in parallel): the player spawns on them
             var playerStart = GridToWorld(ref blob, stream.Ground, blob.PlayerStart.x + 0.5f, blob.PlayerStart.y + 0.5f);
@@ -301,6 +304,65 @@ namespace LevelGeneration
 
         // No level, no abyss fade
         static void ClearBackdrop() => Shader.SetGlobalFloat(AbyssDepthId, 0f);
+
+        /// <summary>
+        /// The level's small animals (AmbientLifeSet), placed from the seed: darters on walkable corners beside not-walkable
+        /// ground (the forest's edge), flyers on corners with walkable ground all around (also where birds land, the
+        /// layout's AmbientPerch buffer), swimmers on water corners with water on at least three sides.
+        /// </summary>
+        void BuildAmbientLife(Entity layoutEntity, ref LevelLayoutBlob blob, LevelStream stream, uint seed, LevelSurface surface)
+        {
+            int cw = blob.Width + 1, ch = blob.Height + 1;
+            byte TerrainAt(int x, int y) => x < 0 || y < 0 || x >= cw || y >= ch ? (byte)WfcTerrain.NotWalkable : surface.Terrain[x + y * cw];
+            var edge = new List<int2>();
+            var open = new List<int2>();
+            var water = new List<int2>();
+            for (int y = 0; y < ch; y++)
+                for (int x = 0; x < cw; x++)
+                {
+                    byte terrain = TerrainAt(x, y);
+                    int walls = 0, wet = 0, walkable = 0;
+                    for (int dy = -1; dy <= 1; dy++)
+                        for (int dx = -1; dx <= 1; dx++)
+                        {
+                            if (dx == 0 && dy == 0) continue;
+                            byte other = TerrainAt(x + dx, y + dy);
+                            bool side = dx == 0 || dy == 0;
+                            if (side && other == (byte)WfcTerrain.NotWalkable) walls++;
+                            if (side && other == (byte)WfcTerrain.Water) wet++;
+                            if (other == (byte)WfcTerrain.Walkable) walkable++;
+                        }
+                    if (terrain == (byte)WfcTerrain.Walkable && walls > 0) edge.Add(new int2(x, y));
+                    else if (terrain == (byte)WfcTerrain.Walkable && walkable == 8) open.Add(new int2(x, y));
+                    else if (terrain == (byte)WfcTerrain.Water && wet >= 3) water.Add(new int2(x, y));
+                }
+
+            var creatures = EntityManager.GetBuffer<LevelAmbientCreature>(layoutEntity).ToNativeArray(Allocator.Temp);
+            var perches = EntityManager.AddBuffer<AmbientPerch>(layoutEntity);
+            foreach (var corner in open) perches.Add(new AmbientPerch { Position = GridToWorld(ref blob, stream.Ground, corner.x, corner.y) });
+
+            var random = new Unity.Mathematics.Random(math.max(1u, math.hash(new uint2(seed, 0xA11Fu))));
+            foreach (var creature in creatures)
+            {
+                var spots = creature.Kind == AmbientLifeSet.Kind.Darter ? edge : creature.Kind == AmbientLifeSet.Kind.Flyer ? open : water;
+                for (int i = 0; i < math.min(creature.Count, spots.Count); i++)
+                {
+                    // A random spot not used yet (the list's unused part is from i on)
+                    int pick = random.NextInt(i, spots.Count);
+                    (spots[i], spots[pick]) = (spots[pick], spots[i]);
+                    var home = GridToWorld(ref blob, stream.Ground, spots[i].x, spots[i].y) + new float3(0f, creature.Height, 0f);
+                    float yaw = random.NextFloat(2f * math.PI);
+                    var entity = Spawn(creature.Prefab, home, quaternion.RotateY(yaw), random.NextFloat(creature.Scale.x, creature.Scale.y));
+                    EntityManager.AddComponentData(entity, new AmbientCreature
+                    {
+                        Kind = creature.Kind, Home = home, From = home, To = home, Yaw = yaw, Rest = random.NextFloat(0.5f, 4f),
+                        FleeRadius = creature.FleeRadius, Speed = creature.Speed,
+                        Random = new Unity.Mathematics.Random(math.max(1u, random.NextUInt())),
+                    });
+                }
+            }
+            creatures.Dispose();
+        }
 
         // The blob's landmarks as WfcLayoutCompiler.PlaceLandmarks takes them
         static List<LandmarkPool> LandmarkPools(ref LevelLayoutBlob blob)
@@ -667,8 +729,8 @@ namespace LevelGeneration
             blob.Origin + math.mul(blob.Rotation, LevelDeformation.Sample(corners, blob.Width, blob.Height, x, y));
 
         // Props are prefabs: placed whole. Unity Physics bakes static colliders unparented, in the prefab's space, so
-        // those are moved the same way; parented parts follow the root.
-        void Spawn(Entity prefab, float3 position, quaternion turn, float scale = 0f)
+        // those are moved the same way; parented parts follow the root. Returns the root.
+        Entity Spawn(Entity prefab, float3 position, quaternion turn, float scale = 0f)
         {
             var root = EntityManager.Instantiate(prefab);
             if (EntityManager.HasComponent<LocalTransform>(root))
@@ -680,7 +742,7 @@ namespace LevelGeneration
                 EntityManager.SetComponentData(root, transform);
             }
 
-            if (!EntityManager.HasBuffer<LinkedEntityGroup>(root)) return;
+            if (!EntityManager.HasBuffer<LinkedEntityGroup>(root)) return root;
             var linked = EntityManager.GetBuffer<LinkedEntityGroup>(root).ToNativeArray(Allocator.Temp);
             foreach (var member in linked)
             {
@@ -692,6 +754,7 @@ namespace LevelGeneration
                 EntityManager.SetComponentData(entity, transform);
             }
             linked.Dispose();
+            return root;
         }
     }
 
