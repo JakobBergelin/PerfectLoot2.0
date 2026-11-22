@@ -104,6 +104,36 @@ Shader "PerfectLoot/Comic"
                         lerp(lerp(PL_Hash(i + float3(0,0,1)), PL_Hash(i + float3(1,0,1)), f.x),
                              lerp(PL_Hash(i + float3(0,1,1)), PL_Hash(i + float3(1,1,1)), f.x), f.y), f.z);
         }
+
+        // The ink outline's shell: the vertex pushed out along its (smoothed) normal by width pixels on screen
+        // pull: meters it moves toward the camera
+        float4 PL_OutlineShell(float3 positionOS, float3 normalOS, float4 tangentOS, float3 smoothTS, float width, out float3 positionWS,
+                               float pull = 0.0)
+        {
+            float3 nOS = normalOS;
+            if (_UseSmoothNormals > 0.5 && dot(smoothTS, smoothTS) > 0.01)
+            {
+                float3 t = normalize(tangentOS.xyz);
+                float3 b = cross(nOS, t) * tangentOS.w;
+                nOS = normalize(t * smoothTS.x + b * smoothTS.y + nOS * smoothTS.z);
+            }
+
+            positionWS = TransformObjectToWorld(positionOS);
+            float weight = lerp(1.0, 0.35 + 1.3 * PL_Noise(positionWS * 2.2), _OutlineJitter);
+
+            float4 posCS = TransformWorldToHClip(positionWS + normalize(GetCameraPositionWS() - positionWS) * pull);
+            float3 nWS = TransformObjectToWorldNormal(nOS);
+            float2 nCS = mul((float3x3)UNITY_MATRIX_VP, nWS).xy;
+            float len = length(nCS);
+            if (len > 1e-5)
+                posCS.xy += (nCS / len) / _ScreenParams.xy * width * weight * 2.0 * posCS.w;
+            return posCS;
+        }
+
+        // A player's outline through what hides it (the PLXRayMask and PLXRayOutline passes, drawn by the renderer's
+        // Player X-Ray features for the Player layer only). HiddenOutlineSystem sets these; width 0 turns it off.
+        half4 _PL_XRayColor;
+        float _PL_XRayWidth;
         ENDHLSL
 
         Pass
@@ -281,7 +311,7 @@ Shader "PerfectLoot/Comic"
             {
                 float4 positionCS : SV_POSITION;
                 float  fogFactor  : TEXCOORD0;
-                float  worldY     : TEXCOORD1;
+                float3 positionWS : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -290,34 +320,93 @@ Shader "PerfectLoot/Comic"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-
-                float3 nOS = input.normalOS;
-                if (_UseSmoothNormals > 0.5 && dot(input.smoothTS, input.smoothTS) > 0.01)
-                {
-                    float3 t = normalize(input.tangentOS.xyz);
-                    float3 b = cross(nOS, t) * input.tangentOS.w;
-                    nOS = normalize(t * input.smoothTS.x + b * input.smoothTS.y + nOS * input.smoothTS.z);
-                }
-
-                float3 positionWS = TransformObjectToWorld(input.positionOS.xyz);
-                float weight = lerp(1.0, 0.35 + 1.3 * PL_Noise(positionWS * 2.2), _OutlineJitter);
-
-                float4 posCS = TransformWorldToHClip(positionWS);
-                float3 nWS = TransformObjectToWorldNormal(nOS);
-                float2 nCS = mul((float3x3)UNITY_MATRIX_VP, nWS).xy;
-                float len = length(nCS);
-                if (len > 1e-5)
-                    posCS.xy += (nCS / len) / _ScreenParams.xy * _OutlineWidth * weight * 2.0 * posCS.w;
-                o.positionCS = posCS;
-                o.fogFactor = ComputeFogFactor(posCS.z);
-                o.worldY = positionWS.y;
+                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, _OutlineWidth, o.positionWS);
+                o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
 
             half4 frag (Varyings input) : SV_Target
             {
                 clip(_OutlineWidth - 0.001);
-                return half4(PL_ApplyAbyss(MixFog(_OutlineColor.rgb, input.fogFactor), input.worldY), 1.0h);
+                return half4(PL_ApplyAbyss(MixFog(_OutlineColor.rgb, input.fogFactor), input.positionWS.y), 1.0h);
+            }
+            ENDHLSL
+        }
+
+        // Player X-Ray, step 1: marks the whole body on the screen (stencil bit 2, apart from the telegraphs' bit 1)
+        Pass
+        {
+            Name "PLXRayMask"
+            Tags { "LightMode"="PLXRayMask" }
+            ColorMask 0
+            ZWrite Off
+            ZTest Always
+            Cull Back
+            Stencil
+            {
+                Ref 2
+                WriteMask 2
+                Comp Always
+                Pass Replace
+            }
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Varyings { float4 positionCS : SV_POSITION; };
+            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = TransformObjectToHClip(input.positionOS.xyz); return o; }
+            half4 frag (Varyings input) : SV_Target { clip(_PL_XRayWidth - 0.001); return 0; }
+            ENDHLSL
+        }
+
+        // Player X-Ray, step 2: the outline shell only where something stands in front of it, and only outside the body,
+        // so a hidden player shows as a colored outline
+        Pass
+        {
+            Name "PLXRayOutline"
+            Tags { "LightMode"="PLXRayOutline" }
+            Cull Front
+            ZWrite Off
+            ZTest Greater
+            Stencil
+            {
+                Ref 2
+                ReadMask 2
+                Comp NotEqual
+            }
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex vert
+            #pragma fragment frag
+            #pragma multi_compile_instancing
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                float3 normalOS   : NORMAL;
+                float4 tangentOS  : TANGENT;
+                float3 smoothTS   : TEXCOORD3;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+            struct Varyings { float4 positionCS : SV_POSITION; };
+            Varyings vert (Attributes input)
+            {
+                Varyings o;
+                UNITY_SETUP_INSTANCE_ID(input);
+                float3 positionWS;
+                // Pulled toward the camera, so the player's own ink outline (the same shell) never counts as hiding it
+                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, _PL_XRayWidth, positionWS, 0.5);
+                return o;
+            }
+            half4 frag (Varyings input) : SV_Target
+            {
+                clip(_PL_XRayWidth - 0.001);
+                return half4(_PL_XRayColor.rgb, 1.0h);
             }
             ENDHLSL
         }

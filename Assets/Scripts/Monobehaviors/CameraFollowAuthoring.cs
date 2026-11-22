@@ -44,6 +44,7 @@ public struct CameraFollow : IComponentData
     public float ShakeStrength;     // Meters the camera moves at most, at full trauma
     public float ShakeDecay;        // Trauma lost per second
     public float ShakeFrequency;    // How fast the shake wobbles
+    public float4 HiddenOutline;    // Linear color and width in pixels of a hidden player's outline (HiddenOutlineSystem)
 
     public float3 Velocity;     // SmoothDamp's running velocity
     public float Zoom;          // How far back the camera is now, as an Offset multiple (1 to MaxZoomOut; 0 until set)

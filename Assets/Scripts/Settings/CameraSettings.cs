@@ -1,3 +1,4 @@
+using Unity.Mathematics;
 using UnityEngine;
 
 /// <summary>
@@ -51,6 +52,12 @@ public class CameraSettings : ScriptableObject
     [Tooltip("How fast the camera wobbles while shaking")]
     [Min(0f)] public float ShakeFrequency = 18f;
 
+    [Header("Hidden players")]
+    [Tooltip("Pixels of colored outline drawn around a player wherever anything hides them (walls, cliffs, canopies; " +
+             "the renderer's Player X-Ray features); 0 turns it off")]
+    [Min(0f)] public float HiddenOutlineWidth = 3f;
+    public Color HiddenOutlineColor = new Color(0.75f, 0.92f, 1f);
+
     public Quaternion Rotation => Quaternion.Euler(Pitch, Yaw, 0f);
     public Vector3 Offset => Vector3.up * LookHeight - Rotation * Vector3.forward * Distance;
 
@@ -72,5 +79,7 @@ public class CameraSettings : ScriptableObject
         follow.ShakeStrength = ShakeStrength;
         follow.ShakeDecay = ShakeDecay;
         follow.ShakeFrequency = ShakeFrequency;
+        var hidden = HiddenOutlineColor.linear;
+        follow.HiddenOutline = new float4(hidden.r, hidden.g, hidden.b, HiddenOutlineWidth);
     }
 }
