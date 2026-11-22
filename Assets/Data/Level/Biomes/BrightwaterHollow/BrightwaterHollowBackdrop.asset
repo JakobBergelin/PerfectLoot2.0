@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e5e709ab3427a2b489fb353e7eaa8bfb, type: 3}
   m_Name: BrightwaterHollowBackdrop
   m_EditorClassIdentifier: Assembly-CSharp::LevelGeneration.LevelBackdrop
-  RingSink: 8
+  RingSink: -2
   AbyssColor: {r: 0.5254902, g: 0.7058824, b: 0.65882355, a: 1}
-  FadeStart: 2
-  FadeDepth: 40
+  FadeStart: 1
+  FadeDepth: 10
   FadeBands: 5
   Mist: {fileID: 5705985519887665171, guid: 2bf80a2ea5a81c04bb0eb155260bf244, type: 3}
   Pieces:
@@ -28,4 +28,4 @@ MonoBehaviour:
   PieceDistance: {x: 5, y: 70}
   PieceDepth: {x: 3, y: 22}
   PieceScale: {x: 0.9, y: 1.5}
-  PieceSpacing: 16
+  PieceSpacing: 5.6

@@ -66,7 +66,8 @@ the level's shape is sent over the network. The runtime log prints a hash of the
   trigger and spawn radius. Rules only use flat cells on ground reachable from the start.
 
 ### Backdrop (`LevelBackdrop`)
-- **Ring Sink:** meters the ring curves down at its outer edge (15).
+- **Ring Sink:** meters the ring curves down at its outer edge (15). Negative raises it instead: a forest ring that rises
+  toward its edge (-2 in Brightwater Hollow) frames the level like a bowl of trees.
 - **Abyss Color, Fade Start, Fade Depth, Fade Bands:** everything below the level fades in hard steps to one color;
   the sky below the horizon uses it too.
 - **Mist:** a prefab of sheets at several depths. Each sheet's material (`PerfectLoot/Mist`) has opacity, noise
@@ -101,6 +102,9 @@ the level's shape is sent over the network. The runtime log prints a hash of the
 - A forest kit's own slots (Path, Meadow, Bridge, Flower, Trunk, Birch, Canopy, CanopyLight, CanopyWarm, Bush,
   Undergrowth, Rope): set their colors and `BiomeKitBuilder` makes their materials. Canopies and bushes get wind
   (`_SwayAmount`, meters of sway, on the Comic material; 0 keeps a material still).
+- Water flows by itself (`LevelFlow`): rivers run toward open water (a lake or pond), open water lies still, and a
+  river with no lake runs from one end to the other; a bridge doesn't split a river. The water material's River
+  Current sets the speed. Paint a lake where a river should end.
 - `Tools/Level/Biomes/Build All Biome Tile Sets` rebuilds every tile set (from the Blender kit when a biome has one).
   `Tools/Level/Biomes/Apply Biomes To Test Levels` puts each biome on its test level: light, fog, sky, volume,
   particles, tile set, ring and backdrop.

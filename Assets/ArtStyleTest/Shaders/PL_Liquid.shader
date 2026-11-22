@@ -1,7 +1,8 @@
 // PerfectLoot liquid surface (URP 17 / Unity 6): water, swamp and lava pools of the biome tile sets.
 // Comic look: flat color bands instead of realistic shading, stepped foam at the shore, stylized ripple lines.
 // UV0.x is the distance to the shore in meters (written by BiomeTileGenerator), so the foam and the shallow band
-// survive the level's mesh merging (which keeps only UV0). Patterns use world position, so pools are seamless.
+// survive the level's mesh merging. Patterns use world position, so pools are seamless. UV1 is the water's flow in the
+// mesh's space (LevelFlow, written by the level's chunk builder): water ripples drift along it, rivers toward lakes.
 // Opaque, SRP Batcher compatible, DOTS instancing (Entities Graphics renders the level chunks).
 Shader "PerfectLoot/Liquid"
 {
@@ -17,6 +18,7 @@ Shader "PerfectLoot/Liquid"
         _RippleScale ("Ripple Scale", Range(0.05,2)) = 0.45
         _RippleWidth ("Ripple Line Width", Range(0,0.3)) = 0.06
         _FlowSpeed ("Flow Speed", Range(0,2)) = 0.25
+        _Current ("River Current (m/s)", Range(0,3)) = 0.9
         [HDR] _GlowColor ("Lava Glow (HDR)", Color) = (4,0.9,0.2,1)
         _CrustColor ("Lava Crust Color", Color) = (0.16,0.06,0.07,1)
         _CrustAmount ("Lava Crust Amount", Range(0,1)) = 0.45
@@ -42,6 +44,7 @@ Shader "PerfectLoot/Liquid"
             half _RippleScale;
             half _RippleWidth;
             half _FlowSpeed;
+            half _Current;
             half4 _GlowColor;
             half4 _CrustColor;
             half _CrustAmount;
@@ -105,6 +108,7 @@ Shader "PerfectLoot/Liquid"
             {
                 float4 positionOS : POSITION;
                 float2 uv         : TEXCOORD0;
+                float2 flow       : TEXCOORD1;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -114,6 +118,7 @@ Shader "PerfectLoot/Liquid"
                 float2 uv         : TEXCOORD0;
                 float3 positionWS : TEXCOORD1;
                 float  fogFactor  : TEXCOORD2;
+                float2 flow       : TEXCOORD3;     // World xz
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -128,6 +133,7 @@ Shader "PerfectLoot/Liquid"
                 o.positionCS = pos.positionCS;
                 o.positionWS = pos.positionWS;
                 o.uv = input.uv;
+                o.flow = mul((float3x3)UNITY_MATRIX_M, float3(input.flow.x, 0.0, input.flow.y)).xz;
                 o.fogFactor = ComputeFogFactor(pos.positionCS.z);
                 return o;
             }
@@ -160,10 +166,16 @@ Shader "PerfectLoot/Liquid"
             #else
                 // Stepped depth: shallow band at the shore, deep in the middle
                 color = shore + wobble < _ShallowWidth ? _ShallowColor.rgb : _DeepColor.rgb;
-                // Ripple lines: the zero-crossings of two drifting noise fields, as thin flat strokes
-                float n1 = PLL_Noise(p * _RippleScale + float2(t, t * 0.4));
-                float n2 = PLL_Noise(p * _RippleScale * 1.7 - float2(t * 0.6, t * 0.9) + 13.1);
-                float ripple = abs(n1 + n2 - 1.0);
+                // Ripple lines: the zero-crossings of two drifting noise fields, as thin flat strokes. Where the water
+                // flows they're carried along the current: two copies a half cycle apart, each reset when the other is
+                // fully shown, so the pattern moves without stretching
+                float cycle = 2.0;
+                float phase0 = frac(_Time.y / cycle), phase1 = frac(_Time.y / cycle + 0.5);
+                float2 carry = input.flow * _Current * cycle;
+                float2 p0 = p - carry * phase0, p1 = p - carry * phase1;     // Still water: both the same, so nothing pulses
+                float a0 = PLL_Noise(p0 * _RippleScale + float2(t, t * 0.4)) + PLL_Noise(p0 * _RippleScale * 1.7 - float2(t * 0.6, t * 0.9) + 13.1);
+                float a1 = PLL_Noise(p1 * _RippleScale + float2(t, t * 0.4)) + PLL_Noise(p1 * _RippleScale * 1.7 - float2(t * 0.6, t * 0.9) + 13.1);
+                float ripple = abs(lerp(a0, a1, abs(1.0 - 2.0 * phase0)) - 1.0);
                 color = lerp(color, _RippleColor.rgb, step(ripple, _RippleWidth) * step(_FoamWidth * 2.0, shore));
                 // Foam hugging the bank, with a second thinner ring that breathes in and out
                 float ring = _FoamWidth * (1.6 + 0.4 * sin(_Time.y * 1.3 + p.x * 0.7 + p.y * 0.5));

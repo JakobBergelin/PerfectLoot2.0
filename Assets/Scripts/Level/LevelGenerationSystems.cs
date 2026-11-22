@@ -33,6 +33,7 @@ namespace LevelGeneration
             public int[] Ring;
             public int[] Looks, RingLooks;   // Per cell (of Packed, of Ring): which look of its tile it shows (LevelLooks)
             public NativeArray<float3> JobCorners;
+            public NativeArray<float2> JobFlow;     // Which way the water flows at each corner of the bigger grid (LevelFlow)
             public Material[] Materials;
             public Entity[] PropPrefabs;
             public int ChunksX, ChunksY;
@@ -67,10 +68,16 @@ namespace LevelGeneration
         // The level is gone (no LevelLayout left): so is its abyss fade
         protected override void OnStopRunning() => ClearBackdrop();
 
+        static void DisposeJobData(LevelStream stream)
+        {
+            if (stream.JobCorners.IsCreated) stream.JobCorners.Dispose();
+            if (stream.JobFlow.IsCreated) stream.JobFlow.Dispose();
+        }
+
         protected override void OnDestroy()
         {
             foreach (var pending in _pending) pending.Builder.Dispose();
-            foreach (var stream in _streams) if (stream.JobCorners.IsCreated) stream.JobCorners.Dispose();
+            foreach (var stream in _streams) DisposeJobData(stream);
             foreach (var collider in _colliders) if (collider.IsCreated) collider.Dispose();
             foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
             ClearBackdrop();
@@ -123,7 +130,7 @@ namespace LevelGeneration
                 var stream = _streams[i];
                 if (!IsAlive(stream))
                 {
-                    if (stream.JobCorners.IsCreated && !_pending.Exists(p => p.Stream == stream)) stream.JobCorners.Dispose();
+                    if (!_pending.Exists(p => p.Stream == stream)) DisposeJobData(stream);
                     _streams.RemoveAt(i);
                     continue;
                 }
@@ -182,6 +189,7 @@ namespace LevelGeneration
             packed.Dispose();
             var surface = LevelSurface.Build(blob.Width, blob.Height, stream.Packed, blob.TileCorners.ToArray(), blob.TileEdges.ToArray(), blob.TileWalkThrough.ToArray(),
                                              cornerMasks, blob.CornerTerrains.ToArray(), blob.CornerHeights.ToArray(), blob.EdgeWalkables.ToArray());
+            stream.JobFlow = new NativeArray<float2>(LevelFlow.Build(surface.Terrain, blob.Width, blob.Height, margin), Allocator.Persistent);
             stream.Ground = new float3[corners.Length];
             for (int i = 0; i < corners.Length; i++) stream.Ground[i] = corners[i] + new float3(0f, surface.Height[i], 0f);
             if (margin > 0) stream.Ring = SolveRing(ref blob, layout, seed, surface);
@@ -410,7 +418,7 @@ namespace LevelGeneration
                     });
                 }
 
-            var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, width, height, blob.TileSize, instances);
+            var builder = LevelChunkBuilder.Schedule(geometryBlob, stream.JobCorners, stream.JobFlow, width, height, blob.TileSize, instances);
             return new PendingChunk { Stream = stream, Builder = builder, Chunk = chunk };
         }
 
