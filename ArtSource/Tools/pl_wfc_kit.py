@@ -2,7 +2,7 @@
 
 A tile names a corner connection for each corner (SW, SE, NE, NW; +X east, +Z north in Unity) and an edge connection for
 each edge (S, E, N, W), like WfcTileSet. Corner connections have a kind (floor, path, overgrowth, rock, drop, liquid,
-bridge) and a height: the high ground is the same kinds 2.5 m up. A tile's model sits at its lowest corner's height
+bridge) and a height: the high ground is the same kinds HIGH m up. A tile's model sits at its lowest corner's height
 (Unity raises it), so a cliff or ramp starts at its low side and a high-ground tile reuses the low tile's model.
 
 Each connection's region inside a tile comes from bilinear corner weights plus noise that fades to zero at the border
@@ -21,7 +21,9 @@ from mathutils import Vector, noise
 import pl_wfc_tiles as T
 
 TILE, N, STEP = T.TILE, T.N, T.STEP
-HIGH = 2.5
+# Waist high: clearly a ledge (units step up at most 0.4 m) without hiding much floor or making ramps steep.
+# Abyssal Ruins' exported tiles are still 2.5 m until the kit is exported again.
+HIGH = 1.25
 
 # name, kind, height, Unity terrain, Id, the connection one step up. Ids 0-2 are the old Floor / Wall / Water.
 CONNECTIONS = [
