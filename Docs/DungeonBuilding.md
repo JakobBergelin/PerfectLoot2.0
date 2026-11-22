@@ -77,7 +77,9 @@ the level's shape is sent over the network. The runtime log prints a hash of the
 ### Biome kit (`pl_wfc_kit.py`)
 - `STYLES[biome]`: seed, wall height and jitter, drop depth, slab size, cliff jitter, accent kind, glow, spires, and
   factors for how much liquid and drop appear.
-- `CONNECTIONS` and `EDGES`: the kit's connections. The high ground is the same kinds 2.5 m up (`HIGH`).
+- `CONNECTIONS` and `EDGES`: the kit's connections. The high ground is the same kinds 1.25 m up (`HIGH`).
+  Abyssal Ruins was exported at 2.5 m and keeps that until the kit is exported again. Don't go below about 1 m: units
+  step over anything under 0.4 m, and a ledge just above that blocks walking while looking like a curb.
 - `WEIGHT` per connection (a tile's weight is the product over its corners), plus per-tile factors in `kit_tiles`:
   corner and diagonal cliffs are rarer than straight ones, and ramps use `RAMP_WEIGHT`.
 - `kit_tiles` is the tile list: which pairs of connections get transition tiles, junctions, bridges, ramps (narrow,
