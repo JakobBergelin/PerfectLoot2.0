@@ -17,7 +17,7 @@ Usage inside Blender:
     K.export_kit(objects, out_dir, K.STYLES["AbyssalRuins"])   # FBX per model, slots.txt and kit.json for Unity
 """
 import bpy, bmesh, json, math, os, random
-from mathutils import Vector, noise
+from mathutils import Matrix, Vector, noise
 import pl_wfc_tiles as T
 
 TILE, N, STEP = T.TILE, T.N, T.STEP
@@ -64,21 +64,36 @@ STYLES = {
                         accent="mushrooms", glow=0.9, spires=True, liquid_factor=1.0, drop_factor=0.6),
     "FrozenHollow": dict(name="FrozenHollow", seed=29, wall_h=3.0, wall_jitter=0.6, depth=10.0, slab=4, cliff_jitter=0.12,
                          accent="crystals", glow=0.0, spires=True, liquid_factor=0.6, drop_factor=1.0),
+    # A bright forest: grass and dirt instead of slabs, tree walls instead of rock, low water crossed by rope bridges, no
+    # drop and no high ground (the optional keys below; a style without them is built as before)
+    "BrightwaterHollow": dict(name="BrightwaterHollow", seed=53, wall_h=3.0, wall_jitter=0.0, depth=8.0, slab=5,
+                              cliff_jitter=0.0, accent="flowers", glow=0.0, spires=False, liquid_factor=0.6, drop_factor=0.0,
+                              connections=["Floor", "Path", "Overgrowth", "Rock", "Liquid", "Bridge"],
+                              prefix="BH_", ground="grass", wall="trees", bridge="rope", water=(-0.45, -1.0),
+                              weights={"Path": 0.8, "Overgrowth": 1.2, "Rock": 1.4, "Bridge": 0.05}),
 }
 
 # Material slot names: Unity puts the biome's material on each (BiomeKitBuilder)
 SLOTS = ["Floor", "FloorAlt", "Joint", "Path", "Overgrowth", "Accent", "Cliff", "WallSide", "WallTop", "WallDark",
-         "Bank", "Chasm", "Liquid", "Glow", "Bridge", "Spire"]
+         "Bank", "Chasm", "Liquid", "Glow", "Bridge", "Spire", "Flower", "Trunk", "Birch", "Canopy", "CanopyLight",
+         "CanopyWarm", "Bush", "Undergrowth", "Rope"]
+SMOOTH = ("Canopy", "CanopyLight", "CanopyWarm", "Bush")    # Round lumps: smooth shading, so the comic shader's light split curves
 WEIGHT = {"Floor": 4.0, "Path": 1.6, "Overgrowth": 1.6, "Rock": 1.0, "Drop": 1.0, "Liquid": 0.5, "Bridge": 0.25,
           "FloorHigh": 1.8, "PathHigh": 1.0, "OvergrowthHigh": 1.0}
+# Placeholder colors for the renders (Unity sets the real ones); a style's "colors" override these
+COLORS = {"Floor": "#4A4656", "FloorAlt": "#454152", "Joint": "#24212C", "Path": "#6A6474", "Overgrowth": "#3E5A58",
+          "Accent": "#3FC4B4", "Cliff": "#5C5870", "WallSide": "#565470", "WallTop": "#8C88A8", "WallDark": "#3A3848",
+          "Bank": "#2A2834", "Chasm": "#123E44", "Liquid": "#1C4A54", "Glow": "#2A6A64", "Bridge": "#6B4E3A",
+          "Spire": "#3A3A4C", "Flower": "#F2EEDC", "Trunk": "#6A4A36", "Birch": "#E6E0CE", "Canopy": "#3F8A6A",
+          "CanopyLight": "#6AB07C", "CanopyWarm": "#B4C060", "Bush": "#3A7A58", "Undergrowth": "#2E5A44", "Rope": "#D8C08A"}
+STYLES["BrightwaterHollow"]["colors"] = {
+    "Floor": "#5A9A5E", "FloorAlt": "#47804E", "Path": "#B08A5E", "Overgrowth": "#64A46C", "Accent": "#E06A9A",
+    "Cliff": "#9A968C", "Bank": "#6A4E3A", "Liquid": "#4AB0C8", "Bridge": "#A0703F"}
 
 
-def materials():
+def materials(S=None):
     """Placeholder materials named like the slots (colors only help reading the renders)."""
-    colors = {"Floor": "#4A4656", "FloorAlt": "#454152", "Joint": "#24212C", "Path": "#6A6474", "Overgrowth": "#3E5A58",
-              "Accent": "#3FC4B4", "Cliff": "#5C5870", "WallSide": "#565470", "WallTop": "#8C88A8", "WallDark": "#3A3848",
-              "Bank": "#2A2834", "Chasm": "#123E44", "Liquid": "#1C4A54", "Glow": "#2A6A64", "Bridge": "#6B4E3A",
-              "Spire": "#3A3A4C"}
+    colors = dict(COLORS, **(S.get("colors", {}) if S else {}))
     out = {}
     for name in SLOTS:
         m = bpy.data.materials.get(name) or bpy.data.materials.new(name)
@@ -196,6 +211,161 @@ def box(b, u, v, h, su, sv, sh, m):
     b.skirt(faces, h, m)
 
 
+def blob(b, u, v, h, radius, squash, m, seed, lump=0.2):
+    """A chunky low-poly lump (canopy, bush): an icosphere centered at (u, v, h), squashed and dented by noise."""
+    center = Vector((u, -v, h))
+    scale = Matrix.Diagonal((radius, radius, radius * squash)).to_4x4()
+    verts = bmesh.ops.create_icosphere(b.bm, subdivisions=1, radius=1.0, matrix=Matrix.Translation(center) @ scale)["verts"]
+    off = Vector((seed * 1.7, seed * 0.9, 3.1))
+    for vt in verts:
+        d = vt.co - center
+        vt.co = center + d * (1.0 + lump * noise.noise(d * (1.6 / radius) + off))
+    idx = b.mat_index(m)
+    for f in {f for vt in verts for f in vt.link_faces}: f.material_index = idx
+
+
+def flower(b, u, v, h, size, m):
+    """A flat five-petal flower a little above the ground."""
+    pts = [(u + math.cos(a) * size * (1.0 if k % 2 == 0 else 0.45), v + math.sin(a) * size * (1.0 if k % 2 == 0 else 0.45))
+           for k, a in ((k, k * math.pi / 5 + 0.3) for k in range(10))]
+    b.surface([pts], h, m)
+
+
+def grass_surface(b, kind, fn, h, S, M, R, slope=None, look=0):
+    """Natural ground (the "grass" style): grass, a dirt path a little lower, or a flower meadow; calm, with sparse tufts,
+    pebbles and flowers. Heights only vary away from the tile border, so neighbours meet. Returns the outline faces."""
+    hf = (lambda u, v: h + slope(u, v)) if slope else (lambda u, v: h)
+    bump = lambda u, v, z: noise.noise(Vector((u * 0.8, v * 0.8, z))) * T._falloff(u, v)
+    bed = region_faces(b, fn, lambda u, v: hf(u, v) - 0.06, M["FloorAlt"])
+    if kind == "path":
+        b.surface(T.region(fn, merge=False), lambda u, v: hf(u, v) - 0.02 + 0.015 * bump(u, v, 4.0), M["Path"])
+        for (u, v) in scatter(R, fn, 3, margin=0.5):
+            prism(b, u, v, hf(u, v) - 0.03, R.uniform(0.06, 0.12), R.uniform(0.05, 0.1), M["Cliff"], sides=5, twist=R.uniform(0, 3), taper=0.6)
+        return bed
+    meadow = kind == "overgrowth"
+    top = b.surface(T.region(fn, merge=False), lambda u, v: hf(u, v) + 0.03 + 0.04 * bump(u, v, 1.0),
+                    M["Overgrowth"] if meadow else M["Floor"])
+    b.skirt(top, lambda u, v: hf(u, v) - 0.06, M["FloorAlt"], contour_only=True)
+    # Tufts: small tapered clumps, a few per tile
+    for (u, v) in scatter(R, fn, 6 if meadow else (5 if look == 1 else 2), margin=0.4):
+        for k in range(3):
+            prism(b, u + R.uniform(-0.1, 0.1), v + R.uniform(-0.1, 0.1), hf(u, v), R.uniform(0.05, 0.08),
+                  R.uniform(0.18, 0.32), M["FloorAlt"], sides=3, twist=R.uniform(0, 3), taper=0.1)
+    # Flowers: a meadow is full of them, plain grass gets a few on one look
+    count = 9 if meadow else (4 if look == 2 else 0)
+    for (u, v) in scatter(R, fn, count, margin=0.4):
+        flower(b, u, v, hf(u, v) + 0.1 + R.uniform(0, 0.06), R.uniform(0.14, 0.2), M["Accent"] if R.random() < 0.45 else M["Flower"])
+    return bed
+
+
+def stone(b, u, v, h, size, M, R):
+    """A faceted stone sunk a little into the ground."""
+    blob(b, u, v, h + size * 0.2, size, R.uniform(0.5, 0.75), M["Cliff"], R.randint(0, 999), lump=0.3)
+
+
+def stone_size(R, largest=2):
+    """Mostly small stones, some medium, a few big ones (size class 0, 1 or 2 at most)."""
+    roll = R.random()
+    if roll < 0.55 or largest == 0: return R.uniform(0.1, 0.18)
+    if roll < 0.88 or largest == 1: return R.uniform(0.22, 0.36)
+    return R.uniform(0.45, 0.75)
+
+
+def tree(b, u, v, h, scale, M, R):
+    """One chunky tree at (u, v), scale times a normal one: a broadleaf (a crown of one to four lumps in a mix of greens),
+    a tall narrow one (lumps stacked up) or a birch (a pale trunk under a lighter crown)."""
+    roll = R.random()
+    kind = "birch" if roll < 0.2 else ("tall" if roll < 0.3 else "broad")
+    green = lambda: M[R.choice(["Canopy"] * 5 + ["CanopyLight"] * 3 + ["CanopyWarm"] * 2)]
+    birch = kind == "birch"
+    height = scale * (R.uniform(2.2, 3.2) if kind != "broad" else R.uniform(1.4, 2.6))
+    prism(b, u, v, h, scale ** 0.5 * (R.uniform(0.15, 0.2) if birch else R.uniform(0.22, 0.36)), height + 0.6 * scale,
+          M["Birch"] if birch else M["Trunk"], sides=6, twist=R.uniform(0, 3), taper=0.7)
+    main = M["CanopyLight"] if birch else green()
+    if kind == "tall":
+        radius = scale * R.uniform(0.8, 1.05)
+        for k in range(R.randint(2, 3)):
+            blob(b, u + R.uniform(-0.15, 0.15), v + R.uniform(-0.15, 0.15), h + height + radius * (0.4 + 0.75 * k),
+                 radius * (1.0 - 0.18 * k), 1.15, main, R.randint(0, 999))
+        return
+    radius = scale * (R.uniform(0.8, 1.15) if birch else R.uniform(1.0, 1.7))
+    blob(b, u, v, h + height + radius * 0.5, radius, R.uniform(0.7, 0.95), main, R.randint(0, 999))
+    for k in range(R.randint(1, 2) if birch else R.randint(1, 3)):
+        a = R.uniform(0, 2 * math.pi); d = radius * R.uniform(0.45, 0.85)
+        blob(b, u + math.cos(a) * d, v + math.sin(a) * d, h + height + radius * R.uniform(0.3, 1.0),
+             radius * R.uniform(0.45, 0.7), 0.8, R.choice([main, M["CanopyLight"]]), R.randint(0, 999))
+
+
+def trees_surface(b, fn, h, S, M, R, seed):
+    """A tree wall (the "trees" style): dark undergrowth, and a slope of growth up from its edge: bushes, stones and small
+    trees there, bigger trees deeper in, some overhanging the edge. Returns the outline faces (hidden base)."""
+    floor = b.surface(T.region(fn, merge=False), h + 0.04, M["Undergrowth"])
+    b.skirt(floor, h - 0.06, M["Undergrowth"], contour_only=True)
+    edge = lambda u, v: min(fn(u, v), 0.35 - fn(u, v))
+    for (u, v) in scatter(R, edge, 7, margin=0.3):
+        blob(b, u, v, h + 0.2, R.uniform(0.45, 0.9), R.uniform(0.6, 0.85), M["Bush"], R.randint(0, 999))
+    for (u, v) in scatter(R, edge, 3, margin=0.3):
+        stone(b, u, v, h, stone_size(R), M, R)
+    for (u, v) in scatter(R, lambda u, v: min(fn(u, v) - 0.06, 0.3 - fn(u, v)), 2, margin=0.4):     # Young trees at the edge
+        tree(b, u, v, h, R.uniform(0.45, 0.7), M, R)
+    n = 3
+    for j in range(n):
+        for i in range(n):
+            u = -TILE / 2 + (i + 0.5) * TILE / n + R.uniform(-0.6, 0.6)
+            v = -TILE / 2 + (j + 0.5) * TILE / n + R.uniform(-0.6, 0.6)
+            depth = fn(u, v)
+            if depth < 0.1 or R.random() < 0.2: continue
+            tree(b, u, v, h, min(1.3, 0.55 + depth * 1.5) * R.uniform(0.85, 1.15), M, R)
+    return region_faces(b, fn, h - 0.02, M["Undergrowth"])     # Hidden base: only its outline is used, then it's removed
+
+
+def forest_fringe(b, F, c, fn, h, M, R):
+    """Low bushes and stones on walkable ground along a tree wall (about a meter and a half wide), so the forest doesn't
+    rise straight up from the grass. Kept low enough to walk over: they have no colliders."""
+    def band(u, v):
+        if fn(u, v) <= 0: return -1.0
+        other = max((o for o in F.present if o != c), key=lambda o: F.score(o, u, v))
+        return min(fn(u, v), 0.6 - fn(u, v)) if other == "Rock" else -1.0
+    for (u, v) in scatter(R, band, 5, margin=0.3):
+        near = 1.0 - min(1.0, fn(u, v) / 0.6)     # Bigger close to the trees
+        blob(b, u, v, h + 0.1, R.uniform(0.3, 0.45) + 0.2 * near, R.uniform(0.65, 0.85), M["Bush"], R.randint(0, 999))
+    for (u, v) in scatter(R, band, 4, margin=0.3):
+        stone(b, u, v, h, stone_size(R, largest=1), M, R)
+
+
+def rope_rails(b, F, faces, h, M, R):
+    """A rope bridge's railing: posts every 1.25 m and two ropes along the deck's edge over the water, and big posts where
+    the deck meets the bank."""
+    edges = outline_edges(b, faces)
+    over_water = [(a, e) for a, e in edges if across(F, a, e) == "Liquid"]
+    for a, e in over_water:
+        (ua, va), (ue, ve) = uv_of(a), uv_of(e)
+        length = math.hypot(ue - ua, ve - va) or 1.0
+        nu, nv = -(ve - va) / length * 0.04, (ue - ua) / length * 0.04
+        for y in (0.45, 0.85):
+            ring = lambda u, v: [b.vert(u - nu, v - nv, h + y - 0.04), b.vert(u + nu, v + nv, h + y - 0.04),
+                                 b.vert(u + nu, v + nv, h + y + 0.04), b.vert(u - nu, v - nv, h + y + 0.04)]
+            ra, re = ring(ua, va), ring(ue, ve)
+            tube = [b.face([ra[k], ra[(k + 1) % 4], re[(k + 1) % 4], re[k]], M["Rope"]) for k in range(4)]
+            bmesh.ops.recalc_face_normals(b.bm, faces=[f for f in tube if f])
+    # Posts on the 1.25 m grid lines (not on the tile border, where the neighbour has one)
+    on_line = lambda x: any(abs(x - T._gp(i)) < 1e-3 for i in (5, 10, 15))
+    posts = {a for a, e in over_water} | {e for a, e in over_water}
+    for p in posts:
+        u, v = uv_of(p)
+        if on_line(u) or on_line(v): box(b, u, v, h, 0.08, 0.08, 1.0, M["Bridge"])
+    # End posts: where the deck's edge turns from the water to the bank
+    sides = {}
+    for a, e in edges:
+        kind = "water" if across(F, a, e) == "Liquid" else "bank"
+        for p in (a, e): sides.setdefault(p, set()).add(kind)
+    for p, kinds in sides.items():
+        if len(kinds) == 2:
+            u, v = uv_of(p)
+            box(b, u, v, h, 0.15, 0.15, 1.35, M["Trunk"])
+            box(b, u, v, h + 0.95, 0.17, 0.17, 0.12, M["Rope"])
+
+
 # ---------- surfaces per kind ----------
 
 def floor_surface(b, kind, fn, h, S, M, R, slope=None, look=0):
@@ -255,15 +425,17 @@ def rock_surface(b, fn, h, S, M, seed):
     return region_faces(b, fn, h - 0.02, M["WallDark"])   # Hidden base: only its outline is used, then it's removed
 
 
-def bridge_surface(b, fn, h, M, R):
-    """A plank deck at h over the region (a drop under it). Returns the outline faces."""
+def bridge_surface(b, fn, h, M, R, planks_along_v=False):
+    """A plank deck at h over the region (a drop or water under it). Returns the outline faces. Planks run along u, or
+    along v for a deck that runs along u."""
     deck = region_faces(b, fn, h, M["Bridge"])
     # Planks: thin raised strips across the deck
     for j in range(N // 2):
-        cells = [(i, j * 2 + c) for c in range(2) for i in range(N)]
+        cells = [(j * 2 + c, i) if planks_along_v else (i, j * 2 + c) for c in range(2) for i in range(N)]
         polys = T.region(fn, 0.0, cells)
         if not polys: continue
-        faces = b.surface(polys, h + 0.04 + R.uniform(0, 0.02), M["Bridge"], scale_about=(0.0, T._gp(j * 2) + STEP), k=0.92)
+        about = (T._gp(j * 2) + STEP, 0.0) if planks_along_v else (0.0, T._gp(j * 2) + STEP)
+        faces = b.surface(polys, h + 0.04 + R.uniform(0, 0.02), M["Bridge"], scale_about=about, k=0.92)
         b.skirt(faces, h, M["Bridge"])
     return deck
 
@@ -297,13 +469,18 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
     # Surfaces; each returns faces whose outline gets the faces down to its neighbors
     outlines = {}
     helpers = []
+    grass = S.get("ground") == "grass"
     for c in F.present:
         k = CONN[c]["kind"]
-        if k in FLOORLIKE: outlines[c] = floor_surface(b, k, g[c], h[c], S, M, R, look=look)
+        if k in FLOORLIKE:
+            outlines[c] = (grass_surface if grass else floor_surface)(b, k, g[c], h[c], S, M, R, look=look)
         elif k == "rock":
-            outlines[c] = rock_surface(b, g[c], h[c], S, M, seed)
+            outlines[c] = trees_surface(b, g[c], h[c], S, M, R, seed) if S.get("wall") == "trees" else rock_surface(b, g[c], h[c], S, M, seed)
             helpers += outlines[c]
-        elif k == "bridge": outlines[c] = bridge_surface(b, g[c], h[c], M, R)
+        elif k == "bridge": outlines[c] = bridge_surface(b, g[c], h[c], M, R, planks_along_v=kind == "planks_v")
+    if S.get("wall") == "trees" and "Rock" in F.present:
+        for c in F.present:
+            if CONN[c]["kind"] in ("floor", "overgrowth"): forest_fringe(b, F, c, g[c], h[c], M, R)
     if strip: floor_surface(b, "floor", strip, 0.0, S, M, R, slope=ramp)
 
     # A lip of edge stones along the top of each cliff and chasm rim, so high ground reads as a plateau
@@ -326,10 +503,13 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
                 prism(b, u, v, -depth, R.uniform(0.5, 0.95), depth + R.uniform(-3.5, 1.5), M["Spire"], sides=R.randint(4, 6), twist=R.uniform(0, 3), taper=0.25)
 
     # Liquid: bed, surface (UV.x: meters from the shore) and a glow band on the ground beside it
+    surface_h, bed_h = S.get("water", (-0.3, -1.1))
     if "Liquid" in F.present:
         hl = h["Liquid"]
-        b.surface(T.region(g["Liquid"]), hl - 1.1, M["Bank"])
-        b.surface(T.region(lambda u, v: g["Liquid"](u, v) + 0.06), hl - 0.3, M["Liquid"])
+        # The water carries on under a bridge deck
+        wet = (lambda u, v: max(F.g("Liquid", u, v), F.g("Bridge", u, v))) if "Bridge" in F.present else g["Liquid"]
+        b.surface(T.region(wet), hl + bed_h, M["Bank"])
+        b.surface(T.region(lambda u, v: wet(u, v) + 0.06), hl + surface_h, M["Liquid"])
         if S["glow"] > 0:
             reach = S["glow"] / (TILE / 2)
             b.surface(T.region(lambda u, v: min(g["Liquid"](u, v) + reach, -g["Liquid"](u, v) + 0.02), merge=False), hl + 0.03, M["Glow"])
@@ -346,13 +526,19 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
                 wall(b, a, e, ta, h[other] - 0.03, M["Cliff"])     # Straight down: meets the lower floor on the outline
             elif k in FLOORLIKE + ("rock",) and ko == "drop":
                 wall(b, a, e, ta, -depth, M["Chasm"], jitter)
-            elif k in FLOORLIKE and ko == "liquid":
-                wall(b, a, e, ta, h[other] - 1.1, M["Bank"])
-            elif k == "bridge" and ko == "drop":
+            elif (k in FLOORLIKE or (k == "rock" and grass)) and ko == "liquid":
+                wall(b, a, e, ta, h[other] + bed_h, M["Bank"])
+                if grass and k in FLOORLIKE and R.random() < 0.1:     # Stones on the bank's rim
+                    (u, v) = uv_of(a)
+                    stone(b, u, v, ta - 0.15, stone_size(R), M, R)
+            elif k == "bridge" and ko in ("drop", "liquid"):
                 wall(b, a, e, ta, h[c] - 0.4, M["Bridge"])
 
     for f in helpers:
         if f.is_valid: b.bm.faces.remove(f)
+
+    if S.get("bridge") == "rope" and "Bridge" in F.present and "Liquid" in F.present:
+        rope_rails(b, F, outlines["Bridge"], h["Bridge"], M, R)
 
     # Bridge railing posts along the deck's edge over the drop
     if "Bridge" in F.present and "Drop" in F.present:
@@ -391,11 +577,11 @@ def to_object(b, name, coll, F):
     b.bm.free()
     me = bpy.data.meshes.new(name)
     me.from_pydata(verts, [], [f[0] for f in faces])
+    slot_names = [m.name for m in b.mats]
     for p, (_, m) in zip(me.polygons, faces):
         p.material_index = m
-        p.use_smooth = False
+        p.use_smooth = m < len(slot_names) and slot_names[m] in SMOOTH
     uv = me.uv_layers.new(name="UVMap")
-    slot_names = [m.name for m in b.mats]
     for poly in me.polygons:
         slot = slot_names[poly.material_index] if poly.material_index < len(slot_names) else ""
         for li in poly.loop_indices:
@@ -475,14 +661,18 @@ def kit_tiles(S):
     """Every tile of the kit: name, model, corners, edges, weight, background, mirror, extra looks."""
     tiles = []
     models = {}
+    used = set(S.get("connections", CONN))      # A tile is only in the kit when all its corners are
+    weights = dict(WEIGHT, **S.get("weights", {}))
 
     def weight(corners):
         w = 1.0
-        for c in corners: w *= WEIGHT[c] * (S["drop_factor"] if c == "Drop" else 1.0) * (S["liquid_factor"] / 0.5 if c == "Liquid" else 1.0)
+        for c in corners: w *= weights[c] * (S["drop_factor"] if c == "Drop" else 1.0) * (S["liquid_factor"] / 0.5 if c == "Liquid" else 1.0)
         return w
 
     def add(name, corners, model=None, kind=None, factor=1.0, background=False, mirror=False, looks=0, walk_through=False, edges=None):
-        model = model or "K_" + name
+        if not set(corners) <= used: return
+        # Each kit's own prefix, so two kits' models never share names in one .blend (Blender would add .001)
+        model = S.get("prefix", "K_") + (model or "K_" + name)[2:]
         if model not in models: models[model] = dict(corners=corners, kind=kind, looks=looks)
         tiles.append(dict(name=name, model=model, corners=corners, edges=edges or edge_ids(corners), weight=weight(corners) * factor,
                           background=background, mirror=mirror, walk_through=walk_through,
@@ -517,6 +707,17 @@ def kit_tiles(S):
     # cliffs or all by drop, and a high area beside a chasm could never get a ramp down
     for p, corners in junctions("Floor", "FloorHigh", "Drop"):
         add(f"CliffDrop_{p}", corners, factor=0.3, mirror=True)
+    # Rivers and lakes crossed by bridges: water beside trees and paths, where three meet (a painted river runs into the
+    # tree wall or past a path), bridge decks over the water and their ends on the bank
+    if S.get("bridge") == "rope":
+        for a, b in (("Path", "Liquid"), ("Rock", "Liquid"), ("Liquid", "Bridge")):
+            for p, corners in patterns(a, b):
+                add(f"{a}_{b}_{p}", corners, factor=0.5 if p == "D" else 1.0, kind="planks_v" if b == "Bridge" else None)
+        for a, b, c in (("Floor", "Path", "Liquid"), ("Floor", "Rock", "Liquid")):
+            for p, corners in junctions(a, b, c):
+                add(f"{a}{b}{c}_{p}", corners, factor=0.3, mirror=True)
+        for ground in ("Floor", "Path"):
+            add(f"BridgeEnd{'' if ground == 'Floor' else ground}", [ground, ground, "Bridge", "Liquid"], factor=4.0, mirror=True)
     # Background ring: rock and drop (with spires standing in the fog)
     add("Rock_Background", ["Rock"] * 4, model="K_Rock", background=True)
     add("Drop_Background", ["Drop"] * 4, model="K_DropSpires", kind="spires", background=True, looks=2, factor=3.0)
@@ -527,7 +728,7 @@ def kit_tiles(S):
 
 def build_kit(S, coll):
     """Every model of the kit (and its looks) in coll. Returns {model name: object}."""
-    M = materials()
+    M = materials(S)
     tiles, models = kit_tiles(S)
     objects = {}
     for i, (model, spec) in enumerate(sorted(models.items())):
@@ -548,9 +749,10 @@ def export_kit(objects, outdir, S):
     with open(os.path.join(outdir, "slots.txt"), "w") as f: f.write("\n".join(slots))
 
     tiles, _ = kit_tiles(S)
+    used = S.get("connections", CONN)
     kit = {
         "corners": [dict(id=v["id"], name=k, terrain=v["terrain"], height=v["height"],
-                         higher=CONN[v["higher"]]["id"] if v["higher"] else -1) for k, v in CONN.items()],
+                         higher=CONN[v["higher"]]["id"] if v["higher"] in used else -1) for k, v in CONN.items() if k in used],
         "edges": [dict(id=e[1], name=e[0], walkable=e[2]) for e in EDGES],
         "tiles": [dict(name=t["name"], model=t["model"], corners=[CONN[c]["id"] for c in t["corners"]],
                        edges=[EDGE[e] for e in t["edges"]], weight=round(t["weight"], 4), background=t["background"],

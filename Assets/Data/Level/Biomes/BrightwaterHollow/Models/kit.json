@@ -1,0 +1,1076 @@
+{
+ "corners": [
+  {
+   "id": 0,
+   "name": "Floor",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 1,
+   "name": "Rock",
+   "terrain": "NotWalkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 2,
+   "name": "Liquid",
+   "terrain": "Water",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 4,
+   "name": "Path",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 5,
+   "name": "Overgrowth",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": -1
+  },
+  {
+   "id": 6,
+   "name": "Bridge",
+   "terrain": "Walkable",
+   "height": 0.0,
+   "higher": -1
+  }
+ ],
+ "edges": [
+  {
+   "id": 0,
+   "name": "Plain",
+   "walkable": true
+  },
+  {
+   "id": 1,
+   "name": "Cliff",
+   "walkable": false
+  },
+  {
+   "id": 2,
+   "name": "Slope",
+   "walkable": true
+  }
+ ],
+ "tiles": [
+  {
+   "name": "Floor",
+   "model": "BH_Floor",
+   "corners": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 256.0,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": [
+    "BH_Floor_Look1",
+    "BH_Floor_Look2"
+   ]
+  },
+  {
+   "name": "Path",
+   "model": "BH_Path",
+   "corners": [
+    4,
+    4,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.4096,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Overgrowth",
+   "model": "BH_Overgrowth",
+   "corners": [
+    5,
+    5,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.0736,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock",
+   "model": "BH_Rock",
+   "corners": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 3.8416,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid",
+   "model": "BH_Liquid",
+   "corners": [
+    2,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.1296,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_1",
+   "model": "BH_Floor_Path_1",
+   "corners": [
+    0,
+    0,
+    0,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 51.2,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_2",
+   "model": "BH_Floor_Path_2",
+   "corners": [
+    0,
+    0,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 10.24,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_D",
+   "model": "BH_Floor_Path_D",
+   "corners": [
+    0,
+    4,
+    0,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 5.12,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Path_3",
+   "model": "BH_Floor_Path_3",
+   "corners": [
+    0,
+    4,
+    4,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.048,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_1",
+   "model": "BH_Floor_Overgrowth_1",
+   "corners": [
+    0,
+    0,
+    0,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 76.8,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_2",
+   "model": "BH_Floor_Overgrowth_2",
+   "corners": [
+    0,
+    0,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 23.04,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_D",
+   "model": "BH_Floor_Overgrowth_D",
+   "corners": [
+    0,
+    5,
+    0,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 11.52,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Overgrowth_3",
+   "model": "BH_Floor_Overgrowth_3",
+   "corners": [
+    0,
+    5,
+    5,
+    5
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 6.912,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_1",
+   "model": "BH_Floor_Rock_1",
+   "corners": [
+    0,
+    0,
+    0,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 89.6,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_2",
+   "model": "BH_Floor_Rock_2",
+   "corners": [
+    0,
+    0,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 31.36,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_D",
+   "model": "BH_Floor_Rock_D",
+   "corners": [
+    0,
+    1,
+    0,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 15.68,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Rock_3",
+   "model": "BH_Floor_Rock_3",
+   "corners": [
+    0,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 10.976,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_1",
+   "model": "BH_Floor_Liquid_1",
+   "corners": [
+    0,
+    0,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 38.4,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_2",
+   "model": "BH_Floor_Liquid_2",
+   "corners": [
+    0,
+    0,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 5.76,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_D",
+   "model": "BH_Floor_Liquid_D",
+   "corners": [
+    0,
+    2,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.88,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Floor_Liquid_3",
+   "model": "BH_Floor_Liquid_3",
+   "corners": [
+    0,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.864,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Path_Liquid_1",
+   "model": "BH_Path_Liquid_1",
+   "corners": [
+    4,
+    4,
+    4,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.3072,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Path_Liquid_2",
+   "model": "BH_Path_Liquid_2",
+   "corners": [
+    4,
+    4,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.2304,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Path_Liquid_D",
+   "model": "BH_Path_Liquid_D",
+   "corners": [
+    4,
+    2,
+    4,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.1152,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Path_Liquid_3",
+   "model": "BH_Path_Liquid_3",
+   "corners": [
+    4,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.1728,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Liquid_1",
+   "model": "BH_Rock_Liquid_1",
+   "corners": [
+    1,
+    1,
+    1,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.6464,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Liquid_2",
+   "model": "BH_Rock_Liquid_2",
+   "corners": [
+    1,
+    1,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.7056,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Liquid_D",
+   "model": "BH_Rock_Liquid_D",
+   "corners": [
+    1,
+    2,
+    1,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.3528,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Liquid_3",
+   "model": "BH_Rock_Liquid_3",
+   "corners": [
+    1,
+    2,
+    2,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.3024,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid_Bridge_1",
+   "model": "BH_Liquid_Bridge_1",
+   "corners": [
+    2,
+    2,
+    2,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0108,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid_Bridge_2",
+   "model": "BH_Liquid_Bridge_2",
+   "corners": [
+    2,
+    2,
+    6,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0009,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid_Bridge_D",
+   "model": "BH_Liquid_Bridge_D",
+   "corners": [
+    2,
+    6,
+    2,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0004,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Liquid_Bridge_3",
+   "model": "BH_Liquid_Bridge_3",
+   "corners": [
+    2,
+    6,
+    6,
+    6
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0001,
+   "background": false,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_AABC",
+   "model": "BH_FloorPathLiquid_AABC",
+   "corners": [
+    0,
+    0,
+    4,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.304,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_ABAC",
+   "model": "BH_FloorPathLiquid_ABAC",
+   "corners": [
+    0,
+    4,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 2.304,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_BBAC",
+   "model": "BH_FloorPathLiquid_BBAC",
+   "corners": [
+    4,
+    4,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.4608,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_BABC",
+   "model": "BH_FloorPathLiquid_BABC",
+   "corners": [
+    4,
+    0,
+    4,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.4608,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_CCAB",
+   "model": "BH_FloorPathLiquid_CCAB",
+   "corners": [
+    2,
+    2,
+    0,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.3456,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorPathLiquid_CACB",
+   "model": "BH_FloorPathLiquid_CACB",
+   "corners": [
+    2,
+    0,
+    2,
+    4
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.3456,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_AABC",
+   "model": "BH_FloorRockLiquid_AABC",
+   "corners": [
+    0,
+    0,
+    1,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 4.032,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_ABAC",
+   "model": "BH_FloorRockLiquid_ABAC",
+   "corners": [
+    0,
+    1,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 4.032,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_BBAC",
+   "model": "BH_FloorRockLiquid_BBAC",
+   "corners": [
+    1,
+    1,
+    0,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.4112,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_BABC",
+   "model": "BH_FloorRockLiquid_BABC",
+   "corners": [
+    1,
+    0,
+    1,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.4112,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_CCAB",
+   "model": "BH_FloorRockLiquid_CCAB",
+   "corners": [
+    2,
+    2,
+    0,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.6048,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "FloorRockLiquid_CACB",
+   "model": "BH_FloorRockLiquid_CACB",
+   "corners": [
+    2,
+    0,
+    2,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.6048,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "BridgeEnd",
+   "model": "BH_BridgeEnd",
+   "corners": [
+    0,
+    0,
+    6,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 1.92,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "BridgeEndPath",
+   "model": "BH_BridgeEndPath",
+   "corners": [
+    4,
+    4,
+    6,
+    2
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 0.0768,
+   "background": false,
+   "mirror": true,
+   "walkThrough": false,
+   "looks": []
+  },
+  {
+   "name": "Rock_Background",
+   "model": "BH_Rock",
+   "corners": [
+    1,
+    1,
+    1,
+    1
+   ],
+   "edges": [
+    0,
+    0,
+    0,
+    0
+   ],
+   "weight": 3.8416,
+   "background": true,
+   "mirror": false,
+   "walkThrough": false,
+   "looks": []
+  }
+ ]
+}

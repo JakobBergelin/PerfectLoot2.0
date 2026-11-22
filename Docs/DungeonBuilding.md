@@ -77,6 +77,15 @@ the level's shape is sent over the network. The runtime log prints a hash of the
 ### Biome kit (`pl_wfc_kit.py`)
 - `STYLES[biome]`: seed, wall height and jitter, drop depth, slab size, cliff jitter, accent kind, glow, spires, and
   factors for how much liquid and drop appear.
+- Optional style keys (Brightwater Hollow uses them; a style without them builds like Abyssal Ruins):
+  - `connections`: the connections the kit uses. A tile is only in the kit when all its corners are.
+  - `ground="grass"`: grass, a dirt path and a flower meadow instead of stone slabs.
+  - `wall="trees"`: the not-walkable connection is a forest: undergrowth, bushes, stones and trees that get taller
+    deeper in, plus a fringe of low bushes and stones on the grass beside it (no colliders, low enough to walk over).
+  - `bridge="rope"`: rope bridges over water, plus the water tiles a painted river needs (water beside trees and
+    paths, three-way junctions, bridge ends on grass or path).
+  - `water=(surface, bed)`: water heights below the ground. `weights`: per-connection weight overrides. `colors`:
+    preview colors in Blender. `prefix`: the model name prefix (`BH_`).
 - `CONNECTIONS` and `EDGES`: the kit's connections. The high ground is the same kinds 1.25 m up (`HIGH`).
   Abyssal Ruins was exported at 2.5 m and keeps that until the kit is exported again. Don't go below about 1 m: units
   step over anything under 0.4 m, and a ledge just above that blocks walking while looking like a curb.
@@ -112,6 +121,9 @@ the level's shape is sent over the network. The runtime log prints a hash of the
   still use the raw exporter and may be mirrored too.
 - Blender renders and solver-only checks all looked right while the game was wrong. Only measuring the imported Unity
   mesh (where an asymmetric tile's drop or wall vertices sit against its corner names) showed the mirror.
+- Every kit lives in `BiomeKit.blend`, and Blender adds `.001` to a name that's already taken. Unity finds a tile's
+  mesh by its exact name, so each kit needs its own model prefix (`K_` for Abyssal Ruins, `BH_` for Brightwater
+  Hollow).
 
 **Modelling tiles**
 - A face whose outline passes through a grid point gets that point twice, and bmesh refuses the face: holes at almost
