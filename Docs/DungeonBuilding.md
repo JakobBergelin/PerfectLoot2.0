@@ -87,6 +87,11 @@ the level's shape is sent over the network. The runtime log prints a hash of the
     paths, three-way junctions, bridge ends on grass or path).
   - `water=(surface, bed)`: water heights below the ground. `weights`: per-connection weight overrides. `colors`:
     preview colors in Blender. `prefix`: the model name prefix (`BH_`).
+  - `pieces`: set pieces as corner maps (letters, north row first). `build_piece` makes each from the kit's own cells,
+    so they match the tiles, and kit.json lists them; BiomeKitBuilder puts them in the tile set's Pieces (by name).
+    Brightwater Hollow has a full-width River with a rope bridge, a BossArena, and a Pond and Lake for landmarks.
+- The solver never carries water on by itself: a river piece that ends at its own edge becomes a pond. A river that
+  should cross the level has to span it.
 - `CONNECTIONS` and `EDGES`: the kit's connections. The high ground is the same kinds 1.25 m up (`HIGH`).
   Abyssal Ruins was exported at 2.5 m and keeps that until the kit is exported again. Don't go below about 1 m: units
   step over anything under 0.4 m, and a ledge just above that blocks walking while looking like a curb.

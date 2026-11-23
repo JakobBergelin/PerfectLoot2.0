@@ -1,4 +1,5 @@
 # object|material slots in submesh order
+BH_BossArena|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,CanopyLight,Canopy,Flower,Accent,Birch,CanopyWarm
 BH_BridgeEnd|Bridge,FloorAlt,Floor,Bank,Liquid,Cliff,Rope,Trunk
 BH_BridgeEndPath|Bridge,FloorAlt,Path,Cliff,Bank,Liquid,Rope,Trunk
 BH_Floor|FloorAlt,Floor
@@ -32,6 +33,7 @@ BH_Floor_Rock_1|FloorAlt,Floor,Undergrowth,Bush,Cliff,Birch,CanopyLight
 BH_Floor_Rock_2|FloorAlt,Floor,Undergrowth,Bush,Cliff,Birch,CanopyLight,Trunk,Canopy
 BH_Floor_Rock_3|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,Canopy,CanopyLight,CanopyWarm,Birch
 BH_Floor_Rock_D|FloorAlt,Floor,Undergrowth,Bush,Cliff,Trunk,Canopy,Birch,CanopyLight
+BH_Lake|FloorAlt,Floor,Bank,Liquid,Accent,Flower,Cliff
 BH_Liquid|Bank,Liquid
 BH_Liquid_Bridge_1|Bridge,Bank,Liquid,Rope
 BH_Liquid_Bridge_2|Bridge,Bank,Liquid,Rope
@@ -43,6 +45,8 @@ BH_Path_Liquid_1|FloorAlt,Path,Cliff,Bank,Liquid
 BH_Path_Liquid_2|FloorAlt,Path,Cliff,Bank,Liquid
 BH_Path_Liquid_3|FloorAlt,Path,Cliff,Bank,Liquid
 BH_Path_Liquid_D|FloorAlt,Path,Cliff,Bank,Liquid
+BH_Pond|FloorAlt,Floor,Bank,Liquid,Cliff,Accent,Flower
+BH_River|FloorAlt,Floor,Flower,Accent,Bank,Liquid,Cliff,Path,Bridge,Rope,Trunk
 BH_Rock|Undergrowth,Trunk,Canopy,CanopyWarm,CanopyLight,Birch
 BH_Rock_Liquid_1|Undergrowth,Bush,Cliff,Trunk,CanopyLight,CanopyWarm,Birch,Bank,Liquid
 BH_Rock_Liquid_2|Undergrowth,Bush,Trunk,CanopyLight,Canopy,Bank,Liquid

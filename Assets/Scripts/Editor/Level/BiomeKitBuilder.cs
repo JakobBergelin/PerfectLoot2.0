@@ -21,7 +21,8 @@ public static class BiomeKitBuilder
     const int GroundLayer = 6;
     const int WallLayer = 7;
 
-    [Serializable] class Kit { public KitCorner[] corners; public KitEdge[] edges; public KitTile[] tiles; }
+    [Serializable] class Kit { public KitCorner[] corners; public KitEdge[] edges; public KitTile[] tiles; public KitPiece[] pieces; }
+    [Serializable] class KitPiece { public string name, model; public int[] size, corners; }
     [Serializable] class KitCorner { public int id; public string name; public string terrain; public float height; public int higher; }
     [Serializable] class KitEdge { public int id; public string name; public bool walkable; }
     [Serializable] class KitTile { public string name, model; public int[] corners, edges; public float weight; public bool background, mirror, walkThrough; public string[] looks; }
@@ -45,7 +46,8 @@ public static class BiomeKitBuilder
 
         // A prefab per model (looks included)
         var prefabs = new Dictionary<string, GameObject>();
-        foreach (var name in kit.tiles.SelectMany(t => t.looks.Prepend(t.model)).Distinct())
+        var pieces = kit.pieces ?? Array.Empty<KitPiece>();
+        foreach (var name in kit.tiles.SelectMany(t => t.looks.Prepend(t.model)).Concat(pieces.Select(p => p.model)).Distinct())
             prefabs[name] = SavePrefab(name, models, folder + "/KitTiles", slots, materials);
 
         string setPath = $"{folder}/{biome.Name}TileSet.asset";
@@ -71,7 +73,11 @@ public static class BiomeKitBuilder
             South = t.edges[0], East = t.edges[1], North = t.edges[2], West = t.edges[3],
             Looks = t.looks.Select(l => prefabs[l]).ToList(),
         }).ToList();
-        tileSet.Pieces.Clear();
+        // Set pieces (pl_wfc_kit build_piece): placed by hand or as landmarks, by their index in this list
+        tileSet.Pieces = pieces.Select(p => new WfcPiece
+        {
+            Name = p.name, Prefab = prefabs[p.model], Size = new Vector2Int(p.size[0], p.size[1]), CornerIds = p.corners.ToList(),
+        }).ToList();
         tileSet.EnsureConnections();
         EditorUtility.SetDirty(tileSet);
         var backdrop = BuildBackdrop(biome, folder, materials);

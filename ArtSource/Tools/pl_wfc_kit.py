@@ -67,10 +67,42 @@ STYLES = {
     # A bright forest: grass and dirt instead of slabs, tree walls instead of rock, low water crossed by rope bridges, no
     # drop and no high ground (the optional keys below; a style without them is built as before)
     "BrightwaterHollow": dict(name="BrightwaterHollow", seed=53, wall_h=3.0, wall_jitter=0.0, depth=8.0, slab=5,
-                              cliff_jitter=0.0, accent="flowers", glow=0.0, spires=False, liquid_factor=0.6, drop_factor=0.0,
+                              cliff_jitter=0.0, accent="flowers", glow=0.0, spires=False, liquid_factor=1.0, drop_factor=0.0,
                               connections=["Floor", "Path", "Overgrowth", "Rock", "Liquid", "Bridge"],
                               prefix="BH_", ground="grass", wall="trees", bridge="rope", water=(-0.45, -1.0),
-                              weights={"Path": 0.15, "Overgrowth": 1.2, "Rock": 1.4, "Bridge": 0.05}),
+                              weights={"Floor": 2.5, "Path": 0.15, "Overgrowth": 1.2, "Rock": 4.0, "Bridge": 0.05}),
+}
+
+# Set pieces: multi-cell models made from the kit's own cells (build_piece), as corner maps, north row first. Letters:
+# F floor, P path, O overgrowth, R rock (trees), L liquid, B bridge. A river's corners on a piece's side are water, so
+# the solver carries it on.
+PIECE_LETTERS = {"F": "Floor", "P": "Path", "O": "Overgrowth", "R": "Rock", "L": "Liquid", "B": "Bridge"}
+STYLES["BrightwaterHollow"]["pieces"] = {
+    # A river across the level with a rope bridge in the middle and short dirt approaches; it steps up a row on one side,
+    # and the solver doesn't carry water on by itself, so the piece spans the level (turned around, it bends the other way)
+    "River": ["FFFFFFFPPPFFFFFFF",
+              "LLLLLFFPPPFFFFFFF",
+              "LLLLLLLLBLLLLLLLL",
+              "FFFFLLLLBLLLLLLLL",
+              "FFFFFFFPPPFFFFFFF"],
+    # The boss's clearing: open grass ringed by forest, a wide way in from the south
+    "BossArena": ["RRRRRRRR",
+                  "RFFFFFFR",
+                  "RFFFFFFR",
+                  "RFFFFFFR",
+                  "RFFFFFFR",
+                  "RFFFFFFR",
+                  "RRFFFFRR"],
+    # Water the seed scatters (landmarks)
+    "Pond": ["FFFF",
+             "FLLF",
+             "FLLF",
+             "FFFF"],
+    "Lake": ["FFFFFF",
+             "FLLLLF",
+             "FLLLLF",
+             "FFLLFF",
+             "FFFFFF"],
 }
 
 # Material slot names: Unity puts the biome's material on each (BiomeKitBuilder)
@@ -746,7 +778,50 @@ def build_kit(S, coll):
         objects[model] = build_model(model, spec["corners"], S, M, coll, seed=seed, kind=spec["kind"])
         for l in range(1, spec["looks"] + 1):
             objects[f"{model}_Look{l}"] = build_model(f"{model}_Look{l}", spec["corners"], S, M, coll, seed=seed + l * 997, kind=spec["kind"], look=l)
+    for i, (name, rows) in enumerate(sorted(S.get("pieces", {}).items())):
+        model = S.get("prefix", "K_") + name
+        objects[model] = build_piece(model, rows, S, M, coll, seed=S["seed"] * 211 + i * 31)
     return objects
+
+
+def piece_corners(rows):
+    """A piece's corner connections, row by row from the south-west (WfcPiece.CornerIds order), and its size in cells."""
+    corners = [PIECE_LETTERS[ch] for row in reversed(rows) for ch in row]
+    return corners, (len(rows[0]) - 1, len(rows) - 1)
+
+
+def build_piece(name, rows, S, M, coll, seed=0):
+    """A set piece from the kit's cells: each cell built like a tile with its four corners, moved into place, then joined
+    into one model (pivot in the footprint's middle) with one collider object per collider kind."""
+    corners, (w, h) = piece_corners(rows)
+    at = lambda x, y: corners[x + y * (w + 1)]
+    parts, colliders = [], {}
+    for y in range(h):
+        for x in range(w):
+            cell = [at(x, y), at(x + 1, y), at(x + 1, y + 1), at(x, y + 1)]
+            o = build_model(f"{name}_cell{x}_{y}", cell, S, M, coll, seed=seed + x * 17 + y * 131, look=(x + 2 * y) % 3)
+            offset = Matrix.Translation(((x + 0.5 - w / 2) * TILE, -(y + 0.5 - h / 2) * TILE, 0.0))
+            o.data.transform(offset)
+            for child in list(o.children):
+                child.data.transform(offset)
+                child.parent = None
+                suffix = child.name.split("_Col", 1)[1]
+                colliders.setdefault("Col" + suffix, []).append(child)
+            parts.append(o)
+
+    def join(objects, new_name):
+        with bpy.context.temp_override(active_object=objects[0], selected_editable_objects=objects, selected_objects=objects):
+            bpy.ops.object.join()
+        joined = objects[0]
+        joined.name = new_name
+        joined.data.name = new_name
+        return joined
+
+    vis = join(parts, name)
+    for suffix, objects in colliders.items():
+        col = join(objects, f"{name}_{suffix}")
+        col.parent = vis
+    return vis
 
 
 def export_kit(objects, outdir, S):
@@ -767,5 +842,7 @@ def export_kit(objects, outdir, S):
         "tiles": [dict(name=t["name"], model=t["model"], corners=[CONN[c]["id"] for c in t["corners"]],
                        edges=[EDGE[e] for e in t["edges"]], weight=round(t["weight"], 4), background=t["background"],
                        mirror=t["mirror"], walkThrough=t["walk_through"], looks=t["looks"]) for t in tiles],
+        "pieces": [dict(name=name, model=S.get("prefix", "K_") + name, size=list(piece_corners(rows)[1]),
+                        corners=[CONN[c]["id"] for c in piece_corners(rows)[0]]) for name, rows in sorted(S.get("pieces", {}).items())],
     }
     with open(os.path.join(outdir, "kit.json"), "w") as f: json.dump(kit, f, indent=1)

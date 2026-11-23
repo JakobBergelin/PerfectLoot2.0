@@ -73,7 +73,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 256
+    Weight: 39.0625
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -123,7 +123,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 3.8416
+    Weight: 256
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -141,7 +141,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.1296
+    Weight: 1
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -157,7 +157,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 9.6
+    Weight: 2.3438
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -173,7 +173,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.36
+    Weight: 0.1406
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -189,7 +189,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.18
+    Weight: 0.0703
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -205,7 +205,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0135
+    Weight: 0.0084
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -221,7 +221,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 76.8
+    Weight: 18.75
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -237,7 +237,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 23.04
+    Weight: 9
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -253,7 +253,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 11.52
+    Weight: 4.5
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -269,7 +269,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 6.912
+    Weight: 4.32
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -285,7 +285,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 89.6
+    Weight: 62.5
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -301,7 +301,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 31.36
+    Weight: 100
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -317,7 +317,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 15.68
+    Weight: 50
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -333,7 +333,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 10.976
+    Weight: 160
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -349,7 +349,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 38.4
+    Weight: 15.625
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -365,7 +365,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 5.76
+    Weight: 6.25
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -381,7 +381,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 2.88
+    Weight: 3.125
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -397,7 +397,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.864
+    Weight: 2.5
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -413,7 +413,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.002
+    Weight: 0.0034
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -429,7 +429,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0081
+    Weight: 0.0225
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -445,7 +445,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.004
+    Weight: 0.0112
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -461,7 +461,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0324
+    Weight: 0.15
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -477,7 +477,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 1.6464
+    Weight: 64
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -493,7 +493,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.7056
+    Weight: 16
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -509,7 +509,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.3528
+    Weight: 8
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -525,7 +525,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.3024
+    Weight: 4
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -541,7 +541,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0108
+    Weight: 0.05
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -557,7 +557,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0009
+    Weight: 0.0025
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -573,7 +573,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0004
+    Weight: 0.0013
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -605,7 +605,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.432
+    Weight: 0.2812
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -621,7 +621,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.432
+    Weight: 0.2812
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -637,7 +637,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0162
+    Weight: 0.0169
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -653,7 +653,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0162
+    Weight: 0.0169
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -669,7 +669,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0648
+    Weight: 0.1125
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -685,7 +685,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0648
+    Weight: 0.1125
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -701,7 +701,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 4.032
+    Weight: 7.5
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -717,7 +717,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 4.032
+    Weight: 7.5
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -733,7 +733,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 1.4112
+    Weight: 12
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -749,7 +749,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 1.4112
+    Weight: 12
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -765,7 +765,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.6048
+    Weight: 3
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -781,7 +781,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.6048
+    Weight: 3
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -797,7 +797,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 1.92
+    Weight: 1.25
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -813,7 +813,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 0.0027
+    Weight: 0.0045
     AllowRotations: 1
     AllowMirror: 1
     WalkThrough: 0
@@ -829,7 +829,7 @@ MonoBehaviour:
     East: 0
     North: 0
     West: 0
-    Weight: 3.8416
+    Weight: 256
     AllowRotations: 1
     AllowMirror: 0
     WalkThrough: 0
@@ -837,6 +837,30 @@ MonoBehaviour:
     Looks:
     - {fileID: 5094151947525114464, guid: 5b7d6aea71a199c4d8ad2000413221d6, type: 3}
     - {fileID: 3815115107044549844, guid: 9099e99372c407f45b231966ee55e0e5, type: 3}
-  Pieces: []
+  Pieces:
+  - Name: BossArena
+    Prefab: {fileID: 1301154162494643511, guid: 34ca25fb140b17a4a85ecf109aac4425, type: 3}
+    Size: {x: 7, y: 6}
+    CornerIds: 0100000001000000000000000000000000000000000000000100000001000000010000000000000000000000000000000000000000000000000000000100000001000000000000000000000000000000000000000000000000000000010000000100000000000000000000000000000000000000000000000000000001000000010000000000000000000000000000000000000000000000000000000100000001000000000000000000000000000000000000000000000000000000010000000100000001000000010000000100000001000000010000000100000001000000i
+    AllowRotations: 1
+    _terrainCorners: 
+  - Name: Lake
+    Prefab: {fileID: 5551060964725707815, guid: e22d728c1d9ba2b48a6c31816d257c6b, type: 3}
+    Size: {x: 5, y: 4}
+    CornerIds: 000000000000000000000000000000000000000000000000000000000000000002000000020000000000000000000000000000000200000002000000020000000200000000000000000000000200000002000000020000000200000000000000000000000000000000000000000000000000000000000000i
+    AllowRotations: 1
+    _terrainCorners: 
+  - Name: Pond
+    Prefab: {fileID: 2585922538513997662, guid: 04dc0109d420628458c1eeedc7e32e81, type: 3}
+    Size: {x: 3, y: 3}
+    CornerIds: 00000000000000000000000000000000000000000200000002000000000000000000000002000000020000000000000000000000000000000000000000000000i
+    AllowRotations: 1
+    _terrainCorners: 
+  - Name: River
+    Prefab: {fileID: 6116252270974948974, guid: 2a35dfcc19f088140b60112e000b7229, type: 3}
+    Size: {x: 16, y: 4}
+    CornerIds: 00000000000000000000000000000000000000000000000000000000040000000400000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000002000000020000000200000002000000060000000200000002000000020000000200000002000000020000000200000002000000020000000200000002000000020000000200000002000000020000000200000006000000020000000200000002000000020000000200000002000000020000000200000002000000020000000200000002000000020000000000000000000000040000000400000004000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000040000000400000000000000000000000000000000000000000000000000000000000000i
+    AllowRotations: 1
+    _terrainCorners: 
   FoundationDepth: 0
   _version: 1

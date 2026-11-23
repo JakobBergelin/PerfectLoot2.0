@@ -8,13 +8,12 @@ using UnityEngine;
 
 /// <summary>
 /// Builds Brightwater Hollow, the first dungeon every new character starts in: its DungeonDefinition (one Kill Boss step,
-/// no time limit, no extra enemies per difficulty), the Hero Slime placeholder boss, and the level painted on
-/// Scenes/BrightwaterHollow (the biome comes from BiomeTileSets). The level teaches one thing at a time, south to north:
-/// a start clearing, a lone Slime, a river crossed by a rope bridge with Spitcaps on the far bank, a Puffshroom grove,
-/// six mixed encounters (one across a lake, one an ambush), a second river and the boss clearing. A creek and the second
-/// river run into the lake, so the water flows toward it. Only the path, the water, the clearings and a few tree walls
-/// are painted; the solver fills the rest from the seed. Also adds a portal to the dungeon in the Hub and the scene to
-/// the build. Safe to run again.
+/// no time limit, no extra enemies per difficulty), the Hero Slime placeholder boss, and the level on
+/// Scenes/BrightwaterHollow (the biome comes from BiomeTileSets). Set pieces shape it: two rivers across the level (each with a
+/// rope bridge in the middle) and the boss arena at the north end, plus ponds and lakes the
+/// seed scatters. The solver fills the forest around them. Encounters teach one thing at a time, south to north: a lone
+/// Slime, Spitcaps across the first river, Puffshrooms, six mixed encounters (one an ambush), then the boss. Also adds a
+/// portal to the dungeon in the Hub and the scene to the build. Safe to run again.
 /// </summary>
 public static class BrightwaterHollowSetup
 {
@@ -31,10 +30,10 @@ public static class BrightwaterHollowSetup
 
     public const int Width = 18, Height = 58;
     static readonly Vector2Int Start = new Vector2Int(9, 3);
-    static readonly Vector2Int BossCell = new Vector2Int(9, 56);
+    static readonly Vector2Int BossCell = new Vector2Int(8, 54);   // The middle of the boss arena
 
     // The biome kit's corner connections (pl_wfc_kit CONNECTIONS)
-    const int Floor = 0, Trees = 1, Water = 2, Path = 4, Meadow = 5, Bridge = 6;
+    const int Floor = 0, Trees = 1, Water = 2;
 
     [MenuItem("Tools/Level/Build Brightwater Hollow")]
     public static void Build()
@@ -132,52 +131,41 @@ public static class BrightwaterHollowSetup
         layout.Landmarks.Clear();
         layout.ClearCornerRules();
 
-        // Clearings: the start and the boss's
+        // Set pieces (BiomeKitBuilder, from pl_wfc_kit's pieces) shape the level; the solver fills the forest around them.
+        // Two rivers across the level, each with a rope bridge in the middle (the second turned around, so it bends the
+        // other way); their ends meet the forest at the border
+        int river = PieceIndex(layout, "River"), arena = PieceIndex(layout, "BossArena");
+        layout.Pieces.Add(new LevelLayoutAuthoring.PlacedPiece { Cell = new Vector2Int(1, 10), Piece = river });
+        layout.Pieces.Add(new LevelLayoutAuthoring.PlacedPiece { Cell = new Vector2Int(1, 37), Piece = river, Rotation = 2 });
+        // The boss's clearing at the north end: open for the fight, ringed by forest, the way in from the south
+        layout.Pieces.Add(new LevelLayoutAuthoring.PlacedPiece { Cell = new Vector2Int(5, 51), Piece = arena });
+        // More water each run: ponds and lakes wherever the seed puts them
+        layout.Landmarks.Add(new LevelLayoutAuthoring.Landmark { Piece = PieceIndex(layout, "Pond"), MinCount = 1, MaxCount = 3, Spacing = 7f });
+        layout.Landmarks.Add(new LevelLayoutAuthoring.Landmark { Piece = PieceIndex(layout, "Lake"), MinCount = 1, MaxCount = 2, Spacing = 9f });
+
+        // The start clearing
         Rect(layout, 6, 1, 12, 6, Floor);
-        Rect(layout, 5, 54, 13, 57, Floor);
 
-        // The path north, all the way to the boss clearing
-        Rect(layout, 9, 4, 9, 53, Path);
-
-        // First river with its bridge, a creek from it along the east side into the lake, and the second river (fed by
-        // the lake's north shore) with its bridge
-        Rect(layout, 1, 12, 17, 13, Water);
-        Rect(layout, 17, 14, 17, 29, Water);       // Against the border: no strip of land cut off behind it
-        Rect(layout, 11, 30, 17, 36, Water);
-        Rect(layout, 15, 37, 17, 39, Water);       // Lake into the second river, out to the border
-        Rect(layout, 1, 40, 17, 41, Water);
-        foreach (int y in new[] { 12, 13, 40, 41 }) layout.SetCornerRule(9, y, WfcCornerRule.Walkable, Bridge);
-        foreach (int y in new[] { 11, 14, 39, 42 }) Rect(layout, 8, y, 10, y, Path);     // Bridge ends: three corners wide
-        // Grass between the path and the water along the lake, so the path stays a path; grass where the Spitcaps stand
-        // on the first river's far bank and on the lake's north shore
-        Rect(layout, 10, 29, 10, 37, Floor);
-        Rect(layout, 5, 14, 7, 16, Floor);
-        Rect(layout, 11, 14, 13, 16, Floor);
-        Rect(layout, 11, 37, 14, 39, Floor);
-
-        // The Puffshroom grove: a meadow west of the path, tree walls narrowing the way after the first river
-        Rect(layout, 3, 17, 6, 20, Meadow);
-        Rect(layout, 1, 22, 4, 26, Trees);
-        Rect(layout, 13, 22, 14, 26, Trees);
-        // The ambush clearing past the second river: open grass on both sides of the path
-        Rect(layout, 3, 43, 15, 46, Floor);
-        Rect(layout, 9, 43, 9, 46, Path);
-
-        // Encounters, in the order they're met (trigger radius in meters: they wake as the player gets close)
+        // Encounters, in the order they're met (trigger radius in meters: they wake as the player gets close), each on a
+        // patch of walkable ground so they never stand in a tree wall
         layout.EnemySpawners.Clear();
         layout.Prefabs.Clear();
-        Spawner(layout, 9, 8, 16f, 1f, ("Slime", 1));                              // A lone Slime: melee, and it splits
-        Spawner(layout, 6, 15, 20f, 1f, ("Spitcap", 1));                           // Spitcaps across the river: ranged
-        Spawner(layout, 12, 15, 20f, 1f, ("Spitcap", 1));
-        Spawner(layout, 9, 19, 14f, 3f, ("Puffshroom", 3));                        // The grove: step out of the puddles
+        Spawner(layout, 9, 7, 16f, 1f, ("Slime", 1));                              // A lone Slime: melee, and it splits
+        Spawner(layout, 7, 15, 20f, 1f, ("Spitcap", 1));                           // Spitcaps across the first river: ranged
+        Spawner(layout, 11, 15, 20f, 1f, ("Spitcap", 1));
+        Spawner(layout, 9, 19, 14f, 3f, ("Puffshroom", 3));                        // Step out of the puddles
         Spawner(layout, 9, 24, 14f, 3f, ("Slime", 1), ("Spitcap", 2));             // Mixed 1: a Slime in front, Spitcaps behind
-        Spawner(layout, 9, 28, 14f, 3.5f, ("Puffshroom", 2), ("Slime", 2));        // Mixed 2: Puffshrooms among Slimes
-        Spawner(layout, 12, 38, 18f, 2f, ("Spitcap", 2));                          // Mixed 3: Spitcaps on the lake's far shore...
-        Spawner(layout, 8, 34, 14f, 2.5f, ("Slime", 2));                           // ...and Slimes on the path beside it
-        Spawner(layout, 5, 45, 10f, 2f, ("Slime", 2));                             // Mixed 4: an ambush from both sides
-        Spawner(layout, 13, 45, 10f, 2f, ("Slime", 1), ("Spitcap", 1));
-        Spawner(layout, 9, 49, 14f, 3f, ("Puffshroom", 4), ("Spitcap", 1));        // Mixed 5: Puffshrooms guarding a Spitcap
-        Spawner(layout, 9, 52, 14f, 4f, ("Slime", 2), ("Spitcap", 2), ("Puffshroom", 2));   // Mixed 6: everything at once
+        Spawner(layout, 9, 29, 14f, 3.5f, ("Puffshroom", 2), ("Slime", 2));        // Mixed 2: Puffshrooms among Slimes
+        Spawner(layout, 12, 34, 18f, 2f, ("Spitcap", 2));                          // Mixed 3: Spitcaps off to the side...
+        Spawner(layout, 7, 33, 14f, 2.5f, ("Slime", 2));                           // ...and Slimes in the way
+        Spawner(layout, 5, 43, 10f, 2f, ("Slime", 2));                             // Mixed 4: an ambush from both sides
+        Spawner(layout, 13, 43, 10f, 2f, ("Slime", 1), ("Spitcap", 1));
+        Spawner(layout, 9, 46, 14f, 3f, ("Puffshroom", 4), ("Spitcap", 1));        // Mixed 5: Puffshrooms guarding a Spitcap
+        Spawner(layout, 9, 49, 14f, 4f, ("Slime", 2), ("Spitcap", 2), ("Puffshroom", 2));   // Mixed 6: everything at once
+        foreach (var spawner in layout.EnemySpawners)
+            for (int y = spawner.Cell.y; y <= spawner.Cell.y + 1; y++)
+                for (int x = spawner.Cell.x; x <= spawner.Cell.x + 1; x++)
+                    layout.SetCornerRule(x, y, WfcCornerRule.Walkable);
         layout.Prefabs.Add(new LevelLayoutAuthoring.PlacedPrefab
         {
             Cell = BossCell, Prefab = AssetDatabase.LoadAssetAtPath<GameObject>(BossSpawnPrefab), ForceWalkable = true, ReservedRadius = 6f,
@@ -186,6 +174,13 @@ public static class BrightwaterHollowSetup
         EditorUtility.SetDirty(layout);
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
+    }
+
+    static int PieceIndex(LevelLayoutAuthoring layout, string name)
+    {
+        int index = layout.TileSet.Pieces.FindIndex(p => p.Name == name);
+        if (index < 0) throw new System.InvalidOperationException($"{layout.TileSet.name} has no piece {name}: rebuild the biome's tile set");
+        return index;
     }
 
     // Corners x0..x1, y0..y1 (inclusive) painted with one connection, as the terrain it plays as
