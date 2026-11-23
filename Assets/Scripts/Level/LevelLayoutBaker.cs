@@ -272,6 +272,7 @@ namespace LevelGeneration
                             FleeRadius = creature.FleeRadius, Speed = creature.Speed, Height = creature.Height, Scale = creature.Scale,
                         });
             }
+            if (authoring.AmbientGraph != null) AddComponent(entity, new LevelAmbientGraph { Graph = authoring.AmbientGraph });
             var placementEnemyBuffer = AddBuffer<LevelPlacementEnemy>(entity);
             foreach (var entry in placementEnemies)
             {

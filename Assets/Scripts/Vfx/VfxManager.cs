@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 /// <summary>
-/// Pools the effect GameObjects in VfxLibrary. ECS systems (VfxSystem) spawn an effect, move it with the entity it
+/// Pools the effect GameObjects in VfxLibrary (particle systems, VFX graphs and lights). ECS systems (VfxSystem) spawn an effect, move it with the entity it
 /// belongs to and release it when the entity goes away; one-shots (impacts, hits) are spawned and released at once.
 /// Lives in the main scene, outside the Entities subscene.
 /// </summary>
@@ -16,7 +16,14 @@ public class VfxManager : MonoBehaviour
         public VfxType Type;
         public VfxInstance Instance;
         public float ReturnAt = -1f;  // < 0: still following its entity
+        public bool Lit;              // Its lights may shine (counted against MaxLights)
+        public bool OneShot;          // A burst (stirs the mist only as it starts)
+        public float StartedAt;
     }
+
+    /// <summary>Effects whose lights may shine at once (fireballs light up what they pass); the rest go without.</summary>
+    public const int MaxLights = 16;
+    int _lit;
 
     readonly Dictionary<VfxType, GameObject> _prefabs = new Dictionary<VfxType, GameObject>();
     readonly Dictionary<VfxType, Stack<VfxInstance>> _pools = new Dictionary<VfxType, Stack<VfxInstance>>();
@@ -59,10 +66,13 @@ public class VfxManager : MonoBehaviour
         var instance = pool.Count > 0 ? pool.Pop() : Create(type);
         instance.transform.SetPositionAndRotation(position, rotation);
         instance.transform.localScale = Vector3.one;
+        bool lit = instance.HasLights && _lit < MaxLights;
+        if (lit) _lit++;
+        instance.AllowLights(lit);
         instance.gameObject.SetActive(true);
         instance.Begin();
         int handle = _nextHandle++;
-        _active[handle] = new Active { Type = type, Instance = instance };
+        _active[handle] = new Active { Type = type, Instance = instance, Lit = lit, StartedAt = Time.time };
         return handle;
     }
 
@@ -74,7 +84,11 @@ public class VfxManager : MonoBehaviour
     public int Burst(VfxType type, Vector3 position, Quaternion rotation)
     {
         int handle = Spawn(type, position, rotation);
-        if (_active.TryGetValue(handle, out var active)) active.ReturnAt = Time.time + active.Instance.Linger;
+        if (_active.TryGetValue(handle, out var active))
+        {
+            active.ReturnAt = Time.time + active.Instance.Linger;
+            active.OneShot = true;
+        }
         return handle;
     }
 
@@ -142,8 +156,21 @@ public class VfxManager : MonoBehaviour
         {
             var active = _active[handle];
             _active.Remove(handle);
+            if (active.Lit) _lit--;
             active.Instance.gameObject.SetActive(false);
             _pools[active.Type].Push(active.Instance);
         }
+    }
+
+    // Shown effects stir the mist (VfxMist): followers while they follow, one-shots as they start; then the wake moves on
+    void LateUpdate()
+    {
+        foreach (var active in _active.Values)
+        {
+            if (!VfxMist.Rules.TryGetValue(active.Type, out var rule)) continue;
+            bool stirring = active.OneShot ? Time.time < active.StartedAt + rule.Burst : active.ReturnAt < 0f;
+            if (stirring) MistWake.Stir(active.Instance.transform.position, rule.Radius, rule.Push, rule.Swirl, rule.Clear);
+        }
+        MistWake.Tick(Time.deltaTime);
     }
 }

@@ -75,47 +75,52 @@ public static partial class VfxBuilder
 
     // ---------- skill effects ----------
 
+    // The fireball (VFX graphs from FireGraphBuilder): its comic core, the graph's ribbon, fire blobs and embers, and a
+    // light that lights up what it passes (flat comic pools in PerfectLoot/Comic). Its impact: a burst of fire blobs,
+    // bouncing sparks and smoke, with a flash of light.
     static GameObject FireballOrb()
     {
         var root = Root_("VFX_FireballOrb", 0.7f, out var instance);
         var core = MeshPart(root, "Core", Ico("VFX_Ico"), ComicGlow("VFX_FireCore", "#FF8A2A", "#FF7A1A", 2.2f, 0.3f), Vector3.zero, Vector3.one * 0.55f);
         instance.HideOnRelease = new Renderer[] { core };
-        Ps(root, "Glow", _additive, ps =>
-        {
-            Main(ps, 0.25f, 0f, 1.4f, Hex("#FF7A1A", 0.5f), local: true, rate: 14f);
-        });
-        Ps(root, "Embers", _additive, ps =>
-        {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.35f, 0.6f), new ParticleSystem.MinMaxCurve(0.3f, 0.9f), new ParticleSystem.MinMaxCurve(0.12f, 0.3f), Color.white, rate: 24f);
-            var e = ps.emission; e.rateOverDistance = 14f;
-            var m = ps.main; m.gravityModifier = -0.3f;
-            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f);
-            Fade(ps, Hex("#FFD24A"), Hex("#FF7A1A"), Hex("#B8301A"));
-            Shrink(ps);
-        });
+        Graph(root, "Fire", "Assets/Data/Vfx/Graphs/Fireball.vfx");
+        instance.Lights = new[] { PointLight(root, "#FF8A2A", 2.2f, 9f) };
+        instance.LightFade = 0.3f;
         return Save(root);
     }
 
     static GameObject FireballImpact()
     {
-        var root = Root_("VFX_FireballImpact", 1.4f, out _);
-        Ps(root, "Flash", _additive, ps => { Main(ps, 0.18f, 0f, 3.2f, Hex("#FFB040", 0.8f), burst: 1); Fade(ps, Hex("#FFE08A"), Hex("#FF7A1A"), Hex("#FF4A1C")); });
-        Ps(root, "Sparks", _additive, ps =>
-        {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.25f, 0.5f), new ParticleSystem.MinMaxCurve(5f, 9f), new ParticleSystem.MinMaxCurve(0.08f, 0.16f), Color.white, burst: 28);
-            Shape(ps, ParticleSystemShapeType.Sphere, 0.2f);
-            Fade(ps, Hex("#FFE08A"), Hex("#FF8A2A"), Hex("#B8301A"));
-            Stretch(ps, 2.5f);
-        });
-        Ps(root, "Smoke", _alpha, ps =>
-        {
-            Main(ps, new ParticleSystem.MinMaxCurve(0.8f, 1.2f), new ParticleSystem.MinMaxCurve(0.5f, 1.5f), new ParticleSystem.MinMaxCurve(0.8f, 1.6f), Color.white, burst: 8);
-            var m = ps.main; m.gravityModifier = -0.15f;
-            Shape(ps, ParticleSystemShapeType.Sphere, 0.3f);
-            Fade(ps, Hex("#3A2E3A", 0.7f), Hex("#2A2230", 0.5f), Hex("#2A2230", 0f));
-            Grow(ps, 1.8f);
-        });
+        var root = Root_("VFX_FireballImpact", 1.4f, out var instance);
+        Graph(root, "Burst", "Assets/Data/Vfx/Graphs/FireballImpact.vfx");
+        instance.Lights = new[] { PointLight(root, "#FFB040", 4f, 11f) };
+        instance.LightFlash = 0.1f;
+        instance.LightFade = 0.35f;
         return Save(root);
+    }
+
+    static UnityEngine.VFX.VisualEffect Graph(GameObject parent, string name, string path)
+    {
+        var go = new GameObject(name);
+        go.transform.SetParent(parent.transform, false);
+        var effect = go.AddComponent<UnityEngine.VFX.VisualEffect>();
+        effect.visualEffectAsset = AssetDatabase.LoadAssetAtPath<UnityEngine.VFX.VisualEffectAsset>(path);
+        return effect;
+    }
+
+    // No shadows: many may be lit at once (VfxManager.MaxLights)
+    static Light PointLight(GameObject parent, string color, float intensity, float range)
+    {
+        var go = new GameObject("Light");
+        go.transform.SetParent(parent.transform, false);
+        var light = go.AddComponent<Light>();
+        light.type = LightType.Point;
+        light.color = Hex(color);
+        light.intensity = intensity;
+        light.range = range;
+        light.shadows = LightShadows.None;
+        light.renderMode = LightRenderMode.ForcePixel;
+        return light;
     }
 
     static GameObject BarrageBolt()

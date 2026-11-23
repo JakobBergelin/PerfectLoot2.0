@@ -155,6 +155,12 @@ namespace LevelGeneration
         public Entity Value;
     }
 
+    /// <summary>The layout's VFX graph of its air and water (LevelAmbientGraphView shows it), when it has one.</summary>
+    public struct LevelAmbientGraph : IComponentData
+    {
+        public UnityObjectRef<UnityEngine.VFX.VisualEffectAsset> Graph;
+    }
+
     /// <summary>A kind of small animal the level is home to (AmbientLifeSet), on the layout entity.</summary>
     public struct LevelAmbientCreature : IBufferElementData
     {

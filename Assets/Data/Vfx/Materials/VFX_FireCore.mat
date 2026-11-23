@@ -48,6 +48,8 @@ Material:
     - _RimStrength: 0.9
     - _ShadeThreshold: 0.62
     - _ShadowReceive: 1
+    - _SwayAmount: 0
+    - _SwaySpeed: 1
     - _UseSmoothNormals: 0
     m_Colors:
     - _BaseColor: {r: 1, g: 0.5411765, b: 0.16470589, a: 1}

@@ -241,6 +241,11 @@ namespace LevelGeneration
             else ClearBackdrop();
             // The forest mask (height fog) and ground height (canopy light), for the eyes only
             if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null) SetForestMask(ref blob, stream, surface);
+            // Fireflies, pollen, leaves, mist over the water and splashes (the layout's ambient graph), for the eyes only
+            if (EntityManager.HasComponent<LevelAmbientGraph>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
+                LevelAmbientGraphView.Build(EntityManager.GetComponentData<LevelAmbientGraph>(layoutEntity).Graph.Value, ref blob, stream.Ground,
+                                            surface.Terrain, stream.JobFlow.ToArray(), stream.Margin, _forestMask, _forestMatrix);
+            else if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null) LevelAmbientGraphView.Clear();
             // Animals are only for the eyes: worlds that render get them (a dedicated server doesn't)
             if (EntityManager.HasBuffer<LevelAmbientCreature>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
                 BuildAmbientLife(layoutEntity, ref blob, stream, seed, surface);
@@ -322,6 +327,7 @@ namespace LevelGeneration
         static readonly int ForestMaskId = Shader.PropertyToID("_PL_ForestMask"), ForestMaskMatrixId = Shader.PropertyToID("_PL_ForestMaskMatrix"),
                             GroundYId = Shader.PropertyToID("_PL_GroundY");
         Texture2D _forestMask;
+        Matrix4x4 _forestMatrix;
 
         /// <summary>
         /// The level's forest mask (LevelForestMask) as a global texture, with the matrix from world positions to its uv
@@ -348,13 +354,21 @@ namespace LevelGeneration
             var toUv = Matrix4x4.Translate(new Vector3((margin + 0.5f) / w, 0f, (margin + 0.5f) / h)) *
                        Matrix4x4.Scale(new Vector3(1f / (blob.TileSize * w), 1f, 1f / (blob.TileSize * h)));
             Shader.SetGlobalTexture(ForestMaskId, _forestMask);
-            Shader.SetGlobalMatrix(ForestMaskMatrixId, toUv * toGrid);
+            _forestMatrix = toUv * toGrid;
+            Shader.SetGlobalMatrix(ForestMaskMatrixId, _forestMatrix);
+            // The mist wake (skills push and clear the mist) covers the same area
+            MistWake.SetArea(_forestMatrix, new Vector2(blob.TileSize * w, blob.TileSize * h));
             Shader.SetGlobalFloat(GroundYId, blob.Origin.y);
         }
 
         // No level, no forest
         void ClearForestMask()
         {
+            if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
+            {
+                LevelAmbientGraphView.Clear();
+                MistWake.Clear();
+            }
             Shader.SetGlobalTexture(ForestMaskId, Texture2D.blackTexture);
             if (_forestMask != null) Object.Destroy(_forestMask);
             _forestMask = null;

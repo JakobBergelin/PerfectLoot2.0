@@ -61,6 +61,9 @@ public static class BiomeTileSets
         // Sunlight through a canopy (CanopyLight volume: leaf and cloud shadows, 0 = off; only set when the profile has none, then tuned in its inspector) and low mist that thickens toward
         // the forest (HeightFog volume: Mist color, 0 = off)
         public float CanopyShade, MistIntensity; public string Mist;
+        // The level's ambient VFX graph (fireflies, pollen, leaves, mist over the water, splashes; LevelAmbientGraph), an asset path;
+        // it replaces the camera-following ambient particles
+        public string AmbientGraph;
 
         // A forest kit (pl_wfc_kit's grass, trees and rope styles): colors for its own slots; null for biomes without them.
         // Path, Meadow and Bridge replace the colors the kit otherwise derives from the floor.
@@ -123,6 +126,7 @@ public static class BiomeTileSets
         {
             Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
             CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f,
+            AmbientGraph = "Assets/Data/Vfx/Graphs/BrightwaterHollow_Ambient.vfx",
             Style = new BiomeTileGenerator.Style(),
             Pattern = FloorPattern.Mud, Floor = "#4E8A58", FloorAlt = "#3F7449", FloorGap = "#2E5A3C",
             WallSide = "#7E7A70", WallTop = "#9A968C", Bank = "#5E4634", Rock = "#8E8A80", Accent = "#E0709E", AccentGlow = "#FF8AB8", AccentGlowStrength = 0.25f,
@@ -514,7 +518,7 @@ public static class BiomeTileSets
         RenderSettings.ambientEquatorColor = Hex(b.AmbientEquator);
         RenderSettings.ambientGroundColor = Hex(b.AmbientGround);
         foreach (var old in scene.GetRootGameObjects().Where(go => go.name.StartsWith("Ambient_") || go.name.EndsWith("_Ambient")).ToList()) Object.DestroyImmediate(old);
-        var ambient = BuildAmbient(b);
+        var ambient = b.AmbientGraph == null ? BuildAmbient(b) : null;
         if (ambient != null) SceneManager.MoveGameObjectToScene((GameObject)PrefabUtility.InstantiatePrefab(ambient), scene);
         RenderSettings.skybox = FogSky();
         RenderSettings.fog = true;
@@ -533,6 +537,7 @@ public static class BiomeTileSets
                 // Kit tile sets have Background tiles: a ring of scenery around the level, wider when a backdrop sinks it away
                 layout.Backdrop = BiomeKitBuilder.Backdrop(b);
                 layout.AmbientLife = BiomeKitBuilder.AmbientLife(b);
+                layout.AmbientGraph = b.AmbientGraph != null ? AssetDatabase.LoadAssetAtPath<UnityEngine.VFX.VisualEffectAsset>(b.AmbientGraph) : null;
                 layout.BackgroundRing = !BiomeKitBuilder.HasKit(b) ? 0 : layout.Backdrop != null ? 5 : 3;
                 layout.BackgroundBorder = WfcCornerRule.NotWalkable;
                 EditorUtility.SetDirty(layout);

@@ -1,0 +1,40 @@
+// The mist wake (MistWake.cs): a top-down map over the level of how far the height fog's mist has been pushed (xy, in
+// meters, world xz) and how much of it has been cleared away (z, 0..1). Each frame it eases back to calm (the mist
+// refills) and the frame's stirs (skills, dashes, footsteps) push it outward (a pull pushes inward), swirl it around
+// and clear it. PL_HeightFog.shader reads it.
+#pragma kernel Wake
+
+RWTexture2D<float4> _Wake;
+StructuredBuffer<float4> _Stirs;    // Two per stir: (x, z, radius, push), (swirl, clear, 0, 0)
+int _StirCount;
+float _DeltaTime;
+float _Refill;                      // Seconds the mist takes to settle back (a little more than a third of it)
+float4x4 _UvToWorld;
+float2 _Size;
+
+[numthreads(8, 8, 1)]
+void Wake(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x >= (uint)_Size.x || id.y >= (uint)_Size.y) return;
+    float2 uv = (id.xy + 0.5) / _Size;
+    float2 xz = mul(_UvToWorld, float4(uv.x, 0.0, uv.y, 1.0)).xz;
+    float4 w = _Wake[id.xy];
+    w.xy *= exp(-_DeltaTime / _Refill);
+    w.z *= exp(-_DeltaTime / (_Refill * 0.75));
+    for (int i = 0; i < _StirCount; i++)
+    {
+        float4 a = _Stirs[i * 2], b = _Stirs[i * 2 + 1];
+        float2 d = xz - a.xy;
+        float distance = length(d);
+        if (distance >= a.z) continue;
+        float f = 1.0 - distance / a.z;
+        f *= f;
+        float2 away = distance > 1e-3 ? d / distance : 0.0;
+        float2 around = float2(-away.y, away.x);
+        w.xy += (away * a.w + around * b.x) * f * _DeltaTime;
+        w.z = saturate(w.z + b.y * f * _DeltaTime * 5.0);
+    }
+    float length2 = dot(w.xy, w.xy);
+    if (length2 > 36.0) w.xy *= 6.0 * rsqrt(length2);
+    _Wake[id.xy] = w;
+}

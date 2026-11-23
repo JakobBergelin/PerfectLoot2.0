@@ -194,6 +194,8 @@ References: `Docs/inspiration/Skills/`.
 - **Fire:** hard-edged stylized blobs, not realistic smoke. Gradient along the length from a white-hot core to yellow, orange and a red fringe, breaking into ember shapes at the tip.
 - An effect's color follows its element or trait color (section 4).
 - Effects are the brightest things on screen; the environment stays darker and less saturated around them.
+- **VFX Graph** effects are built in code like the rest (`Tools/VFX/Build Fire Graphs`, `Build Ambient Graphs`; `Assets/Scripts/Editor/VfxGraph/`), with their behavior in Custom HLSL files under `Assets/Data/Vfx/Graphs/HLSL/` (one function per file). They still open in the VFX Graph editor for tweaking, but a rebuild overwrites hand edits, so change values in the builder or the HLSL. Sprites are hard-edged comic shapes (puff, leaf, dot); fire puffs use alpha clipping so their edges stay hard, and they shrink away instead of fading.
+- **Lights on effects:** a fireball carries a point light and its impact flashes one; the comic shader draws them as flat two-step pools, and they glow in the height fog. No shadows, at most `VfxManager.MaxLights` (16) lit at once. Give an effect a light by adding it to the prefab's `VfxInstance.Lights`.
 
 ## 14. Biome tile sets (procedural)
 
@@ -234,3 +236,8 @@ Two volume settings, set per biome in its volume profile and drawn by `ForestAtm
 - **Canopy Light** (`PL_Canopy.hlsl`): leaf shade shaped like cartoon clouds (clumps of round puffs with scalloped edges), hanging at the canopy height and projected down along the sun, plus big puffy cloud shadows drifting over. In `PerfectLoot/Comic` the leaf shade is its own lighter tone between sun and shadow (`Strength`), with light hatching (`Hatching`) and a slightly soft edge (`Edge Softness`); real shadows keep the hard split. Clouds only dim the sun. Water darkens a little under both. Treetops get only the clouds. Costs next to nothing.
 - **Height Fog** (`PL_HeightFog.shader`): low mist over the ground in hard bands, drifting in patches. It reaches higher and is thicker toward the forest (the level's forest mask, built from the solved terrain) and glows where sun falls through canopy gaps (light shafts). It's drawn before transparents, so telegraphs, water, bars and VFX stay on top. It's one full-screen pass per camera; `Draw Fog` on the feature turns it off for a cheaper quality level.
 - Keep the open-ground mist below knee height so characters read from the waist up.
+
+## 16. Ambient life and the mist wake
+
+- **Ambient graph** (`LevelLayoutAuthoring.AmbientGraph`, set per biome in `BiomeTileSets`): one VFX graph over the whole level, so every split-screen view sees it. Brightwater Hollow's has fireflies in the forest (pale warm candle, never Summoner gold), pollen over the clearings, leaves falling at the forest's edge and lying a while, mist wisps drifting downstream over the water, and splashes where rivers pass bridges and rocks. It replaces the camera-following ambient particles for biomes that have one; `LevelAmbientGraphView` hands it the forest mask, ground height and water points.
+- **Mist wake** (`MistWake`, `VfxMist`): skills push, swirl and clear the height fog's mist, and it slowly fills back in. Fire burns tunnels and blows it away where it lands, tornadoes and whirlwinds swirl it, dashes shove it aside, Undertow pulls it in and players leave a faint trail. A new effect stirs the mist by adding a rule to `VfxMist.Rules`.
