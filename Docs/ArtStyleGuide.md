@@ -226,3 +226,11 @@ Shaders made for surfaces the comic shader can't animate (the only exceptions to
 To add a biome: add an entry to `BiomeTileSets.All` (palette from section 11's table style, a `Style` for the geometry), rebuild, then apply or set a level's Tile Set by hand.
 
 Screenshots (gameplay camera): `screenshots/Biome_EmberDepths.png`, `Biome_DrownedMire.png`, `Biome_FrozenHollow.png`, `Biome_AbyssalRuins.png`; the placeholder look they replaced: `Biome_Before_Placeholder.png`.
+
+## 15. Canopy light and height fog
+
+Two volume settings, set per biome in its volume profile and drawn by `ForestAtmosphereFeature` on `PC_Renderer`. Tune them in the inspector of the biome's `_Volume.asset`; `BiomeTileSets` (`CanopyShade`, `Mist`, `MistIntensity`) only fills them in when the profile doesn't have them yet.
+
+- **Canopy Light** (`PL_Canopy.hlsl`): leaf shade shaped like cartoon clouds (clumps of round puffs with scalloped edges), hanging at the canopy height and projected down along the sun, plus big puffy cloud shadows drifting over. In `PerfectLoot/Comic` the leaf shade is its own lighter tone between sun and shadow (`Strength`), with light hatching (`Hatching`) and a slightly soft edge (`Edge Softness`); real shadows keep the hard split. Clouds only dim the sun. Water darkens a little under both. Treetops get only the clouds. Costs next to nothing.
+- **Height Fog** (`PL_HeightFog.shader`): low mist over the ground in hard bands, drifting in patches. It reaches higher and is thicker toward the forest (the level's forest mask, built from the solved terrain) and glows where sun falls through canopy gaps (light shafts). It's drawn before transparents, so telegraphs, water, bars and VFX stay on top. It's one full-screen pass per camera; `Draw Fog` on the feature turns it off for a cheaper quality level.
+- Keep the open-ground mist below knee height so characters read from the waist up.

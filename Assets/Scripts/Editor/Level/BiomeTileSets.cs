@@ -58,6 +58,9 @@ public static class BiomeTileSets
         public float Bloom = 0.35f, Saturation = 5f, Contrast = 8f, Vignette = 0.28f;
         public string ShadowTint, HighlightTint;
         public AmbientKind Ambient;
+        // Sunlight through a canopy (CanopyLight volume: leaf and cloud shadows, 0 = off; only set when the profile has none, then tuned in its inspector) and low mist that thickens toward
+        // the forest (HeightFog volume: Mist color, 0 = off)
+        public float CanopyShade, MistIntensity; public string Mist;
 
         // A forest kit (pl_wfc_kit's grass, trees and rope styles): colors for its own slots; null for biomes without them.
         // Path, Meadow and Bridge replace the colors the kit otherwise derives from the floor.
@@ -119,6 +122,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
+            CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f,
             Style = new BiomeTileGenerator.Style(),
             Pattern = FloorPattern.Mud, Floor = "#4E8A58", FloorAlt = "#3F7449", FloorGap = "#2E5A3C",
             WallSide = "#7E7A70", WallTop = "#9A968C", Bank = "#5E4634", Rock = "#8E8A80", Accent = "#E0709E", AccentGlow = "#FF8AB8", AccentGlowStrength = 0.25f,
@@ -461,6 +465,14 @@ public static class BiomeTileSets
         // No split toning: the warm key light and cool fog already split the scene, and toning turned every biome brown
         if (profile.TryGet<SplitToning>(out var split)) split.active = false;
         if (profile.TryGet<MotionBlur>(out var blur)) blur.active = false;
+        // Canopy light and mist are only filled in the first time: after that they're tuned in the profile's inspector
+        if (b.CanopyShade > 0f && !profile.Has<global::CanopyLight>()) Get<global::CanopyLight>(profile).strength.Override(b.CanopyShade);
+        if (b.MistIntensity > 0f && !profile.Has<HeightFog>())
+        {
+            var mist = Get<HeightFog>(profile);
+            mist.intensity.Override(b.MistIntensity);
+            if (b.Mist != null) mist.color.Override(Hex(b.Mist));
+        }
         EditorUtility.SetDirty(profile);
         return profile;
     }

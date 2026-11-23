@@ -1,5 +1,20 @@
 %YAML 1.1
 %TAG !u! tag:unity3d.com,2011:
+--- !u!114 &-4438994035381585737
+MonoBehaviour:
+  m_ObjectHideFlags: 1
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 49f4a210a7e987844813e89d317e9388, type: 3}
+  m_Name: ForestAtmosphere
+  m_EditorClassIdentifier: Assembly-CSharp::ForestAtmosphereFeature
+  m_Active: 1
+  fogShader: {fileID: 4800000, guid: 1bf3190d637a99f40a607a0ab75c317a, type: 3}
+  drawFog: 1
 --- !u!114 &-173742022826769898
 MonoBehaviour:
   m_ObjectHideFlags: 1
@@ -73,7 +88,8 @@ MonoBehaviour:
   - {fileID: 4178293650172846193}
   - {fileID: 5241765603419050}
   - {fileID: -173742022826769898}
-  m_RendererFeatureMap: ad6b866f10d7b46c71a0d2f1ef47fc39aaa3c9a85b9f12001642dafe8cbe96fdl
+  - {fileID: -4438994035381585737}
+  m_RendererFeatureMap: ad6b866f10d7b46c71a0d2f1ef47fc39aaa3c9a85b9f12001642dafe8cbe96fdb7b80091718665c2l
   xrSystemData: {fileID: 0}
   postProcessData: {fileID: 11400000, guid: 41439944d30ece34e96484bdb6645b55, type: 2}
   m_AssetVersion: 3

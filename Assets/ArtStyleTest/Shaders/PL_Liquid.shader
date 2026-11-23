@@ -33,6 +33,7 @@ Shader "PerfectLoot/Liquid"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "PL_Abyss.hlsl"
+        #include "PL_Canopy.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
             half4 _DeepColor;
@@ -181,6 +182,8 @@ Shader "PerfectLoot/Liquid"
                 float ring = _FoamWidth * (1.6 + 0.4 * sin(_Time.y * 1.3 + p.x * 0.7 + p.y * 0.5));
                 float foam = step(shore + wobble, _FoamWidth) + step(abs(shore + wobble - ring), _FoamWidth * 0.22);
                 color = lerp(color, _FoamColor.rgb, saturate(foam));
+                // Leaf and cloud shadows darken the water
+                color *= (1.0h - 0.5h * PL_LeafShade(input.positionWS) * _PL_CanopyParams.x) * PL_CloudLight(input.positionWS);
             #endif
 
                 color *= _Brightness;

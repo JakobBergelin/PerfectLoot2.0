@@ -65,7 +65,11 @@ namespace LevelGeneration
         }
 
         // The level is gone (no LevelLayout left): so is its abyss fade
-        protected override void OnStopRunning() => ClearBackdrop();
+        protected override void OnStopRunning()
+        {
+            ClearBackdrop();
+            ClearForestMask();
+        }
 
         static void DisposeJobData(LevelStream stream)
         {
@@ -80,6 +84,7 @@ namespace LevelGeneration
             foreach (var collider in _colliders) if (collider.IsCreated) collider.Dispose();
             foreach (var mesh in _meshes) if (mesh != null) Object.Destroy(mesh);
             ClearBackdrop();
+            ClearForestMask();
             _pending.Clear();
             _streams.Clear();
             _colliders.Clear();
@@ -234,6 +239,8 @@ namespace LevelGeneration
             var (placedProps, placedSpawners) = Place(stream, ref blob, seed, surface, initialCells);
             if (EntityManager.HasComponent<LevelBackdropData>(layoutEntity)) BuildBackdrop(layoutEntity, ref blob, stream, seed);
             else ClearBackdrop();
+            // The forest mask (height fog) and ground height (canopy light), for the eyes only
+            if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null) SetForestMask(ref blob, stream, surface);
             // Animals are only for the eyes: worlds that render get them (a dedicated server doesn't)
             if (EntityManager.HasBuffer<LevelAmbientCreature>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
                 BuildAmbientLife(layoutEntity, ref blob, stream, seed, surface);
@@ -312,6 +319,47 @@ namespace LevelGeneration
 
         // No level, no abyss fade
         static void ClearBackdrop() => Shader.SetGlobalFloat(AbyssDepthId, 0f);
+        static readonly int ForestMaskId = Shader.PropertyToID("_PL_ForestMask"), ForestMaskMatrixId = Shader.PropertyToID("_PL_ForestMaskMatrix"),
+                            GroundYId = Shader.PropertyToID("_PL_GroundY");
+        Texture2D _forestMask;
+
+        /// <summary>
+        /// The level's forest mask (LevelForestMask) as a global texture, with the matrix from world positions to its uv
+        /// (the unbent grid: the mask is blurred, so the bend doesn't show), and the level's ground height.
+        /// </summary>
+        void SetForestMask(ref LevelLayoutBlob blob, LevelStream stream, LevelSurface surface)
+        {
+            int margin = stream.Margin;
+            int w = blob.Width + 1 + 2 * margin, h = blob.Height + 1 + 2 * margin;
+            var values = LevelForestMask.Build(surface.Terrain, blob.Width, blob.Height, margin);
+            if (_forestMask == null || _forestMask.width != w || _forestMask.height != h)
+            {
+                if (_forestMask != null) Object.Destroy(_forestMask);
+                _forestMask = new Texture2D(w, h, TextureFormat.R8, false, true)
+                    { name = "PL_ForestMask", wrapMode = TextureWrapMode.Clamp, filterMode = FilterMode.Bilinear };
+            }
+            var pixels = new byte[w * h];
+            for (int i = 0; i < pixels.Length; i++) pixels[i] = (byte)math.round(math.saturate(values[i]) * 255f);
+            _forestMask.SetPixelData(pixels, 0);
+            _forestMask.Apply(false);
+
+            // World to grid meters (x east, z north), then to the mask's texel centers (corner 0 of the level is texel margin)
+            var toGrid = Matrix4x4.TRS(blob.Origin, blob.Rotation, Vector3.one).inverse;
+            var toUv = Matrix4x4.Translate(new Vector3((margin + 0.5f) / w, 0f, (margin + 0.5f) / h)) *
+                       Matrix4x4.Scale(new Vector3(1f / (blob.TileSize * w), 1f, 1f / (blob.TileSize * h)));
+            Shader.SetGlobalTexture(ForestMaskId, _forestMask);
+            Shader.SetGlobalMatrix(ForestMaskMatrixId, toUv * toGrid);
+            Shader.SetGlobalFloat(GroundYId, blob.Origin.y);
+        }
+
+        // No level, no forest
+        void ClearForestMask()
+        {
+            Shader.SetGlobalTexture(ForestMaskId, Texture2D.blackTexture);
+            if (_forestMask != null) Object.Destroy(_forestMask);
+            _forestMask = null;
+        }
+
 
         /// <summary>
         /// The level's small animals (AmbientLifeSet), placed from the seed: darters on walkable corners beside not-walkable

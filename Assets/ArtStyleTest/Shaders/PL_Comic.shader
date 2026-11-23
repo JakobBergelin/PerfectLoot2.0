@@ -54,6 +54,7 @@ Shader "PerfectLoot/Comic"
         HLSLINCLUDE
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "PL_Abyss.hlsl"
+        #include "PL_Canopy.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -269,13 +270,18 @@ Shader "PerfectLoot/Comic"
 
                 // hard two-tone split
                 half litMask = step(_ShadeThreshold, lit);
-                half3 color = albedo.rgb * lerp(_ShadowColor.rgb, mainLight.color, litMask);
+                // Leaf shade on the lit side: its own lighter tone between sun and shadow, with light hatching (clouds
+                // only dim the sun)
+                half leaf = PL_LeafShade(input.positionWS) * litMask;
+                half3 sun = lerp(mainLight.color * PL_CloudLight(input.positionWS), _ShadowColor.rgb, leaf * _PL_CanopyParams.x);
+                half3 color = albedo.rgb * lerp(_ShadowColor.rgb, sun, litMask);
                 color += albedo.rgb * SampleSH(n) * _AmbientStrength;
 
                 // ink pattern in the shadow side, denser towards the core shadow
                 half darkness = saturate((_ShadeThreshold - lit) / max(_ShadeThreshold - _DeepThreshold, 0.01h));
                 darkness = (1.0h - litMask) * (0.35h + 0.65h * darkness);
                 half ink = InkPattern(input.positionCS.xy, darkness) * (1.0h - litMask);
+                ink = max(ink, InkPattern(input.positionCS.xy, 0.3h) * leaf * _PL_CanopyShade.x);
                 color = lerp(color, _InkColor.rgb, ink * _PatternStrength);
 
                 // additional lights: flat colored pools (lava, torches)
