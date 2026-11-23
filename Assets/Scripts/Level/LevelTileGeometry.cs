@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Linq;
 using Unity.Entities;
 using Unity.Mathematics;
 using UnityEngine;
@@ -190,7 +191,21 @@ namespace LevelGeneration
 
                 var indices = mesh.GetTriangles(s);
                 if (mirrored) FlipWinding(indices);
-                part.Meshes.Add(new MeshPiece { Material = index, Vertices = moved, Normals = movedNormals, Tangents = movedTangents, Uvs = uvs, Indices = indices });
+                // Only the vertices this submesh's triangles use (the whole mesh's, per submesh, multiplied the level's
+                // vertices by its material count), indices renumbered to match
+                var remap = new Dictionary<int, int>();
+                var used = new List<int>();
+                for (int i = 0; i < indices.Length; i++)
+                {
+                    if (!remap.TryGetValue(indices[i], out int local)) { local = used.Count; remap[indices[i]] = local; used.Add(indices[i]); }
+                    indices[i] = local;
+                }
+                part.Meshes.Add(new MeshPiece
+                {
+                    Material = index, Indices = indices,
+                    Vertices = used.Select(v => moved[v]).ToArray(), Normals = used.Select(v => movedNormals[v]).ToArray(),
+                    Tangents = used.Select(v => movedTangents[v]).ToArray(), Uvs = used.Select(v => uvs[v]).ToArray(),
+                });
             }
         }
 

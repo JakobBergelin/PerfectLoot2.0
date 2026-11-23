@@ -231,20 +231,28 @@ def flower(b, u, v, h, size, m):
     b.surface([pts], h, m)
 
 
+def flat_region(fn):
+    """fn's region as polygons for a flat surface: one quad when it covers the whole tile, else a polygon per grid cell
+    (merged runs would leave T-junctions, and skirts along them)."""
+    cells = T.region(fn, merge=False)
+    full = len(cells) == N * N and all(len(p) == 4 for p in cells)
+    return [[(-TILE / 2, -TILE / 2), (TILE / 2, -TILE / 2), (TILE / 2, TILE / 2), (-TILE / 2, TILE / 2)]] if full else cells
+
+
 def grass_surface(b, kind, fn, h, S, M, R, slope=None, look=0):
-    """Natural ground (the "grass" style): grass, a dirt path a little lower, or a flower meadow; calm, with sparse tufts,
-    pebbles and flowers. Heights only vary away from the tile border, so neighbours meet. Returns the outline faces."""
+    """Natural ground (the "grass" style): grass, a dirt path a little lower, or a flower meadow; flat and calm, with sparse
+    tufts, pebbles and flowers, and a short side down to the bed so no gap shows where it meets lower ground. Returns the
+    bed: the region's outline for the faces down to water, removed afterwards (build_model's helpers)."""
     hf = (lambda u, v: h + slope(u, v)) if slope else (lambda u, v: h)
-    bump = lambda u, v, z: noise.noise(Vector((u * 0.8, v * 0.8, z))) * T._falloff(u, v)
     bed = region_faces(b, fn, lambda u, v: hf(u, v) - 0.06, M["FloorAlt"])
     if kind == "path":
-        b.surface(T.region(fn, merge=False), lambda u, v: hf(u, v) - 0.02 + 0.015 * bump(u, v, 4.0), M["Path"])
+        top = b.surface(flat_region(fn), lambda u, v: hf(u, v) - 0.02, M["Path"])
+        b.skirt(top, lambda u, v: hf(u, v) - 0.06, M["FloorAlt"], contour_only=True)
         for (u, v) in scatter(R, fn, 3, margin=0.5):
             prism(b, u, v, hf(u, v) - 0.03, R.uniform(0.06, 0.12), R.uniform(0.05, 0.1), M["Cliff"], sides=5, twist=R.uniform(0, 3), taper=0.6)
         return bed
     meadow = kind == "overgrowth"
-    top = b.surface(T.region(fn, merge=False), lambda u, v: hf(u, v) + 0.03 + 0.04 * bump(u, v, 1.0),
-                    M["Overgrowth"] if meadow else M["Floor"])
+    top = b.surface(flat_region(fn), lambda u, v: hf(u, v) + 0.03, M["Overgrowth"] if meadow else M["Floor"])
     b.skirt(top, lambda u, v: hf(u, v) - 0.06, M["FloorAlt"], contour_only=True)
     # Tufts: small tapered clumps, a few per tile
     for (u, v) in scatter(R, fn, 6 if meadow else (5 if look == 1 else 2), margin=0.4):
@@ -299,7 +307,7 @@ def tree(b, u, v, h, scale, M, R):
 def trees_surface(b, fn, h, S, M, R, seed):
     """A tree wall (the "trees" style): dark undergrowth, and a slope of growth up from its edge: bushes, stones and small
     trees there, bigger trees deeper in, some overhanging the edge. Returns the outline faces (hidden base)."""
-    floor = b.surface(T.region(fn, merge=False), h + 0.04, M["Undergrowth"])
+    floor = b.surface(flat_region(fn), h + 0.04, M["Undergrowth"])
     b.skirt(floor, h - 0.06, M["Undergrowth"], contour_only=True)
     edge = lambda u, v: min(fn(u, v), 0.35 - fn(u, v))
     for (u, v) in scatter(R, edge, 7, margin=0.3):
@@ -474,6 +482,7 @@ def build_model(name, corners, S, M, coll, seed=0, kind=None, look=0):
         k = CONN[c]["kind"]
         if k in FLOORLIKE:
             outlines[c] = (grass_surface if grass else floor_surface)(b, k, g[c], h[c], S, M, R, look=look)
+            if grass: helpers += outlines[c]    # Grass hides its bed under the surface: only its outline is used
         elif k == "rock":
             outlines[c] = trees_surface(b, g[c], h[c], S, M, R, seed) if S.get("wall") == "trees" else rock_surface(b, g[c], h[c], S, M, seed)
             helpers += outlines[c]
