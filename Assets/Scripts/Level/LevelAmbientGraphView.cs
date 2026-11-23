@@ -6,8 +6,8 @@ using UnityEngine.VFX;
 namespace LevelGeneration
 {
     /// <summary>
-    /// Shows the level's ambient VFX graph (LevelAmbientGraph): one effect over the whole level, so every split-screen
-    /// view sees it. It gets the level's bounds, the forest mask (where the trees are), the ground height and two point
+    /// Shows the level's ambient VFX graph (LevelAmbientGraph): one effect over the whole level, so every player sees
+    /// the same. It gets the level's bounds, the forest mask (where the trees are), the ground height and two point
     /// lists from the solved terrain: water (where mist drifts, with the way the water flows) and splashes (river water
     /// beside a bridge or rocks). For the eyes only; built from the solved level, so every machine sees the same.
     /// </summary>

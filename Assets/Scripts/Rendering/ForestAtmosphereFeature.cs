@@ -4,10 +4,9 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
-/// The forest's light and air, from each camera's volume (so every split-screen view gets its own): hands CanopyLight
-/// and HeightFog to the shaders as global values before the opaques draw, then draws the height fog over the opaques
-/// (PL_HeightFog.shader), before transparents. Turn Draw Fog off for a cheaper quality level; the canopy shadows cost
-/// next to nothing.
+/// The forest's light and air, from the camera's volume: hands CanopyLight and HeightFog to the shaders as global
+/// values before the opaques draw, then draws the height fog over the opaques (PL_HeightFog.shader), before
+/// transparents. Turn Draw Fog off for a cheaper quality level; the canopy shadows cost next to nothing.
 /// </summary>
 public class ForestAtmosphereFeature : ScriptableRendererFeature
 {

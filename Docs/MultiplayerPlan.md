@@ -1,9 +1,11 @@
 # Multiplayer Plan
 
-How local split-screen and later online play can work. Written 2026-11-06 on `flair/evening-polish`. No code has been changed for this plan.
+How local couch co-op and later online play can work. Written 2026-11-06 on `flair/evening-polish`. No code has been changed for this plan.
 
 **Update 2026-11-13:** phases O2 to O5 are done on `net/foundation`. How the online game works now is in
 [MultiplayerArchitecture.md](MultiplayerArchitecture.md).
+
+**Update 2026-11-23:** there will be no split-screen. Local play is couch co-op on one shared camera, so phase M4 and the split-screen risks below are dropped, and question 3 is answered.
 
 **Update 2026-11-12:** couch co-op has shipped since (shared camera with a tether, `CoopManager`, `CoopHUD`, per-player managers and HUDs through `IPerPlayer`), so the local phases M1-M5 below are mostly history. The online plan agreed on 2026-11-12, with Steam, is in [Online with Steam](#online-with-steam-2026-11-12) at the end. It builds on the facts in "Networking" below, which still apply.
 
@@ -14,7 +16,7 @@ Netcode for Entities is not in this project (`Packages/manifest.json`, `Library/
 ## Summary
 
 - **The simulation is mostly ready. The layer around it is not.** Skills, damage, enemy AI and flow fields work per entity. Input, managers, camera and HUDs all assume one player.
-- **Split-screen needs no networking.** All players live in one world, so it can ship on its own, and its work also pays for online.
+- **Couch co-op needs no networking.** All players live in one world, so it can ship on its own, and its work also pays for online.
 - **Order:** per-player input and managers, then cameras and HUDs, then a networking spike.
 - **Online recommendation:** Netcode for Entities with a player-hosted server. The server runs the whole simulation; clients predict only their own movement. Decide after a spike, because of the blockers in "Networking".
 
@@ -88,7 +90,7 @@ Netcode for Entities is not in this project (`Packages/manifest.json`, `Library/
 
 Harmless for now: `EnemyManager.cs:168` (dev spawn position), `VfxManager.Instance` and `AssetStorage.Instance` (shared by design), and `LootGenerationManager.Instance` (stateless service as far as I read, not fully checked).
 
-## Phases: local split-screen
+## Phases: local couch co-op
 
 Sizes are rough: S is a day or less, M a few days, L a week or more.
 
@@ -98,7 +100,7 @@ Sizes are rough: S is a day or less, M a few days, L a week or more.
 
 **M3. World rules for several players (M).** Spawner triggers, chunk streaming, dungeon targeting, fail rule, loot pickup, meter owner. Test with a second real `PlayerRig` on one screen with a shared camera, before any split rendering.
 
-**M4. Split-screen cameras and HUD (L).** `Camera.rect` per player: left and right for 2 players, quarters for 3-4. `CameraFollow` targets by index. HUD roots stretch to the player's viewport rather than the screen, and world-anchored labels subtract the root's origin. The hard part is size: panels are designed for 1920x1080 and a half-screen viewport can't hold the character panel at full scale. Try scaling the root first. If that fails, try a `PanelSettings` per player rendering to a texture. [A] Spike this before committing.
+**M4. Split-screen cameras and HUD (L). Dropped 2026-11-23: one shared camera instead.** `Camera.rect` per player: left and right for 2 players, quarters for 3-4. `CameraFollow` targets by index. HUD roots stretch to the player's viewport rather than the screen, and world-anchored labels subtract the root's origin. The hard part is size: panels are designed for 1920x1080 and a half-screen viewport can't hold the character panel at full scale. Try scaling the root first. If that fails, try a `PanelSettings` per player rendering to a texture. [A] Spike this before committing.
 
 **M5. Join flow (M).** Press Start on an unpaired pad to join, in town only. Character pick for the new player, leave, and pad disconnect handling. Save handling depends on question 1.
 
@@ -153,7 +155,7 @@ What each side owns:
 
 ### Loot rules
 
-Recommended: **personal loot.** Each kill rolls separately for each player, and only they see and can pick up their drops. It suits a game about hunting the perfect roll, avoids fights over items, and needs no trading. It maps well to the code: `GroundLootManager` gets an owner per item, and `DropFromTable` (called from `DungeonManager.cs:210`) runs once per player. In split-screen each HUD filters labels by owner. The drop rate per player stays the same.
+Recommended: **personal loot.** Each kill rolls separately for each player, and only they see and can pick up their drops. It suits a game about hunting the perfect roll, avoids fights over items, and needs no trading. It maps well to the code: `GroundLootManager` gets an owner per item, and `DropFromTable` (called from `DungeonManager.cs:210`) runs once per player. In couch co-op each player's HUD filters labels by owner. The drop rate per player stays the same.
 
 ### Online phases
 
@@ -170,8 +172,8 @@ Recommended: **personal loot.** Each kill rolls separately for each player, and 
 ## Risks
 
 - **Size of M2.** Largest refactor before anything visible happens. Mitigation: it ships with no change for one player, one manager at a time.
-- **Split-screen UI.** Panels may need a second layout. Biggest unknown in the local work.
-- **Render cost.** Each viewport renders the scene again, and `PC_Renderer` has two renderer features I did not check against `Camera.rect`. Measure in M4 on target hardware. [A]
+- ~~**Split-screen UI.** Panels may need a second layout. Biggest unknown in the local work.~~ No split-screen (2026-11-23).
+- ~~**Render cost.** Each viewport renders the scene again, and `PC_Renderer` has two renderer features I did not check against `Camera.rect`. Measure in M4 on target hardware. [A]~~ No split-screen, one camera (2026-11-23).
 - **Flow field cost** scales with players: each field refreshes separately and walks physics. Should be fine at 4, not measured.
 - **Fixed tick.** Touches every skill's feel, and frame-based assumptions may hide in the skills.
 - **Netcode version risk.** Entities 6.6 is newer than what I know. The package's API may differ from my memory, so facts marked [A] may need rework.
@@ -179,14 +181,14 @@ Recommended: **personal loot.** Each kill rolls separately for each player, and 
 
 ## Questions for you
 
-1. Split-screen accounts: is the second player a second character on the same account (and can two characters wear the same item?), or a second account on the same machine?
+1. Couch co-op accounts: is the second player a second character on the same account (and can two characters wear the same item?), or a second account on the same machine?
 2. Maximum players: 2 or 4? `FlowFields.MaxFields` is 4 today; 2 makes the UI far easier.
-3. Is true split-screen a must, or is a shared camera acceptable? Shared would skip M4 but needs a leash, and the flow field comment suggests you want players far apart.
+3. Is true split-screen a must, or is a shared camera acceptable? Shared would skip M4 but needs a leash, and the flow field comment suggests you want players far apart. **Answered 2026-11-23: a shared camera; no split-screen.**
 4. Death in a party: wait for respawn as now, or revive by a teammate? Does a Survive step fail only when all are down?
 5. Portals: does one player pull everyone along, or must all stand in range or vote?
 6. Personal loot as recommended, or shared loot that can be fought over or traded?
 7. Is cheating a concern at all (trading, ladders)? If yes, saves must move to a server, which is a much bigger project.
-8. Should online and split-screen combine (two local players joining an online game)? I'd leave this out at first.
+8. Should online and couch co-op combine (two local players joining an online game)? I'd leave this out at first.
 9. Enemy scaling by player count: wanted later? Stats are placeholders, so this only needs a hook for now.
 10. Which platforms? Steam or console changes relay and session choices.
 

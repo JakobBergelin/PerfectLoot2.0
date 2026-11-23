@@ -37,4 +37,4 @@ Read [Docs/ArtStyleGuide.md](Docs/ArtStyleGuide.md) before creating any art in t
 
 ## Multiplayer
 
-The end goal is a multiplayer and split-screen game, so make systems work for multiple players.
+The end goal is a multiplayer game: online co-op, and local couch co-op on one shared camera (no split-screen). Make systems work for multiple players.

@@ -41,7 +41,7 @@ Counted in Play mode with a test build (always crit, 30% dodge and block, Undert
 - Slingshot spark where a shot splits. Seen once, a shard through the Mirror Image copy.
 - Bulwark: a gold half ring in front of the wearer when a hit lands from the front.
 - Camera shake on crits: each skill asset has Crit Shake (0 to 1). The strongest crit of the frame counts, so a crowd doesn't add up. `CameraSettings` has Shake Strength (1 m at Crit Shake 1, trauma squared, so 0.3 is about 9 cm), Shake Decay and Shake Frequency; Shake Strength 0 turns it off. Starting values: Cold Snap 0.5, Ball Lightning 0.35, Frozen Orb 0.3, Tornado 0.3, Hookshot Slash 0.25. Frozen Orb and Tornado crits went through (trauma 0.27); the 1 m strength was set after, and how it feels hasn't been judged.
-- One camera: any player's crit shakes it. With split-screen, each camera should take only its own player's shakes.
+- One shared camera (couch co-op has no split-screen): any player's crit shakes it. Open question: should only crits from a player's own skills shake it, or from anyone's?
 
 ## Notes
 

@@ -93,7 +93,7 @@ There are two ways to do this:
 
 A stick-driven virtual cursor is not an option: the package's Virtual Mouse component works with uGUI only. [D]
 
-The navigator costs a little more now, and avoids redoing all panels for split-screen. Panels register their elements with `navigator.Add(element, onSelect, onDeselect, onActivate)`. Tooltip show and hide methods already exist, so they plug straight in.
+The navigator costs a little more now, and avoids redoing all panels for couch co-op. Panels register their elements with `navigator.Add(element, onSelect, onDeselect, onActivate)`. Tooltip show and hide methods already exist, so they plug straight in.
 
 While a gamepad player has a panel open, zero that player's `Move`, or the left stick walks and navigates at once. Today only typing blocks `Move` (`InputsDataSystem.cs:44`). Keyboard players keep moving as they do now.
 
@@ -127,9 +127,9 @@ New class `LocalPlayerInput`: owns one `InputSystem_Actions`, its `devices` list
 
 - One player: `devices` stays null and every device works. The scheme follows the last real input: stick tilt over 0.5 or any gamepad button switches to Gamepad; mouse moved a few pixels, a click, or a key switches back. Stick drift must not flip it.
 - On Gamepad: hide the cursor, show reticle and gamepad prompts, and clear hovers. On KeyboardMouse: the reverse.
-- Disconnect: keep the scheme, show a "reconnect" note. With split-screen the slot waits for its pad.
+- Disconnect: keep the scheme, show a "reconnect" note. In couch co-op the player's slot waits for its pad.
 
-This is the same class the split-screen plan needs, so build it once. See `Docs/MultiplayerPlan.md`, phase M1. The three HUDs that make their own `new InputSystem_Actions()` move onto it too.
+This is the same class couch co-op needs, so build it once. See `Docs/MultiplayerPlan.md`, phase M1. The three HUDs that make their own `new InputSystem_Actions()` move onto it too.
 
 ## Phases
 

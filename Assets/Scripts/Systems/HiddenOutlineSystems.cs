@@ -4,8 +4,8 @@ using UnityEngine;
 /// <summary>
 /// Passes the camera's Hidden Outline settings (CameraFollow) to PL_Comic's Player X-Ray passes as global shader values:
 /// wherever anything stands between the camera and a player, the player shows as a colored outline. The renderer's
-/// Player X-Ray features draw those passes for the Player layer only, and each camera tests its own depth, so it works
-/// for every player and for split-screen.
+/// Player X-Ray features draw those passes for the Player layer only, and the camera tests its depth, so it works for
+/// every player.
 /// </summary>
 [WorldSystemFilter(WorldSystemFilterFlags.Presentation)]
 [UpdateInGroup(typeof(PresentationSystemGroup))]

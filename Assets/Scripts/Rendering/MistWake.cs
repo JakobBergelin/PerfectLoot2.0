@@ -4,9 +4,9 @@ using UnityEngine;
 /// <summary>
 /// The mist wake: a top-down map over the level (the same area as the forest mask) of how far the height fog's mist has
 /// been pushed and how much has been cleared away. Skills, dashes and footsteps stir it (VfxMist, from the effects they
-/// show); each frame it eases back to calm, so pushed mist slowly fills back in. One map for every camera, so all
-/// split-screen views see the same wake; every machine stirs it from the effects it shows, so they match. Updated on the
-/// GPU (PL_MistWake.compute); PL_HeightFog.shader reads it (_PL_MistWake).
+/// show); each frame it eases back to calm, so pushed mist slowly fills back in. One map for the whole level; every
+/// machine stirs it from the effects it shows, so they match. Updated on the GPU (PL_MistWake.compute);
+/// PL_HeightFog.shader reads it (_PL_MistWake).
 /// </summary>
 public static class MistWake
 {
