@@ -79,6 +79,8 @@ namespace LevelGeneration
         public AmbientLifeSet AmbientLife;
         [Tooltip("A VFX graph of the level's air and water (the biome's): fireflies, pollen, falling leaves, mist over the water, splashes. Decoration only")]
         public UnityEngine.VFX.VisualEffectAsset AmbientGraph;
+        [Tooltip("Marks painted on the floors (the biome's): moss, fallen leaves, mud, flowers. Decoration only")]
+        public LevelDecalSet Decals;
 
         [Header("Generation")]
         public LevelGenerationMode Mode = LevelGenerationMode.GenerateAtRuntime;

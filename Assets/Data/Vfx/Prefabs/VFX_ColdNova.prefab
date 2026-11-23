@@ -49,6 +49,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::VfxInstance
   Linger: 0.9
   HideOnRelease: []
+  Lights: []
+  LightFade: 0.25
+  LightFlash: 0
+  GroundMark: {fileID: 2100000, guid: 92c33ac57578ae942a575dbe60afd199, type: 2}
+  GroundMarkSize: 6
+  GroundMarkLife: {x: 4, y: 3}
 --- !u!1 &2624596671950793466
 GameObject:
   m_ObjectHideFlags: 0

@@ -29,6 +29,9 @@ Material:
     - _Brightness: 1
     - _CrustAmount: 0.45
     - _Current: 0.9
+    - _EdgeFoam: 0.28
+    - _FleckAmount: 0.3
+    - _FleckScale: 1.6
     - _FlowSpeed: 0.2
     - _FoamWidth: 0.18
     - _Mode: 0

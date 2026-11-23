@@ -246,6 +246,14 @@ namespace LevelGeneration
                 LevelAmbientGraphView.Build(EntityManager.GetComponentData<LevelAmbientGraph>(layoutEntity).Graph.Value, ref blob, stream.Ground,
                                             surface.Terrain, stream.JobFlow.ToArray(), stream.Margin, _forestMask, _forestMatrix);
             else if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null) LevelAmbientGraphView.Clear();
+            // Moss, leaves, mud and flowers painted on the floors (the layout's decal set), for the eyes only
+            if (EntityManager.HasBuffer<LevelDecal>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
+            {
+                var decals = EntityManager.GetBuffer<LevelDecal>(layoutEntity).ToNativeArray(Allocator.Temp);
+                LevelDecalsView.Build(decals, ref blob, stream.Ground, surface.Terrain, seed);
+                decals.Dispose();
+            }
+            else if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null) LevelDecalsView.Clear();
             // Animals are only for the eyes: worlds that render get them (a dedicated server doesn't)
             if (EntityManager.HasBuffer<LevelAmbientCreature>(layoutEntity) && World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
                 BuildAmbientLife(layoutEntity, ref blob, stream, seed, surface);
@@ -361,16 +369,16 @@ namespace LevelGeneration
             Shader.SetGlobalFloat(GroundYId, blob.Origin.y);
         }
 
-        // No level, no forest
+        // No level, no forest. Only the world that made them (one that renders: it has a mask) clears the views; a world
+        // without one (a server) leaves them alone, and it can't ask for systems while it's being destroyed
         void ClearForestMask()
         {
-            if (World.GetExistingSystemManaged<PresentationSystemGroup>() != null)
-            {
-                LevelAmbientGraphView.Clear();
-                MistWake.Clear();
-            }
+            if (_forestMask == null) return;
+            LevelAmbientGraphView.Clear();
+            MistWake.Clear();
+            LevelDecalsView.Clear();
             Shader.SetGlobalTexture(ForestMaskId, Texture2D.blackTexture);
-            if (_forestMask != null) Object.Destroy(_forestMask);
+            Object.Destroy(_forestMask);
             _forestMask = null;
         }
 

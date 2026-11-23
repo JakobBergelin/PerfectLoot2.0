@@ -161,6 +161,15 @@ namespace LevelGeneration
         public UnityObjectRef<UnityEngine.VFX.VisualEffectAsset> Graph;
     }
 
+    /// <summary>A kind of mark the layout paints on its floors (LevelDecalSet; LevelDecalsView paints them).</summary>
+    public struct LevelDecal : IBufferElementData
+    {
+        public UnityObjectRef<UnityEngine.Material> Material;
+        public LevelDecalSet.Spot Spot;
+        public int Count;
+        public float2 Size;
+    }
+
     /// <summary>A kind of small animal the level is home to (AmbientLifeSet), on the layout entity.</summary>
     public struct LevelAmbientCreature : IBufferElementData
     {

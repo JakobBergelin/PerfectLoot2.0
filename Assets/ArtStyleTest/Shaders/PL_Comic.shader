@@ -17,6 +17,7 @@ Shader "PerfectLoot/Comic"
         _DeepThreshold ("Deep Shadow Threshold", Range(0,1)) = 0.25
         _AmbientStrength ("Ambient Strength", Range(0,2)) = 0.35
         _ShadowReceive ("Receive Shadows", Range(0,1)) = 1
+        [ToggleUI] _DecalReceive ("Receive Decals (floors: moss, scorch, slime)", Float) = 0
 
         [Header(Ink Pattern)]
         [KeywordEnum(Hatch, Halftone)] _Pattern ("Shadow Pattern", Float) = 0
@@ -64,6 +65,7 @@ Shader "PerfectLoot/Comic"
             half _DeepThreshold;
             half _AmbientStrength;
             half _ShadowReceive;
+            half _DecalReceive;
             half4 _InkColor;
             half _PatternScale;
             half _PatternAngle;
@@ -179,11 +181,13 @@ Shader "PerfectLoot/Comic"
             #pragma multi_compile_fragment _ _ADDITIONAL_LIGHT_SHADOWS
             #pragma multi_compile_fragment _ _SHADOWS_SOFT _SHADOWS_SOFT_LOW _SHADOWS_SOFT_MEDIUM _SHADOWS_SOFT_HIGH
             #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            #pragma multi_compile_fragment _ _DBUFFER_MRT1 _DBUFFER_MRT2 _DBUFFER_MRT3
             #pragma multi_compile_fog
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DBuffer.hlsl"
 
             struct Attributes
             {
@@ -255,6 +259,12 @@ Shader "PerfectLoot/Comic"
                 half3 n = normalize(input.normalWS);
                 half3 v = GetWorldSpaceNormalizeViewDir(input.positionWS);
                 half4 albedo = SAMPLE_TEXTURE2D(_BaseMap, sampler_BaseMap, input.uv) * _BaseColor;
+            #if defined(_DBUFFER)
+                // Decals (moss, scorch, slime) paint the floor before it's lit, so they get the two tones and hatching too
+                half3 decal = albedo.rgb;
+                ApplyDecalToBaseColor(input.positionCS, decal);
+                albedo.rgb = lerp(albedo.rgb, decal, _DecalReceive);
+            #endif
 
                 InputData inputData = (InputData)0;
                 inputData.positionWS = input.positionWS;

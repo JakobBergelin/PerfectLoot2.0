@@ -21,6 +21,9 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
     public override void Create()
     {
         _globals = new GlobalsPass { renderPassEvent = RenderPassEvent.BeforeRenderingOpaques };
+        // Normals before the opaques make URP draw the depth texture in a prepass, which has no water (PL_Liquid has no
+        // DepthNormals pass): the water reads it for its foam ring
+        _globals.ConfigureInput(ScriptableRenderPassInput.Normal);
         _fog = new FogPass { renderPassEvent = RenderPassEvent.BeforeRenderingTransparents };
         _fog.ConfigureInput(ScriptableRenderPassInput.Depth);
     }
@@ -43,7 +46,7 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
 
     static readonly int CanopyParamsId = Shader.PropertyToID("_PL_CanopyParams"), CanopyCloudsId = Shader.PropertyToID("_PL_CanopyClouds"),
                         CanopyShadeId = Shader.PropertyToID("_PL_CanopyShade"),
-                        CanopyHeightId = Shader.PropertyToID("_PL_CanopyHeight"), FogColorId = Shader.PropertyToID("_PL_FogColor"),
+                        CanopyHeightId = Shader.PropertyToID("_PL_CanopyHeight"), WaterDepthFoamId = Shader.PropertyToID("_PL_WaterDepthFoam"), FogColorId = Shader.PropertyToID("_PL_FogColor"),
                         FogParamsId = Shader.PropertyToID("_PL_FogParams"), FogShapeId = Shader.PropertyToID("_PL_FogShape");
 
     /// <summary>The volume's values as global shader values, for this camera.</summary>
@@ -73,6 +76,7 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
                 context.cmd.SetGlobalVector(CanopyShadeId, d.CanopyShade);
                 context.cmd.SetGlobalVector(CanopyCloudsId, d.CanopyClouds);
                 context.cmd.SetGlobalFloat(CanopyHeightId, d.CanopyHeight);
+                context.cmd.SetGlobalFloat(WaterDepthFoamId, 1f);
                 context.cmd.SetGlobalVector(FogColorId, d.FogColor);
                 context.cmd.SetGlobalVector(FogParamsId, d.FogParams);
                 context.cmd.SetGlobalVector(FogShapeId, d.FogShape);

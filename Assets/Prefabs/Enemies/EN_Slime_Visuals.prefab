@@ -108,6 +108,7 @@ GameObject:
   - component: {fileID: 1597090780560754649}
   - component: {fileID: 3207762809232785574}
   - component: {fileID: 5786575687853241530}
+  - component: {fileID: 3870653677247823298}
   m_Layer: 9
   m_Name: EN_Slime_Visuals
   m_TagString: Untagged
@@ -324,6 +325,21 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::UnitVfxAuthoring
   Hit: 11
   Death: 12
+--- !u!114 &3870653677247823298
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7900000000000000001}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b80701ee55719424eb647256f696067b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::SlimeTrailAuthoring
+  Material: {fileID: 2100000, guid: c6821b8098db5134ebe78b8a57005ac3, type: 2}
+  Spacing: 0.9
+  Size: 1.4
 --- !u!1001 &1920254186670335976
 PrefabInstance:
   m_ObjectHideFlags: 0

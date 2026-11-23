@@ -52,6 +52,9 @@ MonoBehaviour:
   - {fileID: 4263579541369390459}
   LightFade: 0.35
   LightFlash: 0.1
+  GroundMark: {fileID: 2100000, guid: d1071d3f82f8b2d4dbebaa7da6ab225f, type: 2}
+  GroundMarkSize: 2.6
+  GroundMarkLife: {x: 6, y: 3}
 --- !u!1 &5553682174441880971
 GameObject:
   m_ObjectHideFlags: 0

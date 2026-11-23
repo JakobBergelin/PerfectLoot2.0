@@ -23,6 +23,11 @@ public class VfxInstance : MonoBehaviour
     [Min(0.01f)] public float LightFade = 0.25f;
     [Tooltip("Above 0: the lights only flash for this many seconds (an impact), then fade")]
     [Min(0f)] public float LightFlash;
+    [Tooltip("A mark it leaves on the ground as it starts (scorch, frost): a decal material (GroundDecals)")]
+    public Material GroundMark;
+    [Min(0f)] public float GroundMarkSize = 3f;
+    [Tooltip("Seconds the mark stays, then the seconds it takes to fade")]
+    public Vector2 GroundMarkLife = new Vector2(6f, 3f);
 
     ParticleSystem[] _systems;
     VisualEffect[] _graphs;
@@ -61,6 +66,9 @@ public class VfxInstance : MonoBehaviour
         _startedAt = Time.time;
         _fadeFrom = -1f;
         SetLights(1f);
+        if (GroundMark != null)
+            GroundDecals.Place(GroundMark, transform.position, GroundMarkSize * transform.localScale.x, Random.Range(0f, 360f),
+                               GroundMarkLife.x, GroundMarkLife.y);
     }
 
     public void End()

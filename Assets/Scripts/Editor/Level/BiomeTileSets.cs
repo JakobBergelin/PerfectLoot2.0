@@ -64,6 +64,8 @@ public static class BiomeTileSets
         // The level's ambient VFX graph (fireflies, pollen, leaves, mist over the water, splashes; LevelAmbientGraph), an asset path;
         // it replaces the camera-following ambient particles
         public string AmbientGraph;
+        // Marks painted on the floors (LevelDecalSet: moss, leaves, mud, flowers), an asset path
+        public string Decals;
 
         // A forest kit (pl_wfc_kit's grass, trees and rope styles): colors for its own slots; null for biomes without them.
         // Path, Meadow and Bridge replace the colors the kit otherwise derives from the floor.
@@ -127,6 +129,7 @@ public static class BiomeTileSets
             Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
             CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f,
             AmbientGraph = "Assets/Data/Vfx/Graphs/BrightwaterHollow_Ambient.vfx",
+            Decals = DecalBuilder.BrightwaterSet,
             Style = new BiomeTileGenerator.Style(),
             Pattern = FloorPattern.Mud, Floor = "#4E8A58", FloorAlt = "#3F7449", FloorGap = "#2E5A3C",
             WallSide = "#7E7A70", WallTop = "#9A968C", Bank = "#5E4634", Rock = "#8E8A80", Accent = "#E0709E", AccentGlow = "#FF8AB8", AccentGlowStrength = 0.25f,
@@ -346,6 +349,8 @@ public static class BiomeTileSets
         material.SetColor("_BaseColor", color);
         material.SetColor("_ShadowColor", shadow);
         material.SetTexture("_BaseMap", texture);
+        // Floors take decals (moss, mud, scorch, slime trails); walls, rocks and props don't
+        material.SetFloat("_DecalReceive", template == ComicFloor ? 1f : 0f);
         return material;
     }
 
@@ -538,6 +543,7 @@ public static class BiomeTileSets
                 layout.Backdrop = BiomeKitBuilder.Backdrop(b);
                 layout.AmbientLife = BiomeKitBuilder.AmbientLife(b);
                 layout.AmbientGraph = b.AmbientGraph != null ? AssetDatabase.LoadAssetAtPath<UnityEngine.VFX.VisualEffectAsset>(b.AmbientGraph) : null;
+                layout.Decals = b.Decals != null ? AssetDatabase.LoadAssetAtPath<LevelDecalSet>(b.Decals) : null;
                 layout.BackgroundRing = !BiomeKitBuilder.HasKit(b) ? 0 : layout.Backdrop != null ? 5 : 3;
                 layout.BackgroundBorder = WfcCornerRule.NotWalkable;
                 EditorUtility.SetDirty(layout);

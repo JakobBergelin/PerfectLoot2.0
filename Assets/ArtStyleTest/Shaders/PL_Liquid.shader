@@ -19,6 +19,9 @@ Shader "PerfectLoot/Liquid"
         _RippleWidth ("Ripple Line Width", Range(0,0.3)) = 0.06
         _FlowSpeed ("Flow Speed", Range(0,2)) = 0.25
         _Current ("River Current (m/s)", Range(0,3)) = 0.9
+        _EdgeFoam ("Edge Foam Width (m)", Range(0,1)) = 0.28
+        _FleckAmount ("River Foam Flecks", Range(0,1)) = 0.3
+        _FleckScale ("Fleck Scale", Range(0.1,4)) = 1.6
         [HDR] _GlowColor ("Lava Glow (HDR)", Color) = (4,0.9,0.2,1)
         _CrustColor ("Lava Crust Color", Color) = (0.16,0.06,0.07,1)
         _CrustAmount ("Lava Crust Amount", Range(0,1)) = 0.45
@@ -34,6 +37,8 @@ Shader "PerfectLoot/Liquid"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "PL_Abyss.hlsl"
         #include "PL_Canopy.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
+        float _PL_WaterDepthFoam;   // 1 when the depth texture is drawn without the water (ForestAtmosphereFeature)
 
         CBUFFER_START(UnityPerMaterial)
             half4 _DeepColor;
@@ -46,6 +51,9 @@ Shader "PerfectLoot/Liquid"
             half _RippleWidth;
             half _FlowSpeed;
             half _Current;
+            half _EdgeFoam;
+            half _FleckAmount;
+            half _FleckScale;
             half4 _GlowColor;
             half4 _CrustColor;
             half _CrustAmount;
@@ -120,6 +128,7 @@ Shader "PerfectLoot/Liquid"
                 float3 positionWS : TEXCOORD1;
                 float  fogFactor  : TEXCOORD2;
                 float2 flow       : TEXCOORD3;     // World xz
+                float4 screenPos  : TEXCOORD4;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
@@ -136,6 +145,7 @@ Shader "PerfectLoot/Liquid"
                 o.uv = input.uv;
                 o.flow = mul((float3x3)UNITY_MATRIX_M, float3(input.flow.x, 0.0, input.flow.y)).xz;
                 o.fogFactor = ComputeFogFactor(pos.positionCS.z);
+                o.screenPos = ComputeScreenPos(pos.positionCS);
                 return o;
             }
 
@@ -178,6 +188,18 @@ Shader "PerfectLoot/Liquid"
                 float a1 = PLL_Noise(p1 * _RippleScale + float2(t, t * 0.4)) + PLL_Noise(p1 * _RippleScale * 1.7 - float2(t * 0.6, t * 0.9) + 13.1);
                 float ripple = abs(lerp(a0, a1, abs(1.0 - 2.0 * phase0)) - 1.0);
                 color = lerp(color, _RippleColor.rgb, step(ripple, _RippleWidth) * step(_FoamWidth * 2.0, shore));
+                // Foam flecks riding the current (rivers only), carried like the ripples
+                float f0 = PLL_Noise(p0 * _FleckScale + 31.7), f1 = PLL_Noise(p1 * _FleckScale + 31.7);
+                float fleck = step(1.0 - _FleckAmount * 0.35, lerp(f0, f1, abs(1.0 - 2.0 * phase0)));
+                fleck *= step(0.1, length(input.flow)) * step(_FoamWidth * 2.0, shore);
+                color = lerp(color, _FoamColor.rgb, fleck);
+                // A hard foam ring wherever something stands in the water (bridge posts, rocks, fish): the scene's depth
+                // behind the surface (the depth prepass has no water) is close to the water's own
+                float2 screenUV = input.screenPos.xy / input.screenPos.w;
+                float gap = LinearEyeDepth(SampleSceneDepth(screenUV), _ZBufferParams) - input.screenPos.w;
+                float lap = _EdgeFoam * (1.0 + 0.25 * sin(_Time.y * 2.0 + p.x * 1.3 + p.y));
+                float standing = step(gap, lap);     // The riverbed is deeper than this, so only what stands in it
+                color = lerp(color, _FoamColor.rgb, standing * _PL_WaterDepthFoam);
                 // Foam hugging the bank, with a second thinner ring that breathes in and out
                 float ring = _FoamWidth * (1.6 + 0.4 * sin(_Time.y * 1.3 + p.x * 0.7 + p.y * 0.5));
                 float foam = step(shore + wobble, _FoamWidth) + step(abs(shore + wobble - ring), _FoamWidth * 0.22);

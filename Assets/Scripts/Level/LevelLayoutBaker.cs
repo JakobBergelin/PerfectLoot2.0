@@ -273,6 +273,14 @@ namespace LevelGeneration
                         });
             }
             if (authoring.AmbientGraph != null) AddComponent(entity, new LevelAmbientGraph { Graph = authoring.AmbientGraph });
+            if (authoring.Decals != null)
+            {
+                DependsOn(authoring.Decals);
+                var decals = AddBuffer<LevelDecal>(entity);
+                foreach (var decal in authoring.Decals.Decals)
+                    if (decal?.Material != null && decal.Count > 0)
+                        decals.Add(new LevelDecal { Material = decal.Material, Spot = decal.Spot, Count = decal.Count, Size = decal.Size });
+            }
             var placementEnemyBuffer = AddBuffer<LevelPlacementEnemy>(entity);
             foreach (var entry in placementEnemies)
             {

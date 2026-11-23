@@ -241,3 +241,14 @@ Two volume settings, set per biome in its volume profile and drawn by `ForestAtm
 
 - **Ambient graph** (`LevelLayoutAuthoring.AmbientGraph`, set per biome in `BiomeTileSets`): one VFX graph over the whole level, so every player sees the same. Brightwater Hollow's has fireflies in the forest (pale warm candle, never Summoner gold), pollen over the clearings, leaves falling at the forest's edge and lying a while, mist wisps drifting downstream over the water, and splashes where rivers pass bridges and rocks. It replaces the camera-following ambient particles for biomes that have one; `LevelAmbientGraphView` hands it the forest mask, ground height and water points.
 - **Mist wake** (`MistWake`, `VfxMist`): skills push, swirl and clear the height fog's mist, and it slowly fills back in. Fire burns tunnels and blows it away where it lands, tornadoes and whirlwinds swirl it, dashes shove it aside, Undertow pulls it in and players leave a faint trail. A new effect stirs the mist by adding a rule to `VfxMist.Rules`.
+
+## 17. Water foam and ground decals
+
+- **Water** stays a flat comic color. Two foam additions in `PL_Liquid.shader` (water mode only):
+  - A hard white ring wherever something stands in the water (rocks, posts, fish). It compares the depth texture, which has no water in it (the Forest Atmosphere feature forces a depth-normals prepass), with the water's own depth. The riverbed lies deeper than the ring's width (`Edge Foam Width`), so it never foams.
+  - Foam flecks drifting downstream on rivers (`River Foam Flecks`, `Fleck Scale`), carried like the ripples.
+- **Decals** use URP's Decal feature in DBuffer mode, albedo only, on `PC_Renderer`. They tint the floor before it's lit, so they get the two tones, hatching, leaf shade and fireball light pools.
+  - Only materials with **Receive Decals** on take them: the floor-template materials (`BiomeTileSets.Comic` sets it for `ComicFloor`). Units, props and rocks never get painted.
+  - Sprites are drawn in code (`Tools/VFX/Build Decals`, `DecalBuilder`) with hard edges, flat colors, and low contrast on floors.
+  - **Level decals** (`LevelDecalSet`, per biome; Brightwater Hollow only for now): moss and fallen leaves along the forest's edge, mud by the water, small rose and off-white flower patches in clearings. They're placed from the level seed, so every machine paints the same.
+  - **Ground marks** (`GroundDecals`): scorch where a fireball lands, frost from Cold Nova, and the slimes' trails (`SlimeTrailAuthoring` on the slime prefab). They hold for a few seconds, then fade; at most 64 at once. An effect leaves one through `VfxInstance.GroundMark`.
