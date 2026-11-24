@@ -57,6 +57,12 @@ public static class BiomeTileSets
         public string AmbientSky, AmbientEquator, AmbientGround, Fog; public float FogDensity = 0.012f;
         public float Bloom = 0.35f, Saturation = 5f, Contrast = 8f, Vignette = 0.28f;
         public string ShadowTint, HighlightTint;
+        // How far the shadows lean to ShadowTint and the highlights to HighlightTint (Shadows Midtones Highlights, 0 = off;
+        // only set when the profile has none, then tuned in its inspector)
+        public float Toning;
+        // Tilt-shift blur at the top and bottom of the screen (TiltShift volume, pixels at 1080p, 0 = off; only set when the
+        // profile has none, then tuned in its inspector)
+        public float TiltShift;
         public AmbientKind Ambient;
         // Sunlight through a canopy (CanopyLight volume: leaf and cloud shadows, 0 = off; only set when the profile has none, then tuned in its inspector) and low mist that thickens toward
         // the forest (HeightFog volume: Mist color, 0 = off)
@@ -127,7 +133,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
-            CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f,
+            CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f, Toning = 0.3f, TiltShift = 4f,
             AmbientGraph = "Assets/Data/Vfx/Graphs/BrightwaterHollow_Ambient.vfx",
             Decals = DecalBuilder.BrightwaterSet,
             Style = new BiomeTileGenerator.Style(),
@@ -471,8 +477,10 @@ public static class BiomeTileSets
         var grading = Get<ColorAdjustments>(profile);
         grading.saturation.Override(b.Saturation);
         grading.contrast.Override(b.Contrast);
-        // No split toning: the warm key light and cool fog already split the scene, and toning turned every biome brown
+        // No split toning: it tints the whole image around one balance point and turned every biome brown. Shadows
+        // Midtones Highlights tints the shadows and highlights only and leaves the midtones (the accents) alone.
         if (profile.TryGet<SplitToning>(out var split)) split.active = false;
+        if (b.Toning > 0f && !profile.Has<ShadowsMidtonesHighlights>()) ApplyToning(b, profile);
         if (profile.TryGet<MotionBlur>(out var blur)) blur.active = false;
         // Canopy light and mist are only filled in the first time: after that they're tuned in the profile's inspector
         if (b.CanopyShade > 0f && !profile.Has<global::CanopyLight>()) Get<global::CanopyLight>(profile).strength.Override(b.CanopyShade);
@@ -482,8 +490,28 @@ public static class BiomeTileSets
             mist.intensity.Override(b.MistIntensity);
             if (b.Mist != null) mist.color.Override(Hex(b.Mist));
         }
+        if (b.TiltShift > 0f && !profile.Has<global::TiltShift>()) Get<global::TiltShift>(profile).strength.Override(b.TiltShift);
         EditorUtility.SetDirty(profile);
         return profile;
+    }
+
+    /// <summary>
+    /// Cool shadows and warm highlights (Shadows Midtones Highlights): the biome's ShadowTint and HighlightTint, at its
+    /// brightest (only the hue counts), Toning of the way from neutral. Filled in once, then tuned in the profile's inspector.
+    /// </summary>
+    public static void ApplyToning(Biome b, VolumeProfile profile)
+    {
+        static Vector4 Wheel(string hex, float amount)
+        {
+            var c = Hex(hex);
+            var hue = (Vector3)(Vector4)c / Mathf.Max(c.r, c.g, c.b, 1e-4f);
+            var tint = Vector3.Lerp(Vector3.one, hue, amount);
+            return new Vector4(tint.x, tint.y, tint.z, 0f);
+        }
+        var smh = Get<ShadowsMidtonesHighlights>(profile);
+        smh.shadows.Override(Wheel(b.ShadowTint, b.Toning));
+        smh.highlights.Override(Wheel(b.HighlightTint, b.Toning));
+        EditorUtility.SetDirty(profile);
     }
 
     static T Get<T>(VolumeProfile profile) where T : VolumeComponent

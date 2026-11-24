@@ -152,7 +152,7 @@ Scenes: `ArtStyleTest_Swamp_Comic`, `ArtStyleTest_Cathedral_Comic` (same layout 
 
 **Palette direction: "dark fairytale".** Serious and moody (dark values, ink, hatching) but with rich jewel-tone accents instead of grey-brown mud, so it also appeals to players who aren't into grimdark:
 - Keep values dark and contrast high; put the saturation in a few accents per biome (rose, teal, ruby, sapphire, candle-gold).
-- Warm key light + cool/teal shadows: inviting, not bleak.
+- Warm key light + cool/teal shadows: inviting, not bleak. The grading pushes this further: Shadows Midtones Highlights in the biome's volume profile (section 15).
 - Accent colors must not collide with trait colors (poison green, shield violet, summoner gold, fire orange). Pink/rose and teal are free for environment use.
 - Gore stays minimal; menace comes from silhouettes, not blood.
 - The palette lives in the Unity material builder (Blender colors are only the starting point), so a biome can be recolored without re-exporting models.
@@ -236,6 +236,8 @@ Two volume settings, set per biome in its volume profile and drawn by `ForestAtm
 - **Canopy Light** (`PL_Canopy.hlsl`): leaf shade shaped like cartoon clouds (clumps of round puffs with scalloped edges), hanging at the canopy height and projected down along the sun, plus big puffy cloud shadows drifting over. In `PerfectLoot/Comic` the leaf shade is its own lighter tone between sun and shadow (`Strength`), with light hatching (`Hatching`) and a slightly soft edge (`Edge Softness`); real shadows keep the hard split. Clouds only dim the sun. Water darkens a little under both. Treetops get only the clouds. Costs next to nothing.
 - **Height Fog** (`PL_HeightFog.shader`): low mist over the ground in hard bands, drifting in patches. It reaches higher and is thicker toward the forest (the level's forest mask, built from the solved terrain) and glows where sun falls through canopy gaps (light shafts). It's drawn before transparents, so telegraphs, water, bars and VFX stay on top. It's one full-screen pass per camera; `Draw Fog` on the feature turns it off for a cheaper quality level.
 - Keep the open-ground mist below knee height so characters read from the waist up.
+- **Tilt Shift** (`PL_TiltShift.shader`, `BiomeTileSets.TiltShift`): a miniature-diorama blur at the top and bottom of the screen, drawn before post-processing so the HUD stays sharp. It works in screen space, so it doesn't change when the camera zooms out. `Strength` is the blur at the very edge in pixels at 1080p (Brightwater 4; keep it at 6 or less for readability). `Focus Height` is the share of the screen's height in the middle that stays sharp (0.6), and `Softness` is how gradually the blur fades in (0.3). `Draw Tilt Shift` on the feature turns it off.
+- **Grading** (URP Shadows Midtones Highlights, `BiomeTileSets.Toning`): shadows lean toward the biome's `ShadowTint` (teal) and highlights toward its `HighlightTint` (warm), `Toning` of the way from neutral (Brightwater 0.3). Midtones stay neutral so the accents keep their color. Don't use Split Toning: it turned every biome brown.
 
 ## 16. Ambient life and the mist wake
 

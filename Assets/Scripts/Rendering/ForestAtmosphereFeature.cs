@@ -1,22 +1,28 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.RenderGraphModule.Util;
 using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// The forest's light and air, from the camera's volume: hands CanopyLight and HeightFog to the shaders as global
 /// values before the opaques draw, then draws the height fog over the opaques (PL_HeightFog.shader), before
-/// transparents. Turn Draw Fog off for a cheaper quality level; the canopy shadows cost next to nothing.
+/// transparents, and the TiltShift blur before post-processing (PL_TiltShift.shader). Turn Draw Fog or Draw Tilt Shift off
+/// for a cheaper quality level; the canopy shadows cost next to nothing.
 /// </summary>
 public class ForestAtmosphereFeature : ScriptableRendererFeature
 {
     [SerializeField] Shader fogShader;
+    [SerializeField] Shader tiltShiftShader;
     [Tooltip("Draw the height fog (one full-screen pass per camera). Off for a cheaper quality level.")]
     public bool drawFog = true;
+    [Tooltip("Draw the tilt-shift blur (one full-screen pass per camera). Off for a cheaper quality level.")]
+    public bool drawTiltShift = true;
 
-    Material _fogMaterial;
+    Material _fogMaterial, _tiltShiftMaterial;
     GlobalsPass _globals;
     FogPass _fog;
+    TiltShiftPass _tiltShift;
 
     public override void Create()
     {
@@ -26,23 +32,39 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
         _globals.ConfigureInput(ScriptableRenderPassInput.Normal);
         _fog = new FogPass { renderPassEvent = RenderPassEvent.BeforeRenderingTransparents };
         _fog.ConfigureInput(ScriptableRenderPassInput.Depth);
+        // Swaps the camera color for its blurred copy, so URP must keep the color in a texture until post-processing
+        _tiltShift = new TiltShiftPass { renderPassEvent = RenderPassEvent.BeforeRenderingPostProcessing, requiresIntermediateTexture = true };
     }
 
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
         renderer.EnqueuePass(_globals);
-        if (!drawFog) return;
-        if (_fogMaterial == null)
+        if (drawFog && Load(ref fogShader, "Hidden/PerfectLoot/HeightFog", ref _fogMaterial))
         {
-            if (fogShader == null) fogShader = Shader.Find("Hidden/PerfectLoot/HeightFog");
-            if (fogShader == null) return;
-            _fogMaterial = CoreUtils.CreateEngineMaterial(fogShader);
+            _fog.Material = _fogMaterial;
+            renderer.EnqueuePass(_fog);
         }
-        _fog.Material = _fogMaterial;
-        renderer.EnqueuePass(_fog);
+        if (drawTiltShift && Load(ref tiltShiftShader, "Hidden/PerfectLoot/TiltShift", ref _tiltShiftMaterial))
+        {
+            _tiltShift.Material = _tiltShiftMaterial;
+            renderer.EnqueuePass(_tiltShift);
+        }
     }
 
-    protected override void Dispose(bool disposing) => CoreUtils.Destroy(_fogMaterial);
+    static bool Load(ref Shader shader, string name, ref Material material)
+    {
+        if (material != null) return true;
+        if (shader == null) shader = Shader.Find(name);
+        if (shader == null) return false;
+        material = CoreUtils.CreateEngineMaterial(shader);
+        return true;
+    }
+
+    protected override void Dispose(bool disposing)
+    {
+        CoreUtils.Destroy(_fogMaterial);
+        CoreUtils.Destroy(_tiltShiftMaterial);
+    }
 
     static readonly int CanopyParamsId = Shader.PropertyToID("_PL_CanopyParams"), CanopyCloudsId = Shader.PropertyToID("_PL_CanopyClouds"),
                         CanopyShadeId = Shader.PropertyToID("_PL_CanopyShade"),
@@ -108,6 +130,32 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
             builder.UseTexture(resources.cameraDepthTexture);
             builder.SetRenderFunc(static (Data d, RasterGraphContext context) =>
                 Blitter.BlitTexture(context.cmd, new Vector4(1f, 1f, 0f, 0f), d.Material, 0));
+        }
+    }
+
+    /// <summary>The tilt-shift blur: the camera color blurred into a copy, which becomes the camera color.</summary>
+    class TiltShiftPass : ScriptableRenderPass
+    {
+        public Material Material;
+        static readonly int TiltShiftId = Shader.PropertyToID("_TiltShift");
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            var tilt = VolumeManager.instance.stack.GetComponent<TiltShift>();
+            if (Material == null || !tilt.IsActive()) return;
+            var camera = frameData.Get<UniversalCameraData>();
+            if (camera.cameraType != CameraType.Game) return;
+            var resources = frameData.Get<UniversalResourceData>();
+            if (resources.isActiveTargetBackBuffer) return;
+
+            Material.SetVector(TiltShiftId, new Vector4(tilt.strength.value, tilt.focusHeight.value, tilt.softness.value, 0f));
+            var source = resources.cameraColor;
+            var desc = renderGraph.GetTextureDesc(source);
+            desc.name = "PL Tilt Shift";
+            desc.clearBuffer = false;
+            var blurred = renderGraph.CreateTexture(desc);
+            renderGraph.AddBlitPass(new RenderGraphUtils.BlitMaterialParameters(source, blurred, Material, 0), "PL Tilt Shift");
+            resources.cameraColor = blurred;
         }
     }
 }

@@ -14,7 +14,9 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::ForestAtmosphereFeature
   m_Active: 1
   fogShader: {fileID: 4800000, guid: 1bf3190d637a99f40a607a0ab75c317a, type: 3}
+  tiltShiftShader: {fileID: 4800000, guid: d12cd09ce3f6a084cb66cad0a98e1692, type: 3}
   drawFog: 1
+  drawTiltShift: 1
 --- !u!114 &-173742022826769898
 MonoBehaviour:
   m_ObjectHideFlags: 1
