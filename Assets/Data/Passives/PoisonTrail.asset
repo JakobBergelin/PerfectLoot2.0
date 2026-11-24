@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 5ae9b2c9ab52196459f0a80dd355defa, type: 3}
+  m_Name: PoisonTrail
+  m_EditorClassIdentifier: Assembly-CSharp::Passives.PoisonTrailPassive
+  Name: Poison Trail
+  Icon: {fileID: 0}
+  Description: Leaves poison behind it as it moves, for 5 seconds.
+  PlayerSelectable: 0
+  DamageType: 3
+  DamagePerSecond: 1
+  Radius: 1.2
+  Lifetime: 5
+  Spacing: 1.5

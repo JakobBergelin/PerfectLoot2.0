@@ -8,7 +8,7 @@ namespace Characters
     {
         public StatBlock Stats = new StatBlock
         {
-            Health = 10f,
+            Health = 20f,
             HealthRegeneration = 1f,
             AttackSpeed = 1f,
             CriticalChance = 0.05f,

@@ -48,7 +48,7 @@ MonoBehaviour:
     ProjectileSpeed: 0
     Armor: 0
     ArmorPierce: 0
-    MovementSpeed: 2.5
+    MovementSpeed: 1.5
     AreaOfEffect: 0
     CooldownReduction: 0
     BuffDuration: 0
@@ -78,10 +78,14 @@ MonoBehaviour:
   DesiredDistance: 0
   DistanceTolerance: 1.5
   Skills:
+  - {fileID: 11400000, guid: b9b1cf33d4e829541b2b615f213f8046, type: 2}
+  - {fileID: 11400000, guid: de74a23a3f74a5b46a5a97fb08077f62, type: 2}
   - {fileID: 11400000, guid: d828b0822490ec644ab88c4c0ebd8098, type: 2}
   Passives:
-  - {fileID: 11400000, guid: 05b8670def4e83346bc5932e9644a88e, type: 2}
   - {fileID: 11400000, guid: 016758b30ef5f484dac67bdfa09f8eb4, type: 2}
+  - {fileID: 11400000, guid: 2b906f7fa4c052044b0ca81c9d9ad02f, type: 2}
+  - {fileID: 11400000, guid: 751bae16239c30b4d9babbae71f6fa8a, type: 2}
+  - {fileID: 11400000, guid: 013faac4261613f4c95d8662b35a7979, type: 2}
   MeleeDamage: 1
   SecondsBetweenAttacks: 1
   AttackTurnSpeed: 360

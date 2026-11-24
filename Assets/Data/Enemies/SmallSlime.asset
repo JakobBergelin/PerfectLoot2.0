@@ -77,7 +77,8 @@ MonoBehaviour:
   TurnAcceleration: 1
   DesiredDistance: 0
   DistanceTolerance: 1.5
-  Skills: []
+  Skills:
+  - {fileID: 11400000, guid: ba7b671f7bf9b0b40b193b7e7c3507f1, type: 2}
   Passives: []
   MeleeDamage: 0.5
   SecondsBetweenAttacks: 1

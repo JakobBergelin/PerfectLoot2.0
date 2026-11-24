@@ -110,6 +110,9 @@ public enum PassiveType
     Split,
     Hopping,
     DeathPuddle,
+    PoisonTrail,
+    HealthSpawns,
+    Circling,
 }
 
 /// <summary>

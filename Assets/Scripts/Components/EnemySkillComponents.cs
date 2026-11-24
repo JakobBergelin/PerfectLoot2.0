@@ -13,6 +13,7 @@ public enum EnemySkillType
     GroundSlam,
     Beam,
     HomingVolley,
+    Leap,
 }
 
 public enum TargetMotion

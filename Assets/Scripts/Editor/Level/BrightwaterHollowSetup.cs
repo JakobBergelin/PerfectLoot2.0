@@ -8,7 +8,7 @@ using UnityEngine;
 
 /// <summary>
 /// Builds Brightwater Hollow, the first dungeon every new character starts in: its DungeonDefinition (one Kill Boss step,
-/// no time limit, no extra enemies per difficulty), the Hero Slime placeholder boss, and the level on
+/// no time limit, no extra enemies per difficulty), the Hero Slime boss, and the level on
 /// Scenes/BrightwaterHollow (the biome comes from BiomeTileSets). Set pieces shape it: two rivers across the level (each with a
 /// rope bridge in the middle) and the boss arena at the north end, plus ponds and lakes the
 /// seed scatters. The solver fills the forest around them. Encounters teach one thing at a time, south to north: a lone
@@ -53,7 +53,7 @@ public static class BrightwaterHollowSetup
 
     // ---------- dungeon ----------
 
-    // A placeholder until the real boss is designed: a big, tough Slime that still splits when it dies
+    // The boss: a big, tough Slime. Its own skills and passives (leap, spit, poison trail, circling, slimes at 60% and 30%) are set on the asset, not here
     static EnemyDefinition BuildBoss()
     {
         var boss = AssetDatabase.LoadAssetAtPath<EnemyDefinition>(BossPath);
