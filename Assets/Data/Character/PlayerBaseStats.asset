@@ -27,7 +27,7 @@ MonoBehaviour:
     ColdDamage: 0
     LightningDamage: 0
     PoisonDamage: 0
-    Health: 10
+    Health: 20
     HealthRegeneration: 0.2
     Resource: 0
     ResourceRegeneration: 0
