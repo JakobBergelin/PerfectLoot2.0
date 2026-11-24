@@ -358,6 +358,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         Tags = skill.Tags,
         Label = SkillDamageLabel.Of(skill.Type),
         CritShake = skill.CritShake,
+        HitShake = skill.HitShake,
         Requirements = skill.Requirements,
         RequiredGear = skill.RequiredGear,
         Priority = skill.Priority,

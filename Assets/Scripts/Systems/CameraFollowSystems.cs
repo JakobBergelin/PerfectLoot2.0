@@ -11,7 +11,7 @@ using UnityEngine;
 /// a player. Zooms out (moves back along its view, up to MaxZoomOut) when a player or a CameraFocus near a player reaches
 /// further than ComfortRadius from that middle: quickly out, slowly back in after ZoomInDelay. Follows the rendered
 /// position (LocalToWorld, which includes physics smoothing), so it runs after the transforms. Also wears off the
-/// camera's shake (Trauma) and works out this frame's ShakeOffset.
+/// camera's shake (Trauma) and hit pulse, and works out this frame's ShakeOffset.
 /// </summary>
 [UpdateAfter(typeof(TransformSystemGroup))]
 public partial struct CameraFollowSystem : ISystem
@@ -38,6 +38,7 @@ public partial struct CameraFollowSystem : ISystem
             {
                 f.HasTarget = false;
                 f.Trauma = 0f;
+                f.Pulse = 0f;
                 f.ShakeOffset = float3.zero;
                 continue;
             }
@@ -82,6 +83,7 @@ public partial struct CameraFollowSystem : ISystem
             float3 right = math.mul(f.Rotation, math.right());
             float3 up = math.mul(f.Rotation, math.up());
             f.ShakeOffset = (right * wobble.x + up * wobble.y) * f.ShakeStrength * f.Trauma * f.Trauma;
+            f.Pulse = math.max(0f, f.Pulse - deltaTime / math.max(f.PulseTime, 0.01f));
         }
     }
 

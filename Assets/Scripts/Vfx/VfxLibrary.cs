@@ -13,6 +13,9 @@ public class VfxLibrary : ScriptableObject
         [Tooltip("Root has a VfxInstance; its particle systems are started on spawn and stopped on release")]
         public GameObject Prefab;
         [Min(0)] public int Prewarm = 4;
+        [Tooltip("How hard a one-shot of it shakes the camera when it plays on screen (an impact: meteors, slams), 0 to 1 like a " +
+                 "skill's Crit Shake; for any caster, players, enemies and bosses, whether it hits or not. Kept when the library is rebuilt.")]
+        [Range(0f, 1f)] public float Shake;
     }
 
     public List<Entry> Entries = new List<Entry>();

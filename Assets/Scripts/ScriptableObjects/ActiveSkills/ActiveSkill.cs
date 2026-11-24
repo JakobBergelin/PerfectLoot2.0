@@ -15,6 +15,8 @@ namespace ActiveSkills
         public SkillTags Tags;
         [Tooltip("How hard the camera shakes when one of this skill's hits crits: 0 = not at all, 1 = CameraSettings' full Shake Strength")]
         [Range(0f, 1f)] public float CritShake;
+        [Tooltip("How hard the camera shakes when one of this skill's hits lands without critting; keep it below Crit Shake, and 0 for skills that hit very often")]
+        [Range(0f, 1f)] public float HitShake;
         [Tooltip("With several skill keys held, the highest priority is cast; between equal ones, the latest pressed. Mobility skills are 1, the rest 0.")]
         public int Priority;
 

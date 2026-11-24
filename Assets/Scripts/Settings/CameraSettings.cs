@@ -52,6 +52,20 @@ public class CameraSettings : ScriptableObject
     [Tooltip("How fast the camera wobbles while shaking")]
     [Min(0f)] public float ShakeFrequency = 18f;
 
+    [Header("Hit feedback")]
+    [Tooltip("A hit on a player shakes the camera when it takes at least this share of their max health")]
+    [Range(0f, 1f)] public float PlayerHitShare = 0.1f;
+    [Tooltip("How hard such a hit shakes, 0 to 1 like a skill's Crit Shake")]
+    [Range(0f, 1f)] public float PlayerHitShake = 0.3f;
+    [Tooltip("A crit whose skill has at least this Crit Shake is a big hit: it also flashes the hit pulse (chromatic aberration and bloom, HitPulse_Volume)")]
+    [Range(0f, 1f)] public float BigHitShake = 0.4f;
+    [Tooltip("How strong a big hit's pulse is, 0 to 1")]
+    [Range(0f, 1f)] public float BigHitPulse = 0.6f;
+    [Tooltip("How hard the camera shakes when a boss (a Camera Focus) first comes within Focus Range of a player; it also pulses fully")]
+    [Range(0f, 1f)] public float BossIntroShake = 0.5f;
+    [Tooltip("Seconds a full pulse takes to fade")]
+    [Min(0.01f)] public float PulseTime = 0.3f;
+
     [Header("Hidden players")]
     [Tooltip("Pixels of colored outline drawn around a player wherever anything hides them (walls, cliffs, canopies; " +
              "the renderer's Player X-Ray features); 0 turns it off")]
@@ -79,6 +93,12 @@ public class CameraSettings : ScriptableObject
         follow.ShakeStrength = ShakeStrength;
         follow.ShakeDecay = ShakeDecay;
         follow.ShakeFrequency = ShakeFrequency;
+        follow.PlayerHitShare = PlayerHitShare;
+        follow.PlayerHitShake = PlayerHitShake;
+        follow.BigHitShake = BigHitShake;
+        follow.BigHitPulse = BigHitPulse;
+        follow.FocusIntroShake = BossIntroShake;
+        follow.PulseTime = PulseTime;
         var hidden = HiddenOutlineColor.linear;
         follow.HiddenOutline = new float4(hidden.r, hidden.g, hidden.b, HiddenOutlineWidth);
     }

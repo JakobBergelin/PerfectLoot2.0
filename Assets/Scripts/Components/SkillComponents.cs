@@ -22,7 +22,8 @@ public struct Skill : IBufferElementData
     [GhostField(SendData = false)] public float CooldownReduction; // Seconds to take off the remaining cooldown, used up by the skill's system (SkillUtil.ApplyCooldownReduction)
 
     [GhostField(SendData = false)] public DamageLabel Label;       // What its hits carry (SkillDamageLabel)
-    [GhostField(SendData = false)] public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (CritShakeSystem)
+    [GhostField(SendData = false)] public float CritShake;         // Camera shake when one of its hits crits, 0 to 1 (HitShakeSystem)
+    [GhostField(SendData = false)] public float HitShake;          // Camera shake when one of its hits lands without critting, 0 to 1 (HitShakeSystem)
     [GhostField(SendData = false)] public int3 Requirements;       // Strength, Agility and Intelligence it needs (ActiveSkill.Requirements)
     [GhostField(SendData = false)] public Equipment.GearKinds RequiredGear; // Weapon or offhand kinds it needs, any one of them (ActiveSkill.RequiredGear)
     [GhostField(SendData = false)] public int Priority;            // With several keys held, the highest is cast (ActiveSkill.Priority)

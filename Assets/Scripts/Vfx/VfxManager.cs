@@ -26,6 +26,8 @@ public class VfxManager : MonoBehaviour
     int _lit;
 
     readonly Dictionary<VfxType, GameObject> _prefabs = new Dictionary<VfxType, GameObject>();
+    readonly Dictionary<VfxType, float> _shakes = new Dictionary<VfxType, float>();
+    float _shake;   // The strongest on-screen impact shake since VfxSystem last took it
     readonly Dictionary<VfxType, Stack<VfxInstance>> _pools = new Dictionary<VfxType, Stack<VfxInstance>>();
     readonly Dictionary<int, Active> _active = new Dictionary<int, Active>();
     readonly List<int> _returning = new List<int>();
@@ -40,6 +42,7 @@ public class VfxManager : MonoBehaviour
         {
             if (entry.Prefab == null) continue;
             _prefabs[entry.Type] = entry.Prefab;
+            if (entry.Shake > 0f) _shakes[entry.Type] = entry.Shake;
             var pool = _pools[entry.Type] = new Stack<VfxInstance>();
             for (int i = 0; i < entry.Prewarm; i++) pool.Push(Create(entry.Type));
         }
@@ -89,7 +92,24 @@ public class VfxManager : MonoBehaviour
             active.ReturnAt = Time.time + active.Instance.Linger;
             active.OneShot = true;
         }
+        if (_shakes.TryGetValue(type, out float shake) && OnScreen(position)) _shake = Mathf.Max(_shake, shake);
         return handle;
+    }
+
+    /// <summary>The strongest impact shake (VfxLibrary's Shake) of the one-shots played on screen since the last call; VfxSystem hands it to the camera.</summary>
+    public float TakeShake()
+    {
+        float shake = _shake;
+        _shake = 0f;
+        return shake;
+    }
+
+    static bool OnScreen(Vector3 position)
+    {
+        var camera = Camera.main;
+        if (camera == null) return false;
+        var view = camera.WorldToViewportPoint(position);
+        return view.z > 0f && view.x >= 0f && view.x <= 1f && view.y >= 0f && view.y <= 1f;
     }
 
     public void Move(int handle, Vector3 position, Quaternion rotation)

@@ -45,14 +45,26 @@ public struct CameraFollow : IComponentData
     public float ShakeDecay;        // Trauma lost per second
     public float ShakeFrequency;    // How fast the shake wobbles
     public float4 HiddenOutline;    // Linear color and width in pixels of a hidden player's outline (HiddenOutlineSystem)
+    public float PlayerHitShare;    // A hit on a player shakes when it takes at least this share of their max health
+    public float PlayerHitShake;    // Trauma of such a hit
+    public float BigHitShake;       // A crit whose Crit Shake is at least this also pulses
+    public float BigHitPulse;       // Pulse of a big crit
+    public float FocusIntroShake;   // Trauma when a CameraFocus (a boss) first comes within FocusRange of a player; it also pulses fully
+    public float PulseTime;         // Seconds a full pulse takes to fade
 
     public float3 Velocity;     // SmoothDamp's running velocity
     public float Zoom;          // How far back the camera is now, as an Offset multiple (1 to MaxZoomOut; 0 until set)
     public float ZoomVelocity;  // SmoothDamp's running zoom speed
     public float ZoomInWait;    // Seconds left before it may zoom back in
     public bool HasTarget;      // False until a player is found (and while there is none), so the camera snaps to it first
-    public float Trauma;        // 0 to 1, raised by shakes (CritShakeSystem), wears off at ShakeDecay
+    public float Trauma;        // 0 to 1, raised by shakes (HitShakeSystem, impacts in VfxSystem), wears off at ShakeDecay
     public float3 ShakeOffset;  // This frame's shake, added on top of the followed position by CameraMonoBehavior
+    public float Pulse;         // 0 to 1, raised by big crits and boss intros, fades over PulseTime: the hit pulse volume's weight (CameraMonoBehavior)
+}
+
+/// <summary>A CameraFocus whose intro has played (FocusIntroSystem): it only shakes and pulses the first time.</summary>
+public struct FocusIntroPlayed : IComponentData
+{
 }
 
 /// <summary>

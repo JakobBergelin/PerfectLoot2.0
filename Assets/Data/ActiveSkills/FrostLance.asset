@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: Thrust a thin lance of cold from your weapon, piercing everything in a line. Each thrust builds resource and briefly hardens you against projectiles.
   Tags: 8514
   CritShake: 0
+  HitShake: 0.1
   Priority: 0
   StrengthRequirement: 1
   AgilityRequirement: 0

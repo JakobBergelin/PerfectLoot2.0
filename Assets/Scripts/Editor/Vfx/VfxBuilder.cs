@@ -23,6 +23,21 @@ public static partial class VfxBuilder
     static readonly Dictionary<VfxType, int> Prewarms = new Dictionary<VfxType, int>();
     static Texture2D _dot;
 
+    /// <summary>
+    /// The first camera shake of impacts (VfxLibrary's Shake, 0 to 1, squared like trauma): the big ones that should be felt
+    /// even when they hit nothing, for players, enemies and bosses alike. Below a crit's shake for everyday hits.
+    /// </summary>
+    public static readonly (VfxType Type, float Shake)[] ImpactShakes =
+    {
+        (VfxType.MeteorImpact, 0.45f),
+        (VfxType.UpheavalSlam, 0.35f),
+        (VfxType.UpheavalQuake, 0.3f),  // Also Trample's stomps
+        (VfxType.EarthWall, 0.25f),
+        (VfxType.ColdNova, 0.25f),
+        (VfxType.StrikeShock, 0.2f),    // Round attacks of 2 m or more (enemy slams)
+        (VfxType.FireballImpact, 0.15f),
+    };
+
     [MenuItem("Tools/VFX/Build Skill Effects")]
     public static void Build()
     {
@@ -58,6 +73,7 @@ public static partial class VfxBuilder
         Prewarms.Clear();
         foreach (var (type, prefab) in SpellEffects()) prefabs[type] = prefab;      // VfxBuilder.Spells.cs
         foreach (var (type, prefab) in MeleeEffects()) prefabs[type] = prefab;      // VfxBuilder.Melee.cs
+        prefabs[VfxType.MeteorImpact] = prefabs[VfxType.FireballImpact];           // Same look, its own pool and shake
 
         string libraryPath = $"{Root}/VfxLibrary.asset";
         var library = AssetDatabase.LoadAssetAtPath<VfxLibrary>(libraryPath);
@@ -66,7 +82,10 @@ public static partial class VfxBuilder
             library = ScriptableObject.CreateInstance<VfxLibrary>();
             AssetDatabase.CreateAsset(library, libraryPath);
         }
-        library.Entries = prefabs.Select(p => new VfxLibrary.Entry { Type = p.Key, Prefab = p.Value, Prewarm = Prewarms.TryGetValue(p.Key, out int count) ? count : p.Key is VfxType.LightningHit or VfxType.BarrageBolt or VfxType.UnitHit or VfxType.IceShard or VfxType.LightningArc ? 12
+        // Shakes are tuned in the library's inspector: kept as they are, or ImpactShakes for an entry that has none yet
+        var shakes = library.Entries.Where(e => e.Shake > 0f).ToDictionary(e => e.Type, e => e.Shake);
+        foreach (var (type, value) in ImpactShakes) shakes.TryAdd(type, value);
+        library.Entries = prefabs.Select(p => new VfxLibrary.Entry { Type = p.Key, Prefab = p.Value, Shake = shakes.TryGetValue(p.Key, out float shake) ? shake : 0f, Prewarm = Prewarms.TryGetValue(p.Key, out int count) ? count : p.Key is VfxType.LightningHit or VfxType.BarrageBolt or VfxType.UnitHit or VfxType.IceShard or VfxType.LightningArc ? 12
             : p.Key is VfxType.SoulOrb or VfxType.LootBeam or VfxType.IceShardImpact or VfxType.CritPop or VfxType.FootstepDust or VfxType.StatusBurn or VfxType.StatusPoison or VfxType.StatusChill or VfxType.StatusBleed or VfxType.StatusCharged ? 8 : 4 }).ToList();
         EditorUtility.SetDirty(library);
         DecalBuilder.AttachToEffects();     // Scorch and frost marks on the rebuilt prefabs

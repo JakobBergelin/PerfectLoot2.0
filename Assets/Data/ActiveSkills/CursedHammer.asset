@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: Throw a tumbling hammer that starts slow and keeps speeding up. It bursts with lightning where it hits an enemy or a wall.
   Tags: 1089
   CritShake: 0
+  HitShake: 0.12
   Priority: 0
   StrengthRequirement: 20
   AgilityRequirement: 0

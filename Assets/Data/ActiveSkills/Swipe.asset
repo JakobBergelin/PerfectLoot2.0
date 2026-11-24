@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: 'A heavy, sweeping swing in front of you: right to left, then back. Every enemy it hits builds resource.'
   Tags: 532482
   CritShake: 0
+  HitShake: 0.1
   Priority: 0
   StrengthRequirement: 1
   AgilityRequirement: 0

@@ -1,6 +1,7 @@
 using UnityEngine;
 using Unity.Entities;
 using Unity.Transforms;
+using UnityEngine.Rendering;
 
 /// <summary>
 /// Copies the CameraFollow entity's transform (CoreEntities subscene) to this camera. Reads the current world every
@@ -13,6 +14,8 @@ public class CameraMonoBehavior : MonoBehaviour
 {
     [Tooltip("The same CameraSettings asset CameraFollowAuthoring bakes; sets the field of view")]
     public CameraSettings Settings;
+    [Tooltip("A global volume (HitPulse_Volume: chromatic aberration and a bloom boost) whose weight follows the camera's hit pulse: big crits and boss intros")]
+    public Volume PulseVolume;
 
     Camera cam;
 
@@ -20,6 +23,7 @@ public class CameraMonoBehavior : MonoBehaviour
     {
         cam = GetComponent<Camera>();
         if (Settings != null) cam.fieldOfView = Settings.FieldOfView;
+        if (PulseVolume != null) PulseVolume.weight = 0f;
     }
 
     void LateUpdate()
@@ -43,7 +47,9 @@ public class CameraMonoBehavior : MonoBehaviour
 #endif
 
         var cameraTransform = cameraQuery.GetSingleton<LocalTransform>();
-        var shake = cameraQuery.GetSingleton<CameraFollow>().ShakeOffset;
+        var followed = cameraQuery.GetSingleton<CameraFollow>();
+        var shake = followed.ShakeOffset;
+        if (PulseVolume != null) PulseVolume.weight = followed.Pulse;
         transform.position = cameraTransform.Position + shake;
         transform.rotation = cameraTransform.Rotation;
     }

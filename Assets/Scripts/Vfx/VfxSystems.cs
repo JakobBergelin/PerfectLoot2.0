@@ -218,6 +218,12 @@ public partial class VfxSystem : SystemBase
     protected override void OnUpdate()
     {
         var vfx = VfxManager.Instance;
+        // Impacts played on screen last frame shake the camera (VfxLibrary's Shake), whoever cast them and whether they hit or not
+        if (vfx != null && vfx.TakeShake() is var shake and > 0f && SystemAPI.HasSingleton<CameraFollow>())
+        {
+            var follow = SystemAPI.GetSingletonRW<CameraFollow>();
+            follow.ValueRW.Trauma = math.max(follow.ValueRO.Trauma, shake);
+        }
         var bindings = new NativeList<(Entity, VfxBinding)>(Allocator.Temp);
         // The looks of effects that follow what only the host has, for their stand-ins (made below, on the host)
         var standIns = new NativeList<(Entity, NetVfx)>(Allocator.Temp);
@@ -605,7 +611,7 @@ public partial class VfxSystem : SystemBase
             case DamageLabel.Riposte:
                 return true;
             case DamageLabel.Meteor:
-                SharedBurst(vfx, VfxType.FireballImpact, t.Position, quaternion.identity);
+                SharedBurst(vfx, VfxType.MeteorImpact, t.Position, quaternion.identity);
                 return false;
             default:
                 return false;

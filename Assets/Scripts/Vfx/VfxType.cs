@@ -98,4 +98,6 @@ public enum VfxType
     EmpoweredAura = 92,
     // Enemies
     PoisonPuddle = 93,
+    // The fireball's impact for meteors, its own entry so it can shake harder (VfxLibrary's Shake)
+    MeteorImpact = 94,
 }

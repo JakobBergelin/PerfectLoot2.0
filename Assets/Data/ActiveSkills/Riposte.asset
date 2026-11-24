@@ -17,6 +17,7 @@ MonoBehaviour:
   Description: A quick strike that throws enemies in front of you far back. For a moment after, enemy projectiles in front of you are turned around and sent the way you aim.
   Tags: 528418
   CritShake: 0
+  HitShake: 0.12
   Priority: 0
   StrengthRequirement: 12
   AgilityRequirement: 10
