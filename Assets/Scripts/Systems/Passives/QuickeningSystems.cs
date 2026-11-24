@@ -16,7 +16,7 @@ public partial struct CalculateQuickeningSystem : ISystem
         foreach (var (quickening, stats) in SystemAPI.Query<RefRO<Quickening>, RefRW<CalculatedStats>>())
         {
             float scaled = math.max(0f, stats.ValueRO.Value.Agility * quickening.ValueRO.CooldownPerAgility);
-            stats.ValueRW.Value.CooldownReduction += scaled / (1f + scaled);
+            stats.ValueRW.Value.CooldownReduction = StatBlock.Stack(stats.ValueRO.Value.CooldownReduction, scaled / (1f + scaled));
         }
     }
 }

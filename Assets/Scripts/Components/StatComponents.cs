@@ -91,6 +91,15 @@ public struct StatBlock
         return 1f + bonus;
     }
 
+    /// <summary>
+    /// Combines two reductions or chances (cooldown and cost reduction, block, dodge, melee and projectile damage
+    /// reduction): the second only takes its share of what the first left, so 50% and 50% make 75%, never 100%.
+    /// </summary>
+    public static float Stack(float total, float value) => 1f - (1f - total) * (1f - value);
+
+    /// <summary>Undoes Stack: takes value back out of total.</summary>
+    public static float Unstack(float total, float value) => value >= 1f ? 0f : 1f - (1f - total) / (1f - value);
+
     public void Add(in StatBlock other)
     {
         Strength += other.Strength;
@@ -113,7 +122,7 @@ public struct StatBlock
         HealthRegeneration += other.HealthRegeneration;
         Resource += other.Resource;
         ResourceRegeneration += other.ResourceRegeneration;
-        ResourceCostReduction += other.ResourceCostReduction;
+        ResourceCostReduction = Stack(ResourceCostReduction, other.ResourceCostReduction);
         ResourceOnHit += other.ResourceOnHit;
         ResourceOnCrit += other.ResourceOnCrit;
         LifeOnHit += other.LifeOnHit;
@@ -126,7 +135,7 @@ public struct StatBlock
 
         MovementSpeed += other.MovementSpeed;
         AreaOfEffect += other.AreaOfEffect;
-        CooldownReduction += other.CooldownReduction;
+        CooldownReduction = Stack(CooldownReduction, other.CooldownReduction);
         BuffDuration += other.BuffDuration;
         PickupRange += other.PickupRange;
 
@@ -138,10 +147,10 @@ public struct StatBlock
 
         CriticalChance += other.CriticalChance;
         CriticalDamage += other.CriticalDamage;
-        BlockChance += other.BlockChance;
-        DodgeChance += other.DodgeChance;
-        ProjectileDamageReduction += other.ProjectileDamageReduction;
-        MeleeDamageReduction += other.MeleeDamageReduction;
+        BlockChance = Stack(BlockChance, other.BlockChance);
+        DodgeChance = Stack(DodgeChance, other.DodgeChance);
+        ProjectileDamageReduction = Stack(ProjectileDamageReduction, other.ProjectileDamageReduction);
+        MeleeDamageReduction = Stack(MeleeDamageReduction, other.MeleeDamageReduction);
         AgilityForStrength += other.AgilityForStrength;
     }
 
@@ -168,7 +177,7 @@ public struct StatBlock
         HealthRegeneration -= other.HealthRegeneration;
         Resource -= other.Resource;
         ResourceRegeneration -= other.ResourceRegeneration;
-        ResourceCostReduction -= other.ResourceCostReduction;
+        ResourceCostReduction = Unstack(ResourceCostReduction, other.ResourceCostReduction);
         ResourceOnHit -= other.ResourceOnHit;
         ResourceOnCrit -= other.ResourceOnCrit;
         LifeOnHit -= other.LifeOnHit;
@@ -181,7 +190,7 @@ public struct StatBlock
 
         MovementSpeed -= other.MovementSpeed;
         AreaOfEffect -= other.AreaOfEffect;
-        CooldownReduction -= other.CooldownReduction;
+        CooldownReduction = Unstack(CooldownReduction, other.CooldownReduction);
         BuffDuration -= other.BuffDuration;
         PickupRange -= other.PickupRange;
 
@@ -193,10 +202,10 @@ public struct StatBlock
 
         CriticalChance -= other.CriticalChance;
         CriticalDamage -= other.CriticalDamage;
-        BlockChance -= other.BlockChance;
-        DodgeChance -= other.DodgeChance;
-        ProjectileDamageReduction -= other.ProjectileDamageReduction;
-        MeleeDamageReduction -= other.MeleeDamageReduction;
+        BlockChance = Unstack(BlockChance, other.BlockChance);
+        DodgeChance = Unstack(DodgeChance, other.DodgeChance);
+        ProjectileDamageReduction = Unstack(ProjectileDamageReduction, other.ProjectileDamageReduction);
+        MeleeDamageReduction = Unstack(MeleeDamageReduction, other.MeleeDamageReduction);
         AgilityForStrength -= other.AgilityForStrength;
     }
 }

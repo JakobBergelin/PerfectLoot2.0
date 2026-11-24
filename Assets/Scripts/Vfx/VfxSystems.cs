@@ -303,7 +303,8 @@ public partial class VfxSystem : SystemBase
                 foreach (var e in entities)
                 {
                     var hazard = EntityManager.GetComponentData<Hazard>(e);
-                    var look = hazard.Origin == DamageLabel.Meteor ? new NetVfx { Type = VfxType.BurningGround, Scale = hazard.Radius } : default;
+                    var look = hazard.Origin == DamageLabel.Meteor ? new NetVfx { Type = VfxType.BurningGround, Scale = hazard.Radius }
+                        : hazard.HitsPlayers ? new NetVfx { Type = VfxType.PoisonPuddle, Scale = hazard.Radius } : default;
                     bindings.Add((e, Bind(vfx, look, EntityManager.GetComponentData<LocalTransform>(e))));
                     standIns.Add((e, look));
                 }

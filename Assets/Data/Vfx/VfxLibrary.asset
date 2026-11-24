@@ -190,6 +190,9 @@ MonoBehaviour:
   - Type: 59
     Prefab: {fileID: 2506929311854486710, guid: 7c9ed562c45930d43add5bfb9dd8351c, type: 3}
     Prewarm: 4
+  - Type: 93
+    Prefab: {fileID: 8780477182634451396, guid: ad48dde0a357c154791d0eb3a2115623, type: 3}
+    Prewarm: 4
   - Type: 60
     Prefab: {fileID: 502561891094665885, guid: 692a8ed26cbe50044aef6a6034d9dedd, type: 3}
     Prewarm: 6

@@ -32,6 +32,6 @@ public partial struct BraceStatsSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (brace, stats) in SystemAPI.Query<RefRO<Brace>, RefRW<CalculatedStats>>())
-            if (brace.ValueRO.TimeRemaining > 0f) stats.ValueRW.Value.BlockChance += brace.ValueRO.BlockBonus;
+            if (brace.ValueRO.TimeRemaining > 0f) stats.ValueRW.Value.BlockChance = StatBlock.Stack(stats.ValueRO.Value.BlockChance, brace.ValueRO.BlockBonus);
     }
 }

@@ -468,6 +468,8 @@ MonoBehaviour:
   - {fileID: -6288072647309666549}
   - {fileID: 7518938298396184218}
   - {fileID: -1410297666881709256}
+  - {fileID: 9082639178700499951}
+  - {fileID: 3627132348562464709}
 --- !u!114 &853819529557874667
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -778,6 +780,49 @@ MonoBehaviour:
   contribution:
     m_OverrideState: 1
     m_Value: 0
+--- !u!114 &3627132348562464709
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6672798d187ecb24b817458f7d530646, type: 3}
+  m_Name: HeightFog
+  m_EditorClassIdentifier: Assembly-CSharp::HeightFog
+  active: 1
+  intensity:
+    m_OverrideState: 1
+    m_Value: 0
+  color:
+    m_OverrideState: 1
+    m_Value: {r: 0.75, g: 0.88, b: 0.84, a: 1}
+  heightOpen:
+    m_OverrideState: 1
+    m_Value: 0.35
+  heightForest:
+    m_OverrideState: 1
+    m_Value: 2.5
+  density:
+    m_OverrideState: 1
+    m_Value: 0.3
+  forestDensity:
+    m_OverrideState: 1
+    m_Value: 2
+  bands:
+    m_OverrideState: 1
+    m_Value: 4
+  patchSize:
+    m_OverrideState: 1
+    m_Value: 9
+  drift:
+    m_OverrideState: 1
+    m_Value: {x: 0.4, y: 0.15}
+  shafts:
+    m_OverrideState: 1
+    m_Value: 0.6
 --- !u!114 &3959858460715838825
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -965,6 +1010,49 @@ MonoBehaviour:
   blueOutBlueIn:
     m_OverrideState: 1
     m_Value: 100
+--- !u!114 &9082639178700499951
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: e997ac6f09f732840a451556335687a6, type: 3}
+  m_Name: CanopyLight
+  m_EditorClassIdentifier: Assembly-CSharp::CanopyLight
+  active: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0
+  hatching:
+    m_OverrideState: 1
+    m_Value: 0.3
+  edgeSoftness:
+    m_OverrideState: 1
+    m_Value: 0.2
+  puffSize:
+    m_OverrideState: 1
+    m_Value: 1.6
+  coverage:
+    m_OverrideState: 1
+    m_Value: 0.4
+  canopyHeight:
+    m_OverrideState: 1
+    m_Value: 6
+  sway:
+    m_OverrideState: 1
+    m_Value: 0.25
+  cloudSize:
+    m_OverrideState: 1
+    m_Value: 12
+  cloudCoverage:
+    m_OverrideState: 1
+    m_Value: 0.35
+  cloudDrift:
+    m_OverrideState: 1
+    m_Value: {x: 1.2, y: 0.5}
 --- !u!114 &9122958982931076880
 MonoBehaviour:
   m_ObjectHideFlags: 3

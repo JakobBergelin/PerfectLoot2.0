@@ -20,7 +20,7 @@ public partial struct DesperationStatsSystem : ISystem
             if (health.ValueRO.MaxValue <= 0f || d.StartHealth <= d.FullHealth) continue;
             float fraction = health.ValueRO.CurrentValue / health.ValueRO.MaxValue;
             float speedUp = d.MaxSpeedUp * math.saturate((d.StartHealth - fraction) / (d.StartHealth - d.FullHealth));
-            stats.ValueRW.Value.CooldownReduction += 1f - 1f / (1f + speedUp);
+            stats.ValueRW.Value.CooldownReduction = StatBlock.Stack(stats.ValueRO.Value.CooldownReduction, 1f - 1f / (1f + speedUp));
         }
     }
 }

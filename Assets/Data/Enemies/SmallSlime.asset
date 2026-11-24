@@ -72,7 +72,7 @@ MonoBehaviour:
   AlertRadius: 10
   NearMissMargin: 2
   ForgetTime: 5
-  AttackRadius: 1.5
+  AttackRadius: 2
   TurnSpeed: 2
   TurnAcceleration: 1
   DesiredDistance: 0

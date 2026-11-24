@@ -96,4 +96,6 @@ public enum VfxType
     StanceAura = 90,
     BloodBurst = 91,
     EmpoweredAura = 92,
+    // Enemies
+    PoisonPuddle = 93,
 }

@@ -98,6 +98,6 @@ public partial struct FrostLanceBuffStatsSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         foreach (var (buff, stats) in SystemAPI.Query<RefRO<FrostLanceBuff>, RefRW<CalculatedStats>>())
-            stats.ValueRW.Value.ProjectileDamageReduction += buff.ValueRO.ProjectileDamageReduction;
+            stats.ValueRW.Value.ProjectileDamageReduction = StatBlock.Stack(stats.ValueRO.Value.ProjectileDamageReduction, buff.ValueRO.ProjectileDamageReduction);
     }
 }

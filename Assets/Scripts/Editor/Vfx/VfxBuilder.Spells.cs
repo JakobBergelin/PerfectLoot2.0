@@ -42,6 +42,7 @@ public static partial class VfxBuilder
         yield return (VfxType.MeteorWarning, SpellLooks.MeteorWarning());
         yield return (VfxType.MeteorRock, SpellLooks.MeteorRock());
         yield return (VfxType.BurningGround, SpellLooks.BurningGround());
+        yield return (VfxType.PoisonPuddle, SpellLooks.PoisonPuddle());
         yield return (VfxType.PlagueArrow, SpellLooks.PlagueArrow());
         yield return (VfxType.ImmolationAura, SpellLooks.ImmolationAura());
         yield return (VfxType.GaleWardBand, SpellLooks.GaleWardBand());
@@ -278,6 +279,31 @@ public static partial class VfxBuilder
                 Shape(ps, ParticleSystemShapeType.Circle, 1f, Flat, new Vector3(0f, Ground + 0.1f, 0f));
                 Fade(ps, Hex(White), Hex(Yellow), Hex(Orange, 0f));
                 Stretch(ps, 2f);
+            });
+            return Save(root);
+        }
+
+        // The poison puddle an enemy leaves, radius 1: a dark green pool with an acid rim, hard bubbles swelling and popping
+        public static GameObject PoisonPuddle()
+        {
+            var root = Root_("VFX_PoisonPuddle", 0.6f, out var instance);
+            var pool = MeshPart(root, "Pool", _disc, Glow("VFX_PuddlePool", AcidDark, 0.55f), new Vector3(0f, Ground + 0.01f, 0f), Vector3.one);
+            var rim = MeshPart(root, "Rim", _ringThick, Glow("VFX_PuddleRim", Acid, 0.45f), new Vector3(0f, Ground + 0.02f, 0f), Vector3.one);
+            instance.HideOnRelease = new Renderer[] { pool, rim };
+            Ps(root, "Bubbles", _flame, ps =>
+            {
+                Main(ps, new Curve(0.5f, 0.9f), new Curve(0f, 0.1f), new Curve(0.15f, 0.3f), Color.white, rate: 18f);
+                var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape; m.gravityModifier = -0.1f;
+                Shape(ps, ParticleSystemShapeType.Circle, 0.9f, Flat, new Vector3(0f, Ground + 0.05f, 0f));
+                Colors(ps, (0f, Hex(AcidPale, 0.9f)), (0.6f, Hex(Acid, 0.85f)), (1f, Hex(Acid, 0f)));
+                Sizes(ps, (0f, 0.3f), (0.8f, 1f), (1f, 1.2f));
+            });
+            Ps(root, "Fumes", _additive, ps =>
+            {
+                Main(ps, new Curve(0.8f, 1.3f), new Curve(0.2f, 0.5f), new Curve(0.06f, 0.1f), Color.white, rate: 8f);
+                var m = ps.main; m.scalingMode = ParticleSystemScalingMode.Shape; m.gravityModifier = -0.2f;
+                Shape(ps, ParticleSystemShapeType.Circle, 1f, Flat, new Vector3(0f, Ground + 0.1f, 0f));
+                Fade(ps, Hex(AcidPale), Hex(Acid), Hex(AcidDark, 0f));
             });
             return Save(root);
         }

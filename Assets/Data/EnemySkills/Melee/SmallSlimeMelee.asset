@@ -18,7 +18,7 @@ MonoBehaviour:
   CooldownOnlyInRange: 1
   ResourceCost: 0
   MinRange: 0
-  MaxRange: 1.6
+  MaxRange: 2.2
   NeedsLineOfSight: 0
   Conditions:
     TargetUsingSkill: 0

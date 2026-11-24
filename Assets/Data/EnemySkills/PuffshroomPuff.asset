@@ -18,7 +18,7 @@ MonoBehaviour:
   CooldownOnlyInRange: 0
   ResourceCost: 0
   MinRange: 0
-  MaxRange: 2.5
+  MaxRange: 4
   NeedsLineOfSight: 0
   Conditions:
     TargetUsingSkill: 0
@@ -29,7 +29,7 @@ MonoBehaviour:
   FacingAngle: 60
   Telegraph:
     Shape: 1
-    Duration: 0.6
+    Duration: 1.2
     Size: 2.5
     Width: 0
     OnSelf: 1
