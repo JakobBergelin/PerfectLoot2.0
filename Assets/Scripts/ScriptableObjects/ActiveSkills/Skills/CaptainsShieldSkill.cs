@@ -6,8 +6,10 @@ namespace ActiveSkills
     public class CaptainsShieldSkill : ActiveSkill<CaptainsShield>
     {
         [SerializeField] float resourceCost = 5f;
-        [Tooltip("Damage per hit, scaled by (1 + block chance)")]
+        [Tooltip("Damage per hit, scaled by (1 + block chance * Block Scaling)")]
         public float Damage = 3f;
+        [Tooltip("How many times block chance counts toward the damage")]
+        public float BlockScaling = 3f;
         public float ProjectileSpeed = 18f;
         [Tooltip("Hit radius of the shield")]
         public float Radius = 0.5f;
@@ -27,13 +29,13 @@ namespace ActiveSkills
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
-            // Damage × (1 + block chance), as CaptainsShieldSystem throws it
+            // Damage × (1 + block chance × BlockScaling), as CaptainsShieldSystem throws it
             var block = GameIcons.Affix(Equipment.Affix.BlockChance);
             var damage = DamageLine(DamageType.Physical, "Damage per hit", stats);
             if (stats is StatBlock s)
-                damage.Text($"{Num(Damage * Mathf.Max(0f, 1f + s.BlockChance))} ({Num(Damage)} × (1 + {Pct(s.BlockChance)}").Icon(block).Text("))");
+                damage.Text($"{Num(Damage * Mathf.Max(0f, 1f + s.BlockChance * BlockScaling))} ({Num(Damage)} × (1 + {Num(BlockScaling)} × {Pct(s.BlockChance)}").Icon(block).Text("))");
             else
-                damage.Text($"{Num(Damage)} × (1 + ").Icon(block).Text(")");
+                damage.Text($"{Num(Damage)} × (1 + {Num(BlockScaling)} × ").Icon(block).Text(")");
             description.Damage.Add(damage);
 
             var bounces = GameIcons.Affix(Equipment.Affix.ProjectileBounces);
@@ -47,6 +49,7 @@ namespace ActiveSkills
         {
             component.ResourceCost = resourceCost;
             component.Damage = Damage;
+            component.BlockScaling = BlockScaling;
             component.ProjectileSpeed = ProjectileSpeed;
             component.Radius = Radius;
             component.HitForce = HitForce;

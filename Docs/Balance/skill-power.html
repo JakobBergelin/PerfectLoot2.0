@@ -1,0 +1,486 @@
+<title>PerfectLoot Skill Power</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600&family=JetBrains+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a balance sheet. Controls in one row, the curve chart, then the ranking table at the compare point. */
+:root {
+  --bg: #f7f7f4; --surface: #fcfcfb; --ink: #0b0b0b; --ink-2: #52514e; --ink-3: #8a8983; --rule: #e4e3de; --grid: #ecebe6;
+  --accent: #2a78d6; --chip: #efeee9;
+  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100; --s5: #e87ba4; --s6: #008300; --s7: #6250d6; --s8: #e34948;
+  --muted-line: #cfcec8;
+  --f-display: "Space Grotesk", "Segoe UI", system-ui, sans-serif;
+  --f-body: "Inter", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --rule: #2e2e2c; --grid: #262624;
+  --accent: #3987e5; --chip: #262624;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
+  --muted-line: #3a3a37; color-scheme: dark; } }
+:root[data-theme="dark"] {
+  --bg: #0d0d0d; --surface: #1a1a19; --ink: #f0efec; --ink-2: #c3c2b7; --ink-3: #8f8e86; --rule: #2e2e2c; --grid: #262624;
+  --accent: #3987e5; --chip: #262624;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500; --s5: #d55181; --s6: #0ca30c; --s7: #9085e9; --s8: #e66767;
+  --muted-line: #3a3a37; color-scheme: dark; }
+body { background: var(--bg); color: var(--ink); font-family: var(--f-body); font-size: 14px; line-height: 1.5; }
+.wrap { max-width: 1100px; margin: 0 auto; padding-block: 28px 48px; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); display: grid; gap: 20px; }
+h1 { font-family: var(--f-display); font-weight: 600; font-size: 28px; margin: 0; text-wrap: balance; }
+h2 { font-family: var(--f-display); font-weight: 600; font-size: 18px; margin: 0; }
+.lede { color: var(--ink-2); max-width: 70ch; margin: 6px 0 0; }
+.panel { background: var(--surface); border: 1px solid var(--rule); border-radius: 10px; padding: 16px; min-width: 0; }
+.controls { display: flex; flex-wrap: wrap; gap: 18px 28px; align-items: flex-start; }
+.ctl { display: grid; gap: 6px; min-width: 0; }
+.ctl-label { font-size: 11px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.seg { display: inline-flex; background: var(--chip); border-radius: 8px; padding: 3px; gap: 2px; flex-wrap: wrap; }
+.seg button { border: 0; background: transparent; color: var(--ink-2); font: 500 13px var(--f-body); padding: 5px 10px; border-radius: 6px; cursor: pointer; }
+.seg button[aria-pressed="true"] { background: var(--surface); color: var(--ink); box-shadow: 0 0 0 1px var(--rule); }
+.seg button:focus-visible, .checks input:focus-visible, input[type=range]:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.checks { display: flex; flex-wrap: wrap; gap: 6px 14px; }
+.checks label { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; color: var(--ink); font-size: 13px; }
+.checks input { accent-color: var(--accent); }
+.range-row { display: flex; gap: 10px; align-items: center; font-family: var(--f-mono); font-size: 13px; }
+.range-row input { width: 140px; accent-color: var(--accent); }
+.chart-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 8px; }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 12.5px; color: var(--ink-2); }
+.legend span { display: inline-flex; align-items: center; gap: 6px; cursor: default; }
+.legend i { width: 14px; height: 3px; border-radius: 2px; display: inline-block; }
+.chart-box { position: relative; }
+svg { display: block; width: 100%; height: auto; }
+svg text { fill: var(--ink-3); font-family: var(--f-mono); font-size: 11px; }
+.tip { position: absolute; pointer-events: none; background: var(--surface); border: 1px solid var(--rule); border-radius: 8px; padding: 8px 10px; font-size: 12.5px; box-shadow: 0 4px 14px rgba(0,0,0,.12); min-width: 170px; }
+.tip b { font-family: var(--f-display); font-weight: 600; }
+.tip .num { font-family: var(--f-mono); }
+.table-scroll { overflow-x: auto; }
+table { border-collapse: collapse; width: 100%; font-size: 13px; }
+th, td { text-align: left; padding: 7px 10px; border-bottom: 1px solid var(--rule); white-space: nowrap; }
+th { font-size: 11px; letter-spacing: .05em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+td.n, th.n { text-align: right; font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+td .sw { display: inline-block; width: 10px; height: 10px; border-radius: 3px; margin-right: 8px; vertical-align: -1px; }
+tr.hot td { background: var(--chip); }
+.pill { font-size: 11.5px; padding: 1px 7px; border-radius: 99px; background: var(--chip); color: var(--ink-2); }
+.notes { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 16px; }
+.notes ul { margin: 6px 0 0; padding-left: 18px; color: var(--ink-2); }
+.notes li { margin: 3px 0; }
+.notes li b { color: var(--ink); font-weight: 600; }
+@media (prefers-reduced-motion: no-preference) { path.line { transition: opacity .15s, stroke-width .15s; } }
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>Skill power by investment</h1>
+    <p class="lede">Estimated damage per second for every damage skill, from a fresh character (left) to every helpful stat at the gear maximum (right). Investment scales each chosen stat from 0 to the highest total gear can roll, after this week's stacking and armor changes.</p>
+  </header>
+
+  <section class="panel controls" aria-label="Chart settings">
+    <div class="ctl">
+      <span class="ctl-label">Skill values</span>
+      <div class="seg" id="values">
+        <button type="button" id="v-today" data-v="today" aria-pressed="false">Today</button>
+        <button type="button" id="v-new" data-v="new" aria-pressed="false">Proposed</button>
+        <button type="button" id="v-unique" data-v="unique" aria-pressed="true">Unique</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Enemies</span>
+      <div class="seg" id="scenario">
+        <button type="button" id="sc-single" data-v="single" aria-pressed="true">One target</button>
+        <button type="button" id="sc-pack" data-v="pack" aria-pressed="false">Pack of 5</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Skills</span>
+      <div class="seg" id="group">
+        <button type="button" id="g-all" data-v="all" aria-pressed="true">All</button>
+        <button type="button" id="g-melee" data-v="Melee" aria-pressed="false">Melee</button>
+        <button type="button" id="g-ranged" data-v="Ranged" aria-pressed="false">Ranged</button>
+        <button type="button" id="g-spell" data-v="Spells" aria-pressed="false">Spells</button>
+        <button type="button" id="g-stat" data-v="Stat-scaling" aria-pressed="false">Stat-scaling</button>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Invest in</span>
+      <div class="checks" id="invest">
+        <label><input type="checkbox" id="i-dmg" data-k="dmg" checked> Damage %</label>
+        <label><input type="checkbox" id="i-cc" data-k="cc" checked> Crit chance</label>
+        <label><input type="checkbox" id="i-cd" data-k="cd" checked> Crit damage</label>
+        <label><input type="checkbox" id="i-speed" data-k="speed" checked> Attack speed</label>
+        <label><input type="checkbox" id="i-cdr" data-k="cdr" checked> Cooldown reduction</label>
+        <label><input type="checkbox" id="i-weapon" data-k="weapon" checked> Weapon damage</label>
+        <label><input type="checkbox" id="i-area" data-k="area" checked> Area</label>
+        <label><input type="checkbox" id="i-own" data-k="own" checked> Skill's own stat</label>
+        <label><input type="checkbox" id="i-res" data-k="res" checked> Resource regen &amp; cost reduction</label>
+        <label><input type="checkbox" id="i-pierce" data-k="pierce" checked> Pierce</label>
+        <label><input type="checkbox" id="i-pspeed" data-k="pspeed" checked> Projectile speed</label>
+        <label><input type="checkbox" id="i-freeze" data-k="freeze" checked> Frozen enemies (other skills)</label>
+      </div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Resource</span>
+      <div class="checks"><label><input type="checkbox" id="limit" checked> Limit by resource income</label></div>
+      <div class="range-row"><input type="range" id="income" min="1" max="20" step="1" value="5" aria-label="Resource income per second"><span id="income-v">5/s</span></div>
+    </div>
+    <div class="ctl">
+      <span class="ctl-label">Y axis</span>
+      <div class="seg" id="scale">
+        <button type="button" id="y-log" data-v="log" aria-pressed="true">Log</button>
+        <button type="button" id="y-lin" data-v="lin" aria-pressed="false">Linear</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="chart-head">
+      <h2 id="chart-title">Damage per second</h2>
+      <div class="legend" id="legend"></div>
+    </div>
+    <div class="chart-box" id="chart-box">
+      <svg id="chart" viewBox="0 0 760 420" role="img" aria-label="Damage per second of each skill against investment"></svg>
+      <div class="tip" id="tip" hidden></div>
+    </div>
+    <div class="range-row" style="margin-top:10px">
+      <span class="ctl-label" style="font-family:var(--f-body)">Compare at</span>
+      <input type="range" id="at" min="0" max="100" step="5" value="50" aria-label="Investment to compare at"><span id="at-v">50%</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2 id="table-title">Ranking</h2>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Skill</th><th>Group</th><th>Type</th><th class="n">Fresh</th><th class="n" id="th-at">At 50%</th><th class="n">Maxed</th><th class="n">Growth</th><th class="n">Resource/s maxed</th><th class="n" id="th-chg">vs today</th></tr></thead>
+        <tbody id="rows"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Proposed changes</h2>
+    <p class="lede" style="margin-top:6px">Each investment has skills it belongs to: attack speed helps free attacks, cooldown reduction helps cooldown skills, resource helps expensive skills, area helps pack skills. Hover a line in Proposed to see today's curve dashed beside it. "vs today" in the table compares at the Compare at slider.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Skill</th><th>Today → proposed</th><th>Where it should be top 3</th></tr></thead>
+        <tbody>
+          <tr><td>Fireball</td><td>Damage 2 → 3</td><td>The easy one: fresh and lightly geared</td></tr>
+          <tr><td>Swipe</td><td>1 + 60% → 1 + 80% weapon damage</td><td>Fresh melee; physical speed or weapon builds</td></tr>
+          <tr><td>Multishot</td><td>Cost 8 → 4</td><td>Fresh and light bow builds</td></tr>
+          <tr><td>Whirlwind</td><td>Cost 12/s → 8/s</td><td>Light gear; physical packs with area</td></tr>
+          <tr><td>Flamethrower</td><td>Cost 12/s → 8/s</td><td>Fire builds, more so with area</td></tr>
+          <tr><td>Frost Lance</td><td>50% → 40% weapon damage</td><td>Cold builds; weapon and attack speed</td></tr>
+          <tr><td>Fists of Thunder</td><td>10% → 20% weapon damage per punch</td><td>Attack speed and weapon, one target</td></tr>
+          <tr><td>Poison Dart</td><td>Explosion 15 → 10</td><td>Easy ranged attack, lower ceiling</td></tr>
+          <tr><td>Plague Arrow</td><td>Damage per second 4 → 6, cost 20 → 10</td><td>Poison builds with area</td></tr>
+          <tr><td>Captain's Shield</td><td>3 × (1 + block) → 4 × (1 + 3 × block); bounces add targets</td><td>Early shield builds in packs</td></tr>
+          <tr><td>Upheaval</td><td>Cost 25 → 20</td><td>Physical resource builds in packs</td></tr>
+          <tr><td>Phantom Edge</td><td>130% → 500% weapon damage, cooldown 10 → 8 s</td><td>Physical packs with cooldown reduction</td></tr>
+          <tr><td>Meteor</td><td>Impact 25 → 40, burning 3 → 4/s, cost 55 → 50</td><td>Resource builds; costs a full Mana pool</td></tr>
+          <tr><td>Frozen Orb</td><td>Cost 25 → 15, ice shard 0.7 → 1</td><td>Cold resource builds</td></tr>
+          <tr><td>Tornado</td><td>0.5 + 20% → 1 + 30% weapon damage, cost 15 → 10</td><td>Lightning packs with area</td></tr>
+          <tr><td>Immolation</td><td>10% → 4% of max health</td><td>Health builds in packs</td></tr>
+          <tr><td>Trample</td><td>5% → 4% of current health</td><td>Health and movement speed, one target</td></tr>
+          <tr><td>Riposte</td><td>30% → 100% weapon damage</td><td>Utility</td></tr>
+          <tr><td>Ball Lightning</td><td>Base damage 3 → 5</td><td>Utility (movement)</td></tr>
+          <tr><td>Cursed Hammer, Sonic Ball</td><td>No change</td><td>Lightning resource builds; armor builds</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h2>Unique curves</h2>
+    <p class="lede" style="margin-top:6px">Built on Proposed. Each skill gets one rule that gives its curve a shape of its own. Hover a line in Unique to see the Proposed curve dashed beside it. Turn single investments on and off to see where each one climbs.</p>
+    <div class="table-scroll">
+      <table>
+        <thead><tr><th>Skill</th><th>Proposed → unique</th><th>Shape</th></tr></thead>
+        <tbody>
+          <tr><td>Swipe</td><td>1 + 80% → 3 + 40% weapon damage; area counts twice</td><td>Leads early, levels off, comes back in packs with area</td></tr>
+          <tr><td>Upheaval</td><td>1.2 → 1.6 s between slams, slam 80% → 150% weapon damage</td><td>The weapon damage skill</td></tr>
+          <tr><td>Whirlwind</td><td>+3% damage per second spinning, up to +25%</td><td>Rises once your resource keeps it spinning</td></tr>
+          <tr><td>Phantom Edge</td><td>Always critically hits; 500% → 300% weapon damage</td><td>Crit chance does nothing, crit damage counts for more</td></tr>
+          <tr><td>Frost Lance</td><td>+50% damage to frozen enemies</td><td>Climbs with freezes from other skills</td></tr>
+          <tr><td>Fists of Thunder</td><td>Attack speed also raises its weapon damage; 20% → 15% weapon damage per punch</td><td>The attack speed skill</td></tr>
+          <tr><td>Multishot</td><td>45° cone, 25% weapon damage per arrow; about 3 arrows hit one close or large enemy</td><td>Ranged single target, at the cost of standing close</td></tr>
+          <tr><td>Poison Dart</td><td>The explosion can&#39;t critically hit; explosion 10 → 12</td><td>Strong start in packs, lower ceiling</td></tr>
+          <tr><td>Meteor</td><td>Attack speed doesn&#39;t affect it; all damage about 45% lower (impact 40 → 21, burning 4 → 2/s)</td><td>Flat until resource investment</td></tr>
+          <tr><td>Cursed Hammer</td><td>Burst 12 → 7, grows with the hammer&#39;s speed; projectile speed raises it. Weak up close</td><td>The projectile speed skill</td></tr>
+          <tr><td>Frozen Orb</td><td>Ice shards pierce</td><td>A pack skill that grows with pierce</td></tr>
+          <tr><td>Ball Lightning</td><td>Base damage 5 → 6</td><td>Utility that also hits hard in packs</td></tr>
+          <tr><td>Trample</td><td>4% → 5.5% of current health</td><td>Health and movement speed</td></tr>
+          <tr><td>Flamethrower, Plague Arrow, Captain&#39;s Shield, Fireball, Tornado, Immolation, Sonic Ball</td><td>Same as Proposed</td><td>Already their own shape: no attack speed; slow projectiles poison longer; block and bounces; the simple spell</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="notes">
+    <div class="panel">
+      <h2>What today's curves show</h2>
+      <ul>
+        <li><b>Resource decides the order more than damage does.</b> With 5 resource a second, free skills (Frost Lance, Poison Dart, Swipe, Immolation, Trample, Sonic Ball) lead, and big spenders drop: Meteor goes from 510 to 30 on one target. Turn the limit off to see what each skill does when you can afford it.</li>
+        <li><b>Frost Lance is the strongest free attack.</b> 50% weapon damage every 0.55 s, plus cold damage %, and it pierces a line. It beats most spenders at every investment.</li>
+        <li><b>Crit is the biggest multiplier for everyone.</b> 62% chance at +335% damage is about ×3.1 on every skill.</li>
+        <li><b>Elemental skills gain far more from Damage %.</b> Fire reaches ×2.9 (Damage + Elemental + Fire), physical only ×1.4. Physical weapon skills make some of it back through weapon damage (5 → 9).</li>
+        <li><b>Spells ignore weapon damage.</b> Fireball, Meteor, Cursed Hammer and Cold Snap use flat numbers only.</li>
+        <li><b>Health and armor skills grow the most.</b> Immolation and Trample scale with health (10 → 136, ×13.6), Sonic Ball with armor. They start as the weakest and end far ahead.</li>
+        <li><b>Cooldown skills (Cold Snap, Riposte, Phantom Edge)</b> stay small next to repeated attacks at every investment.</li>
+      </ul>
+    </div>
+    <div class="panel">
+      <h2>Assumptions</h2>
+      <ul>
+        <li>Fresh character: weapon damage 5, no affixes. Maxed: the highest total each stat can reach on gear (one stat at a time, so not one real set of items).</li>
+        <li>A pack is 5 enemies within 3 m. A skill hits all of them once its radius covers 3 m.</li>
+        <li>Hit counts I had to guess: Multishot hits one target with 2 arrows, Flamethrower keeps about 5 flames on a target, Frozen Orb hits with 4 shards, a Poison Dart explosion every 4 s, Tesla Coil channels 3 s per use, Trample is held 80% of the time.</li>
+        <li>Barrage turns resource spent on other skills into missiles; it uses the income (10/s without the limit).</li>
+        <li>Resource investment adds up to +11.8 regeneration a second to the income slider and makes skills up to 52% cheaper. Resource on hit is not modeled; it would favour skills that hit many enemies fast.</li>
+        <li>Captain's Shield in Proposed: a pack takes 3 hits, plus one per bounce from gear (up to 3 more).</li>
+        <li>Unique: pierce goes up to 7 and each pierce adds 20% more shard hits in a pack. Projectile speed goes up to +75%, and the hammer gains 60% of it as damage. Frozen enemies go up to 50% of the time. Whirlwind's ramp counts as reached when your resource covers its cost. Multishot: about 3 arrows hit one enemy, all 6 land in a pack.</li>
+        <li>Not modeled: companions (Hydra, Wolf, Stone Guardian, Thralls, Mirror Image, Wisp), buffs (Frenzy, Blood Rite, Stances, Shadowstep), defenses and movement skills, enemy armor and resistances.</li>
+      </ul>
+    </div>
+  </section>
+</div>
+
+<script>
+(function () {
+  const TYPE_MAX = { Physical: 0, Fire: 1.04, Cold: 0.94, Lightning: 0.78, Poison: 0.68 };
+  const GROUPS = ["Melee", "Ranged", "Spells", "Stat-scaling"];
+
+  const state = { values: "unique", scenario: "single", group: "all", scale: "log", limit: true, income: 5, at: 50,
+    on: { dmg: true, cc: true, cd: true, speed: true, cdr: true, weapon: true, area: true, own: true, res: true, pierce: true, pspeed: true, freeze: true }, hover: null };
+
+  function statsAt(x) {
+    const o = state.on;
+    return {
+      W: 5 + (o.weapon ? 4 * x : 0),
+      AS: 1 + (o.speed ? 0.56 * x : 0),
+      CDR: o.cdr ? 0.48 * x : 0,
+      A: 1 + (o.area ? 1.02 * x : 0),
+      H: 10 + (o.own ? 126 * x : 0),
+      Ar: o.own ? 86 * x : 0,
+      Bl: o.own ? 0.24 * x : 0,
+      MS: o.own ? 0.58 * x : 0,
+      Bo: o.own ? 3 * x : 0,
+      P: o.pierce ? 7 * x : 0,
+      PS: o.pspeed ? 0.75 * x : 0,
+      Fr: o.freeze ? 0.5 * x : 0,
+      inc: state.income + (o.res ? 11.8 * x : 0),
+      cm: o.res ? 1 - 0.52 * x : 1,
+      x: x
+    };
+  }
+  const costMul = x => state.on.res ? 1 - 0.52 * x : 1;
+  const afford = (S, cost) => state.limit ? Math.min(1, S.inc / (cost * S.cm)) : 1;
+  const pack = () => state.scenario === "pack";
+  const tg = r => pack() ? Math.max(1, Math.min(5, 5 * (r / 3) * (r / 3))) : 1;           // enemies within radius r
+  const cone = r => pack() ? Math.max(1, Math.min(3, 3 * (r / 3) * (r / 3))) : 1;          // a front cone holds up to 3
+  const fixed = (single, packed) => pack() ? packed : single;
+  const cdTime = (cd, S) => cd * (1 - S.CDR);
+  function incomeAt(S) { return state.income + (state.on.res ? 11.8 * S.x : 0); }
+
+  // raw: damage per second before Damage % and crit. cost: resource per second while used.
+  const SKILLS = [
+    { n: "Swipe", g: "Melee", t: "Physical", raw: S => (1 + 0.6 * S.W) / 0.9 * S.AS * cone(2.2 * (1 + 2 * (S.A - 1))), cost: () => 0 },
+    { n: "Upheaval", g: "Melee", t: "Physical", raw: S => ((2 + 0.8 * S.W) * tg(1.5 * S.A) + (4 + 0.6 * S.W) * tg(5 * S.A)) / 1.2 * S.AS, cost: S => 25 / 1.2 * S.AS },
+    { n: "Whirlwind", g: "Melee", t: "Physical", raw: S => 0.4 * S.W / 0.3 * S.AS * tg(1.1 + 0.9 * S.A), cost: () => 12 },
+    { n: "Hookshot Slash", g: "Melee", t: "Physical", raw: S => 1.5 * S.W / 0.8 * fixed(1, 3), cost: () => 10 },
+    { n: "Phantom Edge", g: "Melee", t: "Physical", raw: S => 1.3 * S.W * fixed(1, 5) / cdTime(10, S), cost: () => 0 },
+    { n: "Riposte", g: "Melee", t: "Physical", raw: S => 0.3 * S.W * cone(1.1) / cdTime(3, S), cost: () => 0 },
+    { n: "Frost Lance", g: "Melee", t: "Cold", raw: S => 0.5 * S.W / 0.55 * S.AS * fixed(1, 3), cost: () => 0 },
+    { n: "Fists of Thunder", g: "Melee", t: "Lightning", raw: S => (4.2 + 0.7 * S.W) / 2.25 * S.AS * tg(0.5 * S.A), cost: () => 0 },
+    { n: "Multishot", g: "Ranged", t: "Physical", raw: S => 0.4 * S.W * fixed(2, 5) / 0.6 * S.AS, cost: S => 8 / 0.6 * S.AS },
+    { n: "Plague Arrow", g: "Ranged", t: "Poison", raw: S => 3 * S.A * fixed(1, 3) / 1.1 * S.AS, cost: S => 20 / 1.1 * S.AS },
+    { n: "Poison Dart", g: "Ranged", t: "Poison", raw: S => 0.25 * S.W / 0.5 * S.AS + 15 * tg(4 * S.A) / 4, cost: () => 0 },
+    { n: "Captain's Shield", g: "Ranged", t: "Physical", raw: S => 3 * (1 + S.Bl) * fixed(1, 2) / 0.8 * S.AS, cost: S => 5 / 0.8 * S.AS },
+    { n: "Barrage", g: "Ranged", t: "Physical", raw: S => 0.6 * (state.limit ? incomeAt(S) : 10), cost: () => 0 },
+    { n: "Fireball", g: "Spells", t: "Fire", raw: S => 2 / 0.5 * S.AS * tg(0.25 * S.A), cost: S => 2 / 0.5 * S.AS },
+    { n: "Flamethrower", g: "Spells", t: "Fire", raw: S => 7.9 * (pack() ? Math.min(5, 2 * S.A) : 1), cost: () => 12 },
+    { n: "Meteor", g: "Spells", t: "Fire", raw: S => 37 * tg(3 * S.A) * S.AS, cost: S => 55 * S.AS },
+    { n: "Frozen Orb", g: "Spells", t: "Cold", raw: S => (2 * tg(1.5 * S.A) + 0.7 * fixed(4, 12)) * S.AS, cost: S => 25 * S.AS },
+    { n: "Cold Snap", g: "Spells", t: "Cold", raw: S => 5 * tg(5 * S.A) / cdTime(12, S), cost: () => 0 },
+    { n: "Cursed Hammer", g: "Spells", t: "Lightning", raw: S => 12 * tg(3 * S.A) / 0.8 * S.AS, cost: S => 25 * S.AS },
+    { n: "Tornado", g: "Spells", t: "Lightning", raw: S => (0.5 + 0.2 * S.W) * 4 * 0.5 / 0.9 * S.AS * tg(2 * S.A), cost: S => 15 / 0.9 * S.AS },
+    { n: "Tesla Coil", g: "Spells", t: "Lightning", raw: S => 2 * tg(6 * S.A) * 3 / (3 + cdTime(10, S)), cost: S => 51 / (3 + cdTime(10, S)) },
+    { n: "Immolation", g: "Stat-scaling", t: "Fire", raw: S => 0.1 * S.H * tg(4 * S.A), cost: () => 0, own: "max health" },
+    { n: "Trample", g: "Stat-scaling", t: "Physical", raw: S => 0.05 * S.H * (4 * (1 + S.MS) * 0.5 / 1.5) * tg(2 * S.A) * 0.8, cost: () => 0, own: "health, movement speed" },
+    { n: "Sonic Ball", g: "Stat-scaling", t: "Physical", raw: S => 0.5 * (S.Ar + 10) * fixed(1, 3) / (cdTime(3, S) + 1), cost: () => 0, own: "armor" },
+    { n: "Ball Lightning", g: "Stat-scaling", t: "Lightning", raw: S => 4.5 * tg(4 * S.A) / (cdTime(2, S) + 1), cost: S => 20 / (cdTime(2, S) + 1), own: "resource spent" }
+  ];
+
+  // Proposed values: only what changes
+  const PROPOSED = {
+    "Swipe": { raw: S => (1 + 0.8 * S.W) / 0.9 * S.AS * cone(2.2 * (1 + 2 * (S.A - 1))) },
+    "Upheaval": { cost: S => 20 / 1.2 * S.AS },
+    "Whirlwind": { cost: () => 8 },
+    "Phantom Edge": { raw: S => 5 * S.W * fixed(1, 5) / cdTime(8, S) },
+    "Riposte": { raw: S => 1 * S.W * cone(1.1) / cdTime(3, S) },
+    "Frost Lance": { raw: S => 0.4 * S.W / 0.55 * S.AS * fixed(1, 3) },
+    "Fists of Thunder": { raw: S => (4.2 + 1.4 * S.W) / 2.25 * S.AS * tg(0.5 * S.A) },
+    "Multishot": { cost: S => 4 / 0.6 * S.AS },
+    "Plague Arrow": { raw: S => 4.5 * S.A * fixed(1, 3) / 1.1 * S.AS, cost: S => 10 / 1.1 * S.AS },
+    "Poison Dart": { raw: S => 0.25 * S.W / 0.5 * S.AS + 10 * tg(4 * S.A) / 4 },
+    "Captain's Shield": { raw: S => 4 * (1 + 3 * S.Bl) * (pack() ? Math.min(5, 3 + S.Bo) : 1) / 0.8 * S.AS },
+    "Fireball": { raw: S => 3 / 0.5 * S.AS * tg(0.25 * S.A) },
+    "Flamethrower": { cost: () => 8 },
+    "Meteor": { raw: S => 56 * tg(3 * S.A) * S.AS, cost: S => 50 * S.AS },
+    "Frozen Orb": { raw: S => (2 * tg(1.5 * S.A) + 1.0 * fixed(4, 12)) * S.AS, cost: S => 15 * S.AS },
+    "Tornado": { raw: S => (1 + 0.3 * S.W) * 4 * 0.5 / 0.9 * S.AS * tg(2 * S.A), cost: S => 10 / 0.9 * S.AS },
+    "Immolation": { raw: S => 0.04 * S.H * tg(4 * S.A) },
+    "Trample": { raw: S => 0.04 * S.H * (4 * (1 + S.MS) * 0.5 / 1.5) * tg(2 * S.A) * 0.8 },
+    "Ball Lightning": { raw: S => 7.5 * tg(4 * S.A) / (cdTime(2, S) + 1) }
+  };
+  // Unique values: Proposed plus one thing per skill that gives its curve its own shape.
+  // noCrit: damage per second that can't critically hit. crit: "always" for skills that always critically hit.
+  let MET = 30, HAM = 7, FIST = 1.1, BALL = 9, TRAM = 0.055;
+  const UNIQUE = {
+    "Swipe": { raw: S => (3 + 0.4 * S.W) / 0.9 * S.AS * cone(2.2 * (1 + 2 * (S.A - 1))) },
+    "Upheaval": { raw: S => ((2 + 1.5 * S.W) * tg(1.5 * S.A) + (4 + 0.6 * S.W) * tg(5 * S.A)) / 1.6 * S.AS, cost: S => 20 / 1.6 * S.AS },
+    "Whirlwind": { raw: S => 0.4 * S.W / 0.3 * S.AS * tg(1.1 + 0.9 * S.A) * (1 + 0.25 * afford(S, 8)) },
+    "Phantom Edge": { raw: S => 3 * S.W * fixed(1, 5) / cdTime(8, S), crit: "always" },
+    "Frost Lance": { raw: S => 0.4 * S.W / 0.55 * S.AS * fixed(1, 3) * (1 + 0.5 * S.Fr) },
+    "Fists of Thunder": { raw: S => (4.2 + FIST * S.W * S.AS) / 2.25 * S.AS * tg(0.5 * S.A) },
+    "Multishot": { raw: S => 0.25 * S.W * fixed(3, 6) / 0.6 * S.AS },
+    "Poison Dart": { raw: S => 0.25 * S.W / 0.5 * S.AS, noCrit: S => 12 * tg(4 * S.A) / 4 },
+    "Meteor": { raw: S => MET * tg(3 * S.A), cost: () => 50 },
+    "Cursed Hammer": { raw: S => HAM * tg(3 * S.A) / 0.8 * S.AS * (1 + 0.6 * S.PS) },
+    "Frozen Orb": { raw: S => (2 * tg(1.5 * S.A) + 1.0 * fixed(4, 12 * (1 + 0.2 * S.P))) * S.AS },
+    "Ball Lightning": { raw: S => BALL * tg(4 * S.A) / (cdTime(2, S) + 1) },
+    "Trample": { raw: S => TRAM * S.H * (4 * (1 + S.MS) * 0.5 / 1.5) * tg(2 * S.A) * 0.8 },
+  };
+  const SETS = { today: [], new: [PROPOSED], unique: [UNIQUE, PROPOSED] };
+  const BASE = { new: "today", unique: "new" };               // what "vs" and the dashed line compare against
+  const BASE_NAME = { today: "today", new: "today", unique: "proposed" };
+  const pick = (skill, k, vals) => { for (const set of SETS[vals || state.values]) if (set[skill.n] && k in set[skill.n]) return set[skill.n][k]; return skill[k]; };
+  const changed = skill => !!BASE[state.values] && !!SETS[state.values][0][skill.n];
+  const costOf = (skill, x, vals) => pick(skill, "cost", vals)(statsAt(x)) * costMul(x);
+
+  function dps(skill, x, vals) {
+    const S = statsAt(x), o = state.on;
+    const dmg = 1 + (o.dmg ? (0.41 + (skill.t !== "Physical" ? 0.42 + TYPE_MAX[skill.t] : 0)) * x : 0);
+    const cc = o.cc ? 0.62 * x : 0, cd = 1 + (o.cd ? 2.35 * x : 0);
+    const crit = pick(skill, "crit", vals) === "always" ? 1 + cd : 1 + cc * cd;
+    const nc = pick(skill, "noCrit", vals);
+    let v = (pick(skill, "raw", vals)(S) * crit + (nc ? nc(S) : 0)) * dmg;
+    const c = costOf(skill, x, vals);
+    if (state.limit && c > 0) v *= Math.min(1, incomeAt(S) / c);
+    return v;
+  }
+
+  const css = n => getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+  function colorOf(skill, idxInGroup) {
+    if (state.group === "all") return "var(--s" + (GROUPS.indexOf(skill.g) + 1) + ")";
+    return "var(--s" + (idxInGroup + 1) + ")";
+  }
+  const visible = () => state.group === "all" ? SKILLS : SKILLS.filter(s => s.g === state.group);
+
+  const svg = document.getElementById("chart"), tip = document.getElementById("tip"), box = document.getElementById("chart-box");
+  const W = 760, H = 420, L = 54, R = 150, T = 14, B = 40, PW = W - L - R, PH = H - T - B;
+  const xs = Array.from({ length: 21 }, (_, i) => i / 20);
+
+  function render() {
+    const list = visible();
+    const series = list.map((s, i) => ({ s, i, pts: xs.map(x => dps(s, x)) }));
+    const all = series.flatMap(d => d.pts);
+    const log = state.scale === "log";
+    let lo = Math.max(0.1, Math.min(...all)), hi = Math.max(...all);
+    let yMin, yMax, ticks;
+    if (log) {
+      const nice = [0.1, 0.2, 0.5, 1, 2, 5, 10, 20, 50, 100, 200, 500, 1000, 2000, 5000];
+      yMin = nice.filter(v => v <= lo).pop() || 0.1; yMax = nice.find(v => v >= hi) || hi;
+      ticks = nice.filter(v => v >= yMin && v <= yMax);
+    } else {
+      yMin = 0; const step = [1, 2, 5, 10, 20, 50, 100, 200, 500].find(st => hi / st <= 6) || 1000;
+      yMax = Math.ceil(hi / step) * step; ticks = []; for (let v = 0; v <= yMax + 1e-9; v += step) ticks.push(v);
+    }
+    const X = x => L + x * PW;
+    const Y = v => log ? T + PH - (Math.log10(Math.max(v, yMin)) - Math.log10(yMin)) / (Math.log10(yMax) - Math.log10(yMin)) * PH
+                       : T + PH - (v - yMin) / (yMax - yMin) * PH;
+    const fmt = v => v >= 100 ? v.toFixed(0) : v >= 10 ? v.toFixed(1) : v.toFixed(2);
+
+    let h = "";
+    ticks.forEach(v => { const y = Y(v); h += `<line x1="${L}" x2="${L + PW}" y1="${y}" y2="${y}" stroke="var(--grid)" stroke-width="1"/><text x="${L - 8}" y="${y + 4}" text-anchor="end">${v}</text>`; });
+    [0, 25, 50, 75, 100].forEach(p => { const x = X(p / 100); h += `<text x="${x}" y="${T + PH + 18}" text-anchor="middle">${p}%</text>`; });
+    h += `<line x1="${L}" x2="${L + PW}" y1="${T + PH}" y2="${T + PH}" stroke="var(--ink-3)" stroke-width="1"/>`;
+    h += `<text x="${L + PW / 2}" y="${H - 4}" text-anchor="middle">investment (share of the gear maximum)</text>`;
+    const ax = X(state.at / 100);
+    h += `<line x1="${ax}" x2="${ax}" y1="${T}" y2="${T + PH}" stroke="var(--ink-3)" stroke-dasharray="3 4" stroke-width="1"/>`;
+
+    // End labels: the top 6 at 100% (or every line in a group view), nudged apart
+    const ends = series.map(d => ({ d, y: Y(d.pts[20]) })).sort((a, b) => a.y - b.y);
+    const labelled = state.group === "all" ? ends.slice(0, 6) : ends;
+    let last = -99; labelled.forEach(e => { e.ly = Math.max(e.y, last + 13); last = e.ly; });
+
+    series.forEach(d => {
+      const p = d.pts.map((v, k) => `${k ? "L" : "M"}${X(xs[k]).toFixed(1)},${Y(v).toFixed(1)}`).join("");
+      const hot = state.hover === d.s.n, dim = state.hover && !hot;
+      h += `<path class="line" d="${p}" fill="none" stroke="${colorOf(d.s, d.i)}" stroke-width="${hot ? 3 : 2}" stroke-linejoin="round" stroke-linecap="round" opacity="${dim ? 0.18 : 1}"/>`;
+      h += `<path d="${p}" fill="none" stroke="transparent" stroke-width="12" data-n="${d.s.n}" class="hit" style="cursor:pointer"/>`;
+      if (hot && changed(d.s)) {
+        const q = xs.map((x, k) => `${k ? "L" : "M"}${X(x).toFixed(1)},${Y(dps(d.s, x, BASE[state.values])).toFixed(1)}`).join("");
+        h += `<path d="${q}" fill="none" stroke="${colorOf(d.s, d.i)}" stroke-width="2" stroke-dasharray="4 4" opacity="0.6" pointer-events="none"/>`;
+      }
+    });
+    labelled.forEach(e => { h += `<text x="${L + PW + 8}" y="${e.ly + 4}" style="fill:var(--ink-2);font-family:var(--f-body)">${e.d.s.n}</text>`; });
+    svg.innerHTML = h;
+
+    svg.querySelectorAll(".hit").forEach(el => {
+      el.addEventListener("mousemove", ev => showTip(el.dataset.n, ev, X, fmt));
+      el.addEventListener("mouseleave", () => { state.hover = null; tip.hidden = true; render(); });
+    });
+
+    // Legend
+    const lg = document.getElementById("legend");
+    lg.innerHTML = state.group === "all"
+      ? GROUPS.map((g, i) => `<span><i style="background:var(--s${i + 1})"></i>${g}</span>`).join("")
+      : list.map((s, i) => `<span><i style="background:var(--s${i + 1})"></i>${s.n}</span>`).join("");
+    document.getElementById("chart-title").textContent = ({ today: "Today: ", new: "Proposed: ", unique: "Unique: " })[state.values] + "damage per second, " + (pack() ? "pack of 5" : "one target") + (state.limit ? ", limited by " + state.income + " resource/s" : "");
+
+    // Table
+    const at = state.at / 100;
+    document.getElementById("th-at").textContent = "At " + state.at + "%";
+    document.getElementById("th-chg").textContent = "vs " + BASE_NAME[state.values];
+    const rows = series.map(d => ({ d, a: dps(d.s, at), was: dps(d.s, at, BASE[state.values] || "today"), z: d.pts[0], m: d.pts[20], c: costOf(d.s, 1) }))
+      .sort((p, q) => q.a - p.a);
+    document.getElementById("table-title").textContent = "Ranking at " + state.at + "% investment";
+    document.getElementById("rows").innerHTML = rows.map(r => `<tr class="${state.hover === r.d.s.n ? "hot" : ""}" data-n="${r.d.s.n}">
+      <td><span class="sw" style="background:${colorOf(r.d.s, r.d.i)}"></span>${r.d.s.n}</td><td><span class="pill">${r.d.s.g}</span></td><td>${r.d.s.t}</td>
+      <td class="n">${fmt(r.z)}</td><td class="n">${fmt(r.a)}</td><td class="n">${fmt(r.m)}</td><td class="n">×${(r.m / r.z).toFixed(1)}</td><td class="n">${r.c > 0 ? r.c.toFixed(1) : "–"}</td><td class="n">${BASE[state.values] && Math.abs(r.a / r.was - 1) > 0.005 ? "×" + (r.a / r.was).toFixed(2) : "–"}</td></tr>`).join("");
+    document.querySelectorAll("#rows tr").forEach(tr => {
+      tr.addEventListener("mouseenter", () => { state.hover = tr.dataset.n; render(); });
+      tr.addEventListener("mouseleave", () => { state.hover = null; render(); });
+    });
+  }
+
+  function showTip(name, ev, X, fmt) {
+    const s = SKILLS.find(k => k.n === name); if (!s) return;
+    const rect = svg.getBoundingClientRect();
+    const px = (ev.clientX - rect.left) / rect.width * W;
+    const x = Math.max(0, Math.min(1, (px - L) / PW));
+    const v = dps(s, x), c = costOf(s, x);
+    if (state.hover !== name) { state.hover = name; render(); }
+    tip.innerHTML = `<b>${s.n}</b> <span style="color:var(--ink-3)">${s.t}</span><br>
+      <span class="num">${fmt(v)}</span> damage/s at <span class="num">${Math.round(x * 100)}%</span>${changed(s) ? ` <span style="color:var(--ink-3)">(${BASE_NAME[state.values]} ${fmt(dps(s, x, BASE[state.values]))})</span>` : ""}<br>
+      <span style="color:var(--ink-2)">${c > 0 ? "Costs " + c.toFixed(1) + " resource/s" : "No resource cost"}${s.own ? "<br>Scales with " + s.own : ""}</span>`;
+    tip.hidden = false;
+    const br = box.getBoundingClientRect();
+    let left = ev.clientX - br.left + 14, top = ev.clientY - br.top + 14;
+    if (left + 190 > br.width) left = ev.clientX - br.left - 200;
+    tip.style.left = left + "px"; tip.style.top = top + "px";
+  }
+
+  function seg(id, key) {
+    document.querySelectorAll("#" + id + " button").forEach(b => b.addEventListener("click", () => {
+      state[key] = b.dataset.v;
+      document.querySelectorAll("#" + id + " button").forEach(o => o.setAttribute("aria-pressed", String(o === b)));
+      render();
+    }));
+  }
+  seg("values", "values"); seg("scenario", "scenario"); seg("group", "group"); seg("scale", "scale");
+  document.querySelectorAll("#invest input").forEach(i => i.addEventListener("change", () => { state.on[i.dataset.k] = i.checked; render(); }));
+  document.getElementById("limit").addEventListener("change", e => { state.limit = e.target.checked; render(); });
+  document.getElementById("income").addEventListener("input", e => { state.income = +e.target.value; document.getElementById("income-v").textContent = state.income + "/s"; render(); });
+  document.getElementById("at").addEventListener("input", e => { state.at = +e.target.value; document.getElementById("at-v").textContent = state.at + "%"; render(); });
+  render();
+  window.__skillPower = { state, SKILLS, dps, tune: o => { ({ MET = MET, HAM = HAM, FIST = FIST, BALL = BALL, TRAM = TRAM } = o); } };
+})();
+</script>

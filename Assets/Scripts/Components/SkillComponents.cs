@@ -511,7 +511,8 @@ public struct Shadowstep : IComponentData, IEnableableComponent
 public struct CaptainsShield : IComponentData, IEnableableComponent
 {
     public float ResourceCost;
-    public float Damage;
+    public float Damage;            // Scaled by (1 + block chance * BlockScaling)
+    public float BlockScaling;
     public float ProjectileSpeed;
     public float Radius;
     public float HitForce;
@@ -555,6 +556,9 @@ public struct Whirlwind : IComponentData, IEnableableComponent
     public float SpinUpTime;        // Seconds of spinning before the weapon starts hitting
     public float HitForce;
     public float TickInterval;      // Seconds between melee ticks (MeleeAttackUsed) while the weapon is out
+    public float RampPerSecond;     // More damage for every second spinning: 0.03 = +3%
+    public float MaxRamp;           // The ramp stops here: 0.25 = +25%
+    public float AppliedRamp;       // The ramp the weapon's attack damage has now (1 = none)
     public Entity WeaponEntity;
     public float Elapsed;
     public float TickElapsed;
@@ -706,7 +710,7 @@ public struct CursedHammer : IComponentData, IEnableableComponent
     public float MaxSpeed;
     public float HitRadius;             // How close an enemy has to come to the hammer to be hit
     public float SpinPerMeter;          // Radians it tumbles per meter flown
-    public float Damage;
+    public float Damage;                // Burst damage per meter per second of speed at impact
     public float Radius;
 }
 
@@ -903,6 +907,7 @@ public struct FrostLance : IComponentData, IEnableableComponent
     public float ResourcePerAttack;
     public float ProjectileDamageReduction; // The buff's: 0.2 = -20%
     public float BuffDuration;              // Seconds, scaled by the buff duration stat
+    public float FrozenDamageBonus;         // More damage to frozen enemies: 0.5 = +50%
 }
 
 /// <summary>

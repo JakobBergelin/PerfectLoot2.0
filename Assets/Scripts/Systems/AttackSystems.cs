@@ -121,9 +121,11 @@ public partial class AttackSystem : SystemBase
                         {
                             bool isCrit = false;
                             var damage = attack.ValueRO.Damage;
+                            if(attack.ValueRO.FrozenDamageBonus != 0f && SystemAPI.HasComponent<Frozen>(hit.Entity) && SystemAPI.IsComponentEnabled<Frozen>(hit.Entity))
+                                damage *= 1f + attack.ValueRO.FrozenDamageBonus;
 
                             // Sub damage is sized from the hit that caused it, so it doesn't crit again
-                            if(attack.ValueRO.DamageHierarchy == DamageHierarchy.Main)
+                            if(attack.ValueRO.DamageHierarchy == DamageHierarchy.Main && !attack.ValueRO.CannotCrit)
                                 CalculateCrit(source.ValueRO.Entity, hit.Entity, EntityManager, ref _random, ref damage, ref isCrit, attack.ValueRO.CriticalChanceBonus);
 
                             attack.ValueRW.Events.OnHit = true;

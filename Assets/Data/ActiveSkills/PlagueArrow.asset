@@ -23,8 +23,8 @@ MonoBehaviour:
   IntelligenceRequirement: 2
   RequiredGear: 3
   AttackSpeed: 1.1
-  resourceCost: 20
-  DamagePerSecond: 4
+  resourceCost: 10
+  DamagePerSecond: 6
   TickRate: 0.5
   Radius: 1.5
   Speed: 4

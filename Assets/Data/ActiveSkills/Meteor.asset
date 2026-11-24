@@ -22,11 +22,11 @@ MonoBehaviour:
   AgilityRequirement: 0
   IntelligenceRequirement: 26
   AttackSpeed: 1
-  resourceCost: 55
+  resourceCost: 50
   Range: 15
   Delay: 3
-  Damage: 25
+  Damage: 21
   Radius: 3
-  HazardDamagePerSecond: 3
+  HazardDamagePerSecond: 2
   HazardRadius: 3
   HazardDuration: 4

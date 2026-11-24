@@ -21,7 +21,7 @@ MonoBehaviour:
   AgilityRequirement: 0
   IntelligenceRequirement: 6
   resourceCost: 3
-  resourceCostPerSecond: 12
+  resourceCostPerSecond: 8
   FlamesPerSecond: 15
   SpreadAngle: 12
   Slow: 0.4

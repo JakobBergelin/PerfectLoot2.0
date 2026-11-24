@@ -20,6 +20,10 @@ namespace ActiveSkills
         public float HitForce = 3f;
         [Tooltip("Seconds between melee ticks while spinning: each counts as a melee attack (e.g. for Echoing Blade)")]
         public float TickInterval = 0.3f;
+        [Tooltip("More damage for every second spinning: 0.03 = +3%")]
+        public float RampPerSecond = 0.03f;
+        [Tooltip("The ramp stops here: 0.25 = +25%")]
+        public float MaxRamp = 0.25f;
 
         public override SkillType Type => SkillType.Whirlwind;
         public override float ResourceCostPerSecond => resourceCostPerSecond;
@@ -28,6 +32,7 @@ namespace ActiveSkills
         {
             description.Damage.Add(WeaponDamageLine(DamageType.Physical, "Damage per hit", 0f, 0f, WeaponDamageMultiplier, stats));
             description.Effects.Add(AreaLine("Hit radius", AttackRadius, stats));
+            description.Effects.Add(new SkillLine().Text($"+{Pct(RampPerSecond)} damage for every second spinning, up to +{Pct(MaxRamp)}"));
         }
 
         protected override Whirlwind Configure(Whirlwind component, bool isNew)
@@ -39,6 +44,8 @@ namespace ActiveSkills
             component.SpinUpTime = SpinUpTime;
             component.HitForce = HitForce;
             component.TickInterval = TickInterval;
+            component.RampPerSecond = RampPerSecond;
+            component.MaxRamp = MaxRamp;
             return component;
         }
     }

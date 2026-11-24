@@ -73,10 +73,19 @@ public partial class WhirlwindSystem : SystemBase
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new Source{Entity = entity});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new AttackTarget{TargetType = TargetType.Enemy});
                         commandBuffer.AddComponent(whirlwind.ValueRW.WeaponEntity, new InitializeFromSource{});
-
+                        whirlwind.ValueRW.AppliedRamp = 1f;
                     }
                     else
                     {
+                        // More damage the longer it spins: the attack is rescaled from the ramp it had to the one it has now
+                        float ramp = 1f + math.min(whirlwind.ValueRO.MaxRamp, whirlwind.ValueRO.RampPerSecond * (whirlwind.ValueRO.Elapsed - whirlwind.ValueRO.SpinUpTime));
+                        if(SystemAPI.HasComponent<Attack>(whirlwind.ValueRO.WeaponEntity) && whirlwind.ValueRO.AppliedRamp > 0f)
+                        {
+                            var attack = SystemAPI.GetComponentRW<Attack>(whirlwind.ValueRO.WeaponEntity);
+                            attack.ValueRW.Damage *= ramp / whirlwind.ValueRO.AppliedRamp;
+                            whirlwind.ValueRW.AppliedRamp = ramp;
+                        }
+
                         var weaponTransform = SystemAPI.GetComponentRW<LocalTransform>(whirlwind.ValueRO.WeaponEntity);
                         var forward = math.mul(localTransform.ValueRO.Rotation, Vector3.forward);
                         weaponTransform.ValueRW.Position = localTransform.ValueRO.Position + forward * stats.ValueRO.Value.WeaponReach;

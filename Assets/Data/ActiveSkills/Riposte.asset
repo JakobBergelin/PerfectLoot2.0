@@ -24,7 +24,7 @@ MonoBehaviour:
   IntelligenceRequirement: 0
   RequiredGear: 0
   cooldown: 3
-  WeaponDamageMultiplier: 0.3
+  WeaponDamageMultiplier: 1
   HalfAngle: 60
   HitForce: 12
   Window: 0.25

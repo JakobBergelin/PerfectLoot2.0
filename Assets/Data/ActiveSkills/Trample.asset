@@ -25,6 +25,6 @@ MonoBehaviour:
   cooldown: 4
   SpeedMultiplier: 0.5
   Stride: 1.5
-  DamagePerCurrentHealth: 0.05
+  DamagePerCurrentHealth: 0.055
   Radius: 2
   HitForce: 2

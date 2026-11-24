@@ -31,11 +31,15 @@ namespace ActiveSkills
         [Tooltip("Seconds, scaled by the buff duration stat")]
         public float BuffDuration = 1f;
 
+        [Tooltip("More damage to frozen enemies: 0.5 = +50%")]
+        public float FrozenDamageBonus = 0.5f;
+
         public override SkillType Type => SkillType.FrostLance;
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
             description.Damage.Add(WeaponDamageLine(DamageType.Cold, "Damage per thrust", 0f, 0f, WeaponDamageMultiplier, stats));
+            description.Effects.Add(new SkillLine().Text($"+{Pct(FrozenDamageBonus)} damage to frozen enemies"));
             description.Effects.Add(new SkillLine().Text($"Reach: {Num(Length)} m past your weapon reach, {Num(Width)} m wide"));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.ResourceRegeneration)).Text($"Resource per thrust: +{Num(ResourcePerAttack)}"));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.ProjectileDamageReduction))
@@ -54,6 +58,7 @@ namespace ActiveSkills
             component.ResourcePerAttack = ResourcePerAttack;
             component.ProjectileDamageReduction = ProjectileDamageReduction;
             component.BuffDuration = BuffDuration;
+            component.FrozenDamageBonus = FrozenDamageBonus;
             return component;
         }
     }

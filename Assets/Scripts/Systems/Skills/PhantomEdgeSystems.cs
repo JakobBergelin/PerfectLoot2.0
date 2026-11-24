@@ -174,7 +174,7 @@ public partial struct PhantomEdgeFlurrySystem : ISystem
             float weaponDamage = statBlock.WeaponDamage + _random.NextFloat(-statBlock.WeaponDamageRange, statBlock.WeaponDamageRange);
             var strike = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(strike, new LocalTransform { Position = targetPosition, Rotation = quaternion.identity, Scale = 1f });
-            commandBuffer.AddComponent(strike, new Attack { Origin = DamageLabel.PhantomEdge, Damage = weaponDamage * f.WeaponDamageMultiplier, Type = DamageType.Physical, Radius = f.StrikeRadius, DamageHierarchy = DamageHierarchy.Main });
+            commandBuffer.AddComponent(strike, new Attack { Origin = DamageLabel.PhantomEdge, Damage = weaponDamage * f.WeaponDamageMultiplier, Type = DamageType.Physical, Radius = f.StrikeRadius, DamageHierarchy = DamageHierarchy.Main, CriticalChanceBonus = 1f });
             commandBuffer.AddComponent(strike, new Source { Entity = entity });
             commandBuffer.AddComponent(strike, new AttackTarget { TargetType = TargetType.Enemy });
             commandBuffer.AddComponent(strike, new InitializeFromSource());

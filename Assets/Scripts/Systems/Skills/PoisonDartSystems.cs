@@ -134,7 +134,7 @@ public partial struct PoisonMarkExplosionSystem : ISystem
 
             var newEntity = commandBuffer.CreateEntity();
             commandBuffer.AddComponent(newEntity, new LocalTransform{Position = transform.ValueRO.Position, Rotation = quaternion.identity, Scale = 1f});
-            commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.PoisonExplosion, Damage = mark.ValueRO.ExplosionDamage, Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = mark.ValueRO.ExplosionRadius});
+            commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.PoisonExplosion, Damage = mark.ValueRO.ExplosionDamage, Type = DamageType.Poison, DamageHierarchy = DamageHierarchy.Main, Radius = mark.ValueRO.ExplosionRadius, CannotCrit = true});
             commandBuffer.AddComponent(newEntity, new Source{Entity = caster});
             commandBuffer.AddComponent(newEntity, new AttackTarget{TargetType = TargetType.Enemy});
             commandBuffer.AddComponent(newEntity, new InitializeFromSource{});

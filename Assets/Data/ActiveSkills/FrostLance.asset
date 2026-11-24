@@ -24,7 +24,7 @@ MonoBehaviour:
   IntelligenceRequirement: 1
   RequiredGear: 0
   AttackSpeed: 0.55
-  WeaponDamageMultiplier: 0.5
+  WeaponDamageMultiplier: 0.4
   Length: 10
   Width: 0.8
   Height: 3

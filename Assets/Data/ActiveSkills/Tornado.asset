@@ -21,10 +21,10 @@ MonoBehaviour:
   AgilityRequirement: 4
   IntelligenceRequirement: 12
   AttackSpeed: 0.9
-  resourceCost: 15
+  resourceCost: 10
   Radius: 2
-  DamagePerSecond: 0.5
-  WeaponDamagePerSecond: 0.2
+  DamagePerSecond: 1
+  WeaponDamagePerSecond: 0.3
   TickRate: 0.5
   Lifetime: 4
   Speed: 5

@@ -58,7 +58,8 @@ public partial class FrostLanceSystem : SystemBase
                 Type = DamageType.Cold,
                 Radius = halfLength,
                 DamageHierarchy = DamageHierarchy.Main,
-                HitForce = l.HitForce
+                HitForce = l.HitForce,
+                FrozenDamageBonus = l.FrozenDamageBonus
             });
             commandBuffer.AddComponent(newEntity, new AttackShape
             {

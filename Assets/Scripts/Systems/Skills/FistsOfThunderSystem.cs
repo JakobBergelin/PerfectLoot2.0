@@ -53,7 +53,8 @@ public partial class FistsOfThunderSystem : SystemBase
             var newEntity = commandBuffer.CreateEntity();
 
             var weaponDamage = stats.ValueRO.Value.WeaponDamage + _random.NextFloat(-stats.ValueRO.Value.WeaponDamageRange, stats.ValueRO.Value.WeaponDamageRange);
-            var damage = hit.Damage + weaponDamage * fistOfThunder.ValueRO.WeaponDamageMultiplier;
+            // Attack speed also multiplies the weapon damage part, so it counts for both speed and damage
+            var damage = hit.Damage + weaponDamage * fistOfThunder.ValueRO.WeaponDamageMultiplier * stats.ValueRO.Value.AttackSpeed;
             var position = localTransform.ValueRO.Position + desiredDirection.ValueRO.Direction * stats.ValueRO.Value.WeaponReach;
             commandBuffer.AddComponent(newEntity, new LocalTransform{Position = position, Rotation = Quaternion.identity, Scale = 1f});
             commandBuffer.AddComponent(newEntity, new Attack{Origin = DamageLabel.FistsOfThunder, Damage = damage, Type = DamageType.Lightning, Radius = fistOfThunder.ValueRO.Radius, DamageHierarchy = DamageHierarchy.Main, HitForce = fistOfThunder.ValueRO.HitForce});

@@ -45,7 +45,7 @@ public partial struct CursedHammerSystem : ISystem
                     available = math.max(0f, available - cost);
                     resourceChanges.Add(new ResourceChanger { Value = -cost });
                 }
-                Spawn(commandBuffer, entity, hammer.ValueRO, request.From(transform.ValueRO.Position), request.Direction);
+                Spawn(commandBuffer, entity, hammer.ValueRO, stats.ValueRO.Value, request.From(transform.ValueRO.Position), request.Direction);
                 SkillUtil.MarkUsed(skills, SkillType.CursedHammer, request.AutoCast);
             }
         }
@@ -61,22 +61,24 @@ public partial struct CursedHammerSystem : ISystem
             float cost = SkillUtil.Cost(hammer.ValueRO.ResourceCost, stats.ValueRO.Value);
             if (!SkillUtil.CanAfford(resource.ValueRO.CurrentValue, cost, stats.ValueRO) || !facing) continue;
 
-            Spawn(commandBuffer, entity, hammer.ValueRO, transform.ValueRO.Position, desiredDirection.ValueRO.Direction);
+            Spawn(commandBuffer, entity, hammer.ValueRO, stats.ValueRO.Value, transform.ValueRO.Position, desiredDirection.ValueRO.Direction);
             recovery.ValueRW.Remaining += hammer.ValueRO.AttackSpeed;
             if (resourceLookup.HasBuffer(entity)) resourceLookup[entity].Add(new ResourceChanger { Value = -cost });
             if (skillLookup.HasBuffer(entity)) SkillUtil.MarkUsed(skillLookup[entity], SkillType.CursedHammer);
         }
     }
 
-    /// <summary>One hammer from the caster toward direction. The caller pays the cost.</summary>
-    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in CursedHammer hammer, float3 casterPosition, float3 direction)
+    /// <summary>One hammer from the caster toward direction. The caller pays the cost. Projectile speed scales its start speed
+    /// (InitializeFromSource), its acceleration and its max speed.</summary>
+    public static void Spawn(EntityCommandBuffer commandBuffer, Entity caster, in CursedHammer hammer, in StatBlock stats, float3 casterPosition, float3 direction)
     {
+        float speedScale = math.max(0f, 1f + stats.ProjectileSpeed);
         var entity = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(entity, new LocalTransform { Position = casterPosition + direction, Rotation = quaternion.LookRotationSafe(direction, math.up()), Scale = 1f });
         commandBuffer.AddComponent(entity, new Projectile { Direction = direction, Speed = hammer.StartSpeed, DestroyOnHit = true, FollowGround = true });
         commandBuffer.AddComponent(entity, new CursedHammerProjectile
         {
-            Acceleration = hammer.Acceleration, MaxSpeed = hammer.MaxSpeed, HitRadius = hammer.HitRadius, SpinPerMeter = hammer.SpinPerMeter,
+            Acceleration = hammer.Acceleration * speedScale, MaxSpeed = hammer.MaxSpeed * speedScale, HitRadius = hammer.HitRadius, SpinPerMeter = hammer.SpinPerMeter,
             Damage = hammer.Damage, Radius = hammer.Radius,
         });
         commandBuffer.AddComponent(entity, new Source { Entity = caster });
@@ -144,7 +146,7 @@ public partial struct CursedHammerFlightSystem : ISystem
             }
             if (target != Entity.Null)
             {
-                Burst(burstBuffer, h, start + direction * distance * fraction, source.ValueRO);
+                Burst(burstBuffer, h, p.CurrentSpeed, start + direction * distance * fraction, source.ValueRO);
                 hammer.ValueRW.LastHit = target;
                 if (p.PierceCount > 0) projectile.ValueRW.PierceCount--;
                 else
@@ -158,18 +160,18 @@ public partial struct CursedHammerFlightSystem : ISystem
             var wallFilter = p.FollowGround ? ProjectileUtil.WallFilter : ProjectileUtil.WorldFilter;
             if (!p.PassThroughWalls && physicsWorld.CastRay(new RaycastInput { Start = start, End = start + direction * distance, Filter = wallFilter }, out var wall))
             {
-                Burst(burstBuffer, h, wall.Position, source.ValueRO);
+                Burst(burstBuffer, h, p.CurrentSpeed, wall.Position, source.ValueRO);
                 hammer.ValueRW.LastHit = Entity.Null;
             }
         }
     }
 
-    // A one-frame lightning attack where the hammer hit; the source's damage %, conversion and area of effect apply (InitializeFromSource)
-    static void Burst(EntityCommandBuffer commandBuffer, in CursedHammerProjectile hammer, float3 position, in Source source)
+    // A one-frame lightning attack where the hammer hit, Damage per m/s of its speed; the source's damage %, conversion and area of effect apply (InitializeFromSource)
+    static void Burst(EntityCommandBuffer commandBuffer, in CursedHammerProjectile hammer, float speed, float3 position, in Source source)
     {
         var burst = commandBuffer.CreateEntity();
         commandBuffer.AddComponent(burst, LocalTransform.FromPosition(position));
-        commandBuffer.AddComponent(burst, new Attack { Origin = DamageLabel.CursedHammer, Damage = hammer.Damage, Type = DamageType.Lightning, Radius = hammer.Radius, DamageHierarchy = DamageHierarchy.Main });
+        commandBuffer.AddComponent(burst, new Attack { Origin = DamageLabel.CursedHammer, Damage = hammer.Damage * speed, Type = DamageType.Lightning, Radius = hammer.Radius, DamageHierarchy = DamageHierarchy.Main });
         commandBuffer.AddComponent(burst, new AttackTarget { TargetType = TargetType.Enemy });
         commandBuffer.AddComponent(burst, source);
         commandBuffer.AddComponent(burst, new InitializeFromSource());

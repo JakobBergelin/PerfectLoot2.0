@@ -20,6 +20,7 @@ namespace ActiveSkills
         // Punches land WeaponReach in front of the player
         [Tooltip("Resource gained per punch")]
         public float ResourceGeneration = 1f;
+        [Tooltip("Weapon damage share of each punch, multiplied by the attack speed stat")]
         public float WeaponDamageMultiplier = 0.1f;
         [Tooltip("Hit radius of each punch")]
         public float Radius = 0.5f;
@@ -52,6 +53,7 @@ namespace ActiveSkills
                 }
                 description.Damage.Add(WeaponDamageLine(DamageType.Lightning, "Damage per punch", min, max, WeaponDamageMultiplier, stats));
                 description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.AttackSpeed)).Text($"Combo: {Combo.Count} punches"));
+                description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.AttackSpeed)).Text("Attack speed also multiplies its weapon damage"));
             }
             description.Effects.Add(AreaLine("Punch radius", Radius, stats));
             description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Affix.ResourceRegeneration)).Text($"Resource per punch: +{Num(ResourceGeneration)}"));

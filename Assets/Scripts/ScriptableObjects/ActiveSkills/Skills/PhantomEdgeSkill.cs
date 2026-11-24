@@ -29,6 +29,7 @@ namespace ActiveSkills
             description.Damage.Add(WeaponDamageLine(DamageType.Physical, "Damage per strike", 0f, 0f, WeaponDamageMultiplier, stats));
             description.Effects.Add(new SkillLine().Text($"Marks every enemy within {Num(Radius)} m and strikes each once"));
             description.Effects.Add(AttackTimeLine("Time between strikes", StrikeInterval, stats));
+            description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Equipment.Affix.CriticalDamage)).Text("Always critically hits"));
             description.Effects.Add(new SkillLine().Text("Unseen and invulnerable until the last strike"));
         }
 

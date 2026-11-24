@@ -22,7 +22,7 @@ MonoBehaviour:
   AgilityRequirement: 1
   IntelligenceRequirement: 0
   RequiredGear: 0
-  resourceCostPerSecond: 12
+  resourceCostPerSecond: 8
   WeaponDamageMultiplier: 0.4
   RotationsPerSecond: 2
   AttackRadius: 0.9

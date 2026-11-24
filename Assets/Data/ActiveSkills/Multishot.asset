@@ -23,10 +23,10 @@ MonoBehaviour:
   IntelligenceRequirement: 0
   RequiredGear: 3
   AttackSpeed: 0.6
-  resourceCost: 8
+  resourceCost: 4
   ArrowCount: 6
-  HalfAngle: 30
-  WeaponDamageMultiplier: 0.4
+  HalfAngle: 22.5
+  WeaponDamageMultiplier: 0.25
   ProjectileSpeed: 20
   Range: 18
   Radius: 0.25

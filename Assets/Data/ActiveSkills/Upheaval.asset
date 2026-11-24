@@ -22,10 +22,10 @@ MonoBehaviour:
   AgilityRequirement: 0
   IntelligenceRequirement: 0
   RequiredGear: 0
-  AttackSpeed: 1.2
-  resourceCost: 25
+  AttackSpeed: 1.6
+  resourceCost: 20
   SlamDamage: 2
-  SlamWeaponDamageMultiplier: 0.8
+  SlamWeaponDamageMultiplier: 1.5
   SlamRadius: 1.5
   QuakeDelay: 0.7
   QuakeDamage: 4

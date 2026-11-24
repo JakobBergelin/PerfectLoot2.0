@@ -29,5 +29,5 @@ MonoBehaviour:
   MaxSpeed: 35
   HitRadius: 0.5
   SpinPerMeter: 120
-  Damage: 12
+  Damage: 1
   Radius: 3

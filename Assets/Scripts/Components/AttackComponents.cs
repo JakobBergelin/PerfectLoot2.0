@@ -11,6 +11,10 @@ public struct Attack : IComponentData
     public float HitForce;
     // Added to its Source's critical chance: a companion's own bonus, as its hits use its owner's stats
     public float CriticalChanceBonus;
+    // Never critically hits (Poison Dart's explosion)
+    public bool CannotCrit;
+    // More damage to frozen targets: 0.5 = +50% (Frost Lance)
+    public float FrozenDamageBonus;
     public DamageOrigin Origin;
     // Seconds before it can hit the same target again (e.g. long for one hit per target). 0 = DefaultGracePeriod.
     public float GracePeriod;

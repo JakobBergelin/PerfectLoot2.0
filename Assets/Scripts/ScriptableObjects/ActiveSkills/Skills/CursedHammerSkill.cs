@@ -27,7 +27,8 @@ namespace ActiveSkills
         public float SpinPerMeter = 120f;
 
         [Header("Burst (where it hits)")]
-        public float Damage = 12f;
+        [Tooltip("Burst damage per meter per second of the hammer's speed when it hits")]
+        public float Damage = 1f;
         public float Radius = 3f;
 
         public override SkillType Type => SkillType.CursedHammer;
@@ -35,10 +36,11 @@ namespace ActiveSkills
 
         public override void Describe(SkillDescription description, StatBlock? stats)
         {
-            description.Damage.Add(DamageLine(DamageType.Lightning, "Burst damage", stats).Text(Num(Damage)));
+            description.Damage.Add(DamageLine(DamageType.Lightning, "Burst damage", stats).Text($"{Num(Damage)} per m/s of speed when it hits"));
             description.Effects.Add(AreaLine("Burst radius", Radius, stats));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Distance), "Speed", StartSpeed, null, " m/s"));
             description.Effects.Add(new SkillLine().Text($"Gains {Num(Acceleration)} m/s every second, up to {Num(MaxSpeed)} m/s"));
+            description.Effects.Add(new SkillLine().Icon(GameIcons.Affix(Equipment.Affix.ProjectileSpeed)).Text("Projectile speed also raises how fast it speeds up"));
             description.Effects.Add(AttackTimeLine("Time between casts", AttackSpeed, stats));
         }
 

@@ -21,7 +21,7 @@ MonoBehaviour:
   StrengthRequirement: 6
   AgilityRequirement: 0
   IntelligenceRequirement: 2
-  DamagePerMaxHealth: 0.1
+  DamagePerMaxHealth: 0.04
   HealthCostPerSecond: 0.02
   Radius: 4
   TickRate: 0.5

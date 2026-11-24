@@ -27,7 +27,7 @@ MonoBehaviour:
   resourceCostPerSecond: 10
   Speed: 12
   Lift: 1
-  Damage: 3
+  Damage: 6
   SpentToDouble: 40
   Radius: 4
   HitForce: 4

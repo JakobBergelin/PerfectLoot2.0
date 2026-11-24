@@ -16,7 +16,7 @@ namespace ActiveSkills
         public float HitForce = 2f;
         [Tooltip("Seconds a hit marks the enemy; another hit starts them over")]
         public float MarkDuration = 5f;
-        [Tooltip("Poison damage when a marked enemy dies, not based on weapon damage")]
+        [Tooltip("Poison damage when a marked enemy dies, not based on weapon damage; never critically hits")]
         public float ExplosionDamage = 15f;
         [Tooltip("Meters around the dying enemy, scaled by the caster's area of effect")]
         public float ExplosionRadius = 4f;
@@ -28,6 +28,7 @@ namespace ActiveSkills
             description.Damage.Add(WeaponDamageLine(DamageType.Poison, "Dart damage", 0f, 0f, WeaponDamageMultiplier, stats));
             description.Damage.Add(DamageLine(DamageType.Poison, "Explosion damage", stats).Text(Num(ExplosionDamage)));
             description.Effects.Add(AreaLine("Explosion radius", ExplosionRadius, stats));
+            description.Effects.Add(new SkillLine().Text("The explosion can't critically hit"));
             description.Effects.Add(new SkillLine().Text($"Marks the enemy hit for {Num(MarkDuration)} s"));
             description.Effects.Add(AttackTimeLine("Time between darts", AttackSpeed, stats));
         }

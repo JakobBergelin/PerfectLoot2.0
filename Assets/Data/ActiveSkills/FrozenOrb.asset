@@ -21,7 +21,7 @@ MonoBehaviour:
   AgilityRequirement: 0
   IntelligenceRequirement: 17
   AttackSpeed: 1
-  resourceCost: 25
+  resourceCost: 15
   DamagePerSecond: 2
   TickRate: 0.5
   Radius: 1.5
@@ -29,7 +29,7 @@ MonoBehaviour:
   Lifetime: 2.5
   SpinSpeed: 360
   ShardInterval: 0.05
-  ShardDamage: 0.7
+  ShardDamage: 1
   ShardSpeed: 25
   ShardRadius: 0.1
   ShardRange: 8

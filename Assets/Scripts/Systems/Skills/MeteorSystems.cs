@@ -61,7 +61,7 @@ public partial struct MeteorSystem : ISystem
             });
             commandBuffer.AddComponent(strike, new Source { Entity = entity });
 
-            recovery.ValueRW.Remaining += m.AttackSpeed;
+            recovery.ValueRW.Remaining += m.AttackSpeed * stats.ValueRO.Value.AttackSpeed;    // Counted down by attack speed: this undoes it, so casts are always AttackSpeed apart
             if (resourceChanges.HasBuffer(entity)) resourceChanges[entity].Add(new ResourceChanger { Value = -cost });
             if (skills.HasBuffer(entity)) SkillUtil.MarkUsed(skills[entity], SkillType.Meteor);
         }

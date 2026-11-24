@@ -6,7 +6,7 @@ namespace ActiveSkills
     [CreateAssetMenu(fileName = "Meteor", menuName = "Active Skills/Meteor")]
     public class MeteorSkill : ActiveSkill<Meteor>
     {
-        [Tooltip("Seconds before the next cast (shared by all repeated attacks), scaled by the attack speed stat")]
+        [Tooltip("Seconds before the next cast (shared by all repeated attacks); attack speed doesn't change it")]
         public float AttackSpeed = 1f;
         [SerializeField] float resourceCost = 55f;
         [Tooltip("Meters from you it can land; a cursor further away lands it at this distance")]
@@ -35,7 +35,8 @@ namespace ActiveSkills
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Impact after", Delay, null, " s"));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Burning ground lasts", HazardDuration, null, " s"));
             description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Distance), "Range", Range, null, " m"));
-            description.Effects.Add(AttackTimeLine("Time between casts", AttackSpeed, stats));
+            description.Effects.Add(ValueLine(GameIcons.Stat(StatIcon.Duration), "Time between casts", AttackSpeed, null, " s"));
+            description.Effects.Add(new SkillLine().Text("Attack speed doesn't affect it"));
         }
 
         protected override Meteor Configure(Meteor component, bool isNew)

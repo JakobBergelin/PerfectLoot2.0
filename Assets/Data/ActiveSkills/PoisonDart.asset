@@ -28,5 +28,5 @@ MonoBehaviour:
   Radius: 0.25
   HitForce: 2
   MarkDuration: 5
-  ExplosionDamage: 15
+  ExplosionDamage: 12
   ExplosionRadius: 4

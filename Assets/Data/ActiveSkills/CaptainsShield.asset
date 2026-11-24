@@ -23,11 +23,11 @@ MonoBehaviour:
   IntelligenceRequirement: 0
   RequiredGear: 64
   resourceCost: 5
-  Damage: 3
+  Damage: 4
   ProjectileSpeed: 18
   Radius: 0.5
   HitForce: 2
-  Bounces: 1
+  Bounces: 2
   TurnSpeed: 10
   TurnAcceleration: 20
   NoTargetDistance: 10
