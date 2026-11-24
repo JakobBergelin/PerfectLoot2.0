@@ -52,6 +52,8 @@ Material:
     - _ShadowReceive: 1
     - _SwayAmount: 0
     - _SwaySpeed: 1
+    - _Bend: 1
+    - _BendHeight: 0.3
     - _UseSmoothNormals: 1
     m_Colors:
     - _BaseColor: {r: 0.24705882, g: 0.45490196, b: 0.28627452, a: 1}

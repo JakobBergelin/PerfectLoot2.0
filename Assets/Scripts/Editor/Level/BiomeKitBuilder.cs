@@ -322,13 +322,16 @@ public static class BiomeKitBuilder
 
         // A forest kit's own slots (only for biomes that set their colors). Ground-like ones use the floor template;
         // canopies and bushes sway in the wind (PL_Comic's _SwayAmount, meters).
-        void Slot(string slot, string hex, bool ground = false, float sway = 0f)
+        void Slot(string slot, string hex, bool ground = false, float sway = 0f, float bendHeight = 0f)
         {
             if (hex == null) return;
             var material = BiomeTileSets.Comic(ground ? BiomeTileSets.ComicFloor : BiomeTileSets.ComicEnv, $"{m}/{b.Name}_{slot}.mat",
                                                BiomeTileSets.Hex(hex), shadow);
             material.SetFloat("_SwayAmount", sway);
             material.SetFloat("_SwaySpeed", sway > 0f ? 1.1f : 1f);
+            // Low foliage leans out of the way of players and skills (PL_Foliage.hlsl), fully at its top
+            material.SetFloat("_Bend", bendHeight > 0f ? 1f : 0f);
+            if (bendHeight > 0f) material.SetFloat("_BendHeight", bendHeight);
             result[slot] = material;
         }
         Slot("Path", b.Path, ground: true);
@@ -340,9 +343,12 @@ public static class BiomeKitBuilder
         Slot("Canopy", b.Canopy, sway: 0.12f);
         Slot("CanopyLight", b.CanopyLight, sway: 0.14f);
         Slot("CanopyWarm", b.CanopyWarm, sway: 0.12f);
-        Slot("Bush", b.Bush, sway: 0.05f);
+        Slot("Bush", b.Bush, sway: 0.05f, bendHeight: 1f);
         Slot("Undergrowth", b.Undergrowth, ground: true);
         Slot("Rope", b.Rope);
+        // A forest kit's grass tufts are FloorAlt: they bend too (only small pieces do, so its skirts stay put)
+        result["FloorAlt"].SetFloat("_Bend", b.Bush != null ? 1f : 0f);
+        result["FloorAlt"].SetFloat("_BendHeight", 0.3f);
         foreach (var material in result.Values) EditorUtility.SetDirty(material);
         return result;
     }

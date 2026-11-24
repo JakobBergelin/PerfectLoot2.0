@@ -60,7 +60,7 @@ namespace LevelGeneration
         NativeArray<ColliderBatch> _colliderBatches;
         NativeArray<float3> _vertices, _normals, _outlineNormals, _colliderVertices;
         NativeArray<float4> _tangents;
-        NativeArray<float2> _uvs, _flows;
+        NativeArray<float2> _uvs, _flows, _rises;
         NativeArray<int> _indices;
         NativeArray<int3> _triangles;
         NativeArray<BlobAssetReference<Unity.Physics.Collider>> _builtColliders;
@@ -181,6 +181,7 @@ namespace LevelGeneration
             chunk._tangents = new NativeArray<float4>(vertexTotal, allocator, NativeArrayOptions.UninitializedMemory);
             chunk._uvs = new NativeArray<float2>(vertexTotal, allocator, NativeArrayOptions.UninitializedMemory);
             chunk._flows = new NativeArray<float2>(vertexTotal, allocator, NativeArrayOptions.UninitializedMemory);
+            chunk._rises = new NativeArray<float2>(vertexTotal, allocator, NativeArrayOptions.UninitializedMemory);
             chunk._indices = new NativeArray<int>(indexTotal, allocator, NativeArrayOptions.UninitializedMemory);
             chunk._colliderVertices = new NativeArray<float3>(colliderVertexTotal, allocator, NativeArrayOptions.UninitializedMemory);
             chunk._triangles = new NativeArray<int3>(triangleTotal, allocator, NativeArrayOptions.UninitializedMemory);
@@ -192,7 +193,7 @@ namespace LevelGeneration
                 Geometry = geometryBlob, Corners = corners, Width = width, Height = height, TileSize = tileSize,
                 Instances = chunk._instances, Items = chunk._meshItems,
                 Vertices = chunk._vertices, Normals = chunk._normals, Tangents = chunk._tangents, Uvs = chunk._uvs, Indices = chunk._indices,
-                Flow = flow, Flows = chunk._flows,
+                Flow = flow, Flows = chunk._flows, Rises = chunk._rises,
             }.Schedule(chunk._meshItems.Length, 4);
             var outlines = new OutlineNormalsJob
             {
@@ -252,6 +253,7 @@ namespace LevelGeneration
                 mesh.SetTangents(_tangents, batch.VertexStart, batch.VertexCount);
                 mesh.SetUVs(0, _uvs, batch.VertexStart, batch.VertexCount);
                 mesh.SetUVs(1, _flows, batch.VertexStart, batch.VertexCount);     // Water flow (PerfectLoot/Liquid)
+                mesh.SetUVs(2, _rises, batch.VertexStart, batch.VertexCount);     // Height above its own small piece (PL_Comic's Bend)
                 mesh.SetUVs(3, _outlineNormals, batch.VertexStart, batch.VertexCount);
                 mesh.SetIndices(_indices, batch.IndexStart, batch.IndexCount, MeshTopology.Triangles, 0);
                 mesh.RecalculateBounds();
@@ -310,6 +312,7 @@ namespace LevelGeneration
             if (_tangents.IsCreated) _tangents.Dispose();
             if (_uvs.IsCreated) _uvs.Dispose();
             if (_flows.IsCreated) _flows.Dispose();
+            if (_rises.IsCreated) _rises.Dispose();
             if (_indices.IsCreated) _indices.Dispose();
             if (_colliderVertices.IsCreated) _colliderVertices.Dispose();
             if (_triangles.IsCreated) _triangles.Dispose();
@@ -331,6 +334,7 @@ namespace LevelGeneration
 
             // Each item writes only its own ranges
             [NativeDisableParallelForRestriction] public NativeArray<float2> Flows;
+            [NativeDisableParallelForRestriction] public NativeArray<float2> Rises;
             [NativeDisableParallelForRestriction] public NativeArray<float3> Vertices;
             [NativeDisableParallelForRestriction] public NativeArray<float3> Normals;
             [NativeDisableParallelForRestriction] public NativeArray<float4> Tangents;
@@ -353,6 +357,7 @@ namespace LevelGeneration
                     var tangent = mesh.Tangents[v];
                     Tangents[target] = new float4(math.mul(turn, Mirrored(instance.Mirror, tangent.xyz)), instance.Mirror ? -tangent.w : tangent.w);
                     Uvs[target] = mesh.Uvs[v];
+                    Rises[target] = new float2(mesh.Rises[v], 0f);
                     // The water's flow where the vertex lands on the grid (grid space, as the merged mesh is)
                     var turned = math.mul(turn, Mirrored(instance.Mirror, mesh.Vertices[v]));
                     Flows[target] = LevelFlow.Sample(Flow, Width, Height, instance.Center.x + turned.x / TileSize, instance.Center.y + turned.z / TileSize);

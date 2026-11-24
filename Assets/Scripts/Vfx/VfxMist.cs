@@ -5,7 +5,8 @@ using UnityEngine;
 /// How effects stir the height fog's mist (MistWake): VfxManager stirs it every frame around each shown effect with a rule
 /// here, effects that follow something (a fireball, a tornado) while they're shown and one-shots (an impact, a footstep)
 /// for their first Burst seconds. Since every machine shows the same effects, every machine's mist moves the same.
-/// Push: m/s outward (negative pulls in); Swirl: m/s around; Clear: how fast it thins (per second).
+/// Push: m/s outward (negative pulls in); Swirl: m/s around; Clear: how fast it thins (per second). Bending foliage
+/// (bushes, grass tufts) leans with the pushed mist (PL_Foliage.hlsl), so a rule here moves them too.
 /// </summary>
 public static class VfxMist
 {
@@ -39,6 +40,7 @@ public static class VfxMist
         // Blasts and slams
         [VfxType.StrikeShock] = R(3f, 9f, burst: 0.25f),
         [VfxType.ColdNova] = R(6f, 12f, clear: 0.6f, burst: 0.35f),
+        [VfxType.MeteorImpact] = R(6f, 16f, clear: 0.9f, burst: 0.35f),
         [VfxType.UpheavalSlam] = R(5f, 12f, burst: 0.3f),
         [VfxType.UpheavalQuake] = R(5f, 12f, burst: 0.3f),
         [VfxType.LightningHit] = R(1.5f, 4f, burst: 0.2f),

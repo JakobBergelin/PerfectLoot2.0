@@ -63,6 +63,9 @@ public static class BiomeTileSets
         // Tilt-shift blur at the top and bottom of the screen (TiltShift volume, pixels at 1080p, 0 = off; only set when the
         // profile has none, then tuned in its inspector)
         public float TiltShift;
+        // Ink lines inside shapes and where things stand on the ground (InkEdges volume strength, 0 = off; only set when the
+        // profile has none, then tuned in its inspector)
+        public float InkEdges;
         public AmbientKind Ambient;
         // Sunlight through a canopy (CanopyLight volume: leaf and cloud shadows, 0 = off; only set when the profile has none, then tuned in its inspector) and low mist that thickens toward
         // the forest (HeightFog volume: Mist color, 0 = off)
@@ -133,7 +136,7 @@ public static class BiomeTileSets
         new Biome
         {
             Name = "BrightwaterHollow", TestScene = "BrightwaterHollow", Ambient = AmbientKind.Pollen, LiquidFactor = 0.6f,
-            CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f, Toning = 0.3f, TiltShift = 4f,
+            CanopyShade = 0.45f, Mist = "#B8DCD0", MistIntensity = 0.6f, Toning = 0.3f, TiltShift = 4f, InkEdges = 0.85f,
             AmbientGraph = "Assets/Data/Vfx/Graphs/BrightwaterHollow_Ambient.vfx",
             Decals = DecalBuilder.BrightwaterSet,
             Style = new BiomeTileGenerator.Style(),
@@ -491,6 +494,7 @@ public static class BiomeTileSets
             if (b.Mist != null) mist.color.Override(Hex(b.Mist));
         }
         if (b.TiltShift > 0f && !profile.Has<global::TiltShift>()) Get<global::TiltShift>(profile).strength.Override(b.TiltShift);
+        if (b.InkEdges > 0f && !profile.Has<global::InkEdges>()) Get<global::InkEdges>(profile).strength.Override(b.InkEdges);
         EditorUtility.SetDirty(profile);
         return profile;
     }

@@ -31,6 +31,7 @@ namespace LevelGeneration
         public BlobArray<float3> Normals;
         public BlobArray<float4> Tangents;
         public BlobArray<float2> Uvs;
+        public BlobArray<float> Rises;  // Meters above the bottom of its own small piece (a tuft, a bush), 0 on big ones: how far bending foliage leans
         public BlobArray<int> Indices;
     }
 
@@ -84,6 +85,7 @@ namespace LevelGeneration
             public Vector3[] Normals;
             public Vector4[] Tangents;
             public Vector2[] Uvs;
+            public float[] Rises;
             public int[] Indices;
         }
 
@@ -200,13 +202,71 @@ namespace LevelGeneration
                     if (!remap.TryGetValue(indices[i], out int local)) { local = used.Count; remap[indices[i]] = local; used.Add(indices[i]); }
                     indices[i] = local;
                 }
-                part.Meshes.Add(new MeshPiece
+                var piece = new MeshPiece
                 {
                     Material = index, Indices = indices,
                     Vertices = used.Select(v => moved[v]).ToArray(), Normals = used.Select(v => movedNormals[v]).ToArray(),
                     Tangents = used.Select(v => movedTangents[v]).ToArray(), Uvs = used.Select(v => uvs[v]).ToArray(),
-                });
+                };
+                piece.Rises = Rises(piece.Vertices, indices);
+                part.Meshes.Add(piece);
             }
+        }
+
+        const float SmallPiece = 3f;    // Meters across: bigger pieces (ground, skirts, walls) never bend
+
+        /// <summary>
+        /// Per vertex, its height above the bottom of the small piece it belongs to, so bending foliage (PL_Comic's Bend)
+        /// leans more toward its top and stays planted wherever the piece stands, raised tiles and slopes included. A
+        /// piece is what's joined by triangles or shared corners; small pieces whose bounds touch count as one (a tuft's
+        /// blades, a bush's lumps). Big pieces get 0.
+        /// </summary>
+        static float[] Rises(Vector3[] vertices, int[] indices)
+        {
+            // Joined by triangles or by sharing a corner's position
+            var parent = Enumerable.Range(0, vertices.Length).ToArray();
+            int Find(int i) { while (parent[i] != i) i = parent[i] = parent[parent[i]]; return i; }
+            void Join(int a, int b) { a = Find(a); b = Find(b); if (a != b) parent[b] = a; }
+            for (int i = 0; i + 2 < indices.Length; i += 3) { Join(indices[i], indices[i + 1]); Join(indices[i], indices[i + 2]); }
+            var at = new Dictionary<Vector3Int, int>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                var key = Vector3Int.RoundToInt(vertices[i] * 1000f);
+                if (at.TryGetValue(key, out int other)) Join(other, i); else at[key] = i;
+            }
+
+            // Each piece's bounds; small pieces whose bounds touch are merged
+            var bounds = new Dictionary<int, Bounds>();
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                int root = Find(i);
+                if (bounds.TryGetValue(root, out var b)) { b.Encapsulate(vertices[i]); bounds[root] = b; }
+                else bounds[root] = new Bounds(vertices[i], Vector3.zero);
+            }
+            var small = bounds.Where(p => Mathf.Max(p.Value.size.x, p.Value.size.z) <= SmallPiece).Select(p => p.Key).ToList();
+            for (int a = 0; a < small.Count; a++)
+                for (int c = a + 1; c < small.Count; c++)
+                {
+                    int ra = Find(small[a]), rc = Find(small[c]);
+                    if (ra == rc) continue;
+                    var ba = bounds[ra];
+                    var bc = bounds[rc];
+                    ba.Expand(0.02f);
+                    if (!ba.Intersects(bc)) continue;
+                    Join(ra, rc);
+                    ba = bounds[ra];
+                    ba.Encapsulate(bc);
+                    bounds[ra] = ba;
+                }
+
+            var rises = new float[vertices.Length];
+            var isSmall = new HashSet<int>(small.Select(Find));
+            for (int i = 0; i < vertices.Length; i++)
+            {
+                int root = Find(i);
+                if (isSmall.Contains(root)) rises[i] = vertices[i].y - bounds[root].min.y;
+            }
+            return rises;
         }
 
         static void AddCollider(Part part, Collider collider, Matrix4x4 matrix, List<string> warnings, string owner)
@@ -294,12 +354,14 @@ namespace LevelGeneration
                 var normals = builder.Allocate(ref meshes[i].Normals, source.Vertices.Length);
                 var tangents = builder.Allocate(ref meshes[i].Tangents, source.Vertices.Length);
                 var uvs = builder.Allocate(ref meshes[i].Uvs, source.Uvs.Length);
+                var rises = builder.Allocate(ref meshes[i].Rises, source.Vertices.Length);
                 for (int v = 0; v < source.Vertices.Length; v++)
                 {
                     vertices[v] = source.Vertices[v];
                     normals[v] = source.Normals[v];
                     tangents[v] = source.Tangents[v];
                     uvs[v] = source.Uvs[v];
+                    rises[v] = source.Rises[v];
                 }
                 var indices = builder.Allocate(ref meshes[i].Indices, source.Indices.Length);
                 for (int n = 0; n < source.Indices.Length; n++) indices[n] = source.Indices[n];

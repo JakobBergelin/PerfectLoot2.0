@@ -46,6 +46,8 @@ Shader "PerfectLoot/Comic"
         [Header(Wind)]
         _SwayAmount ("Sway (m, 0 = still)", Range(0,0.5)) = 0
         _SwaySpeed ("Sway Speed", Range(0,4)) = 1
+        _Bend ("Bend Around Players and Skills (0 = stiff)", Range(0,1)) = 0
+        _BendHeight ("Bend Height (m above the ground at full lean)", Range(0.1,4)) = 1
     }
 
     SubShader
@@ -56,6 +58,7 @@ Shader "PerfectLoot/Comic"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "PL_Abyss.hlsl"
         #include "PL_Canopy.hlsl"
+        #include "PL_Foliage.hlsl"
 
         CBUFFER_START(UnityPerMaterial)
             float4 _BaseMap_ST;
@@ -83,6 +86,8 @@ Shader "PerfectLoot/Comic"
             half _UseSmoothNormals;
             half _SwayAmount;
             half _SwaySpeed;
+            half _Bend;
+            half _BendHeight;
         CBUFFER_END
         // Per-entity color for Entities Graphics (URPMaterialPropertyBaseColor: hit flash, unit tints)
         #ifdef UNITY_DOTS_INSTANCING_ENABLED
@@ -116,24 +121,30 @@ Shader "PerfectLoot/Comic"
 
         // Wind: foliage (canopies, bushes) drifts sideways in world space, two waves under a slow gust, so neighbouring
         // lumps move a little apart. Every pass moves its vertices the same way; _SwayAmount 0 keeps a material still.
-        float3 PL_Sway(float3 positionWS)
+        // Bending foliage (_Bend, PL_Foliage.hlsl) also leans away from players and skills, more toward its top, so the
+        // base stays planted: rise is the vertex's height above the bottom of its own small piece (UV2.x, baked into the
+        // level's meshes by LevelGeometryExtractor; 0 elsewhere, so nothing else bends).
+        float3 PL_Sway(float3 positionWS, float rise)
         {
             float t = _Time.y * _SwaySpeed;
             float gust = 0.6 + 0.4 * sin(t * 0.37 + positionWS.x * 0.05 + positionWS.z * 0.03);
             float2 wave = float2(sin(t + positionWS.x * 0.35 + positionWS.z * 0.2),
                                  sin(t * 0.83 + positionWS.z * 0.3 - positionWS.x * 0.15));
-            positionWS.xz += wave * (_SwayAmount * gust);
+            float2 offset = wave * (_SwayAmount * gust);
+            if (_Bend > 0.0)
+                offset += PL_FoliagePush(positionWS) * (_Bend * saturate(rise / _BendHeight));
+            positionWS.xz += offset;
             return positionWS;
         }
 
-        float4 PL_SwayedClip(float3 positionOS)
+        float4 PL_SwayedClip(float3 positionOS, float rise)
         {
-            return TransformWorldToHClip(PL_Sway(TransformObjectToWorld(positionOS)));
+            return TransformWorldToHClip(PL_Sway(TransformObjectToWorld(positionOS), rise));
         }
 
         // The ink outline's shell: the vertex pushed out along its (smoothed) normal by width pixels on screen
         // pull: meters it moves toward the camera
-        float4 PL_OutlineShell(float3 positionOS, float3 normalOS, float4 tangentOS, float3 smoothTS, float width, out float3 positionWS,
+        float4 PL_OutlineShell(float3 positionOS, float3 normalOS, float4 tangentOS, float3 smoothTS, float rise, float width, out float3 positionWS,
                                float pull = 0.0)
         {
             float3 nOS = normalOS;
@@ -146,7 +157,7 @@ Shader "PerfectLoot/Comic"
 
             float3 restWS = TransformObjectToWorld(positionOS);
             float weight = lerp(1.0, 0.35 + 1.3 * PL_Noise(restWS * 2.2), _OutlineJitter);   // Line weight stays put in the wind
-            positionWS = PL_Sway(restWS);
+            positionWS = PL_Sway(restWS, rise);
 
             float4 posCS = TransformWorldToHClip(positionWS + normalize(GetCameraPositionWS() - positionWS) * pull);
             float3 nWS = TransformObjectToWorldNormal(nOS);
@@ -194,6 +205,7 @@ Shader "PerfectLoot/Comic"
                 float4 positionOS : POSITION;
                 float3 normalOS   : NORMAL;
                 float2 uv         : TEXCOORD0;
+                float2 rise       : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -214,7 +226,7 @@ Shader "PerfectLoot/Comic"
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_TRANSFER_INSTANCE_ID(input, o);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                o.positionWS = PL_Sway(TransformObjectToWorld(input.positionOS.xyz));
+                o.positionWS = PL_Sway(TransformObjectToWorld(input.positionOS.xyz), input.rise.x);
                 o.positionCS = TransformWorldToHClip(o.positionWS);
                 o.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 o.uv = TRANSFORM_TEX(input.uv, _BaseMap);
@@ -343,6 +355,7 @@ Shader "PerfectLoot/Comic"
                 float3 normalOS   : NORMAL;
                 float4 tangentOS  : TANGENT;
                 float3 smoothTS   : TEXCOORD3;
+                float2 rise       : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
@@ -359,7 +372,7 @@ Shader "PerfectLoot/Comic"
                 Varyings o = (Varyings)0;
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(o);
-                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, _OutlineWidth, o.positionWS);
+                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, input.rise.x, _OutlineWidth, o.positionWS);
                 o.fogFactor = ComputeFogFactor(o.positionCS.z);
                 return o;
             }
@@ -395,9 +408,9 @@ Shader "PerfectLoot/Comic"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
-            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float2 rise : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; };
-            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz); return o; }
+            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz, input.rise.x); return o; }
             half4 frag (Varyings input) : SV_Target { clip(_PL_XRayWidth - 0.001); return 0; }
             ENDHLSL
         }
@@ -430,6 +443,7 @@ Shader "PerfectLoot/Comic"
                 float3 normalOS   : NORMAL;
                 float4 tangentOS  : TANGENT;
                 float3 smoothTS   : TEXCOORD3;
+                float2 rise       : TEXCOORD2;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
             struct Varyings { float4 positionCS : SV_POSITION; };
@@ -439,7 +453,7 @@ Shader "PerfectLoot/Comic"
                 UNITY_SETUP_INSTANCE_ID(input);
                 float3 positionWS;
                 // Pulled toward the camera, so the player's own ink outline (the same shell) never counts as hiding it
-                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, _PL_XRayWidth, positionWS, 0.5);
+                o.positionCS = PL_OutlineShell(input.positionOS.xyz, input.normalOS, input.tangentOS, input.smoothTS, input.rise.x, _PL_XRayWidth, positionWS, 0.5);
                 return o;
             }
             half4 frag (Varyings input) : SV_Target
@@ -471,14 +485,14 @@ Shader "PerfectLoot/Comic"
             float3 _LightDirection;
             float3 _LightPosition;
 
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 rise : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; };
 
             Varyings vert (Attributes input)
             {
                 Varyings o;
                 UNITY_SETUP_INSTANCE_ID(input);
-                float3 positionWS = PL_Sway(TransformObjectToWorld(input.positionOS.xyz));
+                float3 positionWS = PL_Sway(TransformObjectToWorld(input.positionOS.xyz), input.rise.x);
                 float3 normalWS = TransformObjectToWorldNormal(input.normalOS);
                 #if _CASTING_PUNCTUAL_LIGHT_SHADOW
                     float3 lightDirectionWS = normalize(_LightPosition - positionWS);
@@ -512,9 +526,9 @@ Shader "PerfectLoot/Comic"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
-            struct Attributes { float4 positionOS : POSITION; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float2 rise : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; };
-            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz); return o; }
+            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz, input.rise.x); return o; }
             half frag (Varyings input) : SV_Target { return input.positionCS.z; }
             ENDHLSL
         }
@@ -532,9 +546,9 @@ Shader "PerfectLoot/Comic"
             #pragma fragment frag
             #pragma multi_compile_instancing
             #pragma multi_compile _ DOTS_INSTANCING_ON
-            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; UNITY_VERTEX_INPUT_INSTANCE_ID };
+            struct Attributes { float4 positionOS : POSITION; float3 normalOS : NORMAL; float2 rise : TEXCOORD2; UNITY_VERTEX_INPUT_INSTANCE_ID };
             struct Varyings { float4 positionCS : SV_POSITION; float3 normalWS : TEXCOORD0; };
-            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz); o.normalWS = TransformObjectToWorldNormal(input.normalOS); return o; }
+            Varyings vert (Attributes input) { Varyings o; UNITY_SETUP_INSTANCE_ID(input); o.positionCS = PL_SwayedClip(input.positionOS.xyz, input.rise.x); o.normalWS = TransformObjectToWorldNormal(input.normalOS); return o; }
             half4 frag (Varyings input) : SV_Target { return half4(NormalizeNormalPerPixel(input.normalWS), 0.0); }
             ENDHLSL
         }

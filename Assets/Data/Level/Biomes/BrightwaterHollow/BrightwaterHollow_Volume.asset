@@ -150,6 +150,7 @@ MonoBehaviour:
   - {fileID: 8565541208934981004}
   - {fileID: 2511103007675751190}
   - {fileID: -265893040399925369}
+  - {fileID: 7432694446939075738}
 --- !u!114 &849379129802519247
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -292,6 +293,34 @@ MonoBehaviour:
   clamp:
     m_OverrideState: 0
     m_Value: 0.05
+--- !u!114 &7432694446939075738
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1784e47ac1bd4899a00a6c08a1d5fd02, type: 3}
+  m_Name: InkEdges
+  m_EditorClassIdentifier: Assembly-CSharp::InkEdges
+  active: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0.85
+  width:
+    m_OverrideState: 1
+    m_Value: 1
+  depthThreshold:
+    m_OverrideState: 1
+    m_Value: 0.02
+  creaseAngle:
+    m_OverrideState: 1
+    m_Value: 45
+  color:
+    m_OverrideState: 1
+    m_Value: {r: 0.0706, g: 0.0471, b: 0.0863, a: 1}
 --- !u!114 &8565541208934981004
 MonoBehaviour:
   m_ObjectHideFlags: 3

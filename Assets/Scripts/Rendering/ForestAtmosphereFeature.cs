@@ -6,21 +6,26 @@ using UnityEngine.Rendering.Universal;
 
 /// <summary>
 /// The forest's light and air, from the camera's volume: hands CanopyLight and HeightFog to the shaders as global
-/// values before the opaques draw, then draws the height fog over the opaques (PL_HeightFog.shader), before
-/// transparents, and the TiltShift blur before post-processing (PL_TiltShift.shader). Turn Draw Fog or Draw Tilt Shift off
-/// for a cheaper quality level; the canopy shadows cost next to nothing.
+/// values before the opaques draw, then draws the InkEdges lines (PL_InkEdges.shader) and the height fog over the
+/// opaques (PL_HeightFog.shader), before transparents, and the TiltShift blur before post-processing
+/// (PL_TiltShift.shader). Turn Draw Fog, Draw Ink Edges or Draw Tilt Shift off for a cheaper quality level; the canopy
+/// shadows cost next to nothing.
 /// </summary>
 public class ForestAtmosphereFeature : ScriptableRendererFeature
 {
     [SerializeField] Shader fogShader;
+    [SerializeField] Shader inkEdgesShader;
     [SerializeField] Shader tiltShiftShader;
     [Tooltip("Draw the height fog (one full-screen pass per camera). Off for a cheaper quality level.")]
     public bool drawFog = true;
+    [Tooltip("Draw the ink edges (one full-screen pass per camera). Off for a cheaper quality level.")]
+    public bool drawInkEdges = true;
     [Tooltip("Draw the tilt-shift blur (one full-screen pass per camera). Off for a cheaper quality level.")]
     public bool drawTiltShift = true;
 
-    Material _fogMaterial, _tiltShiftMaterial;
+    Material _fogMaterial, _inkEdgesMaterial, _tiltShiftMaterial;
     GlobalsPass _globals;
+    InkEdgesPass _inkEdges;
     FogPass _fog;
     TiltShiftPass _tiltShift;
 
@@ -30,6 +35,9 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
         // Normals before the opaques make URP draw the depth texture in a prepass, which has no water (PL_Liquid has no
         // DepthNormals pass): the water reads it for its foam ring
         _globals.ConfigureInput(ScriptableRenderPassInput.Normal);
+        // Ink first, so the fog covers far lines (same event, enqueued before the fog)
+        _inkEdges = new InkEdgesPass { renderPassEvent = RenderPassEvent.BeforeRenderingTransparents };
+        _inkEdges.ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Normal);
         _fog = new FogPass { renderPassEvent = RenderPassEvent.BeforeRenderingTransparents };
         _fog.ConfigureInput(ScriptableRenderPassInput.Depth);
         // Swaps the camera color for its blurred copy, so URP must keep the color in a texture until post-processing
@@ -39,6 +47,11 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
     public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
     {
         renderer.EnqueuePass(_globals);
+        if (drawInkEdges && Load(ref inkEdgesShader, "Hidden/PerfectLoot/InkEdges", ref _inkEdgesMaterial))
+        {
+            _inkEdges.Material = _inkEdgesMaterial;
+            renderer.EnqueuePass(_inkEdges);
+        }
         if (drawFog && Load(ref fogShader, "Hidden/PerfectLoot/HeightFog", ref _fogMaterial))
         {
             _fog.Material = _fogMaterial;
@@ -63,6 +76,7 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
     protected override void Dispose(bool disposing)
     {
         CoreUtils.Destroy(_fogMaterial);
+        CoreUtils.Destroy(_inkEdgesMaterial);
         CoreUtils.Destroy(_tiltShiftMaterial);
     }
 
@@ -103,6 +117,41 @@ public class ForestAtmosphereFeature : ScriptableRendererFeature
                 context.cmd.SetGlobalVector(FogParamsId, d.FogParams);
                 context.cmd.SetGlobalVector(FogShapeId, d.FogShape);
             });
+        }
+    }
+
+    /// <summary>
+    /// The ink lines, blended over the camera's color from the depth-normals prepass. Tested against the camera's own
+    /// depth, which has the water the prepass lacks, so the water hides the riverbed's lines.
+    /// </summary>
+    class InkEdgesPass : ScriptableRenderPass
+    {
+        public Material Material;
+        static readonly int InkColorId = Shader.PropertyToID("_InkColor"), InkEdgesId = Shader.PropertyToID("_InkEdges");
+
+        class Data { public Material Material; }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            var ink = VolumeManager.instance.stack.GetComponent<InkEdges>();
+            if (Material == null || !ink.IsActive()) return;
+            var camera = frameData.Get<UniversalCameraData>();
+            if (camera.cameraType == CameraType.Preview || camera.cameraType == CameraType.Reflection) return;
+            var resources = frameData.Get<UniversalResourceData>();
+            if (resources.isActiveTargetBackBuffer || !resources.cameraDepthTexture.IsValid() || !resources.cameraNormalsTexture.IsValid()) return;
+
+            using var builder = renderGraph.AddRasterRenderPass<Data>("PL Ink Edges", out var data);
+            var color = ink.color.value.linear;
+            Material.SetVector(InkColorId, new Vector4(color.r, color.g, color.b, ink.strength.value));
+            Material.SetVector(InkEdgesId, new Vector4(ink.width.value, ink.depthThreshold.value,
+                                                       1f - Mathf.Cos(ink.creaseAngle.value * Mathf.Deg2Rad), ink.smallestStep.value));
+            data.Material = Material;
+            builder.SetRenderAttachment(resources.activeColorTexture, 0);
+            builder.SetRenderAttachmentDepth(resources.activeDepthTexture, AccessFlags.Read);
+            builder.UseTexture(resources.cameraDepthTexture);
+            builder.UseTexture(resources.cameraNormalsTexture);
+            builder.SetRenderFunc(static (Data d, RasterGraphContext context) =>
+                Blitter.BlitTexture(context.cmd, new Vector4(1f, 1f, 0f, 0f), d.Material, 0));
         }
     }
 
