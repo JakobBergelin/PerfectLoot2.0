@@ -28,7 +28,7 @@ MonoBehaviour:
     LightningDamage: 0
     PoisonDamage: 0
     Health: 20
-    HealthRegeneration: 0.2
+    HealthRegeneration: 1
     Resource: 0
     ResourceRegeneration: 0
     ResourceCostReduction: 0

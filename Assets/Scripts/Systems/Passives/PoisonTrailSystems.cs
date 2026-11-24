@@ -26,6 +26,8 @@ public struct PoisonTrail : IComponentData
 [BurstCompile]
 public partial struct PoisonTrailSystem : ISystem
 {
+    const float RootHeight = 1f;    // Hazard art is drawn for a root this far above the floor (a unit of scale 1)
+
     [BurstCompile]
     public void OnCreate(ref SystemState state) => state.RequireForUpdate<PoisonTrail>();
 
@@ -42,9 +44,9 @@ public partial struct PoisonTrailSystem : ISystem
             if (health.ValueRO.CurrentValue <= 0f) continue;
             if (leaps.HasComponent(entity) && leaps[entity].Airborne) continue;   // Nothing while in the air
             ref var t = ref trail.ValueRW;
-            // On the ground under it: its position is its collider's middle
+            // From the floor under it, not its own middle, which is higher up on a big enemy
             var position = transform.ValueRO.Position;
-            position.y -= UnitMovement.BottomOffset(collider.ValueRO, transform.ValueRO.Rotation, transform.ValueRO.Scale);
+            position.y += RootHeight - UnitMovement.BottomOffset(collider.ValueRO, transform.ValueRO.Rotation, transform.ValueRO.Scale);
             if (t.HasDropped && math.distance(position.xz, t.LastDrop.xz) < t.Spacing) continue;
             t.HasDropped = true;
             t.LastDrop = position;
