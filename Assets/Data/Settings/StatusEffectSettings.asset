@@ -18,6 +18,7 @@ MonoBehaviour:
     BurnDuration: 3
     PoisonDuration: 3
     PoisonDamagePerSecond: 2.5
+    PoisonHealthRegenerationReduction: 0.5
     ChilledDamageMultiplier: 2
     ChillDuration: 4
     ChillMaxStacks: 100

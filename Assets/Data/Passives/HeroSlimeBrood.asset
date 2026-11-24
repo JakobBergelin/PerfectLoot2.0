@@ -19,8 +19,8 @@ MonoBehaviour:
   Thresholds:
   - HealthBelow: 0.6
     Into: {fileID: 11400000, guid: c56bd56d12c9fb446bb5c9e9bdd6d56a, type: 2}
-    Count: 2
+    Count: 1
   - HealthBelow: 0.3
     Into: {fileID: 11400000, guid: c56bd56d12c9fb446bb5c9e9bdd6d56a, type: 2}
-    Count: 4
+    Count: 2
   Spread: 2

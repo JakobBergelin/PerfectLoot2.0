@@ -13,6 +13,7 @@ public class StatusEffectSettings : ScriptableObject
         BurnDuration = 3.0f,
         PoisonDuration = 5.0f,
         PoisonDamagePerSecond = 3.0f,
+        PoisonHealthRegenerationReduction = 0.5f,
         ChilledDamageMultiplier = 2.0f,
         ChillDuration = 4.0f,
         ChillMaxStacks = 100,
@@ -41,6 +42,8 @@ public struct StatusEffectConfig : IComponentData
     [Tooltip("Seconds poison lasts; refreshed on every poison hit")]
     public float PoisonDuration;
     public float PoisonDamagePerSecond;
+    [Tooltip("Share of health regeneration lost while poisoned (0.5 = 50%). The text in Poisoned.asset states it too.")]
+    public float PoisonHealthRegenerationReduction;
 
     [Header("Chill / Freeze (cold)")]
     [Tooltip("Chill stacks per point of cold damage")]

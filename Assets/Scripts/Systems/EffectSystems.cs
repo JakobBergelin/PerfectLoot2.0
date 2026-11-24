@@ -166,6 +166,24 @@ public partial struct ChillSystem : ISystem
     }
 }
 
+/// <summary>Poisoned: lowers the finished health regeneration, after all bonuses. Negative regeneration is left as it is.</summary>
+[UpdateInGroup(typeof(FinalizeStatsSystemGroup))]
+[UpdateAfter(typeof(FinalizeStatsSystem))]
+[BurstCompile]
+public partial struct PoisonedRegenerationSystem : ISystem
+{
+    [BurstCompile]
+    public void OnCreate(ref SystemState state) => state.RequireForUpdate<StatusEffectConfig>();
+
+    [BurstCompile]
+    public void OnUpdate(ref SystemState state)
+    {
+        float kept = 1f - SystemAPI.GetSingleton<StatusEffectConfig>().PoisonHealthRegenerationReduction;
+        foreach (var regeneration in SystemAPI.Query<RefRW<HealthRegeneration>>().WithAll<Poisoned>())
+            if (regeneration.ValueRO.Value > 0f) regeneration.ValueRW.Value *= kept;
+    }
+}
+
 /// <summary>
 /// Damage over time, dealt as sub-damage: Bleeding (a fraction of current health per second, per bleed), Burning and
 /// Poisoned (damage per second). Also adds it up for the combat text (EffectDamageTextSystem).
