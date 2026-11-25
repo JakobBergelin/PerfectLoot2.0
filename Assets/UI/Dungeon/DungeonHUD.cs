@@ -3,7 +3,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Top of the screen while in a dungeon (DungeonManager): its name and difficulty, the time left (and what a death just cost), the
+/// Top left of the screen while in a dungeon (DungeonManager): its name and difficulty, the time left (and what a death just cost), the
 /// current step and its progress with what dying does in it, or that it's complete or failed and the return portal is
 /// open; how many items were picked up. Leave dungeon (the host's only: a client leaves the game from its menu) asks first
 /// when something would be lost: an unfinished run, or items still on the ground.

@@ -6,14 +6,17 @@ using UnityEngine;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// At the top of the screen while the mouse is over an enemy or companion (InputsData.Hovered): its name, Health, the
-/// stats it has, its buffs and debuffs (HoveredEffect), passives and skills. Most of a companion's stats are its owner's,
+/// At the top of the screen while the mouse is over an enemy or companion (InputsData.Hovered): its name, Health and
+/// buffs and debuffs (HoveredEffect); in town, the full panel, also the stats it has, its passives and its skills. Below
+/// the boss bars, and not for a boss that has one (BossBarHUD). Most of a companion's stats are its owner's,
 /// as CompanionStatsSystem copies them; this shows what the game uses. Never takes the mouse from the game.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class UnitPanelHUD : MonoBehaviour
 {
     const string VisibleClass = "unit-panel--visible";
+    const string SmallClass = "unit-panel--small";
+    const float Top = 12f;
     const string HiddenClass = "unit-panel--hidden";
 
     [Tooltip("The same library the game bakes; used for names, icons and descriptions")]
@@ -102,7 +105,8 @@ public class UnitPanelHUD : MonoBehaviour
         var unit = hasPlayer ? entityManager.GetComponentData<InputsData>(player).Hovered : Entity.Null;
 
         // A dying unit has lost its Health
-        bool show = entityManager.Exists(unit) && entityManager.HasComponent<UnitInfo>(unit) && entityManager.HasComponent<Health>(unit);
+        bool show = entityManager.Exists(unit) && entityManager.HasComponent<UnitInfo>(unit) && entityManager.HasComponent<Health>(unit)
+                    && !BossBarHUD.IsShown(entityManager, unit);
         _panel.EnableInClassList(VisibleClass, show);
         if (!show)
         {
@@ -110,13 +114,16 @@ public class UnitPanelHUD : MonoBehaviour
             return;
         }
 
+        bool small = !GameArea.IsTown;
+        _panel.EnableInClassList(SmallClass, small);
+        _panel.style.top = Top + BossBarHUD.Bottom;
         if (unit != _shown)
         {
             _shown = unit;
             ShowDescription(entityManager.GetComponentData<UnitInfo>(unit).Source.Value as IUnitDescription);
         }
         UpdateHealth(entityManager.GetComponentData<Health>(unit));
-        UpdateStats(entityManager, unit);
+        if (!small) UpdateStats(entityManager, unit);
         UpdateEffects(entityManager, player);
     }
 

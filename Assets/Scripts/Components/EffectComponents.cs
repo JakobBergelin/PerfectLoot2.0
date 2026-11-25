@@ -328,7 +328,10 @@ public struct EffectDamageText : IComponentData
     public float Timer;
 }
 
-/// <summary>Only on the player: its active effects, rebuilt every frame by EffectDisplaySystem for the HUD. Sent to its owner.</summary>
+/// <summary>
+/// Only on the player and a dungeon's boss: its active effects, rebuilt every frame by EffectDisplaySystem for the HUD. A
+/// player's are sent to its owner; a boss's stay on the host.
+/// </summary>
 [Unity.NetCode.GhostComponent(OwnerSendType = Unity.NetCode.SendToOwnerType.SendToOwner)]
 public struct EffectDisplay : IBufferElementData
 {

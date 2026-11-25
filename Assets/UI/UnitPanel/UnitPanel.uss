@@ -127,3 +127,47 @@
 .unit-panel__skills {
     margin-top: 8px;
 }
+
+/* Outside town: only the name, health and effect icons */
+.unit-panel--small {
+    width: 240px;
+    margin-left: -120px;
+    padding: 5px 10px;
+}
+
+.unit-panel--small .unit-panel__name {
+    font-size: 15px;
+    margin: 0 0 3px 0;
+}
+
+.unit-panel--small .unit-panel__health {
+    height: 14px;
+    margin-bottom: 0;
+}
+
+.unit-panel--small .unit-panel__health-text {
+    font-size: 11px;
+}
+
+.unit-panel--small #stats,
+.unit-panel--small #passives,
+.unit-panel--small #skills,
+.unit-panel--small .unit-panel__effect .unit-panel__text {
+    display: none;
+}
+
+.unit-panel--small #effects {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.unit-panel--small .unit-panel__effect {
+    margin-top: 5px;
+}
+
+.unit-panel--small .unit-panel__effect .effect-tile {
+    width: 24px;
+    height: 24px;
+    margin: 0 2px;
+}

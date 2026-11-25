@@ -1,7 +1,7 @@
 <ui:UXML xmlns:ui="UnityEngine.UIElements">
     <ui:Style src="DungeonHUD.uss" />
     <ui:VisualElement name="dungeonRoot" class="dungeon-root" picking-mode="Ignore">
-        <!-- Top center while in a dungeon; filled by DungeonHUD from DungeonManager -->
+        <!-- Top left while in a dungeon; filled by DungeonHUD from DungeonManager -->
         <ui:VisualElement name="card" class="dh-card dh-card--hidden">
             <ui:Label name="dungeonName" class="dh-name" />
             <ui:Label name="difficulty" class="dh-difficulty" />

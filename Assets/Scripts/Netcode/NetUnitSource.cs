@@ -13,6 +13,17 @@ public struct NetUnitSource : IComponentData
     [GhostField] public FixedString64Bytes Key;
     /// <summary>On its players' side: a summon or a Thrall.</summary>
     [GhostField] public bool Companion;
+    /// <summary>A dungeon's boss (DungeonBoss), for its health bar (BossBarHUD) and the camera.</summary>
+    [GhostField] public bool Boss;
+
+    /// <summary>The host: marks the unit as a dungeon's boss for the other machines. After Set.</summary>
+    public static void SetBoss(EntityManager entityManager, Entity entity)
+    {
+        if (!entityManager.HasComponent<NetUnitSource>(entity)) return;
+        var source = entityManager.GetComponentData<NetUnitSource>(entity);
+        source.Boss = true;
+        entityManager.SetComponentData(entity, source);
+    }
 
     /// <summary>The host: names the unit's source for the other machines, on a ghost body that has this baked.</summary>
     public static void Set(EntityManager entityManager, Entity entity, Object source, bool companion)
@@ -25,8 +36,8 @@ public struct NetUnitSource : IComponentData
 /// <summary>
 /// In someone else's game: gives each enemy and companion ghost what this machine needs to show it, which only the host
 /// adds. UnitInfo, from the enemy lists every machine bakes or every skill (ActiveSkillManager), so hovering and the unit
-/// panel find it; the Enemy tag (aim assist) or Companion (its bar's colour; its owner stays the host's); and an enemy
-/// definition's tint. The host's own units already have all of it.
+/// panel find it; the Enemy tag (aim assist) or Companion (its bar's colour; its owner stays the host's); an enemy
+/// definition's tint; and a boss's DungeonBoss and CameraFocus. The host's own units already have all of it.
 /// </summary>
 [UpdateInGroup(typeof(FeedbackSystemGroup), OrderFirst = true)]
 [WorldSystemFilter(WorldSystemFilterFlags.ClientSimulation)]
@@ -53,6 +64,11 @@ public partial class NetUnitSourceSystem : SystemBase
             EntityManager.AddComponentData(entity, new UnitInfo { Source = asset });
             if (source.Companion) EntityManager.AddComponentData(entity, new Companion());
             else EntityManager.AddComponent<Enemy>(entity);
+            if (source.Boss && asset is EnemyDefinition boss)
+            {
+                EntityManager.AddComponent<DungeonBoss>(entity);
+                EntityManager.AddComponentData(entity, new CameraFocus { Radius = boss.BodyRadius });
+            }
             if (asset is EnemyDefinition { OverrideColor: true } definition) EnemyEntitySetup.ApplyTint(EntityManager, entity, definition.Tint);
         }
     }

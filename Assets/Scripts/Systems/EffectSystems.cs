@@ -280,7 +280,7 @@ public partial struct BrokenPromisesBuffStatsSystem : ISystem
 }
 
 /// <summary>
-/// Rebuilds the player's EffectDisplay list from its enabled effect components, for the HUD, and its HoveredEffect list
+/// Rebuilds the player's (and a boss's) EffectDisplay list from its enabled effect components, for the HUD, and its HoveredEffect list
 /// from those of the unit it has the mouse over, for the unit panel. One block per effect. On the host, where the effects
 /// are: a remote player's EffectDisplay is sent to its owner.
 /// </summary>

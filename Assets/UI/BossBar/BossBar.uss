@@ -1,0 +1,106 @@
+/* The boss's health at the top of the screen (BossBarHUD), in the unit bars' style: a thick dark outline, a flat fill with
+   a lighter band along its top. Effect tiles, the font and the color variables come from EffectBar.uss */
+.boss-bars {
+    position: absolute;
+    top: 10px;
+    left: 0;
+    right: 0;
+    align-items: center;
+}
+
+.boss-bar {
+    width: 900px;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+/* Two or more bosses at once */
+.boss-bars--many .boss-bar {
+    width: 600px;
+}
+
+.boss-bar__name {
+    font-size: 24px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #F4E3A1;
+    padding: 0;
+    margin: 0 0 2px 0;
+}
+
+.boss-bar__bar {
+    align-self: stretch;
+    height: 28px;
+    border-width: 4px;
+    border-color: #120D1C;
+    border-radius: 8px;
+    background-color: rgba(43, 18, 24, 0.92);
+    overflow: hidden;
+}
+
+/* Widths set from code, as percentages. Lost: the health just lost, draining after the hit */
+.boss-bar__lost {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #FFC46B;
+}
+
+.boss-bar__fill {
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    background-color: #C8323C;
+}
+
+.boss-bar__band {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 40%;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Where its health sets something off (Health Spawns) */
+.boss-bar__mark {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    margin-left: -2px;
+    background-color: #120D1C;
+}
+
+.boss-bar__value {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    font-size: 15px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    -unity-text-outline-width: 1.5px;
+    -unity-text-outline-color: #120D1C;
+    color: #FFFFFF;
+    padding: 0;
+    margin: 0;
+}
+
+.boss-bar__effects {
+    flex-direction: row;
+    justify-content: center;
+    height: 36px;
+    margin-top: 4px;
+}
+
+.boss-bar__effects .effect-tile {
+    width: 32px;
+    height: 32px;
+    margin: 0 2px;
+}

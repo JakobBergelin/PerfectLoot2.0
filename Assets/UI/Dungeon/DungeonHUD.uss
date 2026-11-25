@@ -5,7 +5,7 @@
     top: 0;
     right: 0;
     bottom: 0;
-    align-items: center;
+    align-items: flex-start;
     --panel-bg: rgba(20, 22, 28, 0.85);
     --panel-border: #3A3F4B;
     --text-color: #F2F2F2;
@@ -18,7 +18,7 @@
 }
 
 .dh-card {
-    margin-top: 16px;
+    margin: 16px 0 0 16px;
     min-width: 280px;
     max-width: 420px;
     align-items: center;

@@ -470,6 +470,8 @@ public class DungeonManager : MonoBehaviour
             return;
         }
         entityManager.AddComponent<DungeonBoss>(_boss);
+        NetUnitSource.SetBoss(entityManager, _boss);
+        entityManager.AddBuffer<EffectDisplay>(_boss);    // Its bar shows them (BossBarHUD)
         // The camera zooms out to keep it on screen while a player is near
         entityManager.AddComponentData(_boss, new CameraFocus { Radius = step.Boss.BodyRadius });
     }

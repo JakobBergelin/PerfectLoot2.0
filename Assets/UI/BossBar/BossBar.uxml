@@ -1,0 +1,8 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="../EffectBar/EffectBar.uss" />
+    <ui:Style src="BossBar.uss" />
+    <ui:VisualElement class="effect-bar-root" picking-mode="Ignore">
+        <!-- One bar per boss, made by BossBarHUD -->
+        <ui:VisualElement name="bars" class="boss-bars" picking-mode="Ignore" />
+    </ui:VisualElement>
+</ui:UXML>
