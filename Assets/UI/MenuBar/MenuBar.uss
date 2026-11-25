@@ -1,0 +1,150 @@
+/* The menu buttons in the bottom right (MenuBarHUD), in the skill slots' style. 44px buttons, so the bar fits beside the
+   skill bar in a co-op player's half of the screen */
+.menu-bar-root {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    --slot-bg: rgba(20, 22, 28, 0.9);
+    --slot-border: #3A3F4B;
+    --accent: #E0A020;
+    --highlight: #FFD34A;
+    --text-color: #F2F2F2;
+    -unity-font-definition: url("project://database/Assets/TextMesh%20Pro/Fonts/LiberationSans.ttf");
+}
+
+.menu-bar {
+    position: absolute;
+    right: 14px;
+    bottom: 12px;
+    flex-direction: row;
+    align-items: flex-end;
+}
+
+.menu-button {
+    margin-left: 4px;
+    align-items: center;
+}
+
+.menu-button__icon {
+    width: 44px;
+    height: 44px;
+    background-color: var(--slot-bg);
+    border-width: 2px;
+    border-color: var(--slot-border);
+    border-radius: 8px;
+    transition-property: scale;
+    transition-duration: 0.08s;
+}
+
+.menu-button:hover .menu-button__icon {
+    border-color: #FFFFFF;
+    scale: 1.08 1.08;
+}
+
+.menu-button:active .menu-button__icon {
+    scale: 0.95 0.95;
+}
+
+.menu-button--character .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/Character.png");
+}
+
+.menu-button--skills .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/Skills.png");
+}
+
+.menu-button--itemdatabase .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/ItemDatabase.png");
+}
+
+.menu-button--statistics .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/Statistics.png");
+}
+
+.menu-button--gamemenu .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/GameMenu.png");
+}
+
+.menu-button__key {
+    margin: 4px 0 0 0;
+    min-width: 20px;
+    height: 18px;
+    padding: 0 4px;
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: var(--text-color);
+    background-color: var(--slot-bg);
+    border-width: 1px;
+    border-color: var(--slot-border);
+    border-radius: 4px;
+}
+
+/* The hovered button's name, above the bar */
+.menu-bar__name {
+    position: absolute;
+    right: 0;
+    bottom: 100%;
+    margin: 0 0 8px 0;
+    padding: 4px 8px;
+    font-size: 14px;
+    color: var(--text-color);
+    white-space: nowrap;
+    background-color: rgba(8, 9, 12, 0.97);
+    border-width: 1px;
+    border-color: var(--slot-border);
+    border-radius: 4px;
+    display: none;
+}
+
+.menu-bar__name--shown {
+    display: flex;
+}
+
+/* Its panel is open */
+.menu-button--open .menu-button__icon {
+    border-color: var(--accent);
+}
+
+/* Something new in it: a gold border that pulses (menu-button--pulse, on and off from code) and a dot in the corner */
+.menu-button--new .menu-button__icon {
+    border-color: var(--highlight);
+    transition-duration: 0.5s;
+    transition-timing-function: ease-in-out;
+}
+
+.menu-button--new.menu-button--pulse .menu-button__icon {
+    scale: 1.1 1.1;
+}
+
+.menu-button__dot {
+    position: absolute;
+    right: -6px;
+    top: -6px;
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+    border-color: #120D1C;
+    border-radius: 7px;
+    background-color: var(--highlight);
+    display: none;
+}
+
+.menu-button--new .menu-button__dot {
+    display: flex;
+}
+
+/* A controller player's bar: only the buttons with something new, without keys (their controller opens the panels) */
+.menu-bar--notices .menu-button {
+    display: none;
+}
+
+.menu-bar--notices .menu-button--new {
+    display: flex;
+}
+
+.menu-bar--notices .menu-button__key {
+    display: none;
+}

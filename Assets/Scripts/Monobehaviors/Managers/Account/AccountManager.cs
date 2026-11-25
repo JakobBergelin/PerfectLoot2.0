@@ -83,6 +83,7 @@ public class AccountManager : MonoBehaviour
         if (!AccountSaves.HasItemDatabase(AccountId)) AccountSaves.WriteItemDatabase(AccountId, null);
         _itemsInitialized = false;
         _pendingDrops.Clear();
+        NewItems.Clear();
         _charactersLoaded = false;
         _characters.Clear();
         _statistics = null;
@@ -536,7 +537,11 @@ public class AccountManager : MonoBehaviour
         }
 
         var kind = Items.Get(key) == null ? DropKind.NewItem : DropKind.Compare;
-        if (kind == DropKind.NewItem) Items.Store(item);
+        if (kind == DropKind.NewItem)
+        {
+            Items.Store(item);
+            NewItems.Found(key);
+        }
         _pendingDrops.Add(new PendingDrop { Item = item, Kind = kind });
         PendingDropsChanged?.Invoke();
     }

@@ -78,6 +78,24 @@
     background-color: rgba(224, 160, 32, 0.22);
 }
 
+/* A dot in the corner: a found item that fits it hasn't been looked at (like the menu bar's) */
+.cp-slot__dot {
+    position: absolute;
+    right: -5px;
+    top: -5px;
+    width: 14px;
+    height: 14px;
+    border-width: 2px;
+    border-color: #120D1C;
+    border-radius: 7px;
+    background-color: #FFD34A;
+    display: none;
+}
+
+.cp-slot--new .cp-slot__dot {
+    display: flex;
+}
+
 .cp-slot__icon {
     position: absolute;
     left: 6px;

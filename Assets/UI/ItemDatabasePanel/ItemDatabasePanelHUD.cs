@@ -118,7 +118,7 @@ public class ItemDatabasePanelHUD : MonoBehaviour
             int player = i;
             _openChanged[i] = openPanel => OnMenuOpenChanged(player, openPanel);
             MenuPanels.For(i).OpenChanged += _openChanged[i];
-            MenuPanels.For(i).AddTab(this, 2, open => SetOpenBy(player, open));
+            MenuPanels.For(i).AddTab(this, MenuTab.ItemDatabase, open => SetOpenBy(player, open));
         }
     }
 

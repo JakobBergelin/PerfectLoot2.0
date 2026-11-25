@@ -17,7 +17,7 @@
 .damage-meter {
     position: absolute;
     right: 16px;
-    bottom: 16px;
+    bottom: 92px;     /* Above the menu bar */
     width: 340px;
     background-color: var(--panel-bg);
     border-width: 1px;

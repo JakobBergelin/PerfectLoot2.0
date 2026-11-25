@@ -95,7 +95,7 @@ public class StatisticsPanelHUD : MonoBehaviour, IPerPlayer
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         Menus.OpenChanged += OnMenuOpenChanged;
-        Menus.AddTab(this, 3, SetOpen);
+        Menus.AddTab(this, MenuTab.Statistics, SetOpen);
     }
 
     void OnDisable()

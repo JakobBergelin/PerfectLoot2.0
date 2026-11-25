@@ -4,6 +4,9 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
+/// <summary>The panels View opens and LB/RB go through, in this order; each has a button on the menu bar (MenuBarHUD).</summary>
+public enum MenuTab { Character, Skills, ItemDatabase, Statistics }
+
 /// <summary>
 /// One local player's menus: which of their menu panels (character, skills, ...) is open (one at a time: opening one
 /// closes their others), popups that block their gameplay input without closing panels, and their menu buttons (Esc,
@@ -101,7 +104,7 @@ public sealed class PlayerMenus
     struct Tab
     {
         public object Panel;
-        public int Order;
+        public MenuTab Order;
         public Action<bool> SetOpen;
     }
 
@@ -109,13 +112,23 @@ public sealed class PlayerMenus
     object _lastTab;
 
     /// <summary>Adds a panel to the ones View opens and LB/RB switch between, at its place in the order.</summary>
-    public void AddTab(object panel, int order, Action<bool> setOpen)
+    public void AddTab(object panel, MenuTab order, Action<bool> setOpen)
     {
         RemoveTab(panel);
         int index = _tabs.FindIndex(tab => tab.Order > order);
         var added = new Tab { Panel = panel, Order = order, SetOpen = setOpen };
         if (index < 0) _tabs.Add(added);
         else _tabs.Insert(index, added);
+    }
+
+    /// <summary>True while this panel of theirs is open.</summary>
+    public bool IsTabOpen(MenuTab order) => _open != null && _tabs.Exists(tab => tab.Order == order && ReferenceEquals(tab.Panel, _open));
+
+    /// <summary>Opens a panel, or closes it when it's open (the menu bar's buttons).</summary>
+    public void ToggleTab(MenuTab order)
+    {
+        int index = _tabs.FindIndex(tab => tab.Order == order);
+        if (index >= 0) _tabs[index].SetOpen(!IsTabOpen(order));
     }
 
     public void RemoveTab(object panel)

@@ -76,6 +76,17 @@ public class PassiveSkillManager : MonoBehaviour, IPerPlayer
     public bool IsUnlocked(int slotIndex) =>
         slotIndex >= 0 && slotIndex < SlotUnlockLevels.Length && (_character == null || _character.Level >= SlotUnlockLevels[slotIndex]);
 
+    /// <summary>True while a slot that's open at the character's level has no passive.</summary>
+    public bool HasEmptySlot
+    {
+        get
+        {
+            for (int i = 0; i < Slots.Length; i++)
+                if (IsUnlocked(i) && Slots[i] != null && Slots[i].IsEmpty) return true;
+            return false;
+        }
+    }
+
     // A level up that opens a slot: its passive (one saved from before) applies, and a nudge to the Skills panel
     void CheckLevel()
     {

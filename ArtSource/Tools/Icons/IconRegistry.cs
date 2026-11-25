@@ -23,7 +23,7 @@ public static class IconRegistry
 
     static List<IconEntry> Matching(string pattern)
     {
-        if (All.Count == 0) { SkillIcons.Register(); PassiveIcons.Register(); ItemIcons.Register(); PowerIcons.Register(); RedrawnIcons.Register(); VisualPassIcons.Register(); }
+        if (All.Count == 0) { SkillIcons.Register(); PassiveIcons.Register(); ItemIcons.Register(); PowerIcons.Register(); RedrawnIcons.Register(); VisualPassIcons.Register(); MenuIcons.Register(); }
         var regex = new Regex("^(" + pattern + ")$", RegexOptions.IgnoreCase);
         return All.FindAll(e => regex.IsMatch(e.Name) || regex.IsMatch(e.Folder));
     }
@@ -41,7 +41,7 @@ public static class IconRegistry
                 using (var bmp = ic.Result()) bmp.Save(file, ImageFormat.Png);
             }
             if (!File.Exists(file + ".meta"))
-                File.WriteAllText(file + ".meta", SpriteMeta.Text(Guid.NewGuid().ToString("N"), entry.Folder == "SkillIcons" ? 128 : 2048));
+                File.WriteAllText(file + ".meta", SpriteMeta.Text(Guid.NewGuid().ToString("N"), entry.Folder == "SkillIcons" || entry.Folder == "MenuIcons" ? 128 : 2048));
         }
     }
 

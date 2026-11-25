@@ -1,0 +1,7 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements">
+    <ui:Style src="MenuBar.uss" />
+    <ui:VisualElement name="menuBarRoot" class="menu-bar-root" picking-mode="Ignore">
+        <!-- The buttons are made in code (MenuBarHUD) -->
+        <ui:VisualElement name="bar" class="menu-bar" />
+    </ui:VisualElement>
+</ui:UXML>

@@ -23,6 +23,8 @@ public class GameMenuHUD : MonoBehaviour, IPerPlayer
     const string HiddenClass = "gm--hidden";
     const string JoinAddressKey = "PerfectLoot.JoinAddress";
 
+    static readonly GameMenuHUD[] _players = new GameMenuHUD[GameInput.MaxPlayers];
+
     PanelRenderer _panelRenderer;
     bool _bound;
     int _boundVersion = -1;
@@ -37,6 +39,7 @@ public class GameMenuHUD : MonoBehaviour, IPerPlayer
 
     void OnEnable()
     {
+        _players[PlayerIndex] = this;
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         Menus.OpenChanged += OnMenuOpenChanged;
@@ -44,6 +47,7 @@ public class GameMenuHUD : MonoBehaviour, IPerPlayer
 
     void OnDisable()
     {
+        if (_players[PlayerIndex] == this) _players[PlayerIndex] = null;
         Menus.OpenChanged -= OnMenuOpenChanged;
         if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
@@ -133,6 +137,15 @@ public class GameMenuHUD : MonoBehaviour, IPerPlayer
         // This Esc is for what is open, or already closed something this frame
         else if (Menus.EscapePressed && !Menus.IsAnyOpen && !Menus.ChangedThisFrame) SetOpen(true);
     }
+
+    /// <summary>Opens this player's menu, or closes it when it's open (the menu bar's button).</summary>
+    public static void Toggle(int playerIndex)
+    {
+        var menu = _players[playerIndex];
+        if (menu != null) menu.SetOpen(!menu._open);
+    }
+
+    public static bool IsOpenFor(int playerIndex) => _players[playerIndex] != null && _players[playerIndex]._open;
 
     void OnMenuOpenChanged(object openPanel)
     {

@@ -84,6 +84,8 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         public CombatConfig Combat;
     }
 
+    const string SlotNewClass = "cp-slot--new";     // A found item the player hasn't looked at fits it (NewItems)
+
     enum OptionState { Available, Equipped, Elsewhere, Unequip }
 
     PanelRenderer _panelRenderer;
@@ -103,6 +105,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
     readonly List<SlotView> _slots = new List<SlotView>();
     readonly List<StatRow> _rows = new List<StatRow>();
     bool _slotsDirty = true;
+    int _newItemsVersion;
 
     // Swap picker
     VisualElement _picker, _pickerFilters;
@@ -139,7 +142,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
         Menus.OpenChanged += OnMenuOpenChanged;
-        Menus.AddTab(this, 0, SetOpen);
+        Menus.AddTab(this, MenuTab.Character, SetOpen);
     }
 
     void OnDisable()
@@ -243,7 +246,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         if (_gold.text != gold) _gold.text = gold;
 
         Subscribe();
-        if (_slotsDirty) RefreshSlots();
+        if (_slotsDirty || _newItemsVersion != NewItems.Version) RefreshSlots();
         RefreshStats();
         if (_pickerSlot != null && _pickerDirty) BuildPicker();
     }
@@ -326,6 +329,9 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         view.Label.AddToClassList("cp-slot__label");
         view.Element.Add(view.Icon);
         view.Element.Add(view.Label);
+        var dot = new VisualElement { pickingMode = PickingMode.Ignore };
+        dot.AddToClassList("cp-slot__dot");
+        view.Element.Add(dot);
 
         UiNav.Hover(view.Element, () => ShowSlotTooltip(view), HideTooltip);
         Action click = () =>
@@ -343,12 +349,14 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
     void RefreshSlots()
     {
         _slotsDirty = false;
+        _newItemsVersion = NewItems.Version;
         var inventory = InventoryManager.For(PlayerIndex);
         foreach (var view in _slots)
         {
             var slot = inventory != null ? view.GetSlot(inventory) : null;
             var item = slot != null && !slot.IsEmpty ? slot.EquippedItem : null;
             view.ShownItem = item;
+            view.Element.EnableInClassList(SlotNewClass, slot != null && NewItems.Any(PlayerIndex, slot.SlotType));
 
             var icon = item != null ? item.BaseItem.Icon : null;
             view.Icon.style.backgroundImage = icon != null ? new StyleBackground(icon) : new StyleBackground(StyleKeyword.None);
@@ -414,9 +422,11 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         EndPreview();
         _pickerSlot = view;
         _rarityFilter = null;
-        foreach (var slot in _slots) slot.Element.EnableInClassList(SlotPickingClass, slot == view);
+        foreach (var other in _slots) other.Element.EnableInClassList(SlotPickingClass, other == view);
         _pickerPager.Reset();
         BuildPicker();
+        var slot = InventoryManager.For(PlayerIndex) != null ? view.GetSlot(InventoryManager.For(PlayerIndex)) : null;
+        if (slot != null) NewItems.Seen(PlayerIndex, slot.SlotType);
         // A controller moves through the picker until it closes, starting on its first item
         Nav.SetScope(_picker, _picker, true);
         Nav.FocusFirstOf(_pickerList.Children());

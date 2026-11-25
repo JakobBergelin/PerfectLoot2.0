@@ -120,7 +120,7 @@ public class SkillsPanelHUD : MonoBehaviour
             int player = i;
             _openChanged[i] = openPanel => OnMenuOpenChanged(player, openPanel);
             MenuPanels.For(i).OpenChanged += _openChanged[i];
-            MenuPanels.For(i).AddTab(this, 1, open => SetOpenBy(player, open));
+            MenuPanels.For(i).AddTab(this, MenuTab.Skills, open => SetOpenBy(player, open));
         }
     }
 

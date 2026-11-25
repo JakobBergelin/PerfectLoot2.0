@@ -144,6 +144,9 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         return characterClass != null && SkillRequirements.UnlockLevel(skill.Requirements, characterClass) <= _character.Level;
     }
 
+    /// <summary>True while a skill is new to the character (IsNew).</summary>
+    public bool HasNew => AllSkills.Exists(IsNew);
+
     /// <summary>The Skills panel was looked at: its new skills aren't new anymore.</summary>
     public void MarkNewSkillsSeen()
     {
