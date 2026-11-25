@@ -117,6 +117,9 @@ public partial class SkillActivationSystem : SystemBase
             case SkillType.Dash:
                 if (SystemAPI.HasComponent<Dash>(entity)) SystemAPI.SetComponentEnabled<Dash>(entity, enabled);
                 break;
+            case SkillType.Charge:
+                if (SystemAPI.HasComponent<Charge>(entity)) SystemAPI.SetComponentEnabled<Charge>(entity, enabled);
+                break;
             case SkillType.Whirlwind:
                 if (SystemAPI.HasComponent<Whirlwind>(entity)) SystemAPI.SetComponentEnabled<Whirlwind>(entity, enabled);
                 break;

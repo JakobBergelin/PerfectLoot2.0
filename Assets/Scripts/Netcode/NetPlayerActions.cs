@@ -21,7 +21,7 @@ public struct NetPlayerActions : IComponentData
     // Stance values (Stances skill); 0 is none
     public const byte StanceStrength = 1, StanceAgility = 2, StanceIntelligence = 3;
 
-    /// <summary>Dashing (Dash), Spinning (Whirlwind), Winding (Fireball held), Channeling (Flamethrower, Tesla Coil),
+    /// <summary>Dashing (Dash, Charge), Spinning (Whirlwind), Winding (Fireball held), Channeling (Flamethrower, Tesla Coil),
     /// Guarding (Shield Wall raised), Rolling (Sonic Ball), Flying (Ball Lightning), Phasing (Phantom Edge flurry),
     /// Hooking (Hookshot Slash: hook out or pulling).</summary>
     [GhostField] public ushort States;
@@ -56,6 +56,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
     public void OnUpdate(ref SystemState state)
     {
         var dashes = SystemAPI.GetComponentLookup<Dash>(true);
+        var charges = SystemAPI.GetComponentLookup<Charge>(true);
         var whirlwinds = SystemAPI.GetComponentLookup<Whirlwind>(true);
         var fireballs = SystemAPI.GetComponentLookup<FireBall>(true);
         var flamethrowers = SystemAPI.GetComponentLookup<Flamethrower>(true);
@@ -79,7 +80,7 @@ public partial struct NetPlayerActionsWriteSystem : ISystem
         {
             var value = actions.ValueRO;
             value.States = 0;
-            if (dashes.HasComponent(entity) && dashes[entity].Dashing) value.States |= NetPlayerActions.Dashing;
+            if (dashes.HasComponent(entity) && dashes[entity].Dashing || charges.HasComponent(entity) && charges[entity].Charging) value.States |= NetPlayerActions.Dashing;
             if (whirlwinds.HasComponent(entity) && whirlwinds[entity].Spinning) value.States |= NetPlayerActions.Spinning;
             if (fireballs.HasComponent(entity) && fireballs.IsComponentEnabled(entity)) value.States |= NetPlayerActions.Winding;
             if (flamethrowers.HasComponent(entity) && flamethrowers[entity].Spraying || teslaCoils.HasComponent(entity) && teslaCoils[entity].Channeling

@@ -20,6 +20,7 @@ using Unity.Mathematics;
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<FrostLanceBuff>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<BloodRiteBuff>))]
 [assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<Risen>))]
+[assembly: RegisterGenericJobType(typeof(TickTimedEffectJob<ChargeBuff>))]
 
 /// <summary>Counts a timed effect down on every unit that has it enabled, and disables it when it runs out.</summary>
 [BurstCompile]
@@ -47,7 +48,7 @@ public struct TickTimedEffectJob<T> : IJobChunk where T : unmanaged, IComponentD
 [BurstCompile]
 public partial struct TimedEffectSystem : ISystem
 {
-    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism, _poisonMark, _afterglow, _thrallMark, _frostLance, _bloodRite, _risen;
+    EntityQuery _brokenPromises, _invulnerable, _shadowstep, _poisoned, _chilled, _frozen, _conductive, _sundered, _bloodrush, _prism, _poisonMark, _afterglow, _thrallMark, _frostLance, _bloodRite, _risen, _charge;
     ComponentTypeHandle<BrokenPromisesBuff> _brokenPromisesHandle;
     ComponentTypeHandle<Invulnerable> _invulnerableHandle;
     ComponentTypeHandle<ShadowstepBuff> _shadowstepHandle;
@@ -63,6 +64,7 @@ public partial struct TimedEffectSystem : ISystem
     ComponentTypeHandle<FrostLanceBuff> _frostLanceHandle;
     ComponentTypeHandle<BloodRiteBuff> _bloodRiteHandle;
     ComponentTypeHandle<Risen> _risenHandle;
+    ComponentTypeHandle<ChargeBuff> _chargeHandle;
     ComponentTypeHandle<ThrallMark> _thrallMarkHandle;
 
     public void OnCreate(ref SystemState state)
@@ -82,6 +84,7 @@ public partial struct TimedEffectSystem : ISystem
         _frostLance = SystemAPI.QueryBuilder().WithAllRW<FrostLanceBuff>().Build();
         _bloodRite = SystemAPI.QueryBuilder().WithAllRW<BloodRiteBuff>().Build();
         _risen = SystemAPI.QueryBuilder().WithAllRW<Risen>().Build();
+        _charge = SystemAPI.QueryBuilder().WithAllRW<ChargeBuff>().Build();
         _thrallMark = SystemAPI.QueryBuilder().WithAllRW<ThrallMark>().Build();
         _brokenPromisesHandle = state.GetComponentTypeHandle<BrokenPromisesBuff>();
         _invulnerableHandle = state.GetComponentTypeHandle<Invulnerable>();
@@ -98,6 +101,7 @@ public partial struct TimedEffectSystem : ISystem
         _frostLanceHandle = state.GetComponentTypeHandle<FrostLanceBuff>();
         _bloodRiteHandle = state.GetComponentTypeHandle<BloodRiteBuff>();
         _risenHandle = state.GetComponentTypeHandle<Risen>();
+        _chargeHandle = state.GetComponentTypeHandle<ChargeBuff>();
         _thrallMarkHandle = state.GetComponentTypeHandle<ThrallMark>();
     }
 
@@ -120,6 +124,7 @@ public partial struct TimedEffectSystem : ISystem
         _frostLanceHandle.Update(ref state);
         _bloodRiteHandle.Update(ref state);
         _risenHandle.Update(ref state);
+        _chargeHandle.Update(ref state);
         _thrallMarkHandle.Update(ref state);
 
         // One line per timed effect
@@ -140,7 +145,8 @@ public partial struct TimedEffectSystem : ISystem
         var n = new TickTimedEffectJob<FrostLanceBuff> { Handle = _frostLanceHandle, DeltaTime = deltaTime }.ScheduleParallel(_frostLance, dependency);
         var o = new TickTimedEffectJob<BloodRiteBuff> { Handle = _bloodRiteHandle, DeltaTime = deltaTime }.ScheduleParallel(_bloodRite, dependency);
         var p = new TickTimedEffectJob<Risen> { Handle = _risenHandle, DeltaTime = deltaTime }.ScheduleParallel(_risen, dependency);
-        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h, k), JobHandle.CombineDependencies(JobHandle.CombineDependencies(i, j, l), JobHandle.CombineDependencies(JobHandle.CombineDependencies(m, n, o), p))));
+        var q = new TickTimedEffectJob<ChargeBuff> { Handle = _chargeHandle, DeltaTime = deltaTime }.ScheduleParallel(_charge, dependency);
+        state.Dependency = JobHandle.CombineDependencies(JobHandle.CombineDependencies(a, b, c), JobHandle.CombineDependencies(d, e, f), JobHandle.CombineDependencies(JobHandle.CombineDependencies(g, h, k), JobHandle.CombineDependencies(JobHandle.CombineDependencies(i, j, l), JobHandle.CombineDependencies(JobHandle.CombineDependencies(m, n, o), p, q))));
     }
 }
 
@@ -367,6 +373,11 @@ public partial struct EffectDisplaySystem : ISystem
         {
             var buff = SystemAPI.GetComponent<ShadowstepBuff>(entity);
             display.Add(new EffectDisplay { Type = EffectType.Shadowstep, Stacks = 1, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.AttackSpeedBonus });
+        }
+        if (IsActive<ChargeBuff>(ref state, entity))
+        {
+            var buff = SystemAPI.GetComponent<ChargeBuff>(entity);
+            display.Add(new EffectDisplay { Type = EffectType.Charge, Stacks = buff.AttacksLeft, TimeRemaining = buff.TimeRemaining, Duration = buff.Duration, Magnitude = buff.AttackSpeedBonus });
         }
         if (IsActive<FrostLanceBuff>(ref state, entity))
         {

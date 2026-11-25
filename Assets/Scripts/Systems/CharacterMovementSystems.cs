@@ -30,9 +30,10 @@ public partial class CharacterMovementSystem : SystemBase
             bool moving = false;
 
             // Effects: slows lower the speed, Frozen and similar stop moving and turning; so does flying with Ball Lightning
-            // rolling with Sonic Ball or hooking with Hookshot Slash (their systems move and turn the unit)
+            // charging, rolling with Sonic Ball or hooking with Hookshot Slash (their systems move and turn the unit)
             var modifiers = SystemAPI.HasComponent<MovementModifiers>(entity) ? SystemAPI.GetComponent<MovementModifiers>(entity) : new MovementModifiers { SpeedMultiplier = 1f };
             bool flying = (SystemAPI.HasComponent<BallLightning>(entity) && SystemAPI.GetComponent<BallLightning>(entity).Flying)
+                       || (SystemAPI.HasComponent<Charge>(entity) && SystemAPI.GetComponent<Charge>(entity).Charging)
                        || (SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling)
                        || (SystemAPI.HasComponent<HookshotSlash>(entity) && SystemAPI.GetComponent<HookshotSlash>(entity).State != HookshotState.Idle)
                        || (SystemAPI.HasComponent<PhantomEdgeFlurry>(entity) && SystemAPI.GetComponent<PhantomEdgeFlurry>(entity).Active);

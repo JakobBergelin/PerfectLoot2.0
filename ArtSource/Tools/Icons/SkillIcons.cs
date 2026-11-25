@@ -28,6 +28,7 @@ public static class SkillIcons
 
     public static void Register()
     {
+        IconRegistry.Reg(Dir, "Charge", Charge);
         IconRegistry.Reg(Dir, "ColdSnap", ColdSnap);
         IconRegistry.Reg(Dir, "FireHydra", FireHydra);
         IconRegistry.Reg(Dir, "MirrorImage", MirrorImage);
@@ -38,6 +39,24 @@ public static class SkillIcons
         IconRegistry.Reg(Dir, "Timezone", Timezone);
         IconRegistry.Reg(Dir, "Wisp", Wisp);
         IconRegistry.Reg(Dir, "Wolf", Wolf);
+    }
+
+    // A horned helm rushing forward, speed lines behind it
+    static void Charge(Ic c)
+    {
+        Tiles.Ruby(c);
+        c.Glow(150, 128, 100, Pal.Hex("#FF8A2A"), 130);
+        for (int i = 0; i < 4; i++)
+            c.Add(G.Poly(20 + i * 8, 80 + i * 34, 110, 72 + i * 34, 110, 90 + i * 34), Pal.Fire);
+        c.Flush();
+        c.Add(G.Soft(104, 96, 92, 56, 112, 30, 128, 58, 146, 82), Pal.Bone);
+        c.Add(G.Soft(180, 80, 204, 60, 232, 64, 222, 88, 198, 106), Pal.Bone);
+        c.Flush();
+        c.Add(G.Soft(92, 108, 124, 74, 180, 74, 216, 112, 222, 150, 188, 206, 128, 206, 92, 160), Pal.Iron).Then(() => c.Gloss(128, 98, 20, 9, -30, 150));
+        c.Add(G.Poly(168, 80, 184, 82, 206, 200, 186, 204), Pal.Gold);
+        c.Flush();
+        c.Fill(G.Poly(116, 132, 174, 140, 170, 156, 120, 148), Ic.Ink);
+        c.Fill(G.Poly(192, 140, 220, 136, 218, 152, 196, 156), Ic.Ink);
     }
 
     // A burst of ice shards flying out from the caster

@@ -18,7 +18,7 @@ public struct PredictedMove : IComponentData
 
 /// <summary>
 /// On the host, after this tick's stats and effects: each player's PredictedMove. Locked while frozen or otherwise
-/// prevented, rising out of the ground, or while a skill moves or holds the player itself (Dash, Teleport, Ball
+/// prevented, rising out of the ground, or while a skill moves or holds the player itself (Dash, Charge, Teleport, Ball
 /// Lightning, Sonic Ball, Hookshot Slash, Phantom Edge, a channeled Tesla Coil).
 /// </summary>
 [BurstCompile]
@@ -37,6 +37,7 @@ public partial struct PredictedMoveStateSystem : ISystem
             var modifiers = SystemAPI.HasComponent<MovementModifiers>(entity) ? SystemAPI.GetComponent<MovementModifiers>(entity) : new MovementModifiers { SpeedMultiplier = 1f };
             bool locked = modifiers.PreventsActions || SystemAPI.HasComponent<SpawnRise>(entity)
                        || (SystemAPI.HasComponent<Dash>(entity) && SystemAPI.GetComponent<Dash>(entity).Dashing)
+                       || (SystemAPI.HasComponent<Charge>(entity) && SystemAPI.GetComponent<Charge>(entity).Charging)
                        || (SystemAPI.HasComponent<Teleport>(entity) && SystemAPI.GetComponent<Teleport>(entity).Casting)
                        || (SystemAPI.HasComponent<BallLightning>(entity) && SystemAPI.GetComponent<BallLightning>(entity).Flying)
                        || (SystemAPI.HasComponent<SonicBall>(entity) && SystemAPI.GetComponent<SonicBall>(entity).Rolling)

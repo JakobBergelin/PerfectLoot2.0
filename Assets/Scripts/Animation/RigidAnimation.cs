@@ -32,7 +32,7 @@ public enum RigidClip : byte
 
 /// <summary>
 /// The clip a player plays once when it uses a skill (NetPlayerActions.CastSkill), or Idle for none. Skills with a held
-/// state (Dash, Whirlwind, Flamethrower, Tesla Coil, Shield Wall, Sonic Ball, Ball Lightning, Hookshot Slash) play their
+/// state (Dash, Charge, Whirlwind, Flamethrower, Tesla Coil, Shield Wall, Sonic Ball, Ball Lightning, Hookshot Slash) play their
 /// loop from NetPlayerActions.States instead (RigidAnimationSystem).
 /// </summary>
 public static class SkillClips

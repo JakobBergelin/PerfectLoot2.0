@@ -36,6 +36,7 @@ public enum EffectType
     FrostLance,
     BloodRite,
     Risen,
+    Charge,
 }
 
 public enum EffectKind
@@ -103,6 +104,17 @@ public struct ShadowstepBuff : IComponentData, IEnableableComponent, ITimedEffec
     public float Duration;
     public float AttackSpeedBonus;
     public float Range;     // Meters from the unit to the enemy it jumps to
+    float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
+    float ITimedEffect.Duration { get => Duration; set => Duration = value; }
+}
+
+/// <summary>Charge skill's buff: extra attack speed, until AttacksLeft attacks were made (ChargeBuffSystem) or it runs out.</summary>
+public struct ChargeBuff : IComponentData, IEnableableComponent, ITimedEffect
+{
+    public float AttackSpeedBonus;
+    public int AttacksLeft;
+    public float TimeRemaining;
+    public float Duration;
     float ITimedEffect.TimeRemaining { get => TimeRemaining; set => TimeRemaining = value; }
     float ITimedEffect.Duration { get => Duration; set => Duration = value; }
 }

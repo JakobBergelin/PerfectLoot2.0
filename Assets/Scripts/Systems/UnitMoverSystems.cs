@@ -103,6 +103,7 @@ public partial struct UnitMoverSystem : ISystem
             Players = SystemAPI.GetComponentLookup<Player>(true),
             PredictedMoves = SystemAPI.GetComponentLookup<PredictedMove>(true),
             Dashes = SystemAPI.GetComponentLookup<Dash>(true),
+            Charges = SystemAPI.GetComponentLookup<Charge>(true),
             Teleports = SystemAPI.GetComponentLookup<Teleport>(true),
             BallLightnings = SystemAPI.GetComponentLookup<BallLightning>(true),
             SonicBalls = SystemAPI.GetComponentLookup<SonicBall>(true),
@@ -123,6 +124,7 @@ public partial struct UnitMoverSystem : ISystem
         [ReadOnly] public ComponentLookup<Player> Players;
         [ReadOnly] public ComponentLookup<PredictedMove> PredictedMoves;
         [ReadOnly] public ComponentLookup<Dash> Dashes;
+        [ReadOnly] public ComponentLookup<Charge> Charges;
         [ReadOnly] public ComponentLookup<Teleport> Teleports;
         [ReadOnly] public ComponentLookup<BallLightning> BallLightnings;
         [ReadOnly] public ComponentLookup<SonicBall> SonicBalls;
@@ -139,9 +141,9 @@ public partial struct UnitMoverSystem : ISystem
             bool isPlayer = Players.HasComponent(entity);
             // Players move in the prediction loop instead (PlayerMoveSystem), on the host and on the client that owns them
             if (isPlayer && PredictedMoves.HasComponent(entity)) return;
-            // A dash, Ball Lightning, Sonic Ball, Hookshot Slash or Leap moves the unit itself (DashSystem, BallLightningSystem, SonicBallSystem,
+            // A dash, Charge, Ball Lightning, Sonic Ball, Hookshot Slash or Leap moves the unit itself (DashSystem, ChargeSystem, BallLightningSystem, SonicBallSystem,
             // HookshotSlashSystem, EnemyLeapSystem); a teleport stands still until it lands (TeleportSystem)
-            if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Teleports.HasComponent(entity) && Teleports[entity].Casting) ||
+            if ((Dashes.HasComponent(entity) && Dashes[entity].Dashing) || (Charges.HasComponent(entity) && Charges[entity].Charging) || (Teleports.HasComponent(entity) && Teleports[entity].Casting) ||
                 (BallLightnings.HasComponent(entity) && BallLightnings[entity].Flying) || (SonicBalls.HasComponent(entity) && SonicBalls[entity].Rolling) ||
                 (Hookshots.HasComponent(entity) && Hookshots[entity].State != HookshotState.Idle) ||
                 (Leaps.HasComponent(entity) && Leaps[entity].Airborne))

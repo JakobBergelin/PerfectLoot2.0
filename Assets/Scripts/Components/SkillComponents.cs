@@ -98,6 +98,7 @@ public enum SkillType
     Multishot,
     Frenzy,
     Trample,
+    Charge,
 }
 
 /// <summary>
@@ -308,6 +309,22 @@ public struct FireBall : IComponentData, IEnableableComponent
     public float ProjectileSpeed;
     public float Radius;
     public float HitForce;
+}
+
+/// <summary>Runs at an enemy near the cursor; on arrival it gives resource and the Charge buff (ChargeSystem).</summary>
+public struct Charge : IComponentData, IEnableableComponent
+{
+    public float Cooldown;
+    public float Elapsed;           // Since the last use, up to Cooldown
+    public float Range;
+    public float Speed;
+    public float ResourceGain;
+    public float AttackSpeedBonus;
+    public int BuffAttacks;
+    public float BuffDuration;
+
+    public bool Charging;
+    public float3 NextPosition;     // Where the charge ends
 }
 
 public struct Dash : IComponentData, IEnableableComponent

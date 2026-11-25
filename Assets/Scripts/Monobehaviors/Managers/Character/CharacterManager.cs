@@ -164,6 +164,10 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
                 if (remove) entityManager.SetComponentEnabled<ShadowstepBuff>(_player, false);
                 else SetEffect(entityManager, new ShadowstepBuff { TimeRemaining = TestDuration, Duration = TestDuration, AttackSpeedBonus = 0.15f, Range = 30f });
                 break;
+            case EffectType.Charge:
+                if (remove) entityManager.SetComponentEnabled<ChargeBuff>(_player, false);
+                else SetEffect(entityManager, new ChargeBuff { TimeRemaining = TestDuration, Duration = TestDuration, AttackSpeedBonus = 0.5f, AttacksLeft = stacks });
+                break;
             case EffectType.Bloodrush:
                 if (remove) entityManager.SetComponentEnabled<BloodrushBuff>(_player, false);
                 else SetEffect(entityManager, new BloodrushBuff { Stacks = stacks, AttackSpeedPerStack = 0.03f, TimeRemaining = TestDuration, Duration = TestDuration });
