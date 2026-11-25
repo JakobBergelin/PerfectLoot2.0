@@ -148,18 +148,19 @@ public struct FlowField : IComponentData
 }
 
 /// <summary>
-/// Singleton: one FlowField per player, by EnemyTargetable.FieldSlot, so players can be far apart. Plain fields rather than
-/// a list so jobs can read them.
+/// Singleton: one FlowField per player, by EnemyTargetable.FieldSlot, so players can be far apart: one for each of the
+/// host's couch players (GameInput.MaxPlayers), then one for each remote player there can be (NetSession.MaxPlayers less
+/// the host's player 1). Plain fields rather than a list so jobs can read them.
 /// </summary>
 public struct FlowFields : IComponentData
 {
-    public const int MaxFields = 4;
+    public const int MaxFields = 5;
 
-    public FlowField Field0, Field1, Field2, Field3;
+    public FlowField Field0, Field1, Field2, Field3, Field4;
 
     public FlowField this[int slot]
     {
-        get => slot switch { 1 => Field1, 2 => Field2, 3 => Field3, _ => Field0 };
+        get => slot switch { 1 => Field1, 2 => Field2, 3 => Field3, 4 => Field4, _ => Field0 };
         set
         {
             switch (slot)
@@ -167,6 +168,7 @@ public struct FlowFields : IComponentData
                 case 1: Field1 = value; break;
                 case 2: Field2 = value; break;
                 case 3: Field3 = value; break;
+                case 4: Field4 = value; break;
                 default: Field0 = value; break;
             }
         }

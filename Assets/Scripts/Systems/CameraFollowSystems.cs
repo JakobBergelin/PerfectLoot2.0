@@ -6,7 +6,7 @@ using Unity.Transforms;
 using UnityEngine;
 
 /// <summary>
-/// Moves the camera toward the middle of the players plus its offset, smoothed (SmoothTime) and no faster than MaxSpeed,
+/// Moves the camera toward the middle of this machine's players plus its offset, smoothed (SmoothTime) and no faster than MaxSpeed,
 /// so teleports and dashes glide instead of jumping. Snaps there when the gap is over SnapDistance, or when it first finds
 /// a player. Zooms out (moves back along its view, up to MaxZoomOut) when a player or a CameraFocus near a player reaches
 /// further than ComfortRadius from that middle: quickly out, slowly back in after ZoomInDelay. Follows the rendered
@@ -18,10 +18,11 @@ public partial struct CameraFollowSystem : ISystem
 {
     public void OnUpdate(ref SystemState state)
     {
-        // The players and their middle (test players count, so several players can be tried)
+        // This machine's players and their middle (test players count, so several players can be tried). Other machines'
+        // have a camera of their own
         var players = new NativeList<float3>(Allocator.Temp);
         float3 center = float3.zero;
-        foreach (var transform in SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<Player>())
+        foreach (var transform in SystemAPI.Query<RefRO<LocalToWorld>>().WithAll<Player>().WithNone<RemotePlayer>())
         {
             players.Add(transform.ValueRO.Position);
             center += transform.ValueRO.Position;

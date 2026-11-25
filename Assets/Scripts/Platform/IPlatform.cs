@@ -85,8 +85,8 @@ public struct PlatformFriend
     /// <summary>The JoinId of their game (its host's SteamID), or empty.</summary>
     public string Host;
 
-    /// <summary>Their game takes another player now: they're in town, it isn't full, and it can be reached.</summary>
-    public bool CanJoin => Area == PresenceKeys.AreaTown && Players > 0 && Players < NetSession.MaxPlayers && !string.IsNullOrEmpty(Host);
+    /// <summary>Their game takes this machine's players now: they're in town, it has room for all of them, and it can be reached.</summary>
+    public bool CanJoin => Area == PresenceKeys.AreaTown && Players > 0 && Players + GameInput.PlayerCount <= NetSession.MaxPlayers && !string.IsNullOrEmpty(Host);
 }
 
 /// <summary>

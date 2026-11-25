@@ -81,9 +81,11 @@ public class PlatformManager : MonoBehaviour
         Platform.Current.SetPresence(key, value);
     }
 
-    // The host knows its game's players; a client counts the player ghosts it sees (owned by a connection, so not
-    // Mirror Image copies)
-    static int PlayersInGame()
+    /// <summary>
+    /// Every machine's players in this game. The host knows; a client counts the player ghosts it sees (owned by a
+    /// connection, so not Mirror Image copies).
+    /// </summary>
+    public static int PlayersInGame()
     {
         if (NetSession.IsHost) return GameInput.PlayerCount + NetSession.RemotePlayers;
         var world = World.DefaultGameObjectInjectionWorld;

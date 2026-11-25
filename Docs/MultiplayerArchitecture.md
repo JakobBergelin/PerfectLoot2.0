@@ -31,8 +31,7 @@ on the next frame by `NetSceneSync`). Going to the main menu ends a client sessi
 
 1. `NetStartSystem`: a host listens on port 7979 (while `NetSession.Listen`); a client connects to `NetSession.ConnectTo`.
 2. `NetJoinSystem`, client side: once its scene's subscenes have loaded, the client puts its connection in game and
-   sends a `JoinRequest` (how many couch players it brings, which scene it is in). It does this again after every scene
-   change.
+   sends a `JoinRequest` (its local players, which scene it is in). It does this again after every scene change.
 3. `NetJoinSystem`, host side:
    - A client that is new to the game is turned down (`JoinRefused`) when the game would have more than 4 players, or when
      the host isn't in town (or is in a menu).
@@ -40,14 +39,24 @@ on the next frame by `NetSceneSync`). Going to the main menu ends a client sessi
    - Otherwise its connection goes in game and gets `JoinedPlayers`.
 4. `NetPlayerSpawnSystem` (host) makes that client's player ghosts next to the host's player, with the same
    `PlayerEntitySetup` as the host's own players, owned by the client's connection (`GhostOwner`). It remakes them after
-   they die, and removes them when the client's connection is gone.
-5. On the client, `CharacterManager.TryAdopt` takes over the ghost it owns (`NetPlayer.LocalIndex` = which couch player)
-   and gives it the local player's components (camera, input).
+   they die, and removes them when the client's connection is gone, or a couch player left or plays another character.
+5. On the client, `CharacterManager.TryAdopt` takes over the ghost it owns (`NetPlayer.LocalIndex` = which couch player,
+   `NetPlayer.Generation` = which of that player's characters, so a new character never reads the old one's level) and
+   gives it the local player's components (camera, input).
 6. A client goes back to its own game, with a notice, when it is turned down, can't reach the host, loses the
    connection or the host leaves (`NetJoinSystem` reads Netcode's connection events and calls `NetSession.Leave`).
 
-Couch players join only in a machine's own game (`CoopHUD`), within the 4-player limit. The co-op tether
-(`CoopTetherSystem`) holds every living player, local or remote.
+**Couch players** join and leave in the Hub on every machine, host or client alike (`CoopHUD`, 2 per machine at most). On
+a client it happens there at once, and the client sends its local players (`LocalPlayersRequest`) whenever they change.
+The host handles those and the join requests one by one, with its own couch player counted in, so the game never has more
+than 4: a couch player too many is turned down (`CouchRefused`) and leaves again on its machine, with a notice. A place
+counts from joining; the player appears once their character is picked. A client's couch player plays a character of the
+client's account, kept and saved there like the first player's.
+
+**One camera per machine**: the camera, hit shake and boss intro follow the machine's own players (on the host: `Player`
+without `RemotePlayer`). The co-op tether (`CoopTetherSystem`) keeps the living players of one machine close enough for
+it; players of different machines can be anywhere. Clients also hold theirs while predicting
+(`CoopTetherPredictionSystem`). Every machine streams the level around every player, and each player has a flow field.
 
 ## Scene changes
 
@@ -69,15 +78,18 @@ Couch players join only in a machine's own game (`CoopHUD`), within the 4-player
   its own players and for a client's when its `PortalChoiceRpc` arrives (`NetPortal`), clears a choice when that player
   walks away, and enters once everyone has chosen the same portal (`PortalHUD`), taking every machine along.
 - **The dungeon runs on the host** (`DungeonManager`), counting every player: any living player at the exit finishes a
-  Reach Exit step, and dungeon XP goes to every player. The boss, waves and return portal go around the host's first
-  living player, or a remote one while the host's are all dead.
+  Reach Exit step, and dungeon XP goes to every player. Any player wakes a boss waiting at its spawn point, each wave comes
+  at a random living player, and the return portal opens by the player at the exit or nearest the dead boss. Otherwise the
+  boss and portal go around the host's first living player, or a remote one while the host's are all dead.
 - **Time limit and deaths**: each dungeon has a `TimeLimit` (5:00 by default); running out fails it (enemies vanish, no
   further step starts, the return portal opens). The clock stops in Survive steps, which have their own. Every player's
   death counts (`CharacterManager.PlayerDied`, `NetPlayerSpawnSystem.RemotePlayerDied` once per remote player), and
   what it does depends on the step: in Kill Enemies and Kill Boss steps it takes 10 × (1 + the group's earlier deaths)
   seconds off the clock (`DeathPenalty`), in Reach Exit steps the player respawns at the level's start
   (`DungeonManager.RespawnAtStart`, read by `CharacterManager` and `NetPlayerSpawnSystem`), and in Survive steps it
-  fails the dungeon. Every player respawns after `CharacterManager.RespawnDelay` (2 s).
+  fails the dungeon. Every player respawns after `CharacterManager.RespawnDelay` (2 s), next to a living player
+  (`NetPlayerSetup.TryFindPartner`): their couch partner, in Reach Exit steps too, since they share a camera; else another
+  machine's; else the level's start.
 - **Difficulty** (`DungeonDifficulty`): the host's player 1 picks it on a dungeon portal's card (arrows, or X on a
   controller), from 1 up to one above the highest their character finished; a change clears everyone's choice. The host
   sends its picks to the clients every second (`PortalDifficultyRpc`), so their cards show it. Only the host spawns, so
@@ -221,9 +233,8 @@ machine on the network joins through the game menu's **Join a game** with the ho
 
 ## Known gaps
 
-- Couch players can't join a client in the middle of someone else's game; they join before joining.
-- With the host alone and three remote players, the fourth player takes flow field slot 1, which is also player 2's
-  `PlayerIndex` on the host.
+- The camera's boss zoom, boss intro and hit shake only happen on the host (`CameraFocus` and damage are host-only).
+- `NetFeedbackSendSystem` sends at most 24 events a frame for the whole game, so fights far apart can crowd each other out.
 - The host logs "server tick batching" with two editors running in the background; check performance in a build.
 - On Player 2, Netcode often logs `InvalidOperationException: Cannot find ghostTypeId in GhostPrefabCollection ...
   (GhostPrefabCollection.Length: 0)` from `GhostPredictionHistorySystem.PredictionBackupJob` right after joining or

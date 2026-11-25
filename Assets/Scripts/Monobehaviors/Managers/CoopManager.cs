@@ -10,6 +10,8 @@ using UnityEngine.InputSystem;
 /// and HUDs (Player2Copies: character, inventory, skills, their bars, panels and Start menu; IPerPlayer, with
 /// PlayerIndex 1) while they're joined with a character, new ones when they pick another, and removes them (and their
 /// player entity) when they leave. Its Settings (CoopSettings) limit how far apart the players get (CoopTetherSystem).
+/// The same on a host and in someone else's game, where the host hears of it and has the last word on the player limit
+/// (NetJoinSystem).
 /// </summary>
 public class CoopManager : MonoBehaviour
 {
@@ -20,6 +22,7 @@ public class CoopManager : MonoBehaviour
 
     GameObject _player2;
     AccountCharacter _player2Character;     // The one _player2's managers play
+    static int _generation;                 // Player 2's characters so far (CharacterManager.Generation)
 
     /// <summary>
     /// Adds a player on this device; they pick their character next (AccountManager.SelectCharacter with their index:
@@ -101,6 +104,7 @@ public class CoopManager : MonoBehaviour
     void CreatePlayer2(AccountCharacter character)
     {
         _player2Character = character;
+        _generation++;
         _player2 = new GameObject("Player2");
         _player2.SetActive(false);
         _player2.transform.SetParent(transform, false);
@@ -113,6 +117,7 @@ public class CoopManager : MonoBehaviour
             var copy = Instantiate(source != null ? source.gameObject : original, _player2.transform);
             copy.name = original.name;
             foreach (var perPlayer in copy.GetComponentsInChildren<IPerPlayer>(true)) perPlayer.PlayerIndex = 1;
+            foreach (var characters in copy.GetComponentsInChildren<CharacterManager>(true)) characters.Generation = _generation;
         }
         _player2.SetActive(true);
     }

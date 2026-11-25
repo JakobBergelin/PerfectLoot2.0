@@ -188,7 +188,7 @@ Recommended: **personal loot.** Each kill rolls separately for each player, and 
 5. Portals: does one player pull everyone along, or must all stand in range or vote?
 6. Personal loot as recommended, or shared loot that can be fought over or traded?
 7. Is cheating a concern at all (trading, ladders)? If yes, saves must move to a server, which is a much bigger project.
-8. Should online and couch co-op combine (two local players joining an online game)? I'd leave this out at first.
+8. Should online and couch co-op combine (two local players joining an online game)? I'd leave this out at first. **Answered 2026-11-24: yes, on every machine, up to 4 players in total and 2 per machine.**
 9. Enemy scaling by player count: wanted later? Stats are placeholders, so this only needs a hook for now.
 10. Which platforms? Steam or console changes relay and session choices.
 
@@ -205,7 +205,7 @@ Agreed with you on 2026-11-12. Supersedes "Online phases" above where they diffe
 | Topology | Listen server: one player's game hosts, up to 3 machines join. No dedicated servers, no host migration. |
 | Authority | Server runs the whole simulation. Clients predict only their own players' movement ("thin prediction" above). |
 | Players | At most 4 per game, couch players included. Couch co-op stays at 2 per machine (`GameInput.MaxPlayers`). The host turns down a join that would go over 4. |
-| Movement rules | The same as couch co-op: `CoopTetherSystem` and `CoopRules` apply to every player, local or remote. |
+| Movement rules | `CoopTetherSystem` and `CoopRules` hold the players of one machine together, since they share a camera. Players of different machines can be anywhere (changed 2026-11-24; before, every player was held). |
 | Joining | Only while both the joiner and the host are in a town (the Hub or a hub-like level). The join button only shows then; otherwise the game may still show that a friend is in town and can be joined. |
 | Trust | The host accepts the items, skills and passives a friend's client sends. Saves stay local. No anti-cheat. |
 | Loot | Personal: each player rolls and sees only their own drops. |

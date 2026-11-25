@@ -25,7 +25,8 @@ using UnityEngine.SceneManagement;
 /// The dungeon's TimeLimit runs out (Fail, no further step starts) unless it's finished first; its clock stops in
 /// Survive steps, which have their own. What a death of any player (this machine's or another's) does depends on the
 /// step: in Kill steps it takes DeathPenalty × (1 + the run's earlier deaths) seconds off the clock, in Reach Exit
-/// steps the player respawns at the level's start (RespawnAtStart), and in Survive steps it fails the dungeon.
+/// steps the player respawns at the level's start, unless their couch partner lives (RespawnAtStart), and in Survive
+/// steps it fails the dungeon.
 ///
 /// Only the host runs the dungeon; it sends how the run stands to the clients (DungeonStatusRpc, ApplyStatus), so their
 /// DungeonHUD shows it too.
@@ -71,6 +72,7 @@ public class DungeonManager : MonoBehaviour
     bool _bossSpawned;
     bool _bossKilled;
     Entity _boss;
+    float3? _finishedAt;        // Where the step ended (the player at the exit, the dead boss), for the return portal
     float _survived;            // Seconds into the current Survive step
     float _nextWave;            // Seconds until its next wave
     float _timeLeft;            // Of the dungeon's TimeLimit
@@ -117,7 +119,10 @@ public class DungeonManager : MonoBehaviour
     public float NextDeathPenalty =>
         ClockRunning && CurrentStep.Kind is DungeonStepKind.KillEnemies or DungeonStepKind.KillBoss ? DeathPenalty * (1 + _deaths) : 0f;
 
-    /// <summary>Players respawn at the level's start rather than next to another player: in a Reach Exit step.</summary>
+    /// <summary>
+    /// Players respawn at the level's start rather than next to another machine's: in a Reach Exit step. One whose couch
+    /// partner lives still goes next to them: they share a camera.
+    /// </summary>
     public static bool RespawnAtStart => Instance != null && Instance.CurrentStep is { Kind: DungeonStepKind.ReachExit };
 
     /// <summary>Kills a Kill Enemies step needs (all of the level's spawned enemies times its percent, rounded up).</summary>
@@ -255,6 +260,7 @@ public class DungeonManager : MonoBehaviour
         _group.Clear();
         _statusTimer = 0f;
         _sentStatus = default;
+        _finishedAt = null;
         ResetStep();
     }
 
@@ -338,7 +344,11 @@ public class DungeonManager : MonoBehaviour
         // Every kill rolls the kill table; the items land where the enemy died
         foreach (var kill in kills)
         {
-            if (kill.Boss) _bossKilled = true;
+            if (kill.Boss)
+            {
+                _bossKilled = true;
+                _finishedAt = kill.Position;
+            }
             else _kills++;
             if (!kill.NoLoot) DropLoot(entityManager, NetLootTable.Kill, kill.Position);
         }
@@ -392,6 +402,7 @@ public class DungeonManager : MonoBehaviour
             }
             if (!IsStepDone(entityManager, _dungeon.Steps[_step])) return;
             _step++;
+            if (_step < _dungeon.Steps.Count) _finishedAt = null;
             ResetStep();
         }
     }
@@ -436,8 +447,21 @@ public class DungeonManager : MonoBehaviour
         if (enemyManager == null || !enemyManager.IsReady || !TryGetPlayer(entityManager, out var player)) return;
 
         var position = BossPosition(entityManager, player, out bool atSpawnPoint);
-        // A boss with a trigger radius waits at its spawn point until a player comes close
-        if (atSpawnPoint && step.BossTriggerRadius > 0f && math.distance(((float3)position).xz, player.xz) > step.BossTriggerRadius) return;
+        // A boss with a trigger radius waits at its spawn point until any player comes close
+        if (atSpawnPoint && step.BossTriggerRadius > 0f)
+        {
+            bool close = false;
+            using var players = LivingPlayers(entityManager);
+            foreach (var other in players)
+            {
+                var point = BossPosition(entityManager, other, out _);
+                if (math.distance(((float3)point).xz, other.xz) > step.BossTriggerRadius) continue;
+                position = point;
+                close = true;
+                break;
+            }
+            if (!close) return;
+        }
         _bossSpawned = true;
         _boss = enemyManager.Spawn(step.Boss, position, riseIn: true);
         if (_boss == Entity.Null)
@@ -471,13 +495,16 @@ public class DungeonManager : MonoBehaviour
     // ---------- Survive ----------
 
     // A wave every WaveInterval (the first at once), unless MaxAlive enemies are alive (0: no limit): one of the step's groups, picked
-    // by weight, rising out of the ground WaveDistance from the player in a random direction and coming for the player
+    // by weight, rising out of the ground WaveDistance from a random living player in a random direction and coming for
+    // the players (machines can be far apart)
     void UpdateWaves(EntityManager entityManager, DungeonStep step)
     {
         _nextWave -= Time.deltaTime;
         if (_nextWave > 0f) return;
         var enemyManager = EnemyManager.Instance;
-        if (enemyManager == null || !enemyManager.IsReady || !TryGetPlayer(entityManager, out var player)) return;
+        using var players = LivingPlayers(entityManager);
+        if (enemyManager == null || !enemyManager.IsReady || players.IsEmpty) return;
+        var player = players[UnityEngine.Random.Range(0, players.Length)];
         _nextWave = step.WaveInterval;
 
         // More of them at higher difficulties, and more may be alive at once
@@ -519,7 +546,11 @@ public class DungeonManager : MonoBehaviour
         using var players = LivingPlayers(entityManager);
         foreach (var player in players)
             for (int i = 0; i < exits.Length; i++)
-                if (math.distance(player.xz, transforms[i].Position.xz) <= exits[i].Range) return true;
+                if (math.distance(player.xz, transforms[i].Position.xz) <= exits[i].Range)
+                {
+                    _finishedAt = player;
+                    return true;
+                }
         return false;
     }
 
@@ -551,7 +582,7 @@ public class DungeonManager : MonoBehaviour
             {
                 DungeonId = id, Difficulty = _difficulty, Seconds = seconds, Players = (byte)players, GroupSize = (byte)group.Count,
             });
-            RecordLeaderboard(_dungeon.Id, _difficulty, seconds, players, group, OwnNetworkId(entityManager));
+            RecordLeaderboard(_dungeon.Id, _difficulty, seconds, players, group, NetPlayerSetup.HostNetworkId(entityManager));
         }
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} complete at difficulty {_difficulty} in {Leaderboards.FormatTime(seconds)}, " +
                   $"{players} player(s).", this);
@@ -565,7 +596,7 @@ public class DungeonManager : MonoBehaviour
         using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetPlayer>(), ComponentType.ReadOnly<GhostOwner>(), ComponentType.ReadOnly<UnitClass>());
         using var players = query.ToEntityArray(Allocator.Temp);
         if (players.Length == 0) return;
-        int mine = OwnNetworkId(entityManager);
+        int mine = NetPlayerSetup.HostNetworkId(entityManager);
         foreach (var player in players)
         {
             int owner = entityManager.GetComponentData<GhostOwner>(player).NetworkId;
@@ -595,13 +626,6 @@ public class DungeonManager : MonoBehaviour
             }
             _group[key] = member;
         }
-    }
-
-    // The host's own connection's id (its players' GhostOwner)
-    static int OwnNetworkId(EntityManager entityManager)
-    {
-        using var query = entityManager.CreateEntityQuery(ComponentType.ReadOnly<NetworkId>(), ComponentType.ReadOnly<LocalConnection>());
-        return query.IsEmpty ? 0 : query.GetSingleton<NetworkId>().Value;
     }
 
     // What a remote machine told the host when it joined
@@ -664,12 +688,18 @@ public class DungeonManager : MonoBehaviour
         Debug.Log($"DungeonManager: {_dungeon.DisplayName} failed: {reason}.", this);
     }
 
-    // ReturnPortalDistance from the player (on the side away from the camera), leading to ReturnScene. After a finish
-    // the completion loot lands between the player and the portal.
+    // ReturnPortalDistance from the player (on the side away from the camera), leading to ReturnScene. After a finish by
+    // the player nearest to where it happened (_finishedAt), and the completion loot lands between them and the portal.
     void OpenReturnPortal(EntityManager entityManager)
     {
         if (!TryGetPlayer(entityManager, out var player)) return;
         _portalPending = false;
+        if (_state == RunState.Complete && _finishedAt is { } at)
+        {
+            using var players = LivingPlayers(entityManager);
+            foreach (var other in players)
+                if (math.distancesq(other.xz, at.xz) < math.distancesq(player.xz, at.xz)) player = other;
+        }
 
         float3 position = AroundPlayer(entityManager, player, ReturnPortalDistance);
         if (_state == RunState.Complete) DropLoot(entityManager, NetLootTable.Completion, math.lerp(player, position, 0.5f));
@@ -687,8 +717,8 @@ public class DungeonManager : MonoBehaviour
 
     // ---------- Helpers ----------
 
-    // Where the boss, waves and return portal go around: player 1, or player 2 while player 1 is dead, or another
-    // machine's player while this machine's are all dead
+    // Where the boss and return portal go around when nothing else says: player 1, or player 2 while player 1 is dead, or
+    // another machine's player while this machine's are all dead
     bool TryGetPlayer(EntityManager entityManager, out float3 position)
     {
         position = default;

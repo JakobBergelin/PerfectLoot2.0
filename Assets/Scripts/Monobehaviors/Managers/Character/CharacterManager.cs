@@ -27,6 +27,12 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     /// <summary>Which local player's this is: 0 is player 1 (the rig's own); player 2's copy is made by CoopManager.</summary>
     public int PlayerIndex { get; set; }
 
+    /// <summary>
+    /// Which of this machine's couch characters this is: player 2's managers are new for each one they pick (CoopManager,
+    /// from 1), player 1's stay (0). In someone else's game the player's ghost carries it (NetPlayer).
+    /// </summary>
+    public int Generation { get; set; }
+
     /// <summary>Raised after every (re)spawn. Other managers re-push their state to the new player entity.</summary>
     public static event Action<Entity> PlayerSpawned;
 
@@ -408,7 +414,7 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     // local player's components, so the camera follows it and its input is read and sent. Its gameplay stays on the host.
     void TryAdopt(EntityManager entityManager)
     {
-        var ghost = NetPlayerSetup.FindOwned(entityManager, PlayerIndex);
+        var ghost = NetPlayerSetup.FindOwned(entityManager, PlayerIndex, Generation);
         if (ghost == Entity.Null) return;
         _player = ghost;
         _hasSpawned = true;
@@ -417,7 +423,7 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
         PlayerSpawned?.Invoke(_player);
     }
 
-    // Where player 2 appears from player 1 (and player 1 from player 2, the other way)
+    // Where player 2 appears from the player they go next to (player 1 the other way)
     static readonly Vector3 JoinOffset = new Vector3(2f, 0f, 0f);
 
     // Seconds to keep looking for ground before spawning at the plain position anyway
@@ -426,9 +432,10 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     Vector3 _groundWaitPosition;
 
     /// <summary>
-    /// The level's player start (or this object's position without a level), or in co-op next to the other player,
-    /// standing on the ground below it. A respawn in a dungeon's Reach Exit step is always at the start
-    /// (DungeonManager.RespawnAtStart). False while the ground isn't in the physics world yet (e.g. the frame the level
+    /// Next to this machine's other living player, who shares the camera (player 2 joining, anyone respawning); else a
+    /// respawn is next to another machine's living player, except in a dungeon's Reach Exit step
+    /// (DungeonManager.RespawnAtStart); else the level's player start (or this object's position without a level).
+    /// Standing on the ground below it. False while the ground isn't in the physics world yet (e.g. the frame the level
     /// appears); after MaxGroundWait at the same position it gives up and uses the plain position, with the player's feet
     /// at its height.
     /// </summary>
@@ -436,15 +443,8 @@ public class CharacterManager : MonoBehaviour, IPerPlayer
     {
         position = transform.position;
         if (LevelGeneration.LevelState.TryGetPlayerStart(entityManager, out var playerStart)) position = playerStart;
-        // In co-op: next to the other player while they're in the level (player 2 joining, anyone respawning)
-        bool backToStart = _hasSpawned && DungeonManager.RespawnAtStart;
-        for (int i = 0; i < _players.Length && !backToStart; i++)
-        {
-            var other = _players[i];
-            if (i == PlayerIndex || other == null || other._player == Entity.Null || !entityManager.Exists(other._player)) continue;
-            position = (Vector3)entityManager.GetComponentData<LocalTransform>(other._player).Position + (PlayerIndex > i ? JoinOffset : -JoinOffset);
-            break;
-        }
+        if (NetPlayerSetup.TryFindPartner(entityManager, NetPlayerSetup.HostNetworkId(entityManager), _hasSpawned && !DungeonManager.RespawnAtStart, out var partner))
+            position = (Vector3)partner + (PlayerIndex > 0 ? JoinOffset : -JoinOffset);
         // Time spent waiting for ground somewhere else doesn't count
         if (position != _groundWaitPosition)
         {

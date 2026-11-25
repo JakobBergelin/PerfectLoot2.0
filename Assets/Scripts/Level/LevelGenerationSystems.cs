@@ -13,7 +13,7 @@ namespace LevelGeneration
     /// <summary>
     /// Builds baked level layouts: solves the whole level with WfcSolveJob (or takes the saved layout) and bends the grid
     /// (LevelDeformation, seeded like the solve), then streams the geometry in chunks of LevelChunkBuilder.ChunkSize cells (built with Burst jobs that finish on later frames):
-    /// the chunks within LoadDistance of the player start before the level is ready, the rest as the player comes within
+    /// the chunks within LoadDistance of the player start before the level is ready, the rest as any player comes within
     /// LoadDistance (nearest first, at most ChunksPerFrame per frame). Built chunks stay. LevelReady is announced a frame
     /// after the first chunks. Frees the meshes and colliders it made when destroyed.
     /// </summary>
@@ -122,12 +122,13 @@ namespace LevelGeneration
                 else started.Builder.Dispose();
             }
 
-            // Stream chunks around the player (before it spawns, the start's chunks are already built)
+            // Stream chunks around every machine's players, who can be far apart (before they spawn, the start's chunks are
+            // already built)
             if (_streams.Count == 0) return;
-            float3? player = null;
-            foreach (var transform in SystemAPI.Query<RefRO<LocalTransform>>().WithAll<Player>())
-                player = transform.ValueRO.Position;
-            if (player == null) return;
+            var players = new NativeList<float3>(Allocator.Temp);
+            foreach (var transform in SystemAPI.Query<RefRO<LocalTransform>>().WithAny<NetPlayer, Player>())
+                players.Add(transform.ValueRO.Position);
+            if (players.IsEmpty) return;
 
             for (int i = _streams.Count - 1; i >= 0; i--)
             {
@@ -138,7 +139,13 @@ namespace LevelGeneration
                     _streams.RemoveAt(i);
                     continue;
                 }
-                _pending.AddRange(StartChunks(stream, player.Value, stream.ChunksPerFrame));
+                int budget = stream.ChunksPerFrame;
+                foreach (var player in players)
+                {
+                    var started = StartChunks(stream, player, budget);
+                    _pending.AddRange(started);
+                    budget -= started.Count;
+                }
             }
         }
 

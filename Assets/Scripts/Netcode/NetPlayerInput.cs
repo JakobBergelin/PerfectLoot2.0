@@ -4,11 +4,13 @@ using Unity.NetCode;
 
 /// <summary>
 /// On every player ghost (baked by NetReplicatedAuthoring): which local player it is on the machine that owns it
-/// (0 or 1 with couch co-op), so that machine's CharacterManager with the same PlayerIndex adopts it.
+/// (0 or 1 with couch co-op), and which of that player's characters (CharacterManager.Generation), so that machine's
+/// CharacterManager with the same two adopts it: another character never gets the last one's ghost.
 /// </summary>
 public struct NetPlayer : IComponentData
 {
     [GhostField] public int LocalIndex;
+    [GhostField] public int Generation;
 }
 
 /// <summary>

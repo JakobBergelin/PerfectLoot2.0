@@ -79,11 +79,16 @@ public partial struct PlayerMoveSystem : ISystem
         float deltaTime = SystemAPI.Time.DeltaTime;
         var step = UnitStep.Create(SystemAPI.GetSingleton<PhysicsWorldSingleton>().CollisionWorld, config, deltaTime);
         float maxTurn = math.radians(config.RotationSpeed) * deltaTime;
+        bool client = !state.WorldUnmanaged.IsServer();
 
         foreach (var (transform, input, move, collider, entity) in
                  SystemAPI.Query<RefRW<LocalTransform>, RefRO<NetPlayerInput>, RefRO<PredictedMove>, RefRO<PhysicsCollider>>()
                      .WithAll<Player, Simulate>().WithEntityAccess())
         {
+            // Where this tick starts, for CoopTetherPredictionSystem (the host's CoopTetherSystem keeps its own)
+            if (client && SystemAPI.HasComponent<CoopTether>(entity))
+                SystemAPI.SetComponent(entity, new CoopTether { LastPosition = transform.ValueRO.Position });
+
             var m = move.ValueRO;
             var stick = input.ValueRO.Move;
             var velocity = float3.zero;

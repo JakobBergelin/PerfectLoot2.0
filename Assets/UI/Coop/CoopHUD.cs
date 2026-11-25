@@ -7,8 +7,8 @@ using UnityEngine.UIElements;
 /// and pressing it there adds player 2 with a character picker on the right (CoopPicker). Picking spawns them next to
 /// player 1 (CoopManager). Change character in their Start menu opens it again (OpenPicker), with Leave co-op too.
 /// Nobody joins in a dungeon; a player 2 who never picked a character leaves when the Hub is left. The picker is one of
-/// player 2's menu panels (PlayerMenus), so their gameplay input is ignored while it's open. Couch players join only in
-/// this machine's own game, up to NetSession.MaxPlayers with the online ones. Also shows online session notices
+/// player 2's menu panels (PlayerMenus), so their gameplay input is ignored while it's open. The same in someone else's
+/// game, up to NetSession.MaxPlayers with every machine's players. Also shows online session notices
 /// (NetSession.Notice) at the top, in every scene, and in the Hub a Join button per friend whose game can be joined
 /// (PlatformManager.JoinableFriends, Steam).
 /// </summary>
@@ -31,11 +31,10 @@ public class CoopHUD : MonoBehaviour
     public static bool InHub => SceneManager.GetActiveScene().name == GameBootstrap.TownScene;
 
     /// <summary>
-    /// Another couch player may join: in this machine's own game, while it has room (NetSession.MaxPlayers, remote
-    /// players included). In someone else's game the host counts the players a client brought when it joined, so couch
-    /// players join before joining a game.
+    /// Another couch player may join while the game has room (NetSession.MaxPlayers, every machine's players). In someone
+    /// else's game that's what this machine sees; the host has the last word (CouchRefused).
     /// </summary>
-    static bool CouchJoinAllowed => NetSession.IsHost && GameInput.PlayerCount + NetSession.RemotePlayers < NetSession.MaxPlayers;
+    static bool CouchJoinAllowed => PlatformManager.PlayersInGame() < NetSession.MaxPlayers;
 
     static PlayerMenus Player2Menus => MenuPanels.For(1);
     static AccountCharacter Player2Character => AccountManager.Instance != null ? AccountManager.Instance.SelectedCharacterOf(1) : null;
