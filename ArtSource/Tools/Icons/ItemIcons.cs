@@ -78,6 +78,7 @@ public static class ItemIcons
         Reg("Weapon", "EndlessWell", EndlessWell);
         Reg("Weapon", "Farsight", Farsight);
         Reg("Weapon", "MasterSword", MasterSword);
+        Reg("Weapon", "AddersKiss", AddersKiss);
     }
 
     // ---------- Shared details ----------
@@ -1339,6 +1340,19 @@ public static class ItemIcons
     }
 
     // A broad blue-hilted blade with an echo of itself
+    // A venom-green blade, dripping, with a brass serpent's guard
+    static void AddersKiss(Ic c)
+    {
+        Tiles.Item(c);
+        c.Glow(128, 120, 104, Pal.Hex("#9CFF4A"), 120);
+        c.Xf(45, 128, 128, 1.08f);
+        Blade(c, 2, 170, 25, Pal.Poison, Pal.Bronze, Pal.DarkLeather, Pal.Bronze, 58);
+        c.NoXf();
+        c.Add(G.Drop(206, 108, 15), Pal.Poison);
+        c.Add(G.Drop(172, 152, 11), Pal.Poison);
+        c.Flush();
+    }
+
     static void MasterSword(Ic c)
     {
         Tiles.Sapphire(c);

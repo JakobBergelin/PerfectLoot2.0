@@ -83,7 +83,7 @@ public partial struct HazardSystem : ISystem
             var key = pair.Key;
             float damage = pair.Value.DamagePerSecond * TickInterval;
             bool isCrit = false;
-            AttackSystem.CalculateCrit(key.Source, key.Target, state.EntityManager, ref _random, ref damage, ref isCrit);
+            AttackSystem.CalculateCrit(key.Source, key.Target, key.Type, state.EntityManager, ref _random, ref damage, ref isCrit);
             var targetPosition = SystemAPI.GetComponent<LocalTransform>(key.Target).Position;
             SystemAPI.GetBuffer<DamageInstance>(key.Target).Add(new DamageInstance
             {

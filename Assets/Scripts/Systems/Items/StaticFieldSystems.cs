@@ -80,7 +80,7 @@ public partial struct StaticFieldSystem : ISystem
             var type = stats.ValueRO.Value.ConvertedType(DamageType.Lightning);
             float damage = s.Damage * stats.ValueRO.Value.DamageMultiplier(type);
             bool isCrit = false;
-            AttackSystem.CalculateCrit(entity, target, state.EntityManager, ref _random, ref damage, ref isCrit);
+            AttackSystem.CalculateCrit(entity, target, type, state.EntityManager, ref _random, ref damage, ref isCrit);
             SystemAPI.GetBuffer<DamageInstance>(target).Add(new DamageInstance
             {
                 Damage = damage, Type = type, Hierarchy = DamageHierarchy.Main, Origin = DamageLabel.StaticField, Source = entity, IsCrit = isCrit, IsCenterTarget = true,

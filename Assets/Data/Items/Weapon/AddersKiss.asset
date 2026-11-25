@@ -1,0 +1,53 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: b9069d65abc0473c87dbd24aabac3f1c, type: 3}
+  m_Name: AddersKiss
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryWeaponItem
+  Name: Adder's Kiss
+  Id: 898269da26cbf004bb2c9b88b8f4d3bd
+  Icon: {fileID: 21300000, guid: 78414531e2304c718089e48222964277, type: 3}
+  Flavor: The second bite is the one you remember.
+  VisualBase: {fileID: 11400000, guid: 67bb9dcccf9e4824bb0b8dfedf5e0bbf, type: 2}
+  BaseAffixes:
+  - Affix: 37
+    RollRange:
+      Min: 0.03
+      Max: 0.06
+  RollableAffixes:
+  - Affix: 9
+    RollRange:
+      Min: 0.03
+      Max: 0.07
+  - Affix: 7
+    RollRange:
+      Min: 0.02
+      Max: 0.05
+  - Affix: 23
+    RollRange:
+      Min: 0.2
+      Max: 0.5
+  - Affix: 26
+    RollRange:
+      Min: 5
+      Max: 15
+  - Affix: 16
+    RollRange:
+      Min: 0.03
+      Max: 0.08
+  Kind: 8
+  WeaponDamage:
+    Min: 3
+    Max: 4
+  WeaponCooldown: 0.9
+  WeaponDamageRange: 1.8
+  WeaponReach: 1.3
+  LegendaryPower: {fileID: 11400000, guid: 40a5704a1bee63c4ba6837ba3455ab41, type: 2}

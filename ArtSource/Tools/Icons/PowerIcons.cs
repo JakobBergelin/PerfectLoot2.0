@@ -20,7 +20,7 @@ public static class PowerIcons
         Reg("SecondWind", SecondWind); Reg("Shatter", Shatter); Reg("Slingshot", Slingshot); Reg("SoulThief", SoulThief);
         Reg("StaticField", StaticField); Reg("Steam", Steam); Reg("Stormborn", Stormborn); Reg("Stormcall", Stormcall);
         Reg("Sunder", Sunder); Reg("ToxicTrail", ToxicTrail); Reg("Undertow", Undertow); Reg("Vanguard", Vanguard);
-        Reg("Venomous", Venomous); Reg("Vigil", Vigil); Reg("Wildfire", Wildfire); Reg("Wyrmfire", Wyrmfire);
+        Reg("FesteringWounds", FesteringWounds); Reg("Venomous", Venomous); Reg("Vigil", Vigil); Reg("Wildfire", Wildfire); Reg("Wyrmfire", Wyrmfire);
     }
 
     static void Small(Ic c)
@@ -596,6 +596,20 @@ public static class PowerIcons
         c.Add(G.Rot(G.RR(10, 66, 40, 10, 4), 24, 30, 70), Pal.Wood).Thin();
         c.Add(G.Rot(G.RR(206, 108, 40, 10, 4), -24, 226, 112), Pal.Wood).Thin();
         Small(c);
+    }
+
+    // A cut that drips poison, with a critical star
+    static void FesteringWounds(Ic c)
+    {
+        Tiles.Poison(c);
+        c.Glow(128, 128, 110, Pal.Hex("#9CFF4A"), 130);
+        c.Add(G.Soft(36, 196, 120, 104, 220, 40, 140, 140), Pal.Blood);
+        c.Flush();
+        c.Add(G.Drop(112, 190, 24), Pal.Poison).Then(() => c.Gloss(104, 188, 5, 8, 15, 210));
+        c.Add(G.Drop(172, 138, 19), Pal.Poison);
+        c.Flush();
+        c.Add(G.Star(82, 80, 42, 17, 4, -90), Pal.Gold);
+        c.Flush();
     }
 
     static void Venomous(Ic c)

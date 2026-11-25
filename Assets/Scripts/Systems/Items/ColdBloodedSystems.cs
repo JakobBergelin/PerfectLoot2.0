@@ -69,7 +69,7 @@ public partial struct ColdBloodedSystem : ISystem
 
                 float damage = baseDamage;
                 bool isCrit = false;
-                AttackSystem.CalculateCrit(entity, hit.Entity, state.EntityManager, ref _random, ref damage, ref isCrit);
+                AttackSystem.CalculateCrit(entity, hit.Entity, type, state.EntityManager, ref _random, ref damage, ref isCrit);
                 var targetPosition = SystemAPI.GetComponent<LocalTransform>(hit.Entity).Position;
                 SystemAPI.GetBuffer<DamageInstance>(hit.Entity).Add(new DamageInstance
                 {

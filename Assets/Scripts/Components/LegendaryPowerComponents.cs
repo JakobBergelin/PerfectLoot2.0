@@ -20,6 +20,12 @@ public struct Ambush : IComponentData
     public float HealthThreshold;   // 1 = full health
 }
 
+/// <summary>Festering Wounds (Adder's Kiss): the wearer's physical damage has more critical chance against poisoned targets (AttackSystem.CalculateCrit).</summary>
+public struct FesteringWounds : IComponentData
+{
+    public float CriticalChanceBonus;   // 0.3 = +30%
+}
+
 /// <summary>Long Shot (Farsight): the wearer's projectile hits deal more the further they are from where they were fired (LongShotSystem).</summary>
 public struct LongShot : IComponentData
 {

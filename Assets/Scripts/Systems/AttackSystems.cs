@@ -20,19 +20,27 @@ public partial class AttackSystem : SystemBase
         _random = Unity.Mathematics.Random.CreateFromIndex((uint)Environment.TickCount);
     }
 
-    public static void CalculateCrit(Entity source, Entity target, EntityManager entityManager, ref Unity.Mathematics.Random random, ref float damage, ref bool isCrit, float chanceBonus = 0f)
+    public static void CalculateCrit(Entity source, Entity target, DamageType type, EntityManager entityManager, ref Unity.Mathematics.Random random, ref float damage, ref bool isCrit, float chanceBonus = 0f)
     {
         if(source != Entity.Null && entityManager.HasComponent<CalculatedStats>(source))
         {
             var sourceStats = entityManager.GetComponentData<CalculatedStats>(source);
             var randomValue = random.NextFloat();
 
-            if(randomValue < sourceStats.Value.CriticalChance + chanceBonus || IsAmbush(source, target, entityManager))
+            if(randomValue < sourceStats.Value.CriticalChance + chanceBonus + FesteringWoundsChance(source, target, type, entityManager) || IsAmbush(source, target, entityManager))
             {
                 isCrit = true;
                 damage *= 1.0f + sourceStats.Value.CriticalDamage;
             }
         }
+    }
+
+    // Festering Wounds legendary power: more for physical damage (after conversion) to a poisoned target
+    static float FesteringWoundsChance(Entity source, Entity target, DamageType type, EntityManager entityManager)
+    {
+        if(type != DamageType.Physical || !entityManager.HasComponent<FesteringWounds>(source)) return 0f;
+        if(!entityManager.HasComponent<Poisoned>(target) || !entityManager.IsComponentEnabled<Poisoned>(target)) return 0f;
+        return entityManager.GetComponentData<FesteringWounds>(source).CriticalChanceBonus;
     }
 
     // Ambush legendary power: the target is still at (or above) the power's share of its max health
@@ -126,7 +134,7 @@ public partial class AttackSystem : SystemBase
 
                             // Sub damage is sized from the hit that caused it, so it doesn't crit again
                             if(attack.ValueRO.DamageHierarchy == DamageHierarchy.Main && !attack.ValueRO.CannotCrit)
-                                CalculateCrit(source.ValueRO.Entity, hit.Entity, EntityManager, ref _random, ref damage, ref isCrit, attack.ValueRO.CriticalChanceBonus);
+                                CalculateCrit(source.ValueRO.Entity, hit.Entity, attack.ValueRO.Type, EntityManager, ref _random, ref damage, ref isCrit, attack.ValueRO.CriticalChanceBonus);
 
                             attack.ValueRW.Events.OnHit = true;
                             attack.ValueRW.Events.OnHitNormal = hit.SurfaceNormal;
@@ -368,7 +376,7 @@ public partial class AccumilatedPeriodicAttackSystem : SystemBase
                     bool isCrit = false;
                     var damage = instance.AccumilatedDamage;
 
-                    AttackSystem.CalculateCrit(instance.Source, entity, EntityManager, ref _random, ref damage, ref isCrit);
+                    AttackSystem.CalculateCrit(instance.Source, entity, instance.Type, EntityManager, ref _random, ref damage, ref isCrit);
 
                     DamageInstance.Add(new DamageInstance{Origin = instance.Origin, Damage = damage, Type = instance.Type, Hierarchy = instance.Hierarchy, Source = instance.Source, IsCrit = isCrit, HitDirection = instance.HitDirection, HitForce = instance.HitForce, IsCenterTarget = instance.IsCenterTarget});
                     periodicDamageInstance.RemoveAt(i);
