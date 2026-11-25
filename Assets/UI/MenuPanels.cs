@@ -5,7 +5,7 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>The panels View opens and LB/RB go through, in this order; each has a button on the menu bar (MenuBarHUD).</summary>
-public enum MenuTab { Character, Skills, ItemDatabase, Statistics }
+public enum MenuTab { Character, ItemReview, Skills, ItemDatabase, Statistics }
 
 /// <summary>
 /// One local player's menus: which of their menu panels (character, skills, ...) is open (one at a time: opening one

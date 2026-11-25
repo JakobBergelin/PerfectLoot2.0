@@ -100,6 +100,7 @@ public class OptionsHUD : MonoBehaviour
             new Row { Section = "Skills", Name = "Skill 4", Action = () => GameInput.Skill(3) },
             new Row { Section = "Interface", Name = "Interact (portals, loot)", Action = () => GameInput.Player.Interact },
             new Row { Section = "Interface", Name = "Inventory", Action = () => GameInput.Player.Inventory },
+            new Row { Section = "Interface", Name = "Item Review", Action = () => GameInput.Player.ItemReview },
             new Row { Section = "Interface", Name = "Skills", Action = () => GameInput.Player.Skills },
             new Row { Section = "Interface", Name = "Item Database", Action = () => GameInput.Player.ItemDatabase },
             new Row { Section = "Interface", Name = "Statistics", Action = () => GameInput.Player.Statistics },

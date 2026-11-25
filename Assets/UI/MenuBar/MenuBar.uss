@@ -1,4 +1,4 @@
-/* The menu buttons in the bottom right (MenuBarHUD), in the skill slots' style. 44px buttons, so the bar fits beside the
+/* The menu buttons in the bottom right (MenuBarHUD), in the skill slots' style. 40px buttons, so the bar fits beside the
    skill bar in a co-op player's half of the screen */
 .menu-bar-root {
     position: absolute;
@@ -16,20 +16,20 @@
 
 .menu-bar {
     position: absolute;
-    right: 14px;
+    right: 10px;
     bottom: 12px;
     flex-direction: row;
     align-items: flex-end;
 }
 
 .menu-button {
-    margin-left: 4px;
+    margin-left: 3px;
     align-items: center;
 }
 
 .menu-button__icon {
-    width: 44px;
-    height: 44px;
+    width: 40px;
+    height: 40px;
     background-color: var(--slot-bg);
     border-width: 2px;
     border-color: var(--slot-border);
@@ -49,6 +49,10 @@
 
 .menu-button--character .menu-button__icon {
     background-image: url("project://database/Assets/Data/Images/MenuIcons/Character.png");
+}
+
+.menu-button--itemreview .menu-button__icon {
+    background-image: url("project://database/Assets/Data/Images/MenuIcons/ItemReview.png");
 }
 
 .menu-button--skills .menu-button__icon {
@@ -134,6 +138,39 @@
 
 .menu-button--new .menu-button__dot {
     display: flex;
+}
+
+/* How many wait (Item Review), in place of the dot */
+.menu-button__count {
+    position: absolute;
+    right: -7px;
+    top: -8px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 3px;
+    margin: 0;
+    font-size: 11px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    color: #1A1218;
+    border-width: 2px;
+    border-color: #120D1C;
+    border-radius: 9px;
+    background-color: #A8ADB8;
+    display: none;
+}
+
+.menu-button--new .menu-button__count {
+    background-color: var(--highlight);
+}
+
+.menu-button--counted .menu-button__dot {
+    display: none;
+}
+
+/* Opens, but nothing can be done in it here */
+.menu-button--muted .menu-button__icon {
+    -unity-background-image-tint-color: #6A6A6A;
 }
 
 /* A controller player's bar: only the buttons with something new, without keys (their controller opens the panels) */

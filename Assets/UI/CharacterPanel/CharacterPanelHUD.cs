@@ -35,9 +35,9 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
     const string NoValue = "–";
     const string PreviewIdleText = "Hover an item to see how your stats change";
     const string TownHint = "Click a slot to swap · Press I to close";
-    const string LookOnlyHint = "Change equipment in town · Press I to close";
+    const string LookOnlyHint = "Change equipment in town or at difficulty 1 · Press I to close";
     const string GamepadTownHint = "A Swap · LT/RT Pages · LB/RB Panels · B Close";
-    const string GamepadLookOnlyHint = "Change equipment in town · LT/RT Pages · LB/RB Panels · B Close";
+    const string GamepadLookOnlyHint = "Change equipment in town or at difficulty 1 · LT/RT Pages · LB/RB Panels · B Close";
     const float Gap = 8f;
     const float ScreenMargin = 16f;
     const int MaxOptionChanges = 3;
@@ -235,11 +235,11 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         // A click anywhere but the picker or a slot closes the picker (slots open their own or close it themselves)
         if (_pickerSlot != null && Mouse.current != null && Mouse.current.leftButton.wasPressedThisFrame && !PointerOnPickerOrSlot())
             ClosePicker();
-        // Equipment is only changed in town; elsewhere the panel is look-only
-        bool town = GameArea.IsTown;
+        // Equipment can't be changed everywhere; elsewhere the panel is look-only
+        bool canChange = GameArea.CanChangeLoadout;
         bool gamepad = Nav.UsingGamepad;
-        _hint.text = town ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
-        if (!town && _pickerSlot != null) ClosePicker();
+        _hint.text = canChange ? (gamepad ? GamepadTownHint : TownHint) : (gamepad ? GamepadLookOnlyHint : LookOnlyHint);
+        if (!canChange && _pickerSlot != null) ClosePicker();
 
         var account = AccountManager.Instance;
         string gold = account != null ? $"{account.Gold:N0} gold" : "";
@@ -337,7 +337,7 @@ public class CharacterPanelHUD : MonoBehaviour, IPerPlayer
         Action click = () =>
         {
             if (_pickerSlot == view) ClosePicker();
-            else if (GameArea.IsTown) OpenPicker(view);
+            else if (GameArea.CanChangeLoadout) OpenPicker(view);
         };
         view.Element.RegisterCallback<ClickEvent>(_ => click());
         UiNav.Clickable(view.Element, click);

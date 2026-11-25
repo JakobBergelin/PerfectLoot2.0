@@ -115,6 +115,15 @@
                     "initialStateCheck": false
                 },
                 {
+                    "name": "ItemReview",
+                    "type": "Button",
+                    "id": "c41d7a90-52be-4e83-b6f0-19a7d3c85e24",
+                    "expectedControlType": "",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
                     "name": "DamageMeter",
                     "type": "Button",
                     "id": "4d8e2a17-93c5-4b61-8f0a-6e2b9c1d7a35",
@@ -439,6 +448,28 @@
                     "processors": "",
                     "groups": "Gamepad",
                     "action": "Statistics",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "d8e2f5b1-6c37-4a09-9e14-72b0c6a3f581",
+                    "path": "<Keyboard>/j",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Keyboard&Mouse",
+                    "action": "ItemReview",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "e93a06c2-7d48-4b1a-8f25-83c1d7b40692",
+                    "path": "",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "Gamepad",
+                    "action": "ItemReview",
                     "isComposite": false,
                     "isPartOfComposite": false
                 },

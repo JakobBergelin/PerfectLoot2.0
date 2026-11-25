@@ -11,7 +11,7 @@ using UnityEngine.UIElements;
 /// <summary>
 /// Skills panel toggled with the Skills action (K), over the whole screen: the active and passive slots on the left,
 /// the skill wheel (ActiveSkillPicker: every skill by its requirements, equipped ones with their slot's key) in the
-/// middle and the highlighted skill's card on the right. In town, clicking a skill and then an active slot (or pressing
+/// middle and the highlighted skill's card on the right. In town and at difficulty 1 (GameArea.CanChangeLoadout), clicking a skill and then an active slot (or pressing
 /// that slot's key) equips it there, swapping with the slot that had it; clicking a passive slot opens a list of the
 /// passives that aren't in another slot; passive slots the character's level hasn't opened show their unlock level.
 /// Skills new to the character have a green "New" badge until the panel closes. Elsewhere it's look-only. Filter chips over it dim the wheel's skills that
@@ -36,10 +36,10 @@ public class SkillsPanelHUD : MonoBehaviour
     const string ChooseClass = "sp-card--choose";
     const string TownHint = "Click a skill, then a slot · Press K to close";
     const string ChooseHint = "Click a slot or press its key · Esc to cancel";
-    const string LookOnlyHint = "Change skills in town · Press K to close";
+    const string LookOnlyHint = "Change skills in town or at difficulty 1 · Press K to close";
     const string GamepadTownHint = "A Choose skill · LT/RT Spokes · LB/RB Panels · B Close";
     const string GamepadChooseHint = "A Equip in slot · B Cancel";
-    const string GamepadLookOnlyHint = "Change skills in town · LT/RT Spokes · LB/RB Panels · B Close";
+    const string GamepadLookOnlyHint = "Change skills in town or at difficulty 1 · LT/RT Spokes · LB/RB Panels · B Close";
     static readonly string[] StanceClasses = { "sp-card--stance-str", "sp-card--stance-agi", "sp-card--stance-int" };
 
     // Filters: Show picks one, Element any of the chosen element tags, Type all of the chosen tags
@@ -208,15 +208,15 @@ public class SkillsPanelHUD : MonoBehaviour
             else SetOpen(false);
             return;
         }
-        // Skills are only changed in town; elsewhere the panel is look-only
-        bool town = GameArea.IsTown;
+        // Skills can't be changed everywhere; elsewhere the panel is look-only
+        bool canChange = GameArea.CanChangeLoadout;
         bool gamepad = Nav.UsingGamepad;
-        if (!town && (_pending != null || _selected != null))
+        if (!canChange && (_pending != null || _selected != null))
         {
             SetPending(null);
             SelectPassive(null);
         }
-        _hint.text = !town ? (gamepad ? GamepadLookOnlyHint : LookOnlyHint)
+        _hint.text = !canChange ? (gamepad ? GamepadLookOnlyHint : LookOnlyHint)
                    : _pending != null ? (gamepad ? GamepadChooseHint : ChooseHint)
                    : gamepad ? GamepadTownHint : TownHint;
 
@@ -390,7 +390,7 @@ public class SkillsPanelHUD : MonoBehaviour
             view.Element.Add(view.Icon);
             view.Element.Add(view.Name);
 
-            Action click = () => SelectPassive(_selected == view || !GameArea.IsTown || view.IsLocked() ? null : view);
+            Action click = () => SelectPassive(_selected == view || !GameArea.CanChangeLoadout || view.IsLocked() ? null : view);
             view.Element.RegisterCallback<ClickEvent>(_ => click());
             UiNav.Clickable(view.Element, click);
             UiNav.Hover(view.Element, () => ShowTooltip(view.IsLocked() ? null : view.GetEquipped(), view.Element), HideTooltip);
@@ -640,11 +640,11 @@ public class SkillsPanelHUD : MonoBehaviour
         return null;
     }
 
-    // A skill clicked on the wheel: in town it waits for a slot; elsewhere it's only shown
+    // A skill clicked on the wheel: where skills can be changed it waits for a slot; elsewhere it's only shown
     void PickOnWheel(ActiveSkill skill)
     {
         _wheel.Highlight(skill);
-        if (!GameArea.IsTown) return;
+        if (!GameArea.CanChangeLoadout) return;
         SelectPassive(null);
         SetPending(_pending == skill ? null : skill);
         // A controller goes to the slots to pick one
@@ -666,7 +666,7 @@ public class SkillsPanelHUD : MonoBehaviour
     {
         var skill = _pending;
         SetPending(null);
-        if (skill == null || !GameArea.IsTown) return;
+        if (skill == null || !GameArea.CanChangeLoadout) return;
         var slot = ActiveSlot(index);
         var current = slot != null ? slot.EquippedSkill : null;
         if (slot != null && skill != current)

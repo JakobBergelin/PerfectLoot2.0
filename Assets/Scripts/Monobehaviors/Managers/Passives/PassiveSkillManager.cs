@@ -98,7 +98,7 @@ public class PassiveSkillManager : MonoBehaviour, IPerPlayer
             if (level > previous && level <= _shownLevel) opened = true;
         if (!opened) return;
         RebuildPassives();
-        PlayerNotices.Post(PlayerIndex, $"New passive slot: open Skills ({PlayerNotices.SkillsKey(PlayerIndex)}) in town to choose one");
+        PlayerNotices.Post(PlayerIndex, $"New passive slot: open Skills ({PlayerNotices.SkillsKey(PlayerIndex)}){(GameArea.CanChangeLoadout ? "" : " in town")} to choose one");
     }
 
     // Set directly instead of EquipPassive so Start pushes once instead of once per slot

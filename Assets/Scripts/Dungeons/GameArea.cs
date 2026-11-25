@@ -13,11 +13,15 @@ public static class GameArea
     static bool _known;
     static LevelArea _area;
 
-    /// <summary>The scene is a town: items and skills can be changed, and found items are reviewed.</summary>
+    /// <summary>The scene is a town.</summary>
     public static bool IsTown => Refresh() && _area.Kind == AreaKind.Town;
 
     /// <summary>The scene is a dungeon (DungeonManager runs it).</summary>
     public static bool IsDungeon => Refresh() && _area.Kind == AreaKind.Dungeon;
+
+    /// <summary>Items and skills can be changed here and found items reviewed: in a town, and in a dungeon at difficulty 1 (the host's run).</summary>
+    public static bool CanChangeLoadout =>
+        IsTown || (IsDungeon && DungeonManager.Instance is { State: not DungeonManager.RunState.None, Difficulty: 1 });
 
     /// <summary>The scene's area, once its subscenes are loaded.</summary>
     public static bool TryGet(out LevelArea area)

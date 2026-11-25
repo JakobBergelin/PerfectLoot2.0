@@ -5,7 +5,7 @@ using UnityEngine.UIElements;
 /// <summary>
 /// Top left of the screen while in a dungeon (DungeonManager): its name and difficulty, the time left (and what a death just cost), the
 /// current step and its progress with what dying does in it, or that it's complete or failed and the return portal is
-/// open; how many items were picked up. Leave dungeon (the host's only: a client leaves the game from its menu) asks first
+/// open. Leave dungeon (the host's only: a client leaves the game from its menu) asks first
 /// when something would be lost: an unfinished run, or items still on the ground.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
@@ -22,7 +22,7 @@ public class DungeonHUD : MonoBehaviour
     PanelRenderer _panelRenderer;
     int _boundVersion = -1;
     VisualElement _card;
-    Label _name, _difficulty, _stepCount, _objective, _note, _found, _confirmText, _timer, _penalty;
+    Label _name, _difficulty, _stepCount, _objective, _note, _confirmText, _timer, _penalty;
     VisualElement _progressBar, _progressFill, _leaveRow, _confirmRow, _timerRow;
 
     bool _hovered;
@@ -66,7 +66,6 @@ public class DungeonHUD : MonoBehaviour
         _difficulty = root.Q<Label>("difficulty");
         _stepCount = root.Q<Label>("stepCount");
         _objective = root.Q<Label>("objective");
-        _found = root.Q<Label>("found");
         _note = root.Q<Label>("note");
         _progressBar = root.Q<VisualElement>("progressBar");
         _progressFill = root.Q<VisualElement>("progressFill");
@@ -80,7 +79,7 @@ public class DungeonHUD : MonoBehaviour
         var confirmLeave = root.Q<Button>("confirmLeaveButton");
         var stay = root.Q<Button>("stayButton");
         _boundVersion = version;
-        if (_card == null || _name == null || _difficulty == null || _stepCount == null || _objective == null || _note == null || _found == null || _progressBar == null || _progressFill == null ||
+        if (_card == null || _name == null || _difficulty == null || _stepCount == null || _objective == null || _note == null || _progressBar == null || _progressFill == null ||
             _leaveRow == null || _confirmRow == null || _confirmText == null || _timerRow == null || _timer == null || _penalty == null ||
             leave == null || confirmLeave == null || stay == null)
         {
@@ -164,11 +163,6 @@ public class DungeonHUD : MonoBehaviour
         _note.style.display = note.Length > 0 ? DisplayStyle.Flex : DisplayStyle.None;
         _progressBar.style.display = progress >= 0f ? DisplayStyle.Flex : DisplayStyle.None;
         if (progress >= 0f) _progressFill.style.width = Length.Percent(Mathf.Clamp01(progress) * 100f);
-
-        var groundLoot = GroundLootManager.Instance;
-        int found = groundLoot != null ? groundLoot.PickedUp : 0;
-        _found.text = found > 0 ? $"{found} {(found == 1 ? "item" : "items")} found · reviewed in town" : "";
-        _found.style.display = found > 0 ? DisplayStyle.Flex : DisplayStyle.None;
     }
 
     // The time limit's clock while it runs (not in Survive steps), red near the end; a death's cost next to it for a while

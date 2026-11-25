@@ -13,7 +13,7 @@ using Random = UnityEngine.Random;
 /// <summary>
 /// Items and gold lying on the ground (dungeon kills and completion, DungeonManager). GroundLootHUD shows a label for each;
 /// clicking it within PickupRange, or Interact for the nearest one, picks the item up: it's given to AccountManager right
-/// away and waits in its drop queue for review in town. Items left on the ground are lost when the scene changes (every
+/// away and waits in its drop queue for review (DropPopupHUD). Items left on the ground are lost when the scene changes (every
 /// scene load makes a new world).
 /// Gold is picked up by walking over it: within GoldPickupRange plus the player's Pickup Range stat, it goes to the account.
 /// Kept between scenes (GameBootstrap's rig).

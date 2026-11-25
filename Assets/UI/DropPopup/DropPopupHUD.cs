@@ -4,10 +4,12 @@ using UnityEngine.InputSystem;
 using UnityEngine.UIElements;
 
 /// <summary>
-/// Shows AccountManager's oldest pending drop while the game keeps running. A newly found item is shown with an OK
+/// The item review panel, toggled with the ItemReview action (J): AccountManager's oldest pending drop, while the game
+/// keeps running, where found items can be reviewed (GameArea.CanChangeLoadout). A newly found item is shown with an OK
 /// button (it's already in the database). A drop whose entry already has an item is shown next to it with the
-/// differences, and the player takes the new one or keeps the current one. Esc keeps the current one / closes.
-/// The drops are the account's, so either player answers it (their controller, Esc or B) and both wait while it shows.
+/// differences, and the player takes the new one or keeps the current one. Esc or B closes it and leaves the rest waiting; it also closes
+/// after the last one. The drops are the account's, so it's one for both players: whoever opens it has it until they close
+/// it; the other player can't open it meanwhile.
 /// </summary>
 [RequireComponent(typeof(PanelRenderer))]
 public class DropPopupHUD : MonoBehaviour
@@ -19,10 +21,15 @@ public class DropPopupHUD : MonoBehaviour
     bool _bound;
     int _boundVersion = -1;
     bool _dirty = true;
-    bool _visible;
+    bool _open;
+    int _owner;     // The player who has it open (or had it last)
+    readonly System.Action<object>[] _openChanged = new System.Action<object>[GameInput.MaxPlayers];
 
-    VisualElement _root;
-    Label _heading, _queue;
+    PlayerMenus Menus => MenuPanels.For(_owner);
+    PlayerNav Nav => UiNav.For(_owner);
+
+    VisualElement _root, _popup, _cards;
+    Label _heading, _queue, _message;
     VisualElement _currentColumn, _currentCard;
     Label _currentTitle, _currentSubtitle;
     VisualElement _currentBody;
@@ -37,11 +44,24 @@ public class DropPopupHUD : MonoBehaviour
     {
         _panelRenderer = GetComponent<PanelRenderer>();
         _panelRenderer.RegisterUIReloadCallback(OnUIReload);
+        // In every player's tabs; another of the owner's panels opening closes it
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+        {
+            int player = i;
+            _openChanged[i] = openPanel => OnMenuOpenChanged(player, openPanel);
+            MenuPanels.For(i).OpenChanged += _openChanged[i];
+            MenuPanels.For(i).AddTab(this, MenuTab.ItemReview, open => SetOpenBy(player, open));
+        }
     }
 
     void OnDisable()
     {
-        SetVisible(false);
+        for (int i = 0; i < GameInput.MaxPlayers; i++)
+        {
+            MenuPanels.For(i).RemoveTab(this);
+            MenuPanels.For(i).OpenChanged -= _openChanged[i];
+        }
+        if (_open) SetOpen(false);
         _panelRenderer.UnregisterUIReloadCallback(OnUIReload);
         Unsubscribe();
         _bound = false;
@@ -61,12 +81,15 @@ public class DropPopupHUD : MonoBehaviour
 
         _bound = Bind(root);
         _boundVersion = version;
-        _dirty = true;
+        if (_bound) SetOpen(_open);
     }
 
     bool Bind(VisualElement root)
     {
         _root = root.Q<VisualElement>("dropPopupRoot");
+        _popup = root.Q<VisualElement>("popup");
+        _cards = root.Q<VisualElement>("cards");
+        _message = root.Q<Label>("message");
         _heading = root.Q<Label>("heading");
         _queue = root.Q<Label>("queue");
         _currentColumn = root.Q<VisualElement>("currentColumn");
@@ -82,7 +105,7 @@ public class DropPopupHUD : MonoBehaviour
         _keepButton = root.Q<Button>("keepButton");
         _takeButton = root.Q<Button>("takeButton");
         _okButton = root.Q<Button>("okButton");
-        if (_root == null || _currentColumn == null || _currentCard == null || _newCard == null || _keepButton == null || _takeButton == null || _okButton == null)
+        if (_root == null || _popup == null || _cards == null || _message == null || _currentColumn == null || _currentCard == null || _newCard == null || _keepButton == null || _takeButton == null || _okButton == null)
         {
             Debug.LogError("DropPopupHUD: DropPopup.uxml is missing elements. Is it the Panel Renderer's Source Asset?", this);
             return false;
@@ -91,9 +114,7 @@ public class DropPopupHUD : MonoBehaviour
         _keepButton.clicked += () => Resolve(takeNew: false);
         _takeButton.clicked += () => Resolve(takeNew: true);
         _okButton.clicked += () => Resolve(takeNew: false);
-        UiNav.Register(_root);
-        var popup = root.Q<VisualElement>("popup");
-        if (popup != null) UiNav.Hint(popup, "A Choose · B Keep current");
+        if (_popup.Q(className: "nav-hint") == null) UiNav.Hint(_popup, "A Choose · LB/RB Panels · B Close");
         return true;
     }
 
@@ -101,33 +122,50 @@ public class DropPopupHUD : MonoBehaviour
     {
         Subscribe();
         if (!_bound) return;
-        // Found items are reviewed in town only; in a dungeon they wait in the queue
-        bool town = GameArea.IsTown;
-        if (town != _town)
-        {
-            _town = town;
-            _dirty = true;
-        }
-        if (_dirty) Refresh();
-
-        // A player's open menu panel handles their Esc (or B) first (it closes); the next one keeps the current item. Last
-        // frame's state too, since the panel may already have closed itself this frame.
-        if (!_visible) return;
+        // Any player's toggle
         for (int i = 0; i < GameInput.PlayerCount; i++)
+            if (MenuPanels.For(i).TogglePressed(GameInput.For(i).Actions.asset.FindAction("Player/ItemReview")))
+                SetOpenBy(i, !_open);
+
+        if (!_open) return;
+        if (Menus.BackPressed)
         {
-            var menus = MenuPanels.For(i);
-            if (menus.IsPanelOpen || _panelOpenLastFrame[i] || menus.IsTyping || !menus.BackPressed) continue;
-            Resolve(takeNew: false);
+            SetOpen(false);
             return;
         }
+        if (_canReview != GameArea.CanChangeLoadout) _dirty = true;
+        if (_dirty) Refresh();
     }
 
-    readonly bool[] _panelOpenLastFrame = new bool[GameInput.MaxPlayers];
-    bool _town;
+    bool _canReview;
 
-    void LateUpdate()
+    // Another of its owner's menu panels opened: close this one
+    void OnMenuOpenChanged(int player, object openPanel)
     {
-        for (int i = 0; i < _panelOpenLastFrame.Length; i++) _panelOpenLastFrame[i] = MenuPanels.For(i).IsPanelOpen;
+        if (_open && player == _owner && openPanel != null && !ReferenceEquals(openPanel, this)) SetOpen(false);
+    }
+
+    // A player opens or closes it; while one has it open, the other can't
+    void SetOpenBy(int player, bool open)
+    {
+        if (_open && player != _owner) return;
+        if (open) _owner = player;
+        SetOpen(open);
+    }
+
+    void SetOpen(bool open)
+    {
+        _open = open;
+        Menus.SetOpen(this, open);
+        if (!_bound) return;
+        _root.EnableInClassList(HiddenClass, !open);
+        if (open)
+        {
+            Nav.Register(_root);
+            Refresh();
+        }
+        // A controller starts on Take new (or OK)
+        Nav.SetScope(this, _popup, open, _takeButton.style.display == DisplayStyle.Flex ? _takeButton : _okButton);
     }
 
     // AccountManager may not exist yet when this is enabled
@@ -152,16 +190,30 @@ public class DropPopupHUD : MonoBehaviour
 
     void Resolve(bool takeNew)
     {
-        if (_subscribedAccount != null) _subscribedAccount.ResolveDrop(takeNew);
+        if (_subscribedAccount == null || !GameArea.CanChangeLoadout) return;
+        _subscribedAccount.ResolveDrop(takeNew);
+        if (_subscribedAccount.PendingDrops.Count == 0) SetOpen(false);
+        else
+        {
+            Refresh();
+            Nav.Focus(_takeButton.style.display == DisplayStyle.Flex ? _takeButton : _okButton);
+        }
     }
 
     void Refresh()
     {
         _dirty = false;
+        _canReview = GameArea.CanChangeLoadout;
         var drops = _subscribedAccount != null ? _subscribedAccount.PendingDrops : null;
-        if (drops == null || drops.Count == 0 || !_town)
+        bool review = drops != null && drops.Count > 0 && _canReview;
+        _cards.style.display = review ? DisplayStyle.Flex : DisplayStyle.None;
+        _message.style.display = review ? DisplayStyle.None : DisplayStyle.Flex;
+        if (!review)
         {
-            SetVisible(false);
+            _heading.text = "Item review";
+            _queue.text = "";
+            _message.text = drops == null || drops.Count == 0 ? "No items to review."
+                          : $"{drops.Count} {(drops.Count == 1 ? "item waits" : "items wait")} to be reviewed in town or at difficulty 1.";
             return;
         }
 
@@ -183,7 +235,6 @@ public class DropPopupHUD : MonoBehaviour
 
         _takeButton.style.display = compare ? DisplayStyle.Flex : DisplayStyle.None;
         _okButton.style.display = compare ? DisplayStyle.None : DisplayStyle.Flex;
-        SetVisible(true);
     }
 
     // No current item yet: a muted note, and the card's usual border
@@ -213,18 +264,5 @@ public class DropPopupHUD : MonoBehaviour
         card.style.borderBottomColor = border;
         card.style.borderLeftColor = border;
         card.style.borderRightColor = border;
-    }
-
-    // While visible the players' buttons (and the mouse) are for it, so gameplay ignores their skill input (other panels
-    // stay open)
-    void SetVisible(bool visible)
-    {
-        _visible = visible;
-        for (int i = 0; i < GameInput.MaxPlayers; i++) MenuPanels.For(i).SetBlocking(this, visible);
-        _root?.EnableInClassList(HiddenClass, !visible);
-        // A controller answers it too: A on Take new (or OK), B keeps the current item
-        if (_root == null) return;
-        var preferred = _takeButton.style.display == DisplayStyle.Flex ? _takeButton : _okButton;
-        for (int i = 0; i < GameInput.MaxPlayers; i++) UiNav.For(i).SetScope(this, _root, visible && i < GameInput.PlayerCount, preferred);
     }
 }

@@ -213,6 +213,16 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""priority"": 0
                 },
                 {
+                    ""name"": ""ItemReview"",
+                    ""type"": ""Button"",
+                    ""id"": ""c41d7a90-52be-4e83-b6f0-19a7d3c85e24"",
+                    ""expectedControlType"": """",
+                    ""processors"": """",
+                    ""interactions"": """",
+                    ""initialStateCheck"": false,
+                    ""priority"": 0
+                },
+                {
                     ""name"": ""DamageMeter"",
                     ""type"": ""Button"",
                     ""id"": ""4d8e2a17-93c5-4b61-8f0a-6e2b9c1d7a35"",
@@ -539,6 +549,28 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
                     ""processors"": """",
                     ""groups"": ""Gamepad"",
                     ""action"": ""Statistics"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""d8e2f5b1-6c37-4a09-9e14-72b0c6a3f581"",
+                    ""path"": ""<Keyboard>/j"",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Keyboard&Mouse"",
+                    ""action"": ""ItemReview"",
+                    ""isComposite"": false,
+                    ""isPartOfComposite"": false
+                },
+                {
+                    ""name"": """",
+                    ""id"": ""e93a06c2-7d48-4b1a-8f25-83c1d7b40692"",
+                    ""path"": """",
+                    ""interactions"": """",
+                    ""processors"": """",
+                    ""groups"": ""Gamepad"",
+                    ""action"": ""ItemReview"",
                     ""isComposite"": false,
                     ""isPartOfComposite"": false
                 },
@@ -1181,6 +1213,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         m_Player_Skills = m_Player.FindAction("Skills", throwIfNotFound: true);
         m_Player_ItemDatabase = m_Player.FindAction("ItemDatabase", throwIfNotFound: true);
         m_Player_Statistics = m_Player.FindAction("Statistics", throwIfNotFound: true);
+        m_Player_ItemReview = m_Player.FindAction("ItemReview", throwIfNotFound: true);
         m_Player_DamageMeter = m_Player.FindAction("DamageMeter", throwIfNotFound: true);
         m_Player_Panels = m_Player.FindAction("Panels", throwIfNotFound: true);
         // UI
@@ -1288,6 +1321,7 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
     private readonly InputAction m_Player_Skills;
     private readonly InputAction m_Player_ItemDatabase;
     private readonly InputAction m_Player_Statistics;
+    private readonly InputAction m_Player_ItemReview;
     private readonly InputAction m_Player_DamageMeter;
     private readonly InputAction m_Player_Panels;
     /// <summary>
@@ -1349,6 +1383,10 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// Provides access to the underlying input action "Player/Statistics".
         /// </summary>
         public InputAction @Statistics => m_Wrapper.m_Player_Statistics;
+        /// <summary>
+        /// Provides access to the underlying input action "Player/ItemReview".
+        /// </summary>
+        public InputAction @ItemReview => m_Wrapper.m_Player_ItemReview;
         /// <summary>
         /// Provides access to the underlying input action "Player/DamageMeter".
         /// </summary>
@@ -1419,6 +1457,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Statistics.started += instance.OnStatistics;
             @Statistics.performed += instance.OnStatistics;
             @Statistics.canceled += instance.OnStatistics;
+            @ItemReview.started += instance.OnItemReview;
+            @ItemReview.performed += instance.OnItemReview;
+            @ItemReview.canceled += instance.OnItemReview;
             @DamageMeter.started += instance.OnDamageMeter;
             @DamageMeter.performed += instance.OnDamageMeter;
             @DamageMeter.canceled += instance.OnDamageMeter;
@@ -1472,6 +1513,9 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
             @Statistics.started -= instance.OnStatistics;
             @Statistics.performed -= instance.OnStatistics;
             @Statistics.canceled -= instance.OnStatistics;
+            @ItemReview.started -= instance.OnItemReview;
+            @ItemReview.performed -= instance.OnItemReview;
+            @ItemReview.canceled -= instance.OnItemReview;
             @DamageMeter.started -= instance.OnDamageMeter;
             @DamageMeter.performed -= instance.OnDamageMeter;
             @DamageMeter.canceled -= instance.OnDamageMeter;
@@ -1862,6 +1906,13 @@ public partial class @InputSystem_Actions: IInputActionCollection2, IDisposable
         /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
         /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
         void OnStatistics(InputAction.CallbackContext context);
+        /// <summary>
+        /// Method invoked when associated input action "ItemReview" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
+        /// </summary>
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.started" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.performed" />
+        /// <seealso cref="UnityEngine.InputSystem.InputAction.canceled" />
+        void OnItemReview(InputAction.CallbackContext context);
         /// <summary>
         /// Method invoked when associated input action "DamageMeter" is either <see cref="UnityEngine.InputSystem.InputAction.started" />, <see cref="UnityEngine.InputSystem.InputAction.performed" /> or <see cref="UnityEngine.InputSystem.InputAction.canceled" />.
         /// </summary>

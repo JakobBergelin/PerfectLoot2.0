@@ -15,7 +15,6 @@
             <ui:VisualElement name="progressBar" class="dh-bar">
                 <ui:VisualElement name="progressFill" class="dh-bar__fill" />
             </ui:VisualElement>
-            <ui:Label name="found" class="dh-found" />
             <ui:VisualElement name="leaveRow" class="dh-actions">
                 <ui:Button name="leaveButton" text="Leave dungeon" class="dh-button dh-button--quiet" />
             </ui:VisualElement>

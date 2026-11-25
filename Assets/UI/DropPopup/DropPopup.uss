@@ -52,6 +52,14 @@
     margin: 0 2px 2px 0;
 }
 
+.dp-message {
+    font-size: 15px;
+    color: var(--text-muted);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 12px 24px;
+}
+
 .dp-cards {
     flex-direction: row;
 }

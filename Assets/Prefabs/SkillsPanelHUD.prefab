@@ -79,7 +79,7 @@ PanelRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: 10
   m_MaskInteraction: 0
   serializedVersion: 1
   m_PanelSettings: {fileID: 11400000, guid: d0049f84dce7fce04d92361535107ac8, type: 2}

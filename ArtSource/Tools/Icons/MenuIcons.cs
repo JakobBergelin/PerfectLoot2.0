@@ -9,6 +9,7 @@ public static class MenuIcons
     public static void Register()
     {
         IconRegistry.Reg(Dir, "Character", Character);
+        IconRegistry.Reg(Dir, "ItemReview", ItemReview);
         IconRegistry.Reg(Dir, "Skills", Skills);
         IconRegistry.Reg(Dir, "ItemDatabase", ItemDatabase);
         IconRegistry.Reg(Dir, "Statistics", Statistics);
@@ -33,6 +34,24 @@ public static class MenuIcons
             c.Fill(G.Circle(94, 154 + i * 17, 5), Ic.Ink);
             c.Fill(G.Circle(162, 154 + i * 17, 5), Ic.Ink);
         }
+    }
+
+    // A chest
+    static void ItemReview(Ic c)
+    {
+        Tiles.Candle(c);
+        c.Glow(128, 110, 100, Pal.Hex("#FFD24A"), 130);
+        c.Add(G.RR(38, 116, 180, 92, 12), Pal.Wood);
+        c.Add(G.Soft(38, 118, 46, 72, 92, 48, 164, 48, 210, 72, 218, 118), Pal.Wood).Then(() => c.Gloss(88, 72, 22, 8, -20, 120));
+        c.Flush();
+        c.Add(G.RR(60, 56, 24, 152, 6), Pal.Gold);
+        c.Add(G.RR(172, 56, 24, 152, 6), Pal.Gold);
+        c.Add(G.RR(32, 108, 192, 22, 8), Pal.Gold);
+        c.Flush();
+        c.Add(G.RR(106, 98, 44, 54, 10), Pal.Gold);
+        c.Flush();
+        c.Fill(G.Circle(128, 118, 8), Ic.Ink);
+        c.Fill(G.RR(124, 118, 8, 20, 3), Ic.Ink);
     }
 
     // A wheel of six skills in the traits' colours around a star

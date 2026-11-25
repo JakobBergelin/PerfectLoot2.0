@@ -6,7 +6,9 @@
                 <ui:Label name="heading" class="dp-heading" />
                 <ui:Label name="queue" class="dp-queue" />
             </ui:VisualElement>
-            <ui:VisualElement class="dp-cards">
+            <!-- In place of the cards when there's nothing to review here -->
+            <ui:Label name="message" class="dp-message" />
+            <ui:VisualElement name="cards" class="dp-cards">
                 <!-- Each card's button sits under it: keep under the current item, take under the new one -->
                 <ui:VisualElement name="currentColumn" class="dp-column">
                     <ui:VisualElement name="currentCard" class="dp-card">

@@ -130,7 +130,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         string list = names.Count <= MaxNames ? string.Join(", ", names)
                     : $"{string.Join(", ", names.GetRange(0, MaxNames))} and {names.Count - MaxNames} more";
         PlayerNotices.Post(PlayerIndex, $"New skill{(names.Count > 1 ? "s" : "")} to equip: {list}\n" +
-                                        $"Open Skills ({PlayerNotices.SkillsKey(PlayerIndex)}) in town");
+                                        $"Open Skills ({PlayerNotices.SkillsKey(PlayerIndex)}){(GameArea.CanChangeLoadout ? "" : " in town")}");
     }
 
     /// <summary>
@@ -310,7 +310,7 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
     /// <summary>
     /// Gives a player entity these skills (by slot, null for an empty one) and removes the ones applied before that aren't
     /// among them (applied, updated). Each slot's variant is its skill's own mode (Stances' stance), carried on from
-    /// before. Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
+    /// before. In a dungeon a skill that wasn't applied before starts on its cooldown. Used for this machine's players and, on the host, for remote ones (NetLoadoutReceiveSystem).
     /// </summary>
     public static void ApplySkills(EntityManager entityManager, Entity player, IReadOnlyList<ActiveSkill> skillsBySlot, IReadOnlyList<int> variants,
                                    List<ActiveSkill> applied)
@@ -340,6 +340,8 @@ public class ActiveSkillManager : MonoBehaviour, IPerPlayer
         foreach (var (slotIndex, skill) in equipped)
         {
             var entry = ToSkill(slotIndex, skill);
+            // Swapped in during a dungeon: starts on its full cooldown, so swapping out and back doesn't reset it
+            if (GameArea.IsDungeon && applied.Count > 0 && !applied.Contains(skill)) entry.CooldownReduction = -skill.Cooldown;
             entry.State.Variant = variants[slotIndex];
             buffer.Add(entry);
         }
