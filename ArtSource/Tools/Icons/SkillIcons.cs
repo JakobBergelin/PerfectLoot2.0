@@ -39,6 +39,61 @@ public static class SkillIcons
         IconRegistry.Reg(Dir, "Timezone", Timezone);
         IconRegistry.Reg(Dir, "Wisp", Wisp);
         IconRegistry.Reg(Dir, "Wolf", Wolf);
+        IconRegistry.Reg(Dir, "Frenzy", Frenzy);
+        IconRegistry.Reg(Dir, "Trample", Trample);
+    }
+
+    // A furious face, eyes burning, with flames rising off it like hair
+    static void Frenzy(Ic c)
+    {
+        Tiles.Ruby(c);
+        c.Glow(128, 120, 116, Pal.Hex("#FF5A3A"), 170);
+        for (int i = 0; i < 5; i++)
+            c.Add(G.Flame(64 + i * 32, 74 - (i == 2 ? 26 : i % 2 == 1 ? 12 : 0), 34, 76), Pal.Fire);
+        c.Flush();
+        c.Add(G.Soft(58, 100, 80, 70, 128, 60, 176, 70, 198, 100, 200, 160, 176, 206, 128, 222, 80, 206, 56, 160), Pal.Blood).Then(() => c.Gloss(96, 92, 18, 9, -30, 140));
+        c.Flush();
+        // Brows slanting down into the nose, burning eyes, a roaring mouth
+        c.Fill(G.Poly(76, 116, 124, 136, 122, 148, 74, 130), Ic.Ink);
+        c.Fill(G.Poly(180, 116, 132, 136, 134, 148, 182, 130), Ic.Ink);
+        c.Fill(G.Ell(100, 150, 12, 7), Pal.Hex("#FFE85A"));
+        c.Fill(G.Ell(156, 150, 12, 7), Pal.Hex("#FFE85A"));
+        c.Fill(G.Soft(98, 178, 158, 178, 150, 206, 106, 206), Ic.Ink);
+        c.Fill(G.Poly(104, 180, 114, 180, 109, 192), Pal.Bone.L);
+        c.Fill(G.Poly(142, 180, 152, 180, 147, 192), Pal.Bone.L);
+    }
+
+    // A heavy armoured boot stamping down, the ground cracking out from under it
+    static void Trample(Ic c)
+    {
+        Tiles.Physical(c);
+        c.Glow(128, 200, 110, Pal.Hex("#FFC870"), 120);
+        c.Add(G.Round(10, 14, 214, 242, 214, 236, 244, 20, 244), Pal.Stone);
+        c.Flush();
+        c.Ink2(5, 128, 216, 70, 242);
+        c.Ink2(5, 128, 216, 196, 240);
+        c.Ink2(4, 128, 216, 32, 220);
+        c.Ink2(4, 128, 216, 226, 222);
+        c.Add(Rock2(46, 196, 10), Pal.Stone);
+        c.Add(Rock2(212, 192, 12), Pal.Stone);
+        c.Flush();
+        // Greave, then the boot: toe forward, a thick sole
+        c.Add(G.Round(14, 92, 30, 160, 30, 156, 132, 98, 132), Pal.Iron).Then(() =>
+        {
+            c.Ink2(4, 96, 64, 156, 64);
+            c.Ink2(4, 96, 98, 156, 98);
+        });
+        c.Add(G.Round(16, 88, 124, 164, 124, 206, 160, 210, 196, 84, 196), Pal.Steel).Then(() => c.Gloss(120, 140, 22, 8, -10, 150));
+        c.Add(G.RR(80, 192, 136, 20, 8), Pal.DarkLeather);
+        c.Flush();
+        // Motion lines above
+        c.Stroke(Pal.Hex("#FFEFC4"), 6, 60, 40, 60, 92);
+        c.Stroke(Pal.Hex("#FFEFC4"), 6, 196, 40, 196, 92);
+    }
+
+    static System.Drawing.Drawing2D.GraphicsPath Rock2(float x, float y, float r)
+    {
+        return G.Soft(x - r, y + r * 0.6f, x - r * 0.4f, y - r, x + r * 0.7f, y - r * 0.6f, x + r, y + r * 0.6f);
     }
 
     // A horned helm rushing forward, speed lines behind it
