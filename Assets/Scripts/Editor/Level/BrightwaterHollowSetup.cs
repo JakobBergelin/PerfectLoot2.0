@@ -88,7 +88,7 @@ public static class BrightwaterHollowSetup
             AssetDatabase.CreateAsset(dungeon, DungeonPath);
         }
         dungeon.Name = "Brightwater Hollow";
-        dungeon.CompletionExperience = 500;
+        dungeon.CompletionExperience = 250;
         dungeon.TimeLimit = 0f;                       // A first dungeon: take your time
         dungeon.ExtraEnemiesPerDifficulty = 0f;       // Learning, not a swarm
         dungeon.MaxEnemyMultiplier = 1f;

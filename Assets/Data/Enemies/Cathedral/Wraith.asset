@@ -63,7 +63,7 @@ MonoBehaviour:
     ProjectileDamageReduction: 0
     MeleeDamageReduction: 0
     AgilityForStrength: 0
-  Experience: 15
+  Experience: 25
   HasAI: 1
   DetectionRadius: 18
   ProximityRadius: 4

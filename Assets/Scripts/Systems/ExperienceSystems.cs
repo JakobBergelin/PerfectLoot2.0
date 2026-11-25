@@ -7,11 +7,17 @@ public static class Experience
 {
     public const int MaxLevel = 10;
 
-    // 2,500 from level 1 to 2, then 750 more for each level: 49,500 from 1 to 10, about 15 dungeons
-    const int FirstLevel = 2500, MorePerLevel = 750;
+    // The first levels come fast: 2 after about 7 kills in Brightwater Hollow, 3 when it is finished. From there each takes
+    // more than the last: 19,260 from 1 to 10, about 15 dungeons
+    const int FirstLevel = 30, SecondLevel = 330, ThirdLevel = 900, MorePerLevel = 600;
 
     /// <summary>Experience from this level to the next; 0 at the max level.</summary>
-    public static int ToNextLevel(int level) => level >= MaxLevel ? 0 : FirstLevel + MorePerLevel * (level - 1);
+    public static int ToNextLevel(int level)
+    {
+        if (level >= MaxLevel) return 0;
+        if (level <= 1) return FirstLevel;
+        return level == 2 ? SecondLevel : ThirdLevel + MorePerLevel * (level - 3);
+    }
 
     /// <summary>Gives every player this much experience (a finished dungeon). ExperienceSystem levels them up.</summary>
     public static void GiveAllPlayers(EntityManager entityManager, int amount)
