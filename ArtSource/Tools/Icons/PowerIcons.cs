@@ -20,7 +20,7 @@ public static class PowerIcons
         Reg("SecondWind", SecondWind); Reg("Shatter", Shatter); Reg("Slingshot", Slingshot); Reg("SoulThief", SoulThief);
         Reg("StaticField", StaticField); Reg("Steam", Steam); Reg("Stormborn", Stormborn); Reg("Stormcall", Stormcall);
         Reg("Sunder", Sunder); Reg("ToxicTrail", ToxicTrail); Reg("Undertow", Undertow); Reg("Vanguard", Vanguard);
-        Reg("FesteringWounds", FesteringWounds); Reg("Venomous", Venomous); Reg("Vigil", Vigil); Reg("Wildfire", Wildfire); Reg("Wyrmfire", Wyrmfire);
+        Reg("FesteringWounds", FesteringWounds); Reg("Seeking", Seeking); Reg("Venomous", Venomous); Reg("Vigil", Vigil); Reg("Wildfire", Wildfire); Reg("Wyrmfire", Wyrmfire);
     }
 
     static void Small(Ic c)
@@ -609,6 +609,20 @@ public static class PowerIcons
         c.Add(G.Drop(172, 138, 19), Pal.Poison);
         c.Flush();
         c.Add(G.Star(82, 80, 42, 17, 4, -90), Pal.Gold);
+        c.Flush();
+    }
+
+    // An arrow curving onto a target
+    static void Seeking(Ic c)
+    {
+        Tiles.Teal(c);
+        c.Glow(178, 92, 70, Pal.Hex("#FFE08A"), 150);
+        c.Add(G.Ring(178, 92, 46, 32), Pal.Ruby);
+        c.Add(G.Circle(178, 92, 16), Pal.Ruby);
+        c.Flush();
+        c.Add(G.Arc(128, 200, 112, 10, 200, 70), Pal.Bone);
+        c.Flush();
+        c.Add(G.Poly(146, 88, 118, 70, 124, 88, 118, 106), Pal.Steel);
         c.Flush();
     }
 

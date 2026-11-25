@@ -238,7 +238,7 @@ public partial class VfxSystem : SystemBase
                     var damageType = attack ? EntityManager.GetComponentData<Attack>(e).Type : DamageType.Physical;
                     var (type, impact) = EntityManager.HasComponent<HealOnArrival>(e)
                         ? (EntityManager.GetComponentData<HealOnArrival>(e).Label == DamageLabel.ShadowPriest ? (VfxType.DarkHealOrb, VfxType.DarkHealBurst) : (VfxType.HealOrb, VfxType.HealBurst))
-                        : EntityManager.HasComponent<HomingProjectile>(e) ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
+                        : attack && EntityManager.GetComponentData<Attack>(e).Origin.Label == DamageLabel.Barrage ? (VfxType.BarrageBolt, VfxType.BarrageImpact)
                         : EntityManager.HasComponent<ShieldProjectile>(e) ? (VfxType.ShieldDisc, VfxType.None)
                         : EntityManager.HasComponent<CursedHammerProjectile>(e) ? (VfxType.CursedHammer, VfxType.None)   // Its bursts are attacks of their own
                         : !attack ? (VfxType.None, VfxType.None)

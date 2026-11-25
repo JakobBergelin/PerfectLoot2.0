@@ -1,0 +1,47 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 34f723e8bfb74af69e2d0b12701298a1, type: 3}
+  m_Name: HoundstoothQuiver
+  m_EditorClassIdentifier: Assembly-CSharp::Equipment.RollableLegendaryOffhandItem
+  Name: Houndstooth Quiver
+  Id: 7e326467cd1b4944880bca737d34c5ab
+  Icon: {fileID: 21300000, guid: ca3ccd8a9913430db064bf84e421b7d8, type: 3}
+  Flavor: Once it has your scent, it doesn't need your aim.
+  VisualBase: {fileID: 11400000, guid: 5d7c6b91f8035ab4a84365b45af0f04c, type: 2}
+  BaseAffixes:
+  - Affix: 32
+    RollRange:
+      Min: 0.05
+      Max: 0.1
+  RollableAffixes:
+  - Affix: 9
+    RollRange:
+      Min: 0.05
+      Max: 0.12
+  - Affix: 23
+    RollRange:
+      Min: 0.5
+      Max: 1
+  - Affix: 27
+    RollRange:
+      Min: 1
+      Max: 2
+  - Affix: 20
+    RollRange:
+      Min: 0.02
+      Max: 0.06
+  - Affix: 21
+    RollRange:
+      Min: 0.05
+      Max: 0.15
+  Kind: 256
+  LegendaryPower: {fileID: 11400000, guid: 0737bb7714110cb4580d43bfbfe67402, type: 2}

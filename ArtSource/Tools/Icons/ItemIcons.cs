@@ -79,6 +79,7 @@ public static class ItemIcons
         Reg("Weapon", "Farsight", Farsight);
         Reg("Weapon", "MasterSword", MasterSword);
         Reg("Weapon", "AddersKiss", AddersKiss);
+        Reg("Offhand", "HoundstoothQuiver", HoundstoothQuiver);
     }
 
     // ---------- Shared details ----------
@@ -1350,6 +1351,33 @@ public static class ItemIcons
         c.NoXf();
         c.Add(G.Drop(206, 108, 15), Pal.Poison);
         c.Add(G.Drop(172, 152, 11), Pal.Poison);
+        c.Flush();
+    }
+
+    // A quiver of feathered arrows, one curving away, with a hound's tooth charm
+    static void HoundstoothQuiver(Ic c)
+    {
+        Tiles.Item(c);
+        c.Glow(128, 110, 100, Pal.Hex("#FFE08A"), 110);
+        c.Xf(-20, 128, 128, 1f);
+        // Three arrows: heads, shafts and fletching above the quiver's mouth
+        for (int i = 0; i < 3; i++)
+        {
+            float x = 104 + i * 24;
+            c.Add(G.RR(x - 3, 30, 6, 70, 3), Pal.Wood);
+            c.Add(G.Poly(x, 12, x + 11, 34, x - 11, 34), Pal.Steel);
+            c.Add(G.Poly(x - 3, 66, x - 13, 88, x - 3, 82), i == 1 ? Pal.Ruby : Pal.Cloth);
+            c.Add(G.Poly(x + 3, 66, x + 13, 88, x + 3, 82), i == 1 ? Pal.Ruby : Pal.Cloth);
+        }
+        c.Flush();
+        c.Add(G.Poly(80, 88, 176, 88, 166, 232, 90, 232), Pal.Leather);
+        c.Add(G.Poly(80, 88, 176, 88, 174, 108, 82, 108), Pal.Bronze);
+        c.Add(G.Poly(86, 196, 170, 196, 168, 212, 88, 212), Pal.Bronze);
+        c.Flush();
+        c.NoXf();
+        // The hound's tooth on a cord
+        c.Stroke(Pal.Hex("#3A2822"), 5, 156, 128, 190, 150);
+        c.Add(G.Soft(184, 146, 204, 146, 210, 164, 196, 206, 184, 172), Pal.Bone);
         c.Flush();
     }
 

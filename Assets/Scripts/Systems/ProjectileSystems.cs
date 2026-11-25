@@ -52,7 +52,8 @@ partial struct HomingProjectileSystem : ISystem
                     float bestValue = homing.ValueRO.HomingType == HomingType.Strongest ? 0.0f : float.MaxValue;
                     foreach(var hit in outHits)
                     {
-                        if(hit.Entity != entity)
+                        // Not one it already hit (a piercing or bouncing projectile goes on to the next)
+                        if(hit.Entity != entity && !AlreadyHit(ref state, entity, hit.Entity))
                         {
                             if (SystemAPI.HasComponent<Source>(entity) && SystemAPI.GetComponentRO<Source>(entity).ValueRO.Entity == hit.Entity)
                             {
@@ -119,7 +120,7 @@ partial struct HomingProjectileSystem : ISystem
                     }
                 }
             }
-            else if(!SystemAPI.Exists(target))
+            else if(!SystemAPI.Exists(target) || AlreadyHit(ref state, entity, target))
             {
                 // TODO, destroy timer?
                 homing.ValueRW.Target = Entity.Null;
@@ -135,6 +136,8 @@ partial struct HomingProjectileSystem : ISystem
             {
                 var position = localTransform.ValueRO.Position;
                 var targetDirection = SystemAPI.GetComponentRO<LocalTransform>(target).ValueRO.Position - position;
+                // One that follows the ground only turns left and right
+                if (projectile.ValueRO.FollowGround) targetDirection.y = 0f;
                 float targetDistance = math.length(targetDirection);
 
                 // Weak avoidance: with the ground or a wall ahead and closer than the target, bend the goal a little
@@ -156,6 +159,15 @@ partial struct HomingProjectileSystem : ISystem
                 homing.ValueRW.TurnSpeed += homing.ValueRO.TurnAcceleration * SystemAPI.Time.DeltaTime;
             }
         }
+    }
+
+    // The projectile's attack has hit this unit and still ignores it
+    bool AlreadyHit(ref SystemState state, Entity projectile, Entity unit)
+    {
+        if (!SystemAPI.HasBuffer<IgnoreEntity>(projectile)) return false;
+        foreach (var ignored in SystemAPI.GetBuffer<IgnoreEntity>(projectile))
+            if (ignored.Entity == unit) return true;
+        return false;
     }
 }
 
