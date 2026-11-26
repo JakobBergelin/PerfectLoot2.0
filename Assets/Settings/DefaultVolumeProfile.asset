@@ -280,6 +280,37 @@ MonoBehaviour:
   SunScatteringIntensity:
     m_OverrideState: 1
     m_Value: 2
+--- !u!114 &-5081890091588470052
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 1784e47ac1bd4899a00a6c08a1d5fd02, type: 3}
+  m_Name: InkEdges
+  m_EditorClassIdentifier: Assembly-CSharp::InkEdges
+  active: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0
+  width:
+    m_OverrideState: 1
+    m_Value: 1
+  depthThreshold:
+    m_OverrideState: 1
+    m_Value: 0.02
+  smallestStep:
+    m_OverrideState: 1
+    m_Value: 0.4
+  creaseAngle:
+    m_OverrideState: 1
+    m_Value: 45
+  color:
+    m_OverrideState: 1
+    m_Value: {r: 0.0706, g: 0.0471, b: 0.0863, a: 1}
 --- !u!114 &-4463884970436517307
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -299,6 +330,28 @@ MonoBehaviour:
   cropToFit:
     m_OverrideState: 1
     m_Value: 1
+--- !u!114 &-2280532656293147365
+MonoBehaviour:
+  m_ObjectHideFlags: 3
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 403aaa9cdfec72a4e86f28b56fc36510, type: 3}
+  m_Name: TiltShift
+  m_EditorClassIdentifier: Assembly-CSharp::TiltShift
+  active: 1
+  strength:
+    m_OverrideState: 1
+    m_Value: 0
+  focusHeight:
+    m_OverrideState: 1
+    m_Value: 0.6
+  softness:
+    m_OverrideState: 1
+    m_Value: 0.3
 --- !u!114 &-1410297666881709256
 MonoBehaviour:
   m_ObjectHideFlags: 3
@@ -470,6 +523,8 @@ MonoBehaviour:
   - {fileID: -1410297666881709256}
   - {fileID: 9082639178700499951}
   - {fileID: 3627132348562464709}
+  - {fileID: -5081890091588470052}
+  - {fileID: -2280532656293147365}
 --- !u!114 &853819529557874667
 MonoBehaviour:
   m_ObjectHideFlags: 3

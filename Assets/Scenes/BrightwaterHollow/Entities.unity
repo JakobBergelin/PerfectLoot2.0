@@ -170,11 +170,11 @@ MonoBehaviour:
   FillPocketsSmallerThan: 6
   LoadDistance: 60
   ChunksPerFrame: 2
-  WobbleStrength: 0.06
-  WobbleScale: 0.61
-  BendAngle: 0
-  HillHeight: 0.3
-  HillScale: 0.15
+  WobbleStrength: 0.08
+  WobbleScale: 3.33
+  BendAngle: 12
+  HillHeight: 3.01
+  HillScale: 0.1
   PlayerStart: {x: 9, y: 3}
   ForcedTiles: []
   Pieces:
