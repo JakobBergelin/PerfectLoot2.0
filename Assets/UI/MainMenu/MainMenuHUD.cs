@@ -28,7 +28,7 @@ public class MainMenuHUD : MonoBehaviour
     int _boundVersion = -1;
     Screen _screen = Screen.Name;
 
-    VisualElement _nameScreen, _mainScreen, _characterScreen;
+    VisualElement _nameScreen, _mainScreen, _characterScreen, _title;
     TextField _nameField;
     Button _continueButton;
     Label _signedIn;
@@ -84,6 +84,7 @@ public class MainMenuHUD : MonoBehaviour
         _nameScreen = root.Q<VisualElement>("nameScreen");
         _mainScreen = root.Q<VisualElement>("mainScreen");
         _characterScreen = root.Q<VisualElement>("characterScreen");
+        _title = root.Q<VisualElement>(className: "mm-title");
         _nameField = root.Q<TextField>("nameField");
         _continueButton = root.Q<Button>("continueButton");
         _signedIn = root.Q<Label>("signedIn");
@@ -218,6 +219,9 @@ public class MainMenuHUD : MonoBehaviour
         _nameScreen.EnableInClassList(HiddenClass, screen != Screen.Name);
         _mainScreen.EnableInClassList(HiddenClass, screen != Screen.Main);
         _characterScreen.EnableInClassList(HiddenClass, screen != Screen.Characters);
+        // Character Select: the characters stand in the middle of the clearing (MenuCharacters), under no title
+        _title?.EnableInClassList(HiddenClass, screen == Screen.Characters);
+        MenuCharacters.Visible = screen == Screen.Characters;
         var shown = screen == Screen.Name ? _nameScreen : screen == Screen.Main ? _mainScreen : _characterScreen;
         UiNav.SetScope(this, shown, true);
         if (screen == Screen.Name)

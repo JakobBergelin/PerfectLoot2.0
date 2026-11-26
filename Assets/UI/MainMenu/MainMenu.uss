@@ -7,7 +7,7 @@
     bottom: 0;
     align-items: center;
     justify-content: center;
-    background-color: #0D0E12;
+    /* No background: the menu's clearing (MenuClearingSetup) shows behind every screen */
     --panel-bg: rgba(20, 22, 28, 0.95);
     --panel-border: #3A3F4B;
     --card-bg: rgba(10, 11, 14, 0.9);
@@ -144,30 +144,8 @@
 }
 
 /* Character Select */
-.mm-panel--wide {
-    width: 780px;
-}
-
-.cs-columns {
-    flex-direction: row;
-    min-height: 420px;
-}
-
-.cs-list-column {
-    width: 300px;
-}
-
-.cs-detail-column {
-    flex-grow: 1;
-    margin-left: 20px;
-    padding-left: 20px;
-    border-left-width: 1px;
-    border-color: var(--panel-border);
-}
-
 .cs-list {
-    flex-grow: 1;
-    max-height: 380px;
+    max-height: 60%;
 }
 
 .cs-character {
@@ -397,13 +375,104 @@
 }
 
 /* Co-op: player 1's Character Select on the left, player 2's picker (CoopPicker, Coop.uss) on the right */
-.mm-coop-row {
-    flex-direction: row;
-    align-items: flex-start;
+/* Character Select over the clearing: side panels down the screen's edges, the characters between them */
+.cs-screen {
+    position: absolute;
+    left: 0;
+    top: 0;
+    right: 0;
+    bottom: 0;
 }
 
+.cs-side {
+    position: absolute;
+    top: 24px;
+    bottom: 24px;
+    width: 340px;
+    padding: 18px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.cs-side--left {
+    left: 24px;
+}
+
+.cs-side--right {
+    right: 24px;
+    width: 380px;
+}
+
+.cs-back {
+    margin-top: 12px;
+}
+
+.cs-big-button {
+    height: 52px;
+    font-size: 20px;
+}
+
+/* Player 2's picker, right of the list */
 .mm-player2 {
-    margin-left: 24px;
+    position: absolute;
+    left: 388px;
+    top: 24px;
+}
+
+/* Creating: the classes along the bottom, between the side panels */
+.cs-class-bar {
+    position: absolute;
+    left: 388px;
+    right: 428px;
+    bottom: 24px;
+    align-items: center;
+}
+
+.cs-class-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    padding: 8px;
+    background-color: var(--panel-bg);
+    border-width: 2px;
+    border-color: var(--panel-border);
+    border-radius: 8px;
+}
+
+.cs-class-choice {
+    width: 72px;
+    height: 84px;
+    margin: 4px;
+    padding: 4px 2px 2px 2px;
+    align-items: center;
+    background-color: var(--card-bg);
+    border-width: 2px;
+    border-color: var(--card-border);
+    border-radius: 6px;
+}
+
+.cs-class-choice:hover {
+    background-color: var(--card-bg-hover);
+}
+
+.cs-class-choice.cs-choice--selected {
+    border-color: var(--accent);
+}
+
+.cs-class-choice__icon {
+    width: 52px;
+    height: 52px;
+    -unity-background-scale-mode: scale-to-fit;
+}
+
+.cs-class-choice__name {
+    font-size: 12px;
+    color: var(--text-color);
+    -unity-text-align: middle-center;
+    padding: 0;
+    margin: 2px 0 0 0;
 }
 
 /* "Player 2" or "Ready" on a character row in co-op */
@@ -416,4 +485,11 @@
     color: var(--accent);
     padding: 0;
     margin: 0;
+}
+
+/* In Character Select the join hint sits between the side panels, at the bottom */
+.main-menu-root .coop-join-hint {
+    right: auto;
+    left: 388px;
+    bottom: 24px;
 }

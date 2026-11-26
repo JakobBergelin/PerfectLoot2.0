@@ -26,7 +26,7 @@ public class CharacterSelectScreen
     VisualElement _list;
     Pager _pager;
     Label _noCharacters, _noSelection;
-    VisualElement _detailsView, _createView, _deleteConfirm;
+    VisualElement _detailsView, _createView, _deleteConfirm, _classBar;
     Label _detailName, _detailClass, _detailResource, _detailDescription, _detailClassInfo, _detailResourceInfo, _deleteQuestion;
     Button _deleteButton, _adventureButton, _deleteNoButton, _createCharacterButton;
     VisualElement _detailSkills, _detailPassives, _skillTooltip, _skillTooltipBody;
@@ -75,6 +75,7 @@ public class CharacterSelectScreen
         _noSelection = root.Q<Label>("noSelection");
         _detailsView = root.Q<VisualElement>("detailsView");
         _createView = root.Q<VisualElement>("createView");
+        _classBar = root.Q<VisualElement>("classBar");
         _deleteConfirm = root.Q<VisualElement>("deleteConfirm");
         _detailName = root.Q<Label>("detailName");
         _detailClass = root.Q<Label>("detailClass");
@@ -113,7 +114,7 @@ public class CharacterSelectScreen
             _detailDescription == null || _detailClassInfo == null || _detailResourceInfo == null || _deleteQuestion == null ||
             _deleteButton == null || _nameField == null || _nameError == null || _classDescription == null || _classInfo == null ||
             _resourceDescription == null || _resourceInfo == null || _createButton == null ||
-            classGrid == null || resourceGrid == null || createCharacter == null || adventure == null || deleteYes == null ||
+            classGrid == null || _classBar == null || resourceGrid == null || createCharacter == null || adventure == null || deleteYes == null ||
             deleteNo == null || cancelCreate == null)
             return false;
 
@@ -147,7 +148,7 @@ public class CharacterSelectScreen
         foreach (ClassType type in Enum.GetValues(typeof(ClassType)))
         {
             if (type == ClassType.None) continue;
-            var choice = AddChoice(classGrid, ClassName(type), () => PickClass(type));
+            var choice = AddClassChoice(classGrid, ClassName(type), ClassAsset(type)?.Icon, () => PickClass(type));
             // Moving over the classes previews their starting skills
             UiNav.Hover(choice, () => ShowStartingSkills(type), () => ShowStartingSkills(_class));
             _classChoices[type] = choice;
@@ -304,6 +305,10 @@ public class CharacterSelectScreen
     {
         _detailsView.EnableInClassList(HiddenClass, !details);
         _createView.EnableInClassList(HiddenClass, !create);
+        _classBar.EnableInClassList(HiddenClass, !create);
+        // Who stands on the clearing (MenuCharacters): the selected character, or a new one while creating
+        MenuCharacters.Player1 = details && Account != null ? Account.FindCharacter(_selectedGuid) : null;
+        MenuCharacters.Creating = create;
         _noSelection.EnableInClassList(HiddenClass, details || create);
         HideSkillTooltip();
         ShowDeleteConfirm(false);
@@ -541,6 +546,22 @@ public class CharacterSelectScreen
     }
 
     // ---------- Names and descriptions ----------
+
+    // A class along the bottom bar: its icon over its name
+    static Button AddClassChoice(VisualElement grid, string text, Sprite icon, Action clicked)
+    {
+        var button = new Button(clicked);
+        button.AddToClassList("cs-class-choice");
+        var image = new VisualElement { pickingMode = PickingMode.Ignore };
+        image.AddToClassList("cs-class-choice__icon");
+        if (icon != null) image.style.backgroundImage = new StyleBackground(icon);
+        var name = new Label(text) { pickingMode = PickingMode.Ignore };
+        name.AddToClassList("cs-class-choice__name");
+        button.Add(image);
+        button.Add(name);
+        grid.Add(button);
+        return button;
+    }
 
     static Button AddChoice(VisualElement grid, string text, Action clicked)
     {
